@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../logic/register_cubit.dart';
-import '../../../logic/register_state.dart';
+import 'package:kids_transport/features/registration/logic/register_cubit.dart';
+import 'package:kids_transport/features/registration/logic/register_state.dart';
 
 class ParentEmailScreen extends StatefulWidget {
   const ParentEmailScreen({super.key});

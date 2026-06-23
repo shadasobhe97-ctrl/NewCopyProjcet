@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart'; // تحتاجي تضيفي باقة image_picker في الـ pubspec
-import '../../../logic/register_cubit.dart';
+import 'package:kids_transport/features/registration/logic/register_cubit.dart';
 
 class ParentAvatarScreen extends StatefulWidget {
   const ParentAvatarScreen({super.key});

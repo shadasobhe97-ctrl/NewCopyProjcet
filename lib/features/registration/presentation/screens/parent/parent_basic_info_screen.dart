@@ -1,7 +1,7 @@
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../logic/register_cubit.dart';
+import 'package:kids_transport/features/registration/logic/register_cubit.dart';
 
 class ParentBasicInfoScreen extends StatefulWidget {
   const ParentBasicInfoScreen({super.key});
