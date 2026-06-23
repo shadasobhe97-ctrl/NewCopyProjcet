@@ -2,7 +2,7 @@ abstract class RegisterState {}
 
 class RegisterInitial extends RegisterState {}
 
-// الحالات الخاصة بولي الأمر (Parent)
+// ==================== [الحالات الخاصة بولي الأمر (Parent)] ====================
 class ParentOtpSentLoading extends RegisterState {}
 class ParentOtpSentSuccess extends RegisterState {
   final String message;
@@ -23,7 +23,7 @@ class ParentRegisterError extends RegisterState {
   ParentRegisterError(this.errorMessage);
 }
 
-// الحالات الخاصة بالسائق (Driver)
+// ==================== [الحالات الخاصة بالسائق (Driver)] ====================
 class DriverRegisterFirstStageLoading extends RegisterState {}
 class DriverRegisterFirstStageSuccess extends RegisterState {
   final String message;
@@ -55,7 +55,7 @@ class DriverCompleteProfileError extends RegisterState {
   DriverCompleteProfileError(this.errorMessage);
 }
 
-// حالة الموقع المشتركة
+// ==================== [حالة الموقع المشتركة] ====================
 class LocationSaveLoading extends RegisterState {}
 class LocationSaveSuccess extends RegisterState {
   final String message;

@@ -93,9 +93,8 @@ class _SelectRoleScreenState extends State<SelectRoleScreen> {
                           // فلو ولي الأمر يبدأ بطلب البريد الإلكتروني أولاً
                           Navigator.pushNamed(context, '/parentEmail'); 
                         } else {
-                          // فلو السائق يبدأ بالبيانات الأساسية مباشرة
-                          Navigator.pushNamed(context, '/driverBasicInfo');
-                        }
+                      // 🌟 فلو السائق - البداية بالبيانات الأساسية
+                        Navigator.pushNamed(context, '/driverBasicInfo');                        }
                       },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),

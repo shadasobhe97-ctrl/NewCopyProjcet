@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart'; // باقة OpenStreetMap
 import 'package:kids_transport/features/registration/logic/register_cubit.dart';
 import 'package:kids_transport/features/registration/logic/register_state.dart';
 import 'package:latlong2/latlong.dart';
+// استيراد ملف الـ Routes لضمان الوصول لـ Routes.parentMainWrapper
 
 class ParentLocationScreen extends StatefulWidget {
   const ParentLocationScreen({super.key});
@@ -15,9 +16,9 @@ class ParentLocationScreen extends StatefulWidget {
 class _ParentLocationScreenState extends State<ParentLocationScreen> {
   final _labelController = TextEditingController(text: "منزلي");
   final MapController _mapController = MapController();
-  
+
   // إحداثيات افتراضية لوسط طرابلس (ليبيا) كمثال للنسخة التجريبية
-  LatLng _currentCenter = const LatLng(32.8872, 13.1913); 
+  LatLng _currentCenter = const LatLng(32.8872, 13.1913);
   bool _isDefaultLocation = true;
 
   @override
@@ -37,8 +38,8 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
   }
 
   void _navigateToHome() {
-    // التوجيه النهائي للشاشة الرئيسية للتطبيق (الهوم) ومسح فلو الـ Register بالكامل
-    Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+    // 🌟 تعديل: التوجيه النهائي للداشبورد الرئيسي ومسح فلو الـ Register بالكامل دون مشاكل
+    Navigator.pushNamedAndRemoveUntil(context, '/parentMainWrapper', (route) => false);
   }
 
   @override
@@ -58,7 +59,11 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
             onPressed: _navigateToHome,
             child: Text(
               "تخطي",
-              style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                color: theme.primaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -69,12 +74,19 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
           listener: (context, state) {
             if (state is LocationSaveSuccess) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: Colors.green),
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.green,
+                ),
               );
-              _navigateToHome(); // الانتقال للهوم سكرين بعد النجاح
+              // 🌟 تعديل: الانتقال مباشرة للداشبورد الرئيسي بعد نجاح الحفظ
+              _navigateToHome();
             } else if (state is LocationSaveError) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.errorMessage), backgroundColor: Colors.red),
+                SnackBar(
+                  content: Text(state.errorMessage),
+                  backgroundColor: Colors.red,
+                ),
               );
             }
           },
@@ -83,14 +95,19 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 8.0,
+                  ),
                   child: Text(
                     "يرجى تحديد موقع المنزل الأساسي على الخريطة لتسهيل عملية التوصيل والربط مع الحافلة.",
-                    style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey,
+                    ),
                     textAlign: TextAlign.right,
                   ),
                 ),
-                
+
                 // 🌟 الخريطة الحقيقية (OpenStreetMap)
                 Expanded(
                   child: Stack(
@@ -109,12 +126,13 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
                           },
                         ),
                         children: [
-                        TileLayer(
-  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  // استخدم هذا الاسم بالضبط كما هو في ملف الـ build.gradle
-  userAgentPackageName: 'com.example.kids_transport', 
-  tileProvider: NetworkTileProvider(),
-),
+                          TileLayer(
+                            urlTemplate:
+                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            // استخدم هذا الاسم بالضبط كما هو في ملف الـ build.gradle
+                            userAgentPackageName: 'com.example.kids_transport',
+                            tileProvider: NetworkTileProvider(),
+                          ),
                         ],
                       ),
                       // علامة الدبوس الثابتة في منتصف الشاشة للإشارة للموقع المختار
@@ -134,9 +152,16 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: isDark ? Colors.grey[950] : Colors.white,
-                    borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -5),
+                      ),
                     ],
                   ),
                   child: Column(
@@ -152,10 +177,12 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      
+
                       // خيار الموقع الأساسي
                       CheckboxListTile(
-                        title: const Text("تعيين هذا الموقع كموقع منزلي الأساسي"),
+                        title: const Text(
+                          "تعيين هذا الموقع كموقع منزلي الأساسي",
+                        ),
                         value: _isDefaultLocation,
                         controlAffinity: ListTileControlAffinity.leading,
                         activeColor: theme.primaryColor,
@@ -169,7 +196,9 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
 
                       // زر حفظ الموقع والارسال للباكيند
                       ElevatedButton(
-                        onPressed: state is LocationSaveLoading ? null : _submitLocation,
+                        onPressed: state is LocationSaveLoading
+                            ? null
+                            : _submitLocation,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
@@ -177,11 +206,17 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
                               )
                             : const Text(
                                 "حفظ وتأكيد الموقع",
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                       ),
                     ],
