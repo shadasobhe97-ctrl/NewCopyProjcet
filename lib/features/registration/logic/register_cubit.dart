@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'register_state.dart';
-// حنستوردوا الموديلز اللي جهزناهم سابقاً هنا
 
 class RegisterCubit extends Cubit<RegisterState> {
   RegisterCubit() : super(RegisterInitial());
 
   // --- [المخزن المؤقت لتجميع بيانات الشاشات محلياً] ---
-  int? selectedRoleId; // 3 للأب، 2 للسائق
+  String? selectedRole; // 'parent' أو 'driver' للتحقق الذكي في شاشة الموقع
+  int? selectedRoleId;  // 3 للأب، 2 للسائق
   
   // بيانات أساسية مشتركة
   String? fullName;
@@ -26,9 +26,21 @@ class RegisterCubit extends Cubit<RegisterState> {
   int? registeredUserId; // الـ user_id المستلم من دالة السائق 1
   int? parentOtpCode;    // كود أوتوبي الأب المحقق
 
+  // --- [مخزن مؤقت إضافي لبيانات السائق المجزأة] ---
+  String? driverNationalId;
+  String? driverLicenseNumber;
+  String? driverLicenseExpiry;
+  String? driverBrand;
+  String? driverModel;
+  String? driverPlateNumber;
+  int? driverYear;
+  String? driverColor;
+  int? driverCapacityManual;
+
   // دالة تحديث الرول المختار من الشاشة الأولى
   void updateRole(int roleId) {
     selectedRoleId = roleId;
+    selectedRole = (roleId == 2) ? 'driver' : 'parent';
   }
 
   // دالة تجميع البيانات الأساسية من الشاشات المشتركة
@@ -50,15 +62,21 @@ class RegisterCubit extends Cubit<RegisterState> {
     gender = userGender;
   }
 
+  // --- [دوال المحاكاة للسائق لضمان عمل الفلو بدون إيرور] ---
+
+  // 1. دالة إعادة إرسال الرمز (لشاشة التحقق)
+  Future<void> resendOtp(String emailAddress) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
+
   // ==================== [APIs فلو ولي الأمر] ====================
 
   // 1. إرسال الأوتوبي للأب (شاشة البريد)
   Future<void> sendParentOtp(String targetEmail) async {
     emit(ParentOtpSentLoading());
     try {
-      // محاكاة طلب السيرفر لتجربة التحميل والـ UI
       await Future.delayed(const Duration(milliseconds: 800));
-      email = targetEmail; // حفظ البريد الإلكتروني محلياً لاستخدامه لاحقاً
+      email = targetEmail; 
       emit(ParentOtpSentSuccess("تم إرسال كود التحقق بنجاح."));
     } catch (e) {
       emit(ParentOtpSentError(e.toString()));
@@ -69,9 +87,7 @@ class RegisterCubit extends Cubit<RegisterState> {
   Future<void> registerParent(int otpCode) async {
     emit(ParentRegisterLoading());
     try {
-      // محاكاة طلب السيرفر لتجربة التحميل والـ UI
       await Future.delayed(const Duration(milliseconds: 1000));
-      // حفظ كود التحقق مؤقتاً
       parentOtpCode = otpCode;
       emit(ParentRegisterSuccess("تم إنشاء حساب ولي الأمر بنجاح."));
     } catch (e) {
@@ -85,9 +101,8 @@ class RegisterCubit extends Cubit<RegisterState> {
   Future<void> registerDriverFirstStage() async {
     emit(DriverRegisterFirstStageLoading());
     try {
-      // إرسال البيانات كـ Multipart بسبب الصورة
-      // final response = await _repository.registerDriverFirst(DriverRegisterRequest(...));
-      // registeredUserId = response.userId; // تخزين الـ id المستلم للمرحلة الثالثة
+      await Future.delayed(const Duration(milliseconds: 500));
+      registeredUserId = 15; // محاكاة تخزين الـ id المستلم
       emit(DriverRegisterFirstStageSuccess("تم تسجيل البيانات الأساسية، يرجى تفعيل الحساب.", 15));
     } catch (e) {
       emit(DriverRegisterFirstStageError(e.toString()));
@@ -98,31 +113,33 @@ class RegisterCubit extends Cubit<RegisterState> {
   Future<void> verifyDriverOtp(String otpCode) async {
     emit(DriverVerifyOtpLoading());
     try {
-      // final response = await _repository.verifyDriverOtp(DriverVerifyOtpRequest(email: email!, otp: otpCode));
+      await Future.delayed(const Duration(milliseconds: 500));
       emit(DriverVerifyOtpSuccess("تم تفعيل حساب السائق بنجاح."));
     } catch (e) {
       emit(DriverVerifyOtpError(e.toString()));
     }
   }
 
-  // 3. المرحلة الثالثة للسائق (إكمال ملف السيارة والوثائق)
-  Future<void> completeDriverProfile(Map<String, dynamic> vehicleAndDocsData) async {
+  // 3. المرحلة الثالثة الحقيقية للسائق (إكمال ملف السيارة والوثائق)
+  Future<void> submitDriverCompleteProfile() async {
     emit(DriverCompleteProfileLoading());
     try {
-      // تحويل الخريطة المستقبلة من شاشات الـ UX إلى الـ Request Model النهائي
-      // ونمرر الـ registeredUserId في الـ Endpoint كطلب ريان
-      // final response = await _repository.completeDriverProfile(userId: registeredUserId!, request: ...);
-      emit(DriverCompleteProfileSuccess("تم رفع بيانات المركبة والوثائق، بانتظار مراجعة الإدارة."));
+      await Future.delayed(const Duration(seconds: 1));
+      emit(DriverCompleteProfileSuccess("تم رفع البيانات بنجاح، بانتظار مراجعة الإدارة."));
     } catch (e) {
       emit(DriverCompleteProfileError(e.toString()));
     }
+  }
+
+  // دالة بديلة في حال تمرير داتا الـ Map مباشرة من الشاشة الـ 7
+  Future<void> completeDriverProfile(Map<String, dynamic> vehicleAndDocsData) async {
+    await submitDriverCompleteProfile();
   }
 
   // ==================== [Endpoint الموقع المشترك] ====================
   Future<void> saveLocation({required String label, required double lat, required double lng, required bool isDefault}) async {
     emit(LocationSaveLoading());
     try {
-      // محاكاة طلب السيرفر لتجربة التحميل والـ UI
       await Future.delayed(const Duration(milliseconds: 800));
       emit(LocationSaveSuccess("تم حفظ الموقع بنجاح."));
     } catch (e) {
