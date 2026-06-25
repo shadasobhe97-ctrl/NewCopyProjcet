@@ -1,73 +1,53 @@
-import 'package:dio/dio.dart';
+import 'package:kids_transport/core/network/api_client.dart';
+import 'package:kids_transport/core/network/api_endpoints.dart';
+import 'package:kids_transport/core/network/api_exception.dart';
+
 import '../models/login_request_model.dart';
+import '../models/reset_password_request_model.dart';
 
 class AuthRemoteDataSource {
-  final Dio _dio = Dio(BaseOptions(baseUrl: 'https://derbi-schools-api.loca.lt/api/'));
+  final ApiClient _apiClient;
 
-  // 1. تسجيل الدخول
+  AuthRemoteDataSource({ApiClient? apiClient})
+      : _apiClient = apiClient ?? ApiClient();
+
   Future<Map<String, dynamic>> login(LoginRequestModel request) async {
-    // ==================== [كود الربط الفعلي بالباكيند - محطوط كومنت] ====================
-    /*
-    final response = await _dio.post('auth/login', data: request.toJson());
-    return response.data;
-    */
-    // =================================================================================
-
-    // ---- [الوضع التجريبي الحالي: يحمل ثانيتين ويرجع بيانات وهمية مطابقة للباكيند] ----
-    await Future.delayed(const Duration(seconds: 2));
-    return {
-      "status": true,
-      "message": "مرحباً خالد مصطفى الورفلي، تم تسجيل الدخول بنجاح!",
-      "access_token": "3|yj1MsGBh28EDGgZoKvb17ZkA88qZg7aEzUcovroO6899e4a5",
-      "token_type": "Bearer",
-      "role_name": "ولي أمر",
-      "user": {
-        "id": 10,
-        "full_name": "خالد مصطفى الورفلي",
-        "phone_number": request.phoneNumber,
-        "role_id": 3,
-        "is_active": true
-      }
-    };
+    final response = await _apiClient.post(
+      ApiEndpoints.login,
+      data: request.toJson(),
+    );
+    return _mapResponse(response.data);
   }
 
-  // 2. تسجيل الخروج
-  Future<Map<String, dynamic>> logout(String token) async {
-    // ==================== [كود الربط الفعلي بالباكيند - محطوط كومنت] ====================
-    /*
-    final response = await _dio.post('auth/logout', 
-      options: Options(headers: {'Authorization': 'Bearer $token'}));
-    return response.data;
-    */
-    // =================================================================================
-
-    await Future.delayed(const Duration(milliseconds: 500));
-    return {"status": true, "message": "تم تسجيل الخروج بنجاح."};
+  Future<Map<String, dynamic>> logout(String authorizationHeader) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.logout,
+      headers: {'Authorization': authorizationHeader},
+    );
+    return _mapResponse(response.data);
   }
 
-  // 3. إرسال رمز الـ OTP
   Future<Map<String, dynamic>> sendOtp(String email) async {
-    // ==================== [كود الربط الفعلي بالباكيند - محطوط كومنت] ====================
-    /*
-    final response = await _dio.post('auth/password/send-otp', data: {'email': email});
-    return response.data;
-    */
-    // =================================================================================
-
-    await Future.delayed(const Duration(milliseconds: 600));
-    return {"status": true, "message": "تم إرسال رمز التحقق إلى بريدك الإلكتروني."};
+    final response = await _apiClient.post(
+      ApiEndpoints.sendPasswordOtp,
+      data: {'email': email},
+    );
+    return _mapResponse(response.data);
   }
 
-  // 4. إعادة تعيين كلمة المرور
-  Future<Map<String, dynamic>> resetPassword(Map<String, dynamic> data) async {
-    // ==================== [كود الربط الفعلي بالباكيند - محطوط كومنت] ====================
-    /*
-    final response = await _dio.post('auth/password/reset', data: data);
-    return response.data;
-    */
-    // =================================================================================
+  Future<Map<String, dynamic>> resetPassword(
+    ResetPasswordRequestModel request,
+  ) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.resetPassword,
+      data: request.toJson(),
+    );
+    return _mapResponse(response.data);
+  }
 
-    await Future.delayed(const Duration(milliseconds: 800));
-    return {"status": true, "message": "تم تحديث كلمة المرور بنجاح."};
+  Map<String, dynamic> _mapResponse(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    throw const ApiException('استجابة الخادم غير مفهومة.');
   }
 }

@@ -3,60 +3,106 @@ import 'package:shared_preferences/shared_preferences.dart';
 class StorageService {
   static late SharedPreferences _prefs;
 
-  // دالة تهيئة الـ SharedPreferences عند تشغيل التطبيق أول مرة
+  static const String _themeKey = 'is_dark_mode';
+  static const String _isFirstTimeKey = 'is_first_time';
+
+  static const String _tokenKey = 'token';
+  static const String _tokenTypeKey = 'token_type';
+  static const String _roleIdKey = 'role_id';
+  static const String _roleNameKey = 'role_name';
+  static const String _userIdKey = 'user_id';
+  static const String _fullNameKey = 'full_name';
+  static const String _phoneNumberKey = 'phone_number';
+  static const String _isActiveKey = 'is_active';
+
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  // مفاتيح التخزين الثابتة (Keys) لمنع الأخطاء الإملائية
-  static const String _themeKey = 'is_dark_mode';
-  
-  // 🌟 توحيد المفاتيح هنا باش تطابق الـ Responses متع الباكيند وماتضربش الـ Session
-  static const String _tokenKey = 'token';
-  static const String _roleIdKey = 'role_id';
-  static const String _isFirstTimeKey = 'is_first_time';
-
-  /// ─── إدارة حالة الثيم (Theme Management) ───
-
-  // دالة حفظ وضع الثيم (فاتح أو غامق)
-  static Future<bool> saveThemeMode(bool isDarkMode) async {
-    return await _prefs.setBool(_themeKey, isDarkMode);
+  static Future<bool> saveThemeMode(bool isDarkMode) {
+    return _prefs.setBool(_themeKey, isDarkMode);
   }
 
-  // دالة قراءة وضع الثيم الحالي (الافتراضي فاتح false إذا لم يُحفظ شيء بعد)
   static bool getThemeMode() {
     return _prefs.getBool(_themeKey) ?? false;
   }
 
-  /// ─── إدارة بيانات المستخدم والـ Session ───
+  static Future<void> saveUserSession({
+    required String token,
+    required int roleId,
+    String tokenType = 'Bearer',
+    String? roleName,
+    int? userId,
+    String? fullName,
+    String? phoneNumber,
+    bool? isActive,
+  }) async {
+    await Future.wait([
+      _prefs.setString(_tokenKey, token),
+      _prefs.setString(_tokenTypeKey, tokenType),
+      _prefs.setInt(_roleIdKey, roleId),
+      if (roleName != null) _prefs.setString(_roleNameKey, roleName),
+      if (userId != null) _prefs.setInt(_userIdKey, userId),
+      if (fullName != null) _prefs.setString(_fullNameKey, fullName),
+      if (phoneNumber != null) _prefs.setString(_phoneNumberKey, phoneNumber),
+      if (isActive != null) _prefs.setBool(_isActiveKey, isActive),
+    ]);
+  }
 
-  // جلب التوكن الحقيقي للمستخدم
   static String? getToken() => _prefs.getString(_tokenKey);
 
-  // جلب الـ ID المخزن لدور المستخدم (2 أو 3)
-  static String? getRoleId() {
-    return _prefs.getString(_roleIdKey);
+  static String getTokenType() => _prefs.getString(_tokenTypeKey) ?? 'Bearer';
+
+  static String? getAuthorizationHeader() {
+    final token = getToken();
+    if (token == null || token.isEmpty) return null;
+    return '${getTokenType()} $token';
   }
 
-  // دالة حفظ الجلسة الموحدة بالـ ID والتوكن بعد تسجيل الدخول بنجاح
-  static Future<void> saveUserSession({required String token, required int roleId}) async {
-    await _prefs.setString(_tokenKey, token);
-    await _prefs.setString(_roleIdKey, roleId.toString()); // نحولوه لـ String باش يتخزن بأمان في الكاش
+  static int? getRoleId() {
+    final value = _prefs.get(_roleIdKey);
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 
-  // مسح البيانات كاملة وتصفية الكاش عند تسجيل الخروج
+  static String? getRoleName() => _prefs.getString(_roleNameKey);
+
+  static int? getUserId() {
+    final value = _prefs.get(_userIdKey);
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  static String? getFullName() => _prefs.getString(_fullNameKey);
+
+  static String? getPhoneNumber() => _prefs.getString(_phoneNumberKey);
+
+  static bool? getIsActive() => _prefs.getBool(_isActiveKey);
+
+  static bool hasValidSession() {
+    final token = getToken();
+    final roleId = getRoleId();
+    return token != null && token.isNotEmpty && roleId != null;
+  }
+
   static Future<void> clearSession() async {
-    await _prefs.remove(_tokenKey);
-    await _prefs.remove(_roleIdKey);
+    await Future.wait([
+      _prefs.remove(_tokenKey),
+      _prefs.remove(_tokenTypeKey),
+      _prefs.remove(_roleIdKey),
+      _prefs.remove(_roleNameKey),
+      _prefs.remove(_userIdKey),
+      _prefs.remove(_fullNameKey),
+      _prefs.remove(_phoneNumberKey),
+      _prefs.remove(_isActiveKey),
+    ]);
   }
 
-  /// ─── إدارة حالة الأونبوردينق (Onboarding) ───
-
-  // دالة لحفظ أن المستخدم خلاص شاف الـ Onboarding وتخطاها
   static Future<void> setFirstTimeComplete() async {
     await _prefs.setBool(_isFirstTimeKey, false);
   }
 
-  // دالة تفحص هل هي أول مرة يفتح فيها التطبيق؟ (لو مالقاش قيمة حيرجع true تلقائياً)
   static bool isFirstTime() => _prefs.getBool(_isFirstTimeKey) ?? true;
 }

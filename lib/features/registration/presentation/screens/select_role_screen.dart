@@ -11,7 +11,7 @@ class SelectRoleScreen extends StatefulWidget {
 }
 
 class _SelectRoleScreenState extends State<SelectRoleScreen> {
-  int? _currentSelectedRole; // 3 لولي الأمر، 2 للسائق
+  int? _currentSelectedRole; // 3 لولي الأمر، 4 للسائق
 
   @override
   Widget build(BuildContext context) {
@@ -65,15 +65,15 @@ class _SelectRoleScreenState extends State<SelectRoleScreen> {
               
               const SizedBox(height: 16),
               
-              // كرت السائق (Role ID: 2)
+              // كرت السائق (Role ID: 4)
               CustomRoleCard(
                 title: "سائق توصيل",
                 description: "إدارة الرحلات اليومية، تسجيل حضور الطلاب، وتنبيه أولياء الأمور بنقاط الانطلاق.",
                 icon: Icons.directions_bus_rounded,
-                isSelected: _currentSelectedRole == 2,
+                isSelected: _currentSelectedRole == 4,
                 onTap: () {
                   setState(() {
-                    _currentSelectedRole = 2;
+                    _currentSelectedRole = 4;
                   });
                 },
               ),

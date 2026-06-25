@@ -13,30 +13,12 @@ class PendingReqWidget extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        // رأس الصفحة
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "أهلاً 👋",
-                    style: theme.textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    "لديكِ طلبات بانتظار المراجعة",
-                    style:
-                        TextStyle(color: AppColors.textMuted, fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        // عنوان قسم الطلبات المعلقة
+        const Text(
+          "الطلبات بانتظار المراجعة",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
         // عنوان القسم
         Row(

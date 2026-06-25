@@ -7,7 +7,7 @@ class RegisterCubit extends Cubit<RegisterState> {
 
   // --- [المخزن المؤقت لتجميع بيانات الشاشات محلياً] ---
   String? selectedRole; // 'parent' أو 'driver' للتحقق الذكي في شاشة الموقع
-  int? selectedRoleId;  // 3 للأب، 2 للسائق
+  int? selectedRoleId;  // 3 للأب، 4 للسائق
   
   // بيانات أساسية مشتركة
   String? fullName;
@@ -40,7 +40,7 @@ class RegisterCubit extends Cubit<RegisterState> {
   // دالة تحديث الرول المختار من الشاشة الأولى
   void updateRole(int roleId) {
     selectedRoleId = roleId;
-    selectedRole = (roleId == 2) ? 'driver' : 'parent';
+    selectedRole = (roleId == 4) ? 'driver' : 'parent';
   }
 
   // دالة تجميع البيانات الأساسية من الشاشات المشتركة

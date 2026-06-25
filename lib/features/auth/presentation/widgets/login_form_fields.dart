@@ -38,7 +38,18 @@ class LoginFormFields extends StatelessWidget {
           },
         ),
         SizedBox(height: 20.h),
-        AuthPasswordField(controller: passwordController),
+        AuthPasswordField(
+          controller: passwordController,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'الرجاء إدخال كلمة المرور';
+            }
+            if (value.length < 6) {
+              return 'كلمة المرور يجب أن لا تقل عن 6 خانات';
+            }
+            return null;
+          },
+        ),
       ],
     );
   }

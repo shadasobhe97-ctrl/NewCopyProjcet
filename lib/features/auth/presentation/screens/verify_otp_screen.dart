@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -12,6 +13,7 @@ import 'package:pin_code_fields/pin_code_fields.dart';
 
 class VerifyOtpScreen extends StatefulWidget {
   final String email;
+
   const VerifyOtpScreen({super.key, required this.email});
 
   @override
@@ -20,8 +22,6 @@ class VerifyOtpScreen extends StatefulWidget {
 
 class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   final TextEditingController _otpController = TextEditingController();
-  
-  // متغيرات العداد التنازلي لإعادة إرسال الرمز
   Timer? _timer;
   int _startSeconds = 60;
   bool _isButtonDisabled = true;
@@ -29,63 +29,54 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   @override
   void initState() {
     super.initState();
-    _startTimer(); // تشغيل العداد تلقائياً عند فتح الشاشة
+    _startTimer();
   }
 
-  // دالة تشغيل العداد التنازلي (تمت حمايتها بـ mounted)
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _otpController.dispose();
+    super.dispose();
+  }
+
   void _startTimer() {
     if (!mounted) return;
     setState(() {
       _startSeconds = 60;
       _isButtonDisabled = true;
     });
-    
-    _timer?.cancel(); // إلغاء أي تيمر قديم قبل تشغيل الجديد
+
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
+
       if (_startSeconds == 0) {
         setState(() {
           _timer?.cancel();
           _isButtonDisabled = false;
         });
       } else {
-        setState(() {
-          _startSeconds--;
-        });
+        setState(() => _startSeconds--);
       }
     });
   }
 
-  // دالة الضغط على إعادة إرسال الرمز
   void _resendCode() {
-    _startTimer(); // إعادة تشغيل العداد فوراً
-
-    // ---- [كود الربط الفعلي بالباكيند - محطوط كومنت] ----
-    /*
-    // استدعاء دالة الـ Cubit لإعادة إرسال الرمز للسيرفر الحقيقي
+    _startTimer();
     context.read<AuthCubit>().sendOtp(email: widget.email);
-    */
-    // ----------------------------------------------------
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("تم إعادة إرسال رمز التحقق بنجاح!"), backgroundColor: AppColors.success),
+  void _openResetPassword(String code) {
+    _timer?.cancel();
+    Navigator.pushNamed(
+      context,
+      AppRoutes.resetPassword,
+      arguments: {'email': widget.email, 'otpCode': code},
     );
   }
-
- @override
-  void dispose() {
-    _timer?.cancel(); // إلغاء التايمر
-    
-    // 🌟 نخلو الكنترولر يموت بهدوء وبدون ما يتواصل مع الحقل
-    _otpController.dispose(); 
-    
-    super.dispose();
-  }
-
-  
 
   @override
   Widget build(BuildContext context) {
@@ -94,8 +85,8 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent, 
-        elevation: 0, 
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
       ),
       body: SafeArea(
@@ -103,11 +94,17 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
           listener: (context, state) {
             if (state is OtpSentSuccess) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: AppColors.success),
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.success,
+                ),
               );
             } else if (state is AuthError) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.errorMessage), backgroundColor: AppColors.error),
+                SnackBar(
+                  content: Text(state.errorMessage),
+                  backgroundColor: AppColors.error,
+                ),
               );
             }
           },
@@ -119,16 +116,16 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                 children: [
                   AuthHeaderSection(
                     title: 'رمز التحقق (OTP)',
-                    subtitle: 'أدخل الرمز المكون من 6 أرقام المرسل إلى:\n${widget.email}',
+                    subtitle:
+                        'أدخل الرمز المكون من 6 أرقام المرسل إلى:\n${widget.email}',
                   ),
                   SizedBox(height: 20.h),
-                  
                   Directionality(
-                    textDirection: TextDirection.rtl, 
+                    textDirection: TextDirection.rtl,
                     child: PinCodeTextField(
                       appContext: context,
                       length: 6,
-                      autoDisposeControllers: false, // 🌟 ضيفي السطر هذا هنا بالظبط
+                      autoDisposeControllers: false,
                       autoFocus: true,
                       controller: _otpController,
                       keyboardType: TextInputType.number,
@@ -139,45 +136,41 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                         borderRadius: BorderRadius.circular(12.r),
                         fieldHeight: 54.h,
                         fieldWidth: 44.w,
-                        activeFillColor: isDark ? AppColors.surfaceDark : Colors.white,
-                        inactiveFillColor: isDark ? AppColors.surfaceDark : Colors.grey.shade100,
-                        selectedFillColor: isDark ? AppColors.surfaceDark : Colors.white,
-                        activeColor: isDark ? AppColors.primaryDark : AppColors.primaryLight,
-                        selectedColor: isDark ? AppColors.primaryDark : AppColors.primaryLight,
-                        inactiveColor: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                        activeFillColor:
+                            isDark ? AppColors.surfaceDark : Colors.white,
+                        inactiveFillColor: isDark
+                            ? AppColors.surfaceDark
+                            : Colors.grey.shade100,
+                        selectedFillColor:
+                            isDark ? AppColors.surfaceDark : Colors.white,
+                        activeColor: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
+                        selectedColor: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
+                        inactiveColor: isDark
+                            ? Colors.grey.shade700
+                            : Colors.grey.shade300,
                       ),
-                      textStyle: AppTextStyles.heading(color: isDark ? Colors.white : Colors.black87),
-                      cursorColor: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+                      textStyle: AppTextStyles.heading(
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      cursorColor:
+                          isDark ? AppColors.primaryDark : AppColors.primaryLight,
                       enableActiveFill: true,
-                      onChanged: (value) {},
-                      onCompleted: (code) {
-                        if (code.length == 6) {
-                          // إلغاء التايمر فوراً عند النجاح لتفادي استدعاء setState بعد الانتقال شاشة أخرى
-                          _timer?.cancel(); 
-                          
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("تم التحقق من الرمز بنجاح!"), backgroundColor: AppColors.success),
-                          );
-                          
-                          Navigator.pushNamed(
-                            context, 
-                            AppRoutes.resetPassword,
-                            arguments: {'email': widget.email, 'otpCode': code},
-                          );
-                        }
-                      },
+                      onChanged: (_) {},
+                      onCompleted: _openResetPassword,
                     ),
                   ),
                   SizedBox(height: 30.h),
-
-                  // ==================== [قسم إعادة إرسال الرمز الذكي] ====================
                   Center(
                     child: Column(
                       children: [
                         Text(
-                          _isButtonDisabled 
-                              ? "يمكنك إعادة إرسال الرمز بعد $_startSeconds ثانية"
-                              : "لم يصلك الرمز بعد؟",
+                          _isButtonDisabled
+                              ? 'يمكنك إعادة إرسال الرمز بعد $_startSeconds ثانية'
+                              : 'لم يصلك الرمز بعد؟',
                           style: AppTextStyles.body(color: AppColors.textMuted),
                         ),
                         SizedBox(height: 8.h),
@@ -186,16 +179,17 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                           child: Text(
                             'إعادة إرسال الرمز',
                             style: AppTextStyles.body(
-                              color: _isButtonDisabled 
-                                  ? Colors.grey 
-                                  : (isDark ? AppColors.primaryDark : AppColors.primaryLight),
+                              color: _isButtonDisabled
+                                  ? Colors.grey
+                                  : (isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight),
                             ).copyWith(fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  // ======================================================================
                 ],
               ),
             ),

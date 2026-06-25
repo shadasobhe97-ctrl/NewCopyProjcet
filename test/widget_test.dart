@@ -19,7 +19,7 @@ void main() {
     await StorageService.init();
 
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const transportApp());
+    await tester.pumpWidget(const TransportApp());
 
     // Verify that SplashScreen is displayed and contains CircularProgressIndicator
     expect(find.byType(SplashScreen), findsOneWidget);

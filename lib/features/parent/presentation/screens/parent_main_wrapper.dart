@@ -85,11 +85,11 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
           backgroundColor:
               isDark ? const Color(0xFF0F0F0F) : AppColors.backgroundLight,
 
-          // ✅ AppBar مُصلح وكامل - PreferredSize ثابت
+          // ✅ AppBar مُوحد ومصمم بلمسة احترافية
           appBar: _buildAppBar(context, theme, isDark),
 
-          // الدروار من جهة اليمين (endDrawer = يفتح من اليمين في RTL)
-          endDrawer: const ParentDrawer(),
+          // الدروار يفتح من جهة اليمين (drawer في RTL)
+          drawer: const ParentDrawer(),
 
           body: IndexedStack(
             index: _selectedIndex,
@@ -104,9 +104,9 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
             activeColor: AppColors.primaryLight,
             color: Colors.grey[400],
             initialActiveIndex: _selectedIndex,
-            height: 60,
-            curveSize: 80,
-            top: -20,
+            height: 52, // 🌟 تقليص الحجم ليكون أنيقاً وحديثاً
+            curveSize: 72, // 🌟 مقاس منحنى أصغر
+            top: -14, // 🌟 تقليص الارتفاع العلوي
             items: const [
               TabItem(icon: Icons.home_rounded, title: 'الرئيسية'),
               TabItem(icon: Icons.people_alt_rounded, title: 'أطفالي'),
@@ -123,19 +123,16 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
     );
   }
 
-  /// ✅ بناء الـ AppBar بشكل صحيح بدون أخطاء
+  /// ✅ بناء الـ AppBar الموحد بشكل احترافي مع تدرج لوني
   PreferredSizeWidget _buildAppBar(
       BuildContext context, ThemeData theme, bool isDark) {
-    final isHome = _selectedIndex == 0;
-
     final gradientColors = isDark
         ? [const Color(0xFF1A2332), const Color(0xFF0F172A)]
-        : [AppColors.primaryLight, const Color(0xFF0E78C4)];
+        : [AppColors.primaryLight, const Color(0xFF0D6EAD)];
 
     return PreferredSize(
-      preferredSize: Size.fromHeight(isHome ? 100 : 64),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
+      preferredSize: const Size.fromHeight(60),
+      child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: gradientColors,
@@ -145,149 +142,79 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
           boxShadow: [
             BoxShadow(
               color: AppColors.primaryLight.withOpacity(isDark ? 0.1 : 0.3),
-              blurRadius: 12,
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(isHome ? 24 : 0),
-          ),
         ),
         child: SafeArea(
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: isHome
-                ? _buildExtendedMainHeader(context)
-                : _buildStandardHeader(context),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              children: [
+                // زر الدروار (يفتح من اليمين في RTL)
+                Builder(
+                  builder: (ctx) => IconButton(
+                    icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
+                    onPressed: () => Scaffold.of(ctx).openDrawer(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // شعار التطبيق الأنيق (بدون اسم الصفحة)
+                const Row(
+                  children: [
+                    Icon(Icons.directions_bus_rounded, color: Colors.white, size: 20),
+                    SizedBox(width: 6),
+                    Text(
+                      "داربي",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 19,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const Spacer(),
+
+                // أيقونة الرسائل
+                IconButton(
+                  icon: const Icon(Icons.chat_bubble_outline_rounded,
+                      color: Colors.white, size: 20),
+                  onPressed: () {},
+                ),
+
+                // أيقونة الإشعارات مع نقطة التنبيه الحمراء
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications_none_rounded,
+                          color: Colors.white, size: 22),
+                      onPressed: () {},
+                    ),
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: AppColors.error,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
-  }
-
-  /// هيدر الصفحة الرئيسية (كبير مع ترحيب)
-  Widget _buildExtendedMainHeader(BuildContext context) {
-    return Row(
-      children: [
-        // زر الدروار
-        Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 26),
-            onPressed: () => Scaffold.of(ctx).openEndDrawer(),
-          ),
-        ),
-        const SizedBox(width: 8),
-        // أفاتار المستخدم
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.white.withOpacity(0.2),
-          backgroundImage:
-              _userAvatarUrl != null ? NetworkImage(_userAvatarUrl!) : null,
-          child: _userAvatarUrl == null
-              ? const Icon(Icons.person_rounded, color: Colors.white, size: 20)
-              : null,
-        ),
-        const SizedBox(width: 10),
-        // نص الترحيب
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "مرحباً، $_userName 👋",
-                style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500),
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                "لوحة التحكم",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 17),
-              ),
-            ],
-          ),
-        ),
-        // أيقونة الرسائل
-        IconButton(
-          icon: const Icon(Icons.chat_bubble_outline_rounded,
-              color: Colors.white, size: 22),
-          onPressed: () {},
-        ),
-        // أيقونة الإشعارات مع نقطة تنبيه
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.notifications_none_rounded,
-                  color: Colors.white, size: 24),
-              onPressed: () {},
-            ),
-            // ✅ نقطة الإشعار داخل Stack بشكل صحيح
-            Positioned(
-              right: 8,
-              top: 8,
-              child: Container(
-                width: 9,
-                height: 9,
-                decoration: const BoxDecoration(
-                  color: AppColors.error,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  /// هيدر كلاسيكي للشاشات الأخرى
-  Widget _buildStandardHeader(BuildContext context) {
-    return Row(
-      children: [
-        Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 26),
-            onPressed: () => Scaffold.of(ctx).openEndDrawer(),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          _getAppBarTitle(),
-          style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        const Spacer(),
-        IconButton(
-          icon: const Icon(Icons.notifications_none_rounded,
-              color: Colors.white, size: 24),
-          onPressed: () {},
-        ),
-      ],
-    );
-  }
-
-  String _getAppBarTitle() {
-    switch (_selectedIndex) {
-      case 0:
-        return "الرئيسية";
-      case 1:
-        return "أطفالي";
-      case 2:
-        return "استكشاف السائقين";
-      case 3:
-        return "العقود والتوثيق";
-      case 4:
-        return "المحفظة الرقمية";
-      default:
-        return "داربي";
-    }
   }
 }

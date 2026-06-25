@@ -21,4 +21,11 @@ class AppColors {
   static const Color pending = Color(0xFFF59E0B);
   static const Color error = Color(0xFFEF4444);
   static const Color textMuted = Color(0xFF6B7280);
+
+  // Branded Accent Colors
+  static const Color maleBlue = Color(0xFF3B82F6);
+  static const Color femalePink = Color(0xFFEC4899);
+  static const Color accentPurple = Color(0xFF8B5CF6);
+  static const Color accentBlue = Color(0xFF6366F1);
+  static const Color accentGreen = Color(0xFF10B981);
 }

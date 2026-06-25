@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/features/parent/data/models/child_model.dart';
 import 'package:kids_transport/features/parent/logic/child_cubit/child_cubit.dart';
 import 'package:kids_transport/features/parent/presentation/widgets/custom_search_dropdown.dart';
@@ -209,14 +210,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 // زر إضافة عنوان جديد
                 InkWell(
                   onTap: () {
-                    // TODO: فتح شاشة اللوكيشن المشتركة (ParentLocationScreen)
-                    // Navigator.pushNamed(context, '/parentLocation');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("سيتم ربط شاشة اختيار الموقع لاحقاً"),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
+                    // التوجيه المباشر لشاشة العناوين المحفوظة لإضافة عنوان جديد
+                    Navigator.pushNamed(context, AppRoutes.savedAddresses);
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
@@ -284,50 +279,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
               ]),
               const SizedBox(height: 20),
 
-              // ── 9. نصف قطر الإشعار ────────────────────────────────────
-              _buildSection(
-                  "نصف قطر إشعار الاقتراب (بالمتر)",
-                  Icons.notifications_active_outlined, [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Slider(
-                        value: _notificationRadius.toDouble(),
-                        min: 50,
-                        max: 1000,
-                        divisions: 19,
-                        activeColor: AppColors.primaryLight,
-                        label: "$_notificationRadius م",
-                        onChanged: (val) =>
-                            setState(() => _notificationRadius = val.toInt()),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        "$_notificationRadius م",
-                        style: const TextStyle(
-                          color: AppColors.primaryLight,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const Text(
-                  "سيصلك إشعار عند وصول الحافلة على هذه المسافة من منزلك",
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 12),
-                ),
-              ]),
-              const SizedBox(height: 20),
-
-              // ── 10. الملاحظات الصحية ─────────────────────────────────
+              // ── 9. الملاحظات الصحية ─────────────────────────────────
               _buildSection(
                   "ملاحظات صحية أو خاصة (اختياري)",
                   Icons.medical_information_outlined, [
@@ -338,13 +290,26 @@ class _AddChildScreenState extends State<AddChildScreen> {
                       "مثل: يعاني من حساسية معينة، يرجى تركه في المقاعد الأمامية..."),
                 ),
               ]),
-
-              const SizedBox(height: 32),
-
-              // ── زر الحفظ ─────────────────────────────────────────────
-              _buildSubmitButton(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
             ],
+          ),
+        ),
+        // زر الحفظ مثبت في الأسفل وبتصميم عائم أنيق
+        bottomNavigationBar: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF111827) : Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
+                blurRadius: 10,
+                offset: const Offset(0, -4),
+              ),
+            ],
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            child: _buildSubmitButton(),
           ),
         ),
       ),
@@ -466,13 +431,13 @@ class _AddChildScreenState extends State<AddChildScreen> {
     final slots = [
       {
         'slot': PreferredTimeSlot.MORNING,
-        'label': 'صباحي فقط',
+        'label': 'فترة صباحية ',
         'emoji': '☀️',
         'color': const Color(0xFFF59E0B),
       },
       {
         'slot': PreferredTimeSlot.EVENING,
-        'label': 'مسائي فقط',
+        'label': 'فترة مسائية ',
         'emoji': '🌙',
         'color': const Color(0xFF6366F1),
       },

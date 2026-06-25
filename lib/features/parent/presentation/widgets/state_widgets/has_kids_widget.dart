@@ -14,30 +14,12 @@ class HasKidsWidget extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        // تحية وعدد الأطفال
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "أهلاً 👋",
-                    style: theme.textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "لديكِ ${kids.length} ${kids.length == 1 ? 'طفل مسجل' : 'أطفال مسجلون'} في التطبيق",
-                    style: const TextStyle(
-                        color: AppColors.textMuted, fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        // عنوان قسم الأطفال المسجلين
+        const Text(
+          "أطفالي المسجلين",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
         // كروت الأطفال
         ...kids.map((child) => _buildChildCard(child, isDark)),

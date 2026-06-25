@@ -40,3 +40,8 @@ class PasswordResetSuccessState extends AuthState {
   final String message;
   const PasswordResetSuccessState(this.message);
 }
+
+class AuthLogoutSuccess extends AuthState {
+  final String message;
+  const AuthLogoutSuccess(this.message);
+}

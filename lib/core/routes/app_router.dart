@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:kids_transport/features/app_entry/logic/app_entry_cubit.dart';
 import 'package:kids_transport/features/app_entry/presentation/screens/onboarding_screen.dart';
 import 'package:kids_transport/features/app_entry/presentation/screens/splash_screen.dart';
+import 'package:kids_transport/features/driver/presentation/screens/driver_home_screen.dart';
 import 'package:kids_transport/features/parent/presentation/screens/parent_home_screen.dart';
 import 'package:kids_transport/features/parent/presentation/screens/parent_main_wrapper.dart';
 import 'package:kids_transport/features/parent/presentation/screens/add_child_screen.dart';
 import 'package:kids_transport/features/parent/presentation/screens/my_children_screen.dart';
 import 'package:kids_transport/features/parent/presentation/screens/child_detail_screen.dart';
+import 'package:kids_transport/features/parent/presentation/screens/parent_profile_screen.dart';
+import 'package:kids_transport/features/parent/presentation/screens/saved_addresses_screen.dart';
 import 'package:kids_transport/features/parent/data/models/child_model.dart';
 import 'package:kids_transport/features/registration/presentation/screens/driver/driver_alternative_phone_screen.dart';
 import 'package:kids_transport/features/registration/presentation/screens/driver/driver_avatar_screen.dart';
@@ -25,7 +26,6 @@ import 'package:kids_transport/features/registration/presentation/screens/parent
 import 'package:kids_transport/features/registration/presentation/screens/parent/parent_otp_screen.dart';
 import 'package:kids_transport/features/registration/presentation/screens/select_role_screen.dart';
 import 'package:kids_transport/features/registration/presentation/screens/parent/parent_location_screen.dart';
-import '../../features/auth/logic/auth_cubit.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/verify_otp_screen.dart';
@@ -38,38 +38,42 @@ class AppRoutes {
   static const String verifyOtp = '/verifyOtp';
   static const String resetPassword = '/resetPassword';
   static const String onboarding = '/onboarding';
+  static const String parentHome = '/parentHome';
+  static const String driverHome = '/driverHome';
   
   // روتس فلو ولي الأمر
   static const String parentMainWrapper = '/parentMainWrapper';
   static const String addChild = '/addChild';
   static const String myChildren = '/myChildren';
   static const String childDetail = '/childDetail';
+  static const String parentProfile = '/parentProfile';
+  static const String savedAddresses = '/savedAddresses';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.splash:
-        return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => AppEntryCubit(),
-            child: const SplashScreen(),
-          ),
-        );
+        return MaterialPageRoute(builder: (_) => const SplashScreen());
       case AppRoutes.onboarding:
         return MaterialPageRoute(builder: (_) => const OnboardingScreen());
       
       case AppRoutes.login:
-        return MaterialPageRoute(builder: (_) => BlocProvider(create: (_) => AuthCubit(), child: const LoginScreen()));
+        return MaterialPageRoute(builder: (_) => const LoginScreen());
       
       case AppRoutes.forgotPassword:
-        return MaterialPageRoute(builder: (_) => BlocProvider(create: (_) => AuthCubit(), child: const ForgotPasswordScreen()));
+        return MaterialPageRoute(builder: (_) => const ForgotPasswordScreen());
       
       case AppRoutes.verifyOtp:
         final email = settings.arguments as String;
-        return MaterialPageRoute(builder: (_) => BlocProvider(create: (_) => AuthCubit(), child: VerifyOtpScreen(email: email)));
+        return MaterialPageRoute(builder: (_) => VerifyOtpScreen(email: email));
       
       case AppRoutes.resetPassword:
         final args = settings.arguments as Map<String, String>;
-        return MaterialPageRoute(builder: (_) => BlocProvider(create: (_) => AuthCubit(), child: ResetPasswordScreen(email: args['email']!, otpCode: args['otpCode']!)));
+        return MaterialPageRoute(
+          builder: (_) => ResetPasswordScreen(
+            email: args['email']!,
+            otpCode: args['otpCode']!,
+          ),
+        );
         
       case '/selectRole':
         return MaterialPageRoute(builder: (_) => const SelectRoleScreen());
@@ -78,9 +82,15 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const ParentEmailScreen());
 
       // 🌟 الحاضن والداشبورد الرئيسي المحدث لولي الأمر
+      case AppRoutes.parentHome:
       case AppRoutes.parentMainWrapper:
         return MaterialPageRoute(
           builder: (_) => const ParentMainWrapper(),
+        );
+
+      case AppRoutes.driverHome:
+        return MaterialPageRoute(
+          builder: (_) => const DriverHomeScreen(),
         );
 
       // شاشة إضافة طفل جديد
@@ -100,6 +110,18 @@ class AppRoutes {
         final child = settings.arguments as ChildModel;
         return MaterialPageRoute(
           builder: (_) => ChildDetailScreen(child: child),
+        );
+
+      // شاشة الملف الشخصي لولي الأمر
+      case AppRoutes.parentProfile:
+        return MaterialPageRoute(
+          builder: (_) => const ParentProfileScreen(),
+        );
+
+      // شاشة إدارة العناوين
+      case AppRoutes.savedAddresses:
+        return MaterialPageRoute(
+          builder: (_) => const SavedAddressesScreen(),
         );
 
       case '/parentOtp':
