@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/features/app_entry/logic/app_entry_cubit.dart';
 import 'package:kids_transport/features/app_entry/presentation/screens/onboarding_screen.dart';
 import 'package:kids_transport/features/app_entry/presentation/screens/splash_screen.dart';
 import 'package:kids_transport/features/driver/presentation/screens/driver_home_screen.dart';
@@ -19,6 +22,10 @@ import 'package:kids_transport/features/registration/presentation/screens/driver
 import 'package:kids_transport/features/registration/presentation/screens/driver/driver_otp_screen.dart';
 import 'package:kids_transport/features/registration/presentation/screens/driver/driver_vehicle_stage_screen.dart';
 import 'package:kids_transport/features/registration/presentation/screens/driver/driver_waiting_screen.dart';
+import 'package:kids_transport/features/driver/presentation/screens/driver_main_wrapper.dart';
+import 'package:kids_transport/features/driver/presentation/screens/driver_backup_vehicle_screen.dart';
+import 'package:kids_transport/features/driver/presentation/screens/driver_profile_screen.dart';
+import 'package:kids_transport/features/driver/presentation/screens/driver_primary_vehicle_screen.dart';
 import 'package:kids_transport/features/registration/presentation/screens/parent/parent_alternative_phone.dart';
 import 'package:kids_transport/features/registration/presentation/screens/parent/parent_avatar_screen.dart';
 import 'package:kids_transport/features/registration/presentation/screens/parent/parent_basic_info_screen.dart';
@@ -26,6 +33,11 @@ import 'package:kids_transport/features/registration/presentation/screens/parent
 import 'package:kids_transport/features/registration/presentation/screens/parent/parent_otp_screen.dart';
 import 'package:kids_transport/features/registration/presentation/screens/select_role_screen.dart';
 import 'package:kids_transport/features/registration/presentation/screens/parent/parent_location_screen.dart';
+
+// 🌟 استيراد شاشة تسجيل دخول الأدمن الجديدة
+import 'package:kids_transport/features/admin/presentation/screens/admin_login_screen.dart'; 
+
+import '../../features/auth/logic/auth_cubit.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/verify_otp_screen.dart';
@@ -34,6 +46,7 @@ import '../../features/auth/presentation/screens/reset_password_screen.dart';
 class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
+  static const String adminLogin = '/adminLogin'; // 👈 تم إضافة روت الأدمن هنا
   static const String forgotPassword = '/forgotPassword';
   static const String verifyOtp = '/verifyOtp';
   static const String resetPassword = '/resetPassword';
@@ -49,10 +62,18 @@ class AppRoutes {
   static const String parentProfile = '/parentProfile';
   static const String savedAddresses = '/savedAddresses';
 
+  // روتس فلو السائق
+  // TODO: عند الربط الكامل، يُوجَّه السائق هنا بعد قبول الأدمن لحسابه
+  static const String driverMainWrapper = '/driverMainWrapper';
+  static const String driverBackupVehicle = '/driverBackupVehicle';
+
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.splash:
         return MaterialPageRoute(builder: (_) => const SplashScreen());
+        
+      case AppRoutes.adminLogin: // 👈 تم إضافة الحالة هنا لفتح شاشة الأدمن
+        return MaterialPageRoute(builder: (_) => const AdminLoginScreen());
       case AppRoutes.onboarding:
         return MaterialPageRoute(builder: (_) => const OnboardingScreen());
       
@@ -186,6 +207,29 @@ class AppRoutes {
       // شاشة انتظار مراجعة حساب السائق
       case '/driverWaiting':
         return MaterialPageRoute(builder: (_) => const DriverWaitingScreen());
+
+      // ── الهوم سكرين الخاص بالسائق (بعد القبول من الأدمن) ──
+      // TODO: عند الربط، تأكد من التحقق من حالة السائق قبل الدخول لهذه الشاشة
+      case AppRoutes.driverMainWrapper:
+        return MaterialPageRoute(builder: (_) => const DriverMainWrapper());
+
+      // ── شاشة إضافة المركبة الاحتياطية ──
+      case AppRoutes.driverBackupVehicle:
+        return MaterialPageRoute(
+          builder: (_) => const DriverBackupVehicleScreen(),
+        );
+
+      // ── شاشة الملف الشخصي للسائق ──
+      case '/driverProfile':
+        return MaterialPageRoute(
+          builder: (_) => const DriverProfileScreen(),
+        );
+
+      // ── شاشة المركبة الأساسية للسائق ──
+      case '/driverPrimaryVehicle':
+        return MaterialPageRoute(
+          builder: (_) => const DriverPrimaryVehicleScreen(),
+        );
 
       default:
         return MaterialPageRoute(builder: (_) => const Scaffold(body: Center(child: Text('الشاشة غير موجودة!'))));

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pin_code_fields/pin_code_fields.dart'; // حقل الرموز المعتمد عندكِ
-import '../../../logic/register_cubit.dart';
+import 'package:kids_transport/features/registration/logic/register_cubit.dart';
 
 class ParentOtpScreen extends StatefulWidget {
   final String email; // تستقبل الإيميل الممرر عبر الـ arguments

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../../../../core/theme/app_colors.dart'; 
-import '../../../../core/theme/text_styles.dart';
-import '../../../../core/routes/app_router.dart'; // استيراد الـ AppRoutes للراوتر المركزي
-import '../../../../core/services/storage_service.dart'; // استيراد الـ Storage لـحفظ الحالة محلياً
+import 'package:kids_transport/core/theme/app_colors.dart'; 
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/routes/app_router.dart'; // استيراد الـ AppRoutes للراوتر المركزي
+import 'package:kids_transport/core/services/storage_service.dart'; // استيراد الـ Storage لـحفظ الحالة محلياً
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});

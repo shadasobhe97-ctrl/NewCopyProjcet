@@ -6,7 +6,7 @@ class AppEntryInitial extends AppEntryState {}
 // حالة التوجيه لشاشة العرض والتعريف (Onboarding)
 class NavigateToOnboarding extends AppEntryState {}
 
-// حالة التوجيه لشاشة تسجيل الدخول (Login)
+// حالة التوجيه لشاشة تسجيل الدخول (Login)  
 class NavigateToLogin extends AppEntryState {}
 
 // حالة التوجيه لشاشة ولي الأمر الرئيسية
