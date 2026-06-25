@@ -21,4 +21,6 @@ class AppColors {
   static const Color pending = Color(0xFFF59E0B);
   static const Color error = Color(0xFFEF4444);
   static const Color textMuted = Color(0xFF6B7280);
+
+  static const Color textDark = Color(0xFF1A1A1A);
 }

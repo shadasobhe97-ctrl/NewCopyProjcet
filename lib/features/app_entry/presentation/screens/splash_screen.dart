@@ -5,7 +5,6 @@ import 'package:kids_transport/core/theme/cubit/theme_cubit.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_cubit.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_state.dart';
 
-
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -28,18 +27,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
     return BlocListener<AppEntryCubit, AppEntryState>(
       listener: (context, state) {
-        if (state is NavigateToOnboarding) {
-          Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
-        } else if (state is NavigateToLogin) {
-          Navigator.pushReplacementNamed(context, AppRoutes.login);
-        } else if (state is NavigateToDriverHome || state is NavigateToParentHome) {
-          Navigator.pushReplacementNamed(context, AppRoutes.login);
-        }
-        //else if (state is NavigateToParentHome) {
-  // لو طلع ولي أمر ومسجل دخول، ابعثيه لصفحة ولي الأمر
-         // Navigator.pushReplacementNamed(context, AppRoutes.parentHome);
-           //}
-    },
+        // 🔥 التوجيه المباشر والسرى إلى الـ Wrapper الخاص بالسائق للمعاينة والتجربة
+        Navigator.pushReplacementNamed(context, AppRoutes.driverMainWrapper);
+      },
       child: Scaffold(
         // الخلفية تتغير تلقائياً حسب الثيم المعتمد في الـ ThemeData
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
