@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:kids_transport/features/app_entry/logic/app_entry_cubit.dart';
 import 'package:kids_transport/features/app_entry/presentation/screens/onboarding_screen.dart';
 import 'package:kids_transport/features/app_entry/presentation/screens/splash_screen.dart';
 import 'package:kids_transport/features/driver/presentation/screens/driver_home_screen.dart';
@@ -37,7 +34,6 @@ import 'package:kids_transport/features/registration/presentation/screens/parent
 // 🌟 استيراد شاشة تسجيل دخول الأدمن الجديدة
 import 'package:kids_transport/features/admin/presentation/screens/admin_login_screen.dart'; 
 
-import '../../features/auth/logic/auth_cubit.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/verify_otp_screen.dart';

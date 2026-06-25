@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
-import 'package:kids_transport/core/theme/cubit/theme_cubit.dart';
 import '../../logic/driver_home_cubit/driver_home_cubit.dart';
 import '../widgets/driver_drawer.dart';
 import 'driver_home_screen.dart';
