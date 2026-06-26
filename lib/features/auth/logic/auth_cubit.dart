@@ -75,6 +75,27 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  Future<void> verifyOtp({required String email, required String code}) async {
+    emit(AuthLoading());
+    try {
+      final response = await _repository.verifyOtp(email, code);
+
+      if (response.status) {
+        emit(PasswordOtpVerifiedSuccess(
+          message: response.message,
+          email: email,
+          code: code,
+        ));
+      } else {
+        emit(AuthError(_fallbackMessage(response.message)));
+      }
+    } on ApiException catch (error) {
+      emit(AuthError(error.message));
+    } catch (_) {
+      emit(AuthError('فشل التحقق من الرمز.'));
+    }
+  }
+
   Future<void> resetPassword({
     required String email,
     required String code,

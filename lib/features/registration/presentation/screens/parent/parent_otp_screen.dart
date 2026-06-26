@@ -1,10 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pin_code_fields/pin_code_fields.dart'; // حقل الرموز المعتمد عندكِ
+import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:kids_transport/features/registration/logic/register_cubit.dart';
+import 'package:kids_transport/features/registration/logic/register_state.dart';
 
 class ParentOtpScreen extends StatefulWidget {
-  final String email; // تستقبل الإيميل الممرر عبر الـ arguments
+  final String email;
 
   const ParentOtpScreen({super.key, required this.email});
 
@@ -14,15 +16,87 @@ class ParentOtpScreen extends StatefulWidget {
 
 class _ParentOtpScreenState extends State<ParentOtpScreen> {
   final _otpController = TextEditingController();
+  int _timerSeconds = 600; // 10 دقائق
+  Timer? _timer;
+  bool _canResend = false;
+  bool _resendLoading = false;
+  bool _resendSucceeded = false; // يتحول لرمادي بعد نجاح الإرسال
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    setState(() {
+      _timerSeconds = 600;
+      _canResend = false;
+    });
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_timerSeconds == 0) {
+        setState(() {
+          _canResend = true;
+          _timer?.cancel();
+        });
+      } else {
+        setState(() {
+          _timerSeconds--;
+        });
+      }
+    });
+  }
+
+  Future<void> _resendOtp() async {
+    setState(() {
+      _resendLoading = true;
+      _resendSucceeded = false;
+    });
+
+    await context.read<RegisterCubit>().resendParentOtp(widget.email);
+
+    if (!mounted) return;
+
+    setState(() {
+      _resendLoading = false;
+      _resendSucceeded = true; // تحول الزر لرمادي = نجح الإرسال
+      _canResend = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("تم إعادة إرسال رمز التحقق إلى بريدك الإلكتروني."),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    setState(() {
+      _resendSucceeded = false;
+    });
+    _startTimer();
+  }
 
   @override
   void dispose() {
-    // الحماية الذهبية اللي اتفقنا عليها لمنع كراش الـ Controller الميت
+    _timer?.cancel();
     try {
       _otpController.text = '';
     } catch (_) {}
     _otpController.dispose();
     super.dispose();
+  }
+
+  String _formatTime(int totalSeconds) {
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -46,7 +120,6 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 20),
-              // الهيدر المعتمد
               Text(
                 "رمز التحقق",
                 style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -60,17 +133,16 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
               ),
               const SizedBox(height: 40),
 
-              // حقل إدخال الرموز المنسق
               Directionality(
-                textDirection: TextDirection.rtl,
+                textDirection: TextDirection.ltr,
                 child: PinCodeTextField(
                   appContext: context,
                   length: 6,
                   controller: _otpController,
                   autoFocus: true,
-                  autoDisposeControllers: false, // 🌟 الحماية لمنع الكراش تلقائياً
+                  autoDisposeControllers: false,
                   keyboardType: TextInputType.number,
-                  animationType: AnimationType.fade,
+                  animationType: AnimationType.slide,
                   pinTheme: PinTheme(
                     shape: PinCodeFieldShape.box,
                     borderRadius: BorderRadius.circular(30),
@@ -82,25 +154,48 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
                   ),
                   onChanged: (value) {},
                   onCompleted: (value) {
-                    if (value.length == 6) {
-                      // 1. حفظ كود التحقق مؤقتاً في الكيوبت
-                      context.read<RegisterCubit>().parentOtpCode = int.tryParse(value);
-                      
-                      // 2. التوجيه لشاشة البيانات الأساسية الكبرى للأب
-                      Navigator.pushNamed(context, '/parentBasicInfo');
-                    }
+                    context.read<RegisterCubit>().parentOtpCode = int.tryParse(value);
+                    Navigator.pushNamed(context, '/parentBasicInfo');
                   },
                 ),
               ),
-              
+              const SizedBox(height: 24),
+
+              // صف إعادة الإرسال
+              Center(
+                child: _canResend
+                    ? _buildResendButton(theme)
+                    : Column(
+                        children: [
+                          Text(
+                            "إعادة الإرسال بعد",
+                            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _formatTime(_timerSeconds),
+                            style: TextStyle(
+                              color: theme.primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+
               const Spacer(),
-              
-              // زر التأكيد اليدوي كبديل للاكتمال التلقائي
+
               ElevatedButton(
                 onPressed: () {
                   if (_otpController.text.length == 6) {
                     context.read<RegisterCubit>().parentOtpCode = int.tryParse(_otpController.text);
                     Navigator.pushNamed(context, '/parentBasicInfo');
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("الرجاء إدخال الرمز كاملاً المكون من 6 أرقام")),
+                    );
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -114,6 +209,40 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
               const SizedBox(height: 24),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResendButton(ThemeData theme) {
+    if (_resendLoading) {
+      return const SizedBox(
+        height: 20,
+        width: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+
+    if (_resendSucceeded) {
+      return TextButton(
+        onPressed: null,
+        child: Text(
+          "تم إرسال الرمز ✓",
+          style: TextStyle(
+            color: Colors.grey[500],
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    return TextButton(
+      onPressed: _resendOtp,
+      child: Text(
+        "إعادة إرسال رمز التحقق",
+        style: TextStyle(
+          color: theme.primaryColor,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );

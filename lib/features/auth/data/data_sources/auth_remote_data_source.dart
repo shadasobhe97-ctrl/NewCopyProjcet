@@ -35,6 +35,17 @@ class AuthRemoteDataSource {
     return _mapResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> verifyOtp(String email, String code) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.verifyPasswordOtp,
+      data: {
+        'email': email,
+        'code': code,
+      },
+    );
+    return _mapResponse(response.data);
+  }
+
   Future<Map<String, dynamic>> resetPassword(
     ResetPasswordRequestModel request,
   ) async {

@@ -129,15 +129,15 @@ class _OnlineStatusCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isOnline
-              ? AppColors.success.withOpacity(0.4)
-              : Colors.grey.withOpacity(0.2),
+              ? AppColors.success.withValues(alpha: 0.4)
+              : Colors.grey.withValues(alpha: 0.2),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
             color: isOnline
-                ? AppColors.success.withOpacity(0.1)
-                : Colors.black.withOpacity(0.04),
+                ? AppColors.success.withValues(alpha: 0.1)
+                : Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -152,8 +152,8 @@ class _OnlineStatusCard extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               color: isOnline
-                  ? AppColors.success.withOpacity(0.12)
-                  : Colors.grey.withOpacity(0.1),
+                  ? AppColors.success.withValues(alpha: 0.12)
+                  : Colors.grey.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -199,10 +199,8 @@ class _OnlineStatusCard extends StatelessWidget {
               value: isOnline,
               activeColor: AppColors.success,
               inactiveThumbColor: Colors.grey[400],
-              inactiveTrackColor: Colors.grey.withOpacity(0.2),
+              inactiveTrackColor: Colors.grey.withValues(alpha: 0.2),
               onChanged: (val) {
-                // تحديث الحالة عبر الكوبيت
-                // TODO: ربط بـ API لتحديث حالة السائق في السيرفر
                 context.read<DriverHomeCubit>().toggleOnlineStatus();
               },
             ),

@@ -23,8 +23,10 @@ class VerifyOtpScreen extends StatefulWidget {
 class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   final TextEditingController _otpController = TextEditingController();
   Timer? _timer;
-  int _startSeconds = 60;
+  int _startSeconds = 600; // 10 دقائق
   bool _isButtonDisabled = true;
+  bool _resendLoading = false;
+  bool _resendSucceeded = false; // يتحول لرمادي بعد نجاح الإرسال
 
   @override
   void initState() {
@@ -42,7 +44,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   void _startTimer() {
     if (!mounted) return;
     setState(() {
-      _startSeconds = 60;
+      _startSeconds = 600;
       _isButtonDisabled = true;
     });
 
@@ -64,9 +66,29 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     });
   }
 
-  void _resendCode() {
-    _startTimer();
+  String _formatTime(int totalSeconds) {
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _resendCode() async {
+    setState(() {
+      _resendLoading = true;
+      _resendSucceeded = false;
+    });
     context.read<AuthCubit>().sendOtp(email: widget.email);
+    await Future.delayed(const Duration(seconds: 1));
+    if (!mounted) return;
+    setState(() {
+      _resendLoading = false;
+      _resendSucceeded = true;
+      _isButtonDisabled = true;
+    });
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    setState(() => _resendSucceeded = false);
+    _startTimer();
   }
 
   void _openResetPassword(String code) {
@@ -99,6 +121,8 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                   backgroundColor: AppColors.success,
                 ),
               );
+            } else if (state is PasswordOtpVerifiedSuccess) {
+              _openResetPassword(state.code);
             } else if (state is AuthError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -160,33 +184,53 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                           isDark ? AppColors.primaryDark : AppColors.primaryLight,
                       enableActiveFill: true,
                       onChanged: (_) {},
-                      onCompleted: _openResetPassword,
+                      onCompleted: (code) {
+                        context.read<AuthCubit>().verifyOtp(email: widget.email, code: code);
+                      },
                     ),
                   ),
                   SizedBox(height: 30.h),
                   Center(
                     child: Column(
                       children: [
-                        Text(
-                          _isButtonDisabled
-                              ? 'يمكنك إعادة إرسال الرمز بعد $_startSeconds ثانية'
-                              : 'لم يصلك الرمز بعد؟',
-                          style: AppTextStyles.body(color: AppColors.textMuted),
-                        ),
-                        SizedBox(height: 8.h),
-                        TextButton(
-                          onPressed: _isButtonDisabled ? null : _resendCode,
-                          child: Text(
-                            'إعادة إرسال الرمز',
-                            style: AppTextStyles.body(
-                              color: _isButtonDisabled
-                                  ? Colors.grey
-                                  : (isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight),
-                            ).copyWith(fontWeight: FontWeight.bold),
+                        if (_isButtonDisabled && !_resendSucceeded)
+                          Column(
+                            children: [
+                              Text(
+                                'إعادة الإرسال بعد',
+                                style: AppTextStyles.body(color: AppColors.textMuted),
+                              ),
+                              SizedBox(height: 4.h),
+                              Text(
+                                _formatTime(_startSeconds),
+                                style: AppTextStyles.body(
+                                  color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+                                ).copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          TextButton(
+                            onPressed: (_resendLoading || _resendSucceeded) ? null : _resendCode,
+                            child: _resendLoading
+                                ? const SizedBox(
+                                    height: 18,
+                                    width: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : Text(
+                                    _resendSucceeded ? 'تم إرسال الرمز ✓' : 'إعادة إرسال الرمز',
+                                    style: AppTextStyles.body(
+                                      color: _resendSucceeded
+                                          ? Colors.grey
+                                          : (isDark ? AppColors.primaryDark : AppColors.primaryLight),
+                                    ).copyWith(fontWeight: FontWeight.bold),
+                                  ),
                           ),
-                        ),
                       ],
                     ),
                   ),

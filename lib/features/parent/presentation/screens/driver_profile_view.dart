@@ -41,7 +41,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundColor: theme.primaryColor.withOpacity(0.1),
+                      backgroundColor: theme.primaryColor.withValues(alpha: 0.1),
                       child: Icon(Icons.person, size: 60, color: theme.primaryColor),
                     ),
                     const SizedBox(height: 12),
@@ -145,7 +145,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isVerified ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+        color: isVerified ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: isVerified ? Colors.green : Colors.red),
       ),

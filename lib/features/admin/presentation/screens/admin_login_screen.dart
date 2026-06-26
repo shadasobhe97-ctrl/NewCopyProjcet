@@ -18,6 +18,17 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   bool _isPasswordVisible = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<AdminAuthProvider>(context, listen: false);
+      if (provider.isAuthenticated) {
+        Navigator.pushReplacementNamed(context, '/admin/dashboard');
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -135,6 +146,17 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                               ),
                             );
                           },
+                        ),
+                        const SizedBox(height: 16),
+                        TextButton.icon(
+                          onPressed: () {
+                            Navigator.pushReplacementNamed(context, '/login');
+                          },
+                          icon: const Icon(Icons.phone_android_rounded, color: AppColors.primaryLight),
+                          label: const Text(
+                            'التحويل لتسجيل دخول المستخدمين (سائق / ولي أمر)',
+                            style: TextStyle(color: AppColors.primaryLight),
+                          ),
                         ),
                       ],
                     ),

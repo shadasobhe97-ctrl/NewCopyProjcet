@@ -65,6 +65,11 @@ class AuthRepository {
     return AuthCommonResponseModel.fromJson(responseData);
   }
 
+  Future<AuthCommonResponseModel> verifyOtp(String email, String code) async {
+    final responseData = await _dataSource.verifyOtp(email, code);
+    return AuthCommonResponseModel.fromJson(responseData);
+  }
+
   Future<AuthCommonResponseModel> resetPassword(
     ResetPasswordRequestModel request,
   ) async {

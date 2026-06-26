@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/widgets/custom_auth_button.dart';
@@ -48,8 +49,10 @@ class _LoginScreenState extends State<LoginScreen> {
               final targetRoute = state.roleId == 3
                   ? AppRoutes.parentHome
                   : state.roleId == 4
-                      ? AppRoutes.driverHome
-                      : AppRoutes.driverHome;
+                      ? (StorageService.getIsActive() == true
+                          ? AppRoutes.driverMainWrapper
+                          : '/driverWaiting')
+                      : AppRoutes.adminLogin; // الأدمن (role != 3 و != 4)
 
               Navigator.pushNamedAndRemoveUntil(
                 context,
@@ -158,6 +161,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    SizedBox(height: 16.h),
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(context, AppRoutes.adminLogin);
+                      },
+                      icon: Icon(
+                        Icons.admin_panel_settings_outlined,
+                        color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+                      ),
+                      label: Text(
+                        'تسجيل دخول المسؤول (الأدمن)',
+                        style: TextStyle(
+                          color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+                        ),
+                      ),
                     ),
                   ],
                 ),

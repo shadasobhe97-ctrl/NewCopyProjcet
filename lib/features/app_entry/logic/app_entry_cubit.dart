@@ -21,9 +21,16 @@ class AppEntryCubit extends Cubit<AppEntryState> {
 
     final roleId = StorageService.getRoleId();
     if (roleId == 4) {
-      emit(NavigateToDriverHome());
+      final isActive = StorageService.getIsActive() ?? false;
+      if (isActive) {
+        emit(NavigateToDriverHome());
+      } else {
+        emit(NavigateToDriverWaiting());
+      }
     } else if (roleId == 3) {
       emit(NavigateToParentHome());
+    } else if (roleId == 1 || roleId == 2) {
+      emit(NavigateToAdminHome());
     } else {
       await StorageService.clearSession();
       emit(NavigateToLogin());

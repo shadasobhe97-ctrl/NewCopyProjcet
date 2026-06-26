@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/cubit/theme_cubit.dart';
+import 'package:kids_transport/features/auth/logic/auth_cubit.dart';
+import 'package:kids_transport/features/auth/logic/auth_state.dart';
 import '../../data/models/driver_model.dart';
 
 // ==========================================
@@ -18,7 +21,31 @@ class DriverDrawer extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Drawer(
+    return BlocListener<AuthCubit, AuthState>(
+      listenWhen: (_, state) => state is AuthLogoutSuccess || state is AuthError,
+      listener: (context, state) {
+        if (state is AuthLogoutSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.login,
+            (route) => false,
+          );
+        } else if (state is AuthError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      },
+      child: Drawer(
       width: MediaQuery.of(context).size.width * 0.82,
       backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
       shape: const RoundedRectangleBorder(
@@ -123,14 +150,22 @@ class DriverDrawer extends StatelessWidget {
                 const Divider(height: 20, indent: 16, endIndent: 16),
 
                 // ── تسجيل الخروج ──
-                _DrawerItem(
-                  icon: Icons.logout_rounded,
-                  iconColor: AppColors.error,
-                  label: 'تسجيل الخروج',
-                  labelColor: AppColors.error,
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showLogoutDialog(context);
+                BlocBuilder<AuthCubit, AuthState>(
+                  builder: (context, state) {
+                    final isLoading = state is AuthLoading;
+                    return _DrawerItem(
+                      icon: isLoading
+                          ? Icons.hourglass_empty_rounded
+                          : Icons.logout_rounded,
+                      iconColor: AppColors.error,
+                      label: isLoading
+                          ? 'جاري تسجيل الخروج...'
+                          : 'تسجيل الخروج',
+                      labelColor: AppColors.error,
+                      onTap: isLoading
+                          ? () {}
+                          : () => context.read<AuthCubit>().logout(),
+                    );
                   },
                 ),
               ],
@@ -150,50 +185,7 @@ class DriverDrawer extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  /// حوار تأكيد تسجيل الخروج
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('تسجيل الخروج', textAlign: TextAlign.center),
-        content: const Text(
-          'هل أنت متأكد أنك تريد تسجيل الخروج؟',
-          textAlign: TextAlign.center,
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(100, 44),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('إلغاء'),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              // TODO: منطق تسجيل الخروج الحقيقي - مسح التوكن والسيشن
-              // await StorageService.clearAll();
-              Navigator.pushNamedAndRemoveUntil(
-                  context, '/selectRole', (route) => false);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              minimumSize: const Size(100, 44),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('خروج'),
-          ),
-        ],
-      ),
+    ),
     );
   }
 }

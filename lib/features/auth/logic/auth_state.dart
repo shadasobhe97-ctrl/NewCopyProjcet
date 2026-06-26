@@ -45,3 +45,14 @@ class AuthLogoutSuccess extends AuthState {
   final String message;
   const AuthLogoutSuccess(this.message);
 }
+
+class PasswordOtpVerifiedSuccess extends AuthState {
+  final String message;
+  final String email;
+  final String code;
+  const PasswordOtpVerifiedSuccess({
+    required this.message,
+    required this.email,
+    required this.code,
+  });
+}

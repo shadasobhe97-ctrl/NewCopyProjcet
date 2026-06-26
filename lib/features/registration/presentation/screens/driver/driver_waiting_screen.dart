@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 
 class DriverWaitingScreen extends StatelessWidget {
   const DriverWaitingScreen({super.key});
@@ -25,9 +26,12 @@ class DriverWaitingScreen extends StatelessWidget {
               label: const Text("اتصل بالدعم الفني والمراجعة"),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 // تراجع وإلغاء ومسح الستورج والعودة لشاشة الـ Login
-                Navigator.pushNamedAndRemoveUntil(context, '/selectRole', (route) => false);
+                await StorageService.clearSession();
+                if (context.mounted) {
+                  Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                }
               },
               child: const Text("تسجيل الخروج والتراجع", style: TextStyle(color: Colors.red)),
             )

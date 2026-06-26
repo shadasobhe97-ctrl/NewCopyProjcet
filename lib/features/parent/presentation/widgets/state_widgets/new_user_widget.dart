@@ -24,12 +24,11 @@ class NewUserWidget extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: [
-                  AppColors.primaryLight.withOpacity(0.15),
-                  AppColors.primaryLight.withOpacity(0.05),
-                ],
+                  AppColors.primaryLight.withValues(alpha: 0.15),
+                  AppColors.primaryLight.withValues(alpha: 0.5)                ],
               ),
               border: Border.all(
-                  color: AppColors.primaryLight.withOpacity(0.2), width: 2),
+                  color: AppColors.primaryLight.withValues(alpha: 0.2), width: 2),
             ),
             child: const Icon(
               Icons.child_care_rounded,

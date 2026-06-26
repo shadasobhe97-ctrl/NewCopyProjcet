@@ -16,13 +16,10 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
   bool _isEditing = false;
   final _formKey = GlobalKey<FormState>();
 
-  // بيانات وهمية (Mock Data) للتمثيل
-  // TODO: عند الربط، استبدل هذه المتغيرات بالبيانات الحقيقية القادمة من الـ API 
   String _carType = 'هيونداي H1 2020';
   String _plateNumber = '98765 طرابلس';
   String _seatsCount = '9';
   
-  // Controllers للوضع التعديل
   late TextEditingController _carTypeController;
   late TextEditingController _plateNumberController;
   late TextEditingController _seatsCountController;
@@ -80,7 +77,6 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
                   _isEditing = false;
                 });
                 
-                // TODO: [ربط API] - إرسال طلب تعديل بيانات المركبة الاحتياطية هنا للإدارة
               },
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(120, 44),
@@ -118,11 +114,10 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
-              // TODO: [ربط API] - إرسال طلب حذف المركبة الاحتياطية
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('تم تقديم طلب حذف المركبة للإدارة'), backgroundColor: AppColors.success),
               );
-              Navigator.pop(context); // العودة للشاشة السابقة بعد الحذف
+              Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
@@ -199,12 +194,11 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
                     color: isDark ? AppColors.surfaceDark : Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
                     ],
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),
-                    // TODO: جلب صورة السيارة الحقيقية من API
                     child: Image.network(
                       'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=500&q=80',
                       fit: BoxFit.cover,
@@ -323,7 +317,7 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 2)),
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 6, offset: const Offset(0, 2)),
                   ],
                 ),
                 child: Row(
@@ -331,7 +325,7 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryLight.withOpacity(0.1),
+                        color: AppColors.primaryLight.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(icon, color: AppColors.primaryLight, size: 20),

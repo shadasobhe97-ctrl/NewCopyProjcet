@@ -14,3 +14,9 @@ class NavigateToParentHome extends AppEntryState {}
 
 // حالة التوجيه لشاشة السائق الرئيسية
 class NavigateToDriverHome extends AppEntryState {}
+
+// حالة التوجيه لشاشة الأدمن الرئيسية
+class NavigateToAdminHome extends AppEntryState {}
+
+// حالة التوجيه لشاشة انتظار السائق
+class NavigateToDriverWaiting extends AppEntryState {}

@@ -178,7 +178,7 @@ class AdminSidebar extends StatelessWidget {
                 
                 // توجيه لصفحة تسجيل الدخول ومسح مسار التصفح (Routing)
                 if (context.mounted) {
-                  Navigator.pushNamedAndRemoveUntil(context, '/admin/login', (route) => false);
+                  Navigator.pushNamedAndRemoveUntil(context, '/adminLogin', (route) => false);
                 }
               },
               child: const Text('خروج'),

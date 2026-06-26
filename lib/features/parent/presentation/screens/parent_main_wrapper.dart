@@ -41,8 +41,8 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
   static late Function(int) changeTab;
 
   // محاكاة بيانات المستخدم (تُستبدل بالـ Repository لاحقاً)
-  final String _userName = "أسماء الفرجاني";
-  final String? _userAvatarUrl = null;
+  final String userName = "أسماء الفرجاني";
+  final String? userAvatarurl = null;
 
   late final List<Widget> _screens;
 
@@ -141,7 +141,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryLight.withOpacity(isDark ? 0.1 : 0.3),
+              color: AppColors.primaryLight.withValues(alpha: isDark ? 0.1 : 0.3),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

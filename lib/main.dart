@@ -65,9 +65,7 @@ class TransportApp extends StatelessWidget {
                   theme: AppTheme.lightTheme,
                   darkTheme: AppTheme.darkTheme,
 
-                  // لو تبي مستقبلاً يتبع الـ Cubit فكي الكومنت على السطر هذا وسكري اللي تحته
-                  // themeMode: themeState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-                  themeMode: ThemeMode.system,
+                  themeMode: themeState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
 
                   // نقطة البداية
                   initialRoute: _getInitialRoute(),

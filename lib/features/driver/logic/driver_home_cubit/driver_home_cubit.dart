@@ -74,13 +74,10 @@ class DriverHomeCubit extends Cubit<DriverHomeState> {
     }
   }
 
-  /// قبول طلب اشتراك طالب
-  /// TODO: ربط بـ API endpoint لقبول الطلب
+ 
   Future<void> acceptRequest(int requestId) async {
     final currentState = state;
     if (currentState is DriverHomeLoaded) {
-      // TODO: إرسال طلب قبول للـ API
-      // مثال: await _driverRepository.acceptSubscriptionRequest(requestId);
 
       final updatedRequests = currentState.newRequests
           .where((r) => r.id != requestId)
@@ -89,13 +86,9 @@ class DriverHomeCubit extends Cubit<DriverHomeState> {
     }
   }
 
-  /// رفض طلب اشتراك طالب
-  /// TODO: ربط بـ API endpoint لرفض الطلب
   Future<void> rejectRequest(int requestId) async {
     final currentState = state;
     if (currentState is DriverHomeLoaded) {
-      // TODO: إرسال طلب رفض للـ API
-      // مثال: await _driverRepository.rejectSubscriptionRequest(requestId);
 
       final updatedRequests = currentState.newRequests
           .where((r) => r.id != requestId)

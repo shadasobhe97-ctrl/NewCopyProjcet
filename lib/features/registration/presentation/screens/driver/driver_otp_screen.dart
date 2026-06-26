@@ -14,9 +14,11 @@ class DriverOtpScreen extends StatefulWidget {
 
 class _DriverOtpScreenState extends State<DriverOtpScreen> {
   final _otpController = TextEditingController();
-  int _timerSeconds = 60;
+  int _timerSeconds = 600; // 10 دقائق
   Timer? _timer;
   bool _canResend = false;
+  bool _resendLoading = false; // لتتبع حالة الإرسال
+  bool _resendSucceeded = false; // يتغير لون الزر بعد النجاح
 
   @override
   void initState() {
@@ -26,10 +28,15 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
 
   void _startTimer() {
     setState(() {
-      _timerSeconds = 60;
+      _timerSeconds = 600;
       _canResend = false;
     });
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
       if (_timerSeconds == 0) {
         setState(() {
           _canResend = true;
@@ -43,6 +50,39 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
     });
   }
 
+  Future<void> _resendOtp() async {
+    final cubit = context.read<RegisterCubit>();
+    setState(() {
+      _resendLoading = true;
+      _resendSucceeded = false;
+    });
+
+    await cubit.resendOtp(cubit.email ?? '');
+
+    if (!mounted) return;
+
+    setState(() {
+      _resendLoading = false;
+      _resendSucceeded = true; // يتحول لرمادي = نجح الإرسال
+      _canResend = false;       // نخفي الزر مؤقتاً ونبدأ التايمر
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("تم إعادة إرسال رمز التحقق إلى بريدك الإلكتروني."),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    // إعادة بدء التايمر بعد 2 ثانية
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    setState(() {
+      _resendSucceeded = false;
+    });
+    _startTimer();
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -51,6 +91,12 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
     } catch (_) {}
     _otpController.dispose();
     super.dispose();
+  }
+
+  String _formatTime(int totalSeconds) {
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -72,7 +118,6 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
         child: BlocConsumer<RegisterCubit, RegisterState>(
           listener: (context, state) {
             if (state is DriverVerifyOtpSuccess) {
-              // 🌟 عند نجاح التحقق، نتوجه فوراً للمرحلة التالية: البيانات الشخصية والوثائق
               Navigator.pushNamed(context, '/driverNationalInfo');
             } else if (state is DriverVerifyOtpError) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -100,9 +145,8 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
                   ),
                   const SizedBox(height: 40),
 
-                  // حقل إدخال الرموز المنسق بنفس تصميم الأب بالظبط
                   Directionality(
-                    textDirection: TextDirection.rtl,
+                    textDirection: TextDirection.ltr,
                     child: PinCodeTextField(
                       appContext: context,
                       length: 6,
@@ -110,7 +154,7 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
                       autoFocus: true,
                       autoDisposeControllers: false,
                       keyboardType: TextInputType.number,
-                      animationType: AnimationType.fade,
+                      animationType: AnimationType.slide,
                       pinTheme: PinTheme(
                         shape: PinCodeFieldShape.box,
                         borderRadius: BorderRadius.circular(30),
@@ -128,36 +172,34 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
                       },
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
-                  // 🌟 الجزء الخاص بالمؤقت التنازلي وإعادة إرسال الرمز
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _canResend
-                          ? TextButton(
-                              onPressed: () {
-                                _startTimer();
-                                cubit.resendOtp(cubit.email ?? '');
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("تم إعادة إرسال رمز التحقق.")),
-                                );
-                              },
-                              child: Text(
-                                "إعادة ارسال رمز التحقق",
-                                style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold),
+                  // صف إعادة الإرسال
+                  Center(
+                    child: _canResend
+                        ? _buildResendButton(theme)
+                        : Column(
+                            children: [
+                              Text(
+                                "إعادة الإرسال بعد",
+                                style: TextStyle(color: Colors.grey[600], fontSize: 13),
                               ),
-                            )
-                          : Text(
-                              "إعادة الإرسال خلال $_timerSeconds ثانية",
-                              style: const TextStyle(color: Colors.grey, fontSize: 14),
-                            ),
-                    ],
+                              const SizedBox(height: 4),
+                              Text(
+                                _formatTime(_timerSeconds),
+                                style: TextStyle(
+                                  color: theme.primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
-                  
+
                   const Spacer(),
-                  
-                  // زر التأكيد اليدوي
+
                   ElevatedButton(
                     onPressed: state is DriverVerifyOtpLoading
                         ? null
@@ -189,6 +231,42 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResendButton(ThemeData theme) {
+    if (_resendLoading) {
+      return const SizedBox(
+        height: 20,
+        width: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+
+    // بعد نجاح الإرسال يتحول الزر لرمادي مؤقتاً
+    if (_resendSucceeded) {
+      return TextButton(
+        onPressed: null,
+        child: Text(
+          "تم إرسال الرمز ✓",
+          style: TextStyle(
+            color: Colors.grey[500],
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    // الحالة الافتراضية: زر أزرق قابل للضغط
+    return TextButton(
+      onPressed: _resendOtp,
+      child: Text(
+        "إعادة إرسال رمز التحقق",
+        style: TextStyle(
+          color: theme.primaryColor,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );

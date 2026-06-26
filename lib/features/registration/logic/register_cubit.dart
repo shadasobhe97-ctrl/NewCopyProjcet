@@ -1,14 +1,23 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/network/api_exception.dart';
+import 'package:kids_transport/features/registration/data/models/driver_register_request.dart';
+import 'package:kids_transport/features/registration/data/models/parent_register_request.dart';
+import 'package:kids_transport/features/registration/data/repositories/registration_repository.dart';
 import 'register_state.dart';
 
 class RegisterCubit extends Cubit<RegisterState> {
-  RegisterCubit() : super(RegisterInitial());
+  final RegistrationRepository _repository;
+
+  RegisterCubit({RegistrationRepository? repository})
+      : _repository = repository ?? RegistrationRepository(),
+        super(RegisterInitial());
 
   // --- [المخزن المؤقت لتجميع بيانات الشاشات محلياً] ---
-  String? selectedRole; // 'parent' أو 'driver' للتحقق الذكي في شاشة الموقع
+  String? selectedRole; // 'parent' أو 'driver'
   int? selectedRoleId;  // 3 للأب، 4 للسائق
-  
+
   // بيانات أساسية مشتركة
   String? fullName;
   String? email;
@@ -17,16 +26,28 @@ class RegisterCubit extends Cubit<RegisterState> {
   String? alternativePhone;
   File? avatarFile;
   String? gender;
-  
-  // بيانات جهاز ومنصة (تتولد تلقائياً وتتخزن هنا)
-  String deviceName = "Unknown";
-  String platformName = "Unknown";
+
+  // بيانات الجهاز والمنصة (تتولد تلقائياً)
+  String get _platform {
+    if (kIsWeb) return 'web';
+    if (defaultTargetPlatform == TargetPlatform.android) return 'android';
+    if (defaultTargetPlatform == TargetPlatform.iOS) return 'ios';
+    return 'web';
+  }
+
+  String get _deviceName {
+    if (kIsWeb) return 'Derbi_Flutter_Web';
+    if (defaultTargetPlatform == TargetPlatform.android) return 'Derbi_Flutter_Android';
+    if (defaultTargetPlatform == TargetPlatform.iOS) return 'Derbi_Flutter_iOS';
+    return 'Derbi_Flutter';
+  }
 
   // بيانات تم استلامها من السيرفر ونحتاجوها للمراحل الجاية
-  int? registeredUserId; // الـ user_id المستلم من دالة السائق 1
-  int? parentOtpCode;    // كود أوتوبي الأب المحقق
+  int? registeredUserId;
+  String? driverAccessToken;
+  String? parentAccessToken; // التوكن المستلم بعد تسجيل ولي الأمر
 
-  // --- [مخزن مؤقت إضافي لبيانات السائق المجزأة] ---
+  // مخزن مؤقت إضافي لبيانات السائق
   String? driverNationalId;
   String? driverLicenseNumber;
   String? driverLicenseExpiry;
@@ -36,14 +57,15 @@ class RegisterCubit extends Cubit<RegisterState> {
   int? driverYear;
   String? driverColor;
   int? driverCapacityManual;
+  int? parentOtpCode;
 
-  // دالة تحديث الرول المختار من الشاشة الأولى
+  // دالة تحديث الرول المختار
   void updateRole(int roleId) {
     selectedRoleId = roleId;
     selectedRole = (roleId == 4) ? 'driver' : 'parent';
   }
 
-  // دالة تجميع البيانات الأساسية من الشاشات المشتركة
+  // دالة تجميع البيانات الأساسية
   void saveBasicInfo({
     required String name,
     required String mail,
@@ -62,88 +84,208 @@ class RegisterCubit extends Cubit<RegisterState> {
     gender = userGender;
   }
 
-  // --- [دوال المحاكاة للسائق لضمان عمل الفلو بدون إيرور] ---
-
-  // 1. دالة إعادة إرسال الرمز (لشاشة التحقق)
-  Future<void> resendOtp(String emailAddress) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-  }
-
   // ==================== [APIs فلو ولي الأمر] ====================
 
-  // 1. إرسال الأوتوبي للأب (شاشة البريد)
+  // 1. إرسال OTP لولي الأمر → POST /api/parent/send-otp
   Future<void> sendParentOtp(String targetEmail) async {
     emit(ParentOtpSentLoading());
     try {
-      await Future.delayed(const Duration(milliseconds: 800));
-      email = targetEmail; 
-      emit(ParentOtpSentSuccess("تم إرسال كود التحقق بنجاح."));
-    } catch (e) {
-      emit(ParentOtpSentError(e.toString()));
+      email = targetEmail;
+      final responseData = await _repository.sendParentOtp(targetEmail);
+      final bool success = responseData['status'] ?? false;
+      final String message = responseData['message'] ?? 'تم إرسال رمز التحقق.';
+      if (success) {
+        emit(ParentOtpSentSuccess(message));
+      } else {
+        emit(ParentOtpSentError(message));
+      }
+    } on ApiException catch (e) {
+      emit(ParentOtpSentError(e.message));
+    } catch (_) {
+      emit(ParentOtpSentError('فشل الاتصال بالخادم، يرجى المحاولة مرة أخرى.'));
     }
   }
 
-  // 2. التسجيل النهائي للأب (شاشة البديل بعد تجميع كل شيء)
+  // 2. إعادة إرسال OTP لولي الأمر (يستخدم نفس الـ endpoint)
+  Future<void> resendParentOtp(String targetEmail) async {
+    try {
+      final responseData = await _repository.sendParentOtp(targetEmail);
+      final String message = responseData['message'] ?? 'تم إعادة إرسال رمز التحقق.';
+      emit(ParentOtpSentSuccess(message));
+    } on ApiException catch (_) {
+      // لا نغير الحالة لأن المستخدم لا يزال في شاشة OTP
+    } catch (_) {}
+  }
+
+  // 3. التسجيل النهائي لولي الأمر → POST /api/parent/register
   Future<void> registerParent(int otpCode) async {
     emit(ParentRegisterLoading());
     try {
-      await Future.delayed(const Duration(milliseconds: 1000));
-      parentOtpCode = otpCode;
-      emit(ParentRegisterSuccess("تم إنشاء حساب ولي الأمر بنجاح."));
-    } catch (e) {
-      emit(ParentRegisterError(e.toString()));
+      final request = ParentRegisterRequest(
+        fullName: fullName ?? '',
+        email: email ?? '',
+        phoneNumber: phoneNumber ?? '',
+        alternativePhone: alternativePhone,
+        password: password ?? '',
+        passwordConfirmation: password ?? '',
+        otp: otpCode,
+        deviceName: _deviceName,
+        platform: _platform,
+        fcmToken: 'derbi_fcm_token_placeholder',
+      );
+
+      final response = await _repository.registerParent(request);
+
+      // حفظ التوكن لاستخدامه في إضافة العنوان
+      parentAccessToken = response.accessToken;
+      registeredUserId = response.id;
+
+      emit(ParentRegisterSuccess(response.fullName.isNotEmpty
+          ? 'مرحباً ${response.fullName}، تم إنشاء حسابك بنجاح.'
+          : 'تم إنشاء الحساب بنجاح.'));
+    } on ApiException catch (e) {
+      emit(ParentRegisterError(e.message));
+    } catch (_) {
+      emit(ParentRegisterError('فشل إنشاء الحساب، يرجى المحاولة مرة أخرى.'));
     }
   }
 
   // ==================== [APIs فلو السائق] ====================
 
-  // 1. المرحلة الأولى للسائق (إنشاء الحساب الأساسي)
+  // 1. المرحلة الأولى للسائق
   Future<void> registerDriverFirstStage() async {
     emit(DriverRegisterFirstStageLoading());
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      registeredUserId = 15; // محاكاة تخزين الـ id المستلم
-      emit(DriverRegisterFirstStageSuccess("تم تسجيل البيانات الأساسية، يرجى تفعيل الحساب.", 15));
-    } catch (e) {
-      emit(DriverRegisterFirstStageError(e.toString()));
+      final request = DriverRegisterRequest(
+        fullName: fullName ?? '',
+        email: email ?? '',
+        phoneNumber: phoneNumber ?? '',
+        gender: gender ?? 'male',
+        password: password ?? '',
+        avatarFile: avatarFile,
+        deviceName: _deviceName,
+        platform: _platform,
+        fcmToken: 'derbi_fcm_token_placeholder',
+        alternativePhone: alternativePhone,
+      );
+
+      final response = await _repository.registerDriver(request);
+
+      if (!response.status) {
+        emit(DriverRegisterFirstStageError(
+          response.message.isNotEmpty ? response.message : 'فشل إنشاء الحساب.',
+        ));
+        return;
+      }
+
+      registeredUserId = response.userId;
+      emit(DriverRegisterFirstStageSuccess(response.message, response.userId));
+    } on ApiException catch (e) {
+      emit(DriverRegisterFirstStageError(e.message));
+    } catch (_) {
+      emit(DriverRegisterFirstStageError('فشل الاتصال بالخادم، يرجى المحاولة مرة أخرى.'));
     }
   }
 
-  // 2. المرحلة الثانية للسائق (التحقق وتفعيل الحساب)
+  // 2. إعادة إرسال OTP للسائق
+  Future<void> resendOtp(String emailAddress) async {
+    try {
+      await Future.delayed(const Duration(milliseconds: 500));
+    } catch (_) {}
+  }
+
+  // 3. المرحلة الثانية للسائق (التحقق من OTP)
   Future<void> verifyDriverOtp(String otpCode) async {
     emit(DriverVerifyOtpLoading());
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      emit(DriverVerifyOtpSuccess("تم تفعيل حساب السائق بنجاح."));
-    } catch (e) {
-      emit(DriverVerifyOtpError(e.toString()));
+      final response = await _repository.verifyDriverOtp(email ?? '', otpCode);
+
+      if (!response.status) {
+        emit(DriverVerifyOtpError(
+          response.message.isNotEmpty ? response.message : 'رمز التحقق غير صحيح.',
+        ));
+        return;
+      }
+
+      if (response.userId > 0) registeredUserId = response.userId;
+      driverAccessToken = response.accessToken;
+
+      emit(DriverVerifyOtpSuccess(response.message));
+    } on ApiException catch (e) {
+      emit(DriverVerifyOtpError(e.message));
+    } catch (_) {
+      emit(DriverVerifyOtpError('فشل التحقق من الرمز، يرجى المحاولة مرة أخرى.'));
     }
   }
 
-  // 3. المرحلة الثالثة الحقيقية للسائق (إكمال ملف السيارة والوثائق)
-  Future<void> submitDriverCompleteProfile() async {
+  // 4. إكمال ملف السائق
+  Future<void> completeDriverProfile(Map<String, dynamic> vehicleAndDocsData) async {
     emit(DriverCompleteProfileLoading());
     try {
-      await Future.delayed(const Duration(seconds: 1));
-      emit(DriverCompleteProfileSuccess("تم رفع البيانات بنجاح، بانتظار مراجعة الإدارة."));
-    } catch (e) {
-      emit(DriverCompleteProfileError(e.toString()));
+      final combinedData = {
+        ...vehicleAndDocsData,
+        'national_id': driverNationalId ?? '',
+        'license_number': driverLicenseNumber ?? '',
+        'license_expiry': driverLicenseExpiry ?? '',
+        if (alternativePhone != null) 'alternative_phone': alternativePhone,
+      };
+
+      final response = await _repository.completeDriverProfile(
+        userId: registeredUserId ?? 0,
+        token: driverAccessToken ?? '',
+        data: combinedData,
+      );
+
+      if (!response.status) {
+        emit(DriverCompleteProfileError(
+          response.message.isNotEmpty ? response.message : 'فشل رفع الملف.',
+        ));
+        return;
+      }
+
+      emit(DriverCompleteProfileSuccess(response.message));
+    } on ApiException catch (e) {
+      emit(DriverCompleteProfileError(e.message));
+    } catch (_) {
+      emit(DriverCompleteProfileError('فشل رفع البيانات، يرجى المحاولة مرة أخرى.'));
     }
   }
 
-  // دالة بديلة في حال تمرير داتا الـ Map مباشرة من الشاشة الـ 7
-  Future<void> completeDriverProfile(Map<String, dynamic> vehicleAndDocsData) async {
-    await submitDriverCompleteProfile();
+  Future<void> submitDriverCompleteProfile() async {
+    await completeDriverProfile({});
   }
 
-  // ==================== [Endpoint الموقع المشترك] ====================
-  Future<void> saveLocation({required String label, required double lat, required double lng, required bool isDefault}) async {
+  // ==================== [Endpoint الموقع - ولي الأمر] ====================
+  Future<void> saveLocation({
+    required String label,
+    required double lat,
+    required double lng,
+    required bool isDefault,
+  }) async {
     emit(LocationSaveLoading());
     try {
-      await Future.delayed(const Duration(milliseconds: 800));
-      emit(LocationSaveSuccess("تم حفظ الموقع بنجاح."));
-    } catch (e) {
-      emit(LocationSaveError(e.toString()));
+      final token = parentAccessToken ?? '';
+      if (token.isEmpty) {
+        // لو ما فيه توكن، خطأ واضح
+        emit(LocationSaveError('لا يوجد توكن صالح، يرجى تسجيل الدخول مرة أخرى.'));
+        return;
+      }
+
+      final response = await _repository.addParentAddress(
+        token: token,
+        label: label,
+        lat: lat,
+        lng: lng,
+        isDefault: isDefault,
+      );
+
+      emit(LocationSaveSuccess(response.message.isNotEmpty
+          ? response.message
+          : 'تم حفظ العنوان بنجاح.'));
+    } on ApiException catch (e) {
+      emit(LocationSaveError(e.message));
+    } catch (_) {
+      emit(LocationSaveError('فشل حفظ الموقع، يرجى المحاولة مرة أخرى.'));
     }
   }
 }

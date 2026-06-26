@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart'; // باقة OpenStreetMap
+import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/features/registration/logic/register_cubit.dart';
 import 'package:kids_transport/features/registration/logic/register_state.dart';
 import 'package:latlong2/latlong.dart';
@@ -37,9 +38,16 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
     );
   }
 
-  void _navigateToDriverWaiting() {
-    // 🌟 التوجيه الفوري لشاشة انتظار السائق ومسح الفلو بالكامل لتأمين الدخول للانتظار
-    Navigator.pushNamedAndRemoveUntil(context, '/driverWaiting', (route) => false);
+// في ملف DriverLocationScreen.dart
+
+  void _navigateToHome() {
+    // نستخدم pushNamedAndRemoveUntil لمسح سجل الشاشات السابقة 
+    // وضمان عدم عودة السائق لشاشة التسجيل بالضغط على زر الرجوع
+    Navigator.pushNamedAndRemoveUntil(
+      context, 
+      AppRoutes.driverMainWrapper, // هذا هو الروت الخاص بالداشبورد الرئيسي للسائق
+      (route) => false,
+    );
   }
 
   @override
@@ -56,7 +64,7 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
         actions: [
           // زر تخطي خاص بالسائق يوجّه لشاشة الانتظار
           TextButton(
-            onPressed: _navigateToDriverWaiting,
+            onPressed: _navigateToHome,
             child: Text(
               "تخطي",
               style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
@@ -72,7 +80,7 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(state.message), backgroundColor: Colors.green),
               );
-              _navigateToDriverWaiting(); // الانتقال لشاشة الانتظار بعد نجاح الحفظ
+              _navigateToHome(); // الانتقال لشاشة الانتظار بعد نجاح الحفظ
             } else if (state is LocationSaveError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(state.errorMessage), backgroundColor: Colors.red),
@@ -103,8 +111,8 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
                           initialCenter: _currentCenter,
                           initialZoom: 14.5,
                           onPositionChanged: (position, hasGesture) {
-                            if (hasGesture && position.center != null) {
-                              _currentCenter = position.center!;
+                            if (hasGesture) {
+                              _currentCenter = position.center;
                             }
                           },
                         ),

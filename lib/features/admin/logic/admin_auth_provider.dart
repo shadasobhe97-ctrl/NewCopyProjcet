@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:kids_transport/features/admin/data/models/admin_user_model.dart';
-// import 'package:dio/dio.dart'; // مكتبة الـ API سيتم تفعيلها لاحقاً
+import 'package:dio/dio.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/core/network/api_endpoints.dart';
 
 class AdminAuthProvider with ChangeNotifier {
   bool _isLoading = false;
@@ -13,56 +15,110 @@ class AdminAuthProvider with ChangeNotifier {
 
   bool get isAuthenticated => _currentUser != null;
 
+  AdminAuthProvider() {
+    _loadSession();
+  }
+
+  void _loadSession() {
+    final token = StorageService.getToken();
+    final roleId = StorageService.getRoleId();
+    final fullName = StorageService.getFullName();
+    final phone = StorageService.getPhoneNumber();
+    if (token != null && roleId != null && roleId != 3 && roleId != 4) {
+      _currentUser = AdminUserModel(
+        id: StorageService.getUserId()?.toString() ?? '',
+        name: fullName ?? 'المسؤول',
+        email: phone ?? '',
+        token: token,
+      );
+    }
+  }
+
   // دالة تسجيل الدخول
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(String phone, String password) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      // ---------------------------------------------------------
-      // الكود الفعلي للربط مع السيرفر (API) - سيتم تفعيله لاحقاً
-      // ---------------------------------------------------------
-      /*
-      final dio = Dio();
+      final dio = Dio(BaseOptions(
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ));
+
       final response = await dio.post(
-        'https://api.copyproject.com/admin/login', // ضع الرابط الفعلي هنا
+        '${ApiEndpoints.baseUrl}${ApiEndpoints.login}',
         data: {
-          'email': email,
+          'phone_number': phone,
+          'email': phone,
           'password': password,
+          'device_name': 'Web_Admin_Panel',
+          'platform': 'web',
         },
       );
-      
-      if (response.statusCode == 200) {
-        _currentUser = AdminUserModel.fromJson(response.data['user']);
-        // يجب حفظ التوكن في التخزين المحلي باستخدام SharedPreferences
-        // await StorageService.saveToken(_currentUser!.token);
-      } else {
-        _errorMessage = 'بيانات الدخول غير صحيحة';
-      }
-      */
-      
-      // ---------------------------------------------------------
-      // محاكاة (Mocking) للبيانات لغرض التجربة الحالية
-      // ---------------------------------------------------------
-      await Future.delayed(const Duration(seconds: 2)); // محاكاة التأخير الزمني للسيرفر
-      
-      if (email == 'admin@copyproject.com' && password == 'admin123') {
+
+      final data = response.data;
+      if (data != null && data['status'] == true) {
+        final token = data['access_token'] ?? '';
+        final userJson = data['user'] ?? {};
+        final fullName = userJson['full_name'] ?? '';
+        final userPhone = userJson['phone_number'] ?? '';
+        final roleIdRaw = userJson['role_id'];
+        final roleId = roleIdRaw is int ? roleIdRaw : int.tryParse(roleIdRaw.toString()) ?? 1;
+        final roleName = data['role_name'] ?? 'أدمن';
+
         _currentUser = AdminUserModel(
-          id: '1',
-          name: 'المسؤول الرئيسي',
-          email: email,
-          token: 'mock_token_12345',
+          id: userJson['id']?.toString() ?? '',
+          name: fullName,
+          email: phone,
+          token: token,
         );
+
+        await StorageService.saveUserSession(
+          token: token,
+          roleId: roleId,
+          roleName: roleName,
+          userId: userJson['id'] is int ? userJson['id'] : int.tryParse(userJson['id'].toString()),
+          fullName: fullName,
+          phoneNumber: userPhone,
+          isActive: userJson['is_active'] == true || userJson['is_active'] == 1,
+        );
+
         _isLoading = false;
         notifyListeners();
         return true;
       } else {
-        _errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+        _errorMessage = data != null ? data['message'] ?? 'بيانات الدخول غير صحيحة' : 'بيانات الدخول غير صحيحة';
         _isLoading = false;
         notifyListeners();
         return false;
       }
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      if (data is Map && data['message'] != null) {
+        _errorMessage = data['message'].toString();
+      } else if (data is Map && data['errors'] != null) {
+        final errors = data['errors'];
+        if (errors is Map && errors.isNotEmpty) {
+          final firstValue = errors.values.first;
+          if (firstValue is List && firstValue.isNotEmpty) {
+            _errorMessage = firstValue.first.toString();
+          } else {
+            _errorMessage = firstValue.toString();
+          }
+        } else {
+          _errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+        }
+      } else {
+        _errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+      }
+      _isLoading = false;
+      notifyListeners();
+      return false;
     } catch (e) {
       _errorMessage = 'حدث خطأ في الاتصال بالخادم';
       _isLoading = false;
@@ -76,28 +132,25 @@ class AdminAuthProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    // ---------------------------------------------------------
-    // كود السيرفر لإنهاء الجلسة (API) - سيتم تفعيله لاحقاً
-    // ---------------------------------------------------------
-    /*
     try {
-      final dio = Dio();
-      // تأكد من تمرير التوكن في الـ Headers
-      await dio.post('https://api.copyproject.com/admin/logout', 
-        options: Options(headers: {'Authorization': 'Bearer ${_currentUser?.token}'})
-      );
-    } catch(e) {
+      final token = StorageService.getToken();
+      if (token != null) {
+        final dio = Dio();
+        await dio.post(
+          '${ApiEndpoints.baseUrl}${ApiEndpoints.logout}',
+          options: Options(
+            headers: {'Authorization': 'Bearer $token'},
+          ),
+        );
+      }
+    } catch (e) {
       debugPrint('خطأ أثناء تسجيل الخروج من السيرفر: $e');
+    } finally {
+      await StorageService.clearSession();
+      _currentUser = null;
+      _errorMessage = null;
+      _isLoading = false;
+      notifyListeners();
     }
-    // مسح التوكن من التخزين المحلي
-    // await StorageService.clearToken();
-    */
-
-    // تنظيف الحالات وإلغاء الجلسة محلياً
-    await Future.delayed(const Duration(milliseconds: 500));
-    _currentUser = null;
-    _errorMessage = null;
-    _isLoading = false;
-    notifyListeners();
   }
 }

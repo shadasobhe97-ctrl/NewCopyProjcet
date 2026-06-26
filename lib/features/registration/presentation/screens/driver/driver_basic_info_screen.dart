@@ -10,6 +10,8 @@ class DriverBasicInfoScreen extends StatefulWidget {
 }
 
 class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
+  bool _isPasswordVisible = false;
+ bool _isConfirmPasswordVisible = false;
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -17,6 +19,26 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   String _selectedGender = 'male';
+
+String? _validatePassword(String? value) {
+  if (value == null || value.isEmpty) {
+    return "كلمة المرور مطلوبة";
+  }
+  if (value.length < 7) {
+    return "يجب ألا تقل كلمة المرور عن 7 خانات";
+  }
+  
+  // التحقق من وجود حرف ورقم على الأقل
+  bool hasUppercase = value.contains(RegExp(r'[A-Z]'));
+  bool hasLowercase = value.contains(RegExp(r'[a-z]'));
+  bool hasDigits = value.contains(RegExp(r'[0-9]'));
+  
+  if (!hasDigits || (!hasUppercase && !hasLowercase)) {
+    return "يجب أن تحتوي كلمة المرور على 6 ارقام وحرف على الاقل ";
+  }
+  
+  return null;
+}
 
   @override
   void dispose() {
@@ -112,25 +134,32 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // كلمة المرور
-                TextFormField(
+              TextFormField(
                   controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
+                  obscureText: !_isPasswordVisible,
+                  decoration: InputDecoration(
                     labelText: "كلمة المرور",
-                    prefixIcon: Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
+                      onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                    ),
                   ),
-                  validator: (v) => v == null || v.length < 6 ? "يجب ألا تقل كلمة المرور عن 6 أحرف" : null,
+                  validator: _validatePassword,
                 ),
                 const SizedBox(height: 16),
 
-                // حقل إعادة تعيين / تأكيد كلمة المرور
+                // حقل تأكيد كلمة المرور (مع أيقونة العين)
                 TextFormField(
                   controller: _confirmPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
+                  obscureText: !_isConfirmPasswordVisible,
+                  decoration: InputDecoration(
                     labelText: "تأكيد كلمة المرور",
-                    prefixIcon: Icon(Icons.lock_reset),
+                    prefixIcon: const Icon(Icons.lock_reset),
+                    suffixIcon: IconButton(
+                      icon: Icon(_isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off),
+                      onPressed: () => setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
+                    ),
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return "الرجاء تأكيد كلمة المرور";
@@ -140,20 +169,7 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // الجنس
-                DropdownButtonFormField<String>(
-                  value: _selectedGender,
-                  decoration: const InputDecoration(
-                    labelText: "الجنس",
-                    prefixIcon: Icon(Icons.wc),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'male', child: Text("ذكر")),
-                    DropdownMenuItem(value: 'female', child: Text("أنثى")),
-                  ],
-                  onChanged: (val) => setState(() => _selectedGender = val ?? 'male'),
-                ),
-                const SizedBox(height: 40),
+            
 
                 // زر التالي
                 ElevatedButton(
@@ -165,7 +181,7 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                       cubit.email = _emailController.text.trim();
                       cubit.phoneNumber = _phoneController.text.trim();
                       cubit.password = _passwordController.text;
-                      cubit.gender = _selectedGender;
+                      
 
                       // الانتقال للشاشة التالية: شاشة الصورة الشخصية المشتركة
                       Navigator.pushNamed(context, '/driverAvatar');

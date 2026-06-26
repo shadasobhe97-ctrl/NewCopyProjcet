@@ -6,8 +6,9 @@ class ParentRegisterRequest {
   final String password;
   final String passwordConfirmation;
   final int otp;
-  final String deviceName;    // ضفناها للباكيند
-  final String platformName;  // ضفناها للباكيند
+  final String deviceName;
+  final String platform;
+  final String? fcmToken;
 
   ParentRegisterRequest({
     required this.fullName,
@@ -18,7 +19,8 @@ class ParentRegisterRequest {
     required this.passwordConfirmation,
     required this.otp,
     required this.deviceName,
-    required this.platformName,
+    required this.platform,
+    this.fcmToken,
   });
 
   Map<String, dynamic> toJson() {
@@ -26,12 +28,14 @@ class ParentRegisterRequest {
       'full_name': fullName,
       'email': email,
       'phone_number': phoneNumber,
-      'alternative_phone': alternativePhone,
+      if (alternativePhone != null && alternativePhone!.isNotEmpty)
+        'alternative_phone': alternativePhone,
       'password': password,
       'password_confirmation': passwordConfirmation,
       'otp': otp,
       'device_name': deviceName,
-      'platform_name': platformName,
+      'platform': platform,
+      if (fcmToken != null && fcmToken!.isNotEmpty) 'fcm_token': fcmToken,
     };
   }
 }

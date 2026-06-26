@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../logic/register_cubit.dart';
@@ -163,23 +162,25 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                     onPressed: state is DriverCompleteProfileLoading
                         ? null
                         : () {
-                            // حقن صور وهمية اختيارية فقط لتفادي قيود الـ Validation في الفلو التجريبي إذا نسى المستخدم تصوير ملف
-                            widget.finalData['license_doc'] ??= File(
-                              'dummy_license.jpg',
-                            );
-                            widget.finalData['logbook_doc'] ??= File(
-                              'dummy_logbook.jpg',
-                            );
-                            widget.finalData['insurance_doc'] ??= File(
-                              'dummy_insurance.jpg',
-                            );
-                            widget.finalData['criminal_doc'] ??= File(
-                              'dummy_criminal.jpg',
-                            );
+                            // التحقق من وجود الملفات الإلزامية قبل الإرسال
+                            final missingDocs = <String>[];
+                            if (widget.finalData['license_doc'] == null) missingDocs.add('رخصة القيادة');
+                            if (widget.finalData['criminal_doc'] == null) missingDocs.add('شهادة الحالة الجنائية');
+                            if (widget.finalData['logbook_doc'] == null) missingDocs.add('كتيب المركبة');
+
+                            if (missingDocs.isNotEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('يرجى إرفاق: ${missingDocs.join('، ')}'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                              return;
+                            }
 
                             context
                                 .read<RegisterCubit>()
-                                .submitDriverCompleteProfile();
+                                .completeDriverProfile(widget.finalData);
                           },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),

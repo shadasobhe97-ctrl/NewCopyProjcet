@@ -16,8 +16,8 @@ class DriverHomeLoaded extends DriverHomeState {
   final int todayTripsCount;
   final int todayStudentsCount;
   final List<SubscriptionRequest> newRequests;
-  final bool hasActiveTrip; // TODO: ربط مع بيانات الرحلة النشطة من الـ API
-
+  final bool hasActiveTrip; 
+  
   DriverHomeLoaded({
     required this.driver,
     required this.isOnline,

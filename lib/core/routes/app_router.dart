@@ -33,6 +33,7 @@ import 'package:kids_transport/features/registration/presentation/screens/parent
 
 // 🌟 استيراد شاشة تسجيل دخول الأدمن الجديدة
 import 'package:kids_transport/features/admin/presentation/screens/admin_login_screen.dart'; 
+import 'package:kids_transport/features/admin/presentation/screens/admin_dashboard_screen.dart';
 
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
@@ -43,6 +44,7 @@ class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
   static const String adminLogin = '/adminLogin'; // 👈 تم إضافة روت الأدمن هنا
+  static const String adminDashboard = '/admin/dashboard';
   static const String forgotPassword = '/forgotPassword';
   static const String verifyOtp = '/verifyOtp';
   static const String resetPassword = '/resetPassword';
@@ -70,6 +72,8 @@ class AppRoutes {
         
       case AppRoutes.adminLogin: // 👈 تم إضافة الحالة هنا لفتح شاشة الأدمن
         return MaterialPageRoute(builder: (_) => const AdminLoginScreen());
+      case AppRoutes.adminDashboard:
+        return MaterialPageRoute(builder: (_) => const AdminDashboardScreen());
       case AppRoutes.onboarding:
         return MaterialPageRoute(builder: (_) => const OnboardingScreen());
       
