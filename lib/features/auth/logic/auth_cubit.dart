@@ -98,7 +98,6 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> resetPassword({
     required String email,
-    required String code,
     required String password,
     required String confirmPassword,
   }) async {
@@ -106,7 +105,6 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       final request = ResetPasswordRequestModel(
         email: email,
-        code: code,
         password: password,
         passwordConfirmation: confirmPassword,
       );
@@ -133,12 +131,12 @@ class AuthCubit extends Cubit<AuthState> {
       if (response.status) {
         emit(AuthLogoutSuccess(response.message));
       } else {
-        emit(AuthError(_fallbackMessage(response.message)));
+        emit(AuthLogoutFailure(_fallbackMessage(response.message)));
       }
     } on ApiException catch (error) {
-      emit(AuthError(error.message));
+      emit(AuthLogoutFailure(error.message));
     } catch (_) {
-      emit(AuthError('فشل تسجيل الخروج، يرجى المحاولة مرة أخرى.'));
+      emit(AuthLogoutFailure('فشل تسجيل الخروج، يرجى المحاولة مرة أخرى.'));
     }
   }
 

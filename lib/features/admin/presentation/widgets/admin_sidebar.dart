@@ -174,10 +174,21 @@ class AdminSidebar extends StatelessWidget {
                 Navigator.pop(dialogContext); // إغلاق النافذة
                 
                 final authProvider = Provider.of<AdminAuthProvider>(context, listen: false);
-                await authProvider.logout();
+                final success = await authProvider.logout();
                 
                 // توجيه لصفحة تسجيل الدخول ومسح مسار التصفح (Routing)
                 if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        success
+                            ? 'تم تسجيل الخروج بنجاح.'
+                            : authProvider.errorMessage ?? 'فشل تسجيل الخروج.',
+                      ),
+                      backgroundColor:
+                          success ? AppColors.success : AppColors.errorLight,
+                    ),
+                  );
                   Navigator.pushNamedAndRemoveUntil(context, '/adminLogin', (route) => false);
                 }
               },

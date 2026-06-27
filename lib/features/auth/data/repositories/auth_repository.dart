@@ -40,21 +40,17 @@ class AuthRepository {
   Future<AuthCommonResponseModel> logout() async {
     final authorizationHeader = StorageService.getAuthorizationHeader();
 
-    try {
-      if (authorizationHeader == null) {
-        return const AuthCommonResponseModel(
-          status: true,
-          message: 'تم تسجيل الخروج بنجاح.',
-        );
-      }
-
-      final responseData = await _dataSource.logout(authorizationHeader);
-      return AuthCommonResponseModel.fromJson(responseData);
-    } on ApiException {
+    if (authorizationHeader == null) {
+      await StorageService.clearSession();
       return const AuthCommonResponseModel(
         status: true,
-        message: 'تم تسجيل الخروج من الجهاز.',
+        message: 'تم تسجيل الخروج بنجاح.',
       );
+    }
+
+    try {
+      final responseData = await _dataSource.logout(authorizationHeader);
+      return AuthCommonResponseModel.fromJson(responseData);
     } finally {
       await StorageService.clearSession();
     }

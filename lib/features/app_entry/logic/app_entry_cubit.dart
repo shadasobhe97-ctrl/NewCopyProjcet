@@ -29,7 +29,7 @@ class AppEntryCubit extends Cubit<AppEntryState> {
       }
     } else if (roleId == 3) {
       emit(NavigateToParentHome());
-    } else if (roleId == 1 || roleId == 2) {
+    } else if (roleId != null && roleId != 3 && roleId != 4) {
       emit(NavigateToAdminHome());
     } else {
       await StorageService.clearSession();

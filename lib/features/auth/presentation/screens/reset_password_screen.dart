@@ -13,8 +13,7 @@ import 'package:kids_transport/features/auth/presentation/widgets/auth_password_
 
 class ResetPasswordScreen extends StatefulWidget {
   final String email;
-  final String otpCode;
-  const ResetPasswordScreen({super.key, required this.email, required this.otpCode});
+  const ResetPasswordScreen({super.key, required this.email});
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -144,7 +143,6 @@ actions: [
                         if (_formKey.currentState!.validate()) {
                           context.read<AuthCubit>().resetPassword(
                                 email: widget.email,
-                                code: widget.otpCode,
                                 password: _passwordController.text,
                                 confirmPassword: _confirmPasswordController.text,
                               );

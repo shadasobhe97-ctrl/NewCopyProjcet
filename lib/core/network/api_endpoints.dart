@@ -2,7 +2,7 @@ class ApiEndpoints {
   const ApiEndpoints._();
 
   // الرابط الأساسي للسيرفر (يحتوي على /api/)
-  static const String baseUrl = 'https://darby-api-new.loca.lt/api/';
+  static const String baseUrl = 'https://small-cameras-itch.loca.lt/api/';
 
   //=========================================
   // Auth Endpoints (مسارات المصادقة العامة)
@@ -18,16 +18,18 @@ class ApiEndpoints {
   //=========================================
   // تتطابق مع بادئة الباك إند: api/v1/driver
   static const String driverRegister = 'v1/driver/register';
+  static const String driverResendOtp = 'v1/driver/resend-otp';
   static const String driverVerifyOtp = 'v1/driver/verify-otp';
   static const String driverCompleteProfile = 'v1/driver/complete-profile';
 
   //=========================================
   // Parent Registration endpoints (أولياء الأمور)
   //=========================================
-  // تم تعديلها لتطابق تكرار الـ parent الناتج عن دمج app.php وملف routes
-  static const String parentSendOtp = 'parent/parent/send-otp';
-  static const String parentRegister = 'parent/parent/register';
-  
-  // مسار إدارة العناوين (يقع تحت الـ middleware المحمي داخل تجمع parent الثاني)
-  static const String parentAddAddress = 'parent/parent/addresses';
+  // POST /api/parent/send-otp  → إرسال OTP للبريد الإلكتروني
+  static const String parentSendOtp = 'parent/send-otp';
+  // POST /api/parent/register  → التسجيل النهائي (يحتوي على OTP)
+  static const String parentRegister = 'parent/register';
+
+  // مسار إدارة العناوين (يتطلب Bearer token)
+  static const String parentAddAddress = 'parent/addresses';
 }

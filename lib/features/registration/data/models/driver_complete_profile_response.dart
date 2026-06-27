@@ -7,9 +7,9 @@ class DriverCompleteProfileResponse {
 
   factory DriverCompleteProfileResponse.fromJson(Map<String, dynamic> json) {
     return DriverCompleteProfileResponse(
-      status: json['status'] ?? false,
-      message: json['message'] ?? '',
-      data: json['data'] != null ? DriverProfileData.fromJson(json['data']) : null,
+      status: _readBool(json['status']),
+      message: json['message']?.toString() ?? '',
+      data: json['data'] is Map ? DriverProfileData.fromJson(Map<String, dynamic>.from(json['data'])) : null,
     );
   }
 }
@@ -29,10 +29,24 @@ class DriverProfileData {
 
   factory DriverProfileData.fromJson(Map<String, dynamic> json) {
     return DriverProfileData(
-      id: json['id'] ?? 0,
-      accountId: json['account_id'] ?? 0,
-      fullName: json['full_name'] ?? '',
-      driverStatus: json['driver_status'] ?? 'Pending',
+      id: _readInt(json['id']),
+      accountId: _readInt(json['account_id']),
+      fullName: json['full_name']?.toString() ?? '',
+      driverStatus: json['driver_status']?.toString() ?? 'Pending',
     );
   }
+}
+
+int _readInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
+bool _readBool(dynamic value) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  if (value is String) return value == '1' || value.toLowerCase() == 'true';
+  return false;
 }

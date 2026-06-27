@@ -88,11 +88,10 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => VerifyOtpScreen(email: email));
       
       case AppRoutes.resetPassword:
-        final args = settings.arguments as Map<String, String>;
+        final args = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(
           builder: (_) => ResetPasswordScreen(
-            email: args['email']!,
-            otpCode: args['otpCode']!,
+            email: args['email'] as String,
           ),
         );
         
@@ -152,12 +151,20 @@ class AppRoutes {
       case '/parentBasicInfo':
         return MaterialPageRoute(builder: (_) => const ParentBasicInfoScreen());
       
+      // الخطوة 2: صورة شخصية
       case '/parentAvatar':
         return MaterialPageRoute(builder: (_) => const ParentAvatarScreen());
       
+      // الخطوة 3: هاتف بديل (اختياري)
       case '/parentAlternativePhone':
         return MaterialPageRoute(builder: (_) => const ParentAlternativePhoneScreen());
       
+      // الخطوة 4: إدخال البريد وإرسال OTP
+      case '/parentEmail':
+        return MaterialPageRoute(builder: (_) => const ParentEmailScreen());
+      
+      // الخطوة 5: إدخال OTP + إرسال طلب التسجيل النهائي
+
       case '/parentLocation':
         return MaterialPageRoute(builder: (_) => const ParentLocationScreen());
       

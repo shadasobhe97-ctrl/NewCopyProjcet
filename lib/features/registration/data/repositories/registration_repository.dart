@@ -21,10 +21,10 @@ class DriverVerifyOtpResponse {
 
   factory DriverVerifyOtpResponse.fromJson(Map<String, dynamic> json) {
     return DriverVerifyOtpResponse(
-      status: json['status'] ?? false,
-      message: json['message'] ?? '',
-      userId: json['user_id'] ?? 0,
-      accessToken: json['access_token'] ?? json['token'] ?? '',
+      status: _readBool(json['status']),
+      message: json['message']?.toString() ?? '',
+      userId: _readInt(json['user_id']),
+      accessToken: json['access_token']?.toString() ?? json['token']?.toString() ?? '',
     );
   }
 }
@@ -44,6 +44,10 @@ class RegistrationRepository {
   Future<DriverRegisterResponse> registerDriver(DriverRegisterRequest request) async {
     final responseData = await _driverDataSource.register(request);
     return DriverRegisterResponse.fromJson(responseData);
+  }
+
+  Future<Map<String, dynamic>> resendDriverOtp(String email) async {
+    return await _driverDataSource.resendOtp(email);
   }
 
   Future<DriverVerifyOtpResponse> verifyDriverOtp(String email, String otpCode) async {
@@ -70,6 +74,11 @@ class RegistrationRepository {
     return await _parentDataSource.sendOtp(email);
   }
 
+  /// نفس الـ endpoint لإعادة الإرسال
+  Future<Map<String, dynamic>> resendParentOtp(String email) async {
+    return await _parentDataSource.sendOtp(email);
+  }
+
   Future<ParentRegisterResponse> registerParent(ParentRegisterRequest request) async {
     final responseData = await _parentDataSource.register(request);
     return ParentRegisterResponse.fromJson(responseData);
@@ -91,4 +100,18 @@ class RegistrationRepository {
     );
     return ParentAddressResponse.fromJson(responseData);
   }
+}
+
+int _readInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
+bool _readBool(dynamic value) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  if (value is String) return value == '1' || value.toLowerCase() == 'true';
+  return false;
 }

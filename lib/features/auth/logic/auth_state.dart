@@ -46,6 +46,11 @@ class AuthLogoutSuccess extends AuthState {
   const AuthLogoutSuccess(this.message);
 }
 
+class AuthLogoutFailure extends AuthState {
+  final String errorMessage;
+  const AuthLogoutFailure(this.errorMessage);
+}
+
 class PasswordOtpVerifiedSuccess extends AuthState {
   final String message;
   final String email;

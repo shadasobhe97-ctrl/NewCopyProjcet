@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import '../../../logic/register_cubit.dart';
 import '../../../logic/register_state.dart';
@@ -57,30 +58,47 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
       _resendSucceeded = false;
     });
 
-    await cubit.resendOtp(cubit.email ?? '');
+    try {
+      final message = await cubit.resendOtp(cubit.email ?? '');
 
+      if (!mounted) return;
+
+      setState(() {
+        _resendLoading = false;
+        _resendSucceeded = true; // يتحول لرمادي = نجح الإرسال
+        _canResend = false;       // نخفي الزر مؤقتاً ونبدأ التايمر
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // إعادة بدء التايمر بعد 2 ثانية
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
+      setState(() {
+        _resendSucceeded = false;
+      });
+      _startTimer();
+    } on ApiException catch (error) {
+      _showResendError(error.message);
+    } catch (_) {
+      _showResendError('فشل إعادة إرسال الرمز، يرجى المحاولة مرة أخرى.');
+    }
+  }
+
+  void _showResendError(String message) {
     if (!mounted) return;
-
     setState(() {
       _resendLoading = false;
-      _resendSucceeded = true; // يتحول لرمادي = نجح الإرسال
-      _canResend = false;       // نخفي الزر مؤقتاً ونبدأ التايمر
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("تم إعادة إرسال رمز التحقق إلى بريدك الإلكتروني."),
-        backgroundColor: Colors.green,
-      ),
-    );
-
-    // إعادة بدء التايمر بعد 2 ثانية
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    setState(() {
       _resendSucceeded = false;
     });
-    _startTimer();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 
   @override
@@ -139,7 +157,7 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "تم إرسال كود التحقق المكون من 6 أرقام إلى بريدك الإلكتروني:\n${cubit.email ?? ''}",
+                    "تم إرسال كود التحقق المكون من 6 أرقام إلى رقم هاتفك:\n${cubit.phoneNumber ?? ''}",
                     style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
                     textAlign: TextAlign.right,
                   ),

@@ -27,17 +27,17 @@ class ParentRegisterResponse {
 
   factory ParentRegisterResponse.fromJson(Map<String, dynamic> json) {
     return ParentRegisterResponse(
-      status: json['status'] ?? true,
-      message: json['message'] ?? 'تم إنشاء الحساب بنجاح.',
-      id: json['id'] ?? 0,
-      accountId: json['account_id'] ?? 0,
-      fullName: json['full_name'] ?? '',
-      email: json['email'] ?? '',
-      phoneNumber: json['phone_number'] ?? '',
-      alternativePhone: json['alternative_phone'],
-      role: json['role'] ?? 'parent',
-      isActive: json['is_active'] ?? true,
-      accessToken: json['access_token'] ?? json['token'] ?? '',
+      status: _readBool(json['status']),
+      message: json['message']?.toString() ?? 'تم إنشاء الحساب بنجاح.',
+      id: _readInt(json['id']),
+      accountId: _readInt(json['account_id']),
+      fullName: json['full_name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      phoneNumber: json['phone_number']?.toString() ?? '',
+      alternativePhone: json['alternative_phone']?.toString(),
+      role: json['role']?.toString() ?? 'parent',
+      isActive: _readBool(json['is_active']),
+      accessToken: json['access_token']?.toString() ?? json['token']?.toString() ?? '',
     );
   }
 }
@@ -63,13 +63,33 @@ class ParentAddressResponse {
 
   factory ParentAddressResponse.fromJson(Map<String, dynamic> json) {
     return ParentAddressResponse(
-      status: json['status'] ?? true,
-      message: json['message'] ?? 'تم حفظ العنوان بنجاح.',
-      id: json['id'] ?? 0,
-      label: json['label'] ?? '',
-      lat: (json['lat'] as num?)?.toDouble() ?? 0.0,
-      lng: (json['lng'] as num?)?.toDouble() ?? 0.0,
-      isDefault: json['is_default'] ?? false,
+      status: _readBool(json['status']),
+      message: json['message']?.toString() ?? 'تم حفظ العنوان بنجاح.',
+      id: _readInt(json['id']),
+      label: json['label']?.toString() ?? '',
+      lat: _readDouble(json['lat']),
+      lng: _readDouble(json['lng']),
+      isDefault: _readBool(json['is_default']),
     );
   }
+}
+
+int _readInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
+double _readDouble(dynamic value) {
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0.0;
+  return 0.0;
+}
+
+bool _readBool(dynamic value) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  if (value is String) return value == '1' || value.toLowerCase() == 'true';
+  return false;
 }

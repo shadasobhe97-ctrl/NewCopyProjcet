@@ -10,6 +10,7 @@ class ParentRemoteDataSource {
       : _apiClient = apiClient ?? ApiClient();
 
   /// POST /api/parent/send-otp
+  /// يُستخدم لإرسال الـ OTP وأيضاً لإعادة إرسال الـ OTP (نفس الـ endpoint)
   Future<Map<String, dynamic>> sendOtp(String email) async {
     final response = await _apiClient.post(
       ApiEndpoints.parentSendOtp,
@@ -19,6 +20,7 @@ class ParentRemoteDataSource {
   }
 
   /// POST /api/parent/register
+  /// التسجيل النهائي - يحتوي على OTP مدمج في الـ body
   Future<Map<String, dynamic>> register(ParentRegisterRequest request) async {
     final response = await _apiClient.post(
       ApiEndpoints.parentRegister,

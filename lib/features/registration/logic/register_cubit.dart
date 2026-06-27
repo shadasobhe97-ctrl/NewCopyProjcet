@@ -57,7 +57,6 @@ class RegisterCubit extends Cubit<RegisterState> {
   int? driverYear;
   String? driverColor;
   int? driverCapacityManual;
-  int? parentOtpCode;
 
   // دالة تحديث الرول المختار
   void updateRole(int roleId) {
@@ -87,13 +86,14 @@ class RegisterCubit extends Cubit<RegisterState> {
   // ==================== [APIs فلو ولي الأمر] ====================
 
   // 1. إرسال OTP لولي الأمر → POST /api/parent/send-otp
+  // يُستخدم لأول إرسال وأيضاً لإعادة الإرسال (نفس الـ endpoint)
   Future<void> sendParentOtp(String targetEmail) async {
     emit(ParentOtpSentLoading());
     try {
       email = targetEmail;
       final responseData = await _repository.sendParentOtp(targetEmail);
-      final bool success = responseData['status'] ?? false;
-      final String message = responseData['message'] ?? 'تم إرسال رمز التحقق.';
+      final bool success = _readBool(responseData['status']);
+      final String message = _readMessage(responseData, 'تم إرسال رمز التحقق.');
       if (success) {
         emit(ParentOtpSentSuccess(message));
       } else {
@@ -106,21 +106,28 @@ class RegisterCubit extends Cubit<RegisterState> {
     }
   }
 
-  // 2. إعادة إرسال OTP لولي الأمر (يستخدم نفس الـ endpoint)
-  Future<void> resendParentOtp(String targetEmail) async {
-    try {
-      final responseData = await _repository.sendParentOtp(targetEmail);
-      final String message = responseData['message'] ?? 'تم إعادة إرسال رمز التحقق.';
-      emit(ParentOtpSentSuccess(message));
-    } on ApiException catch (_) {
-      // لا نغير الحالة لأن المستخدم لا يزال في شاشة OTP
-    } catch (_) {}
+  // 2. إعادة إرسال OTP لولي الأمر - يستخدم نفس الـ endpoint /api/parent/send-otp
+  Future<String> resendParentOtp(String targetEmail) async {
+    final responseData = await _repository.resendParentOtp(targetEmail);
+    final bool success = _readBool(responseData['status']);
+    final String message = _readMessage(responseData, 'تم إعادة إرسال رمز التحقق.');
+    if (!success) {
+      throw ApiException(message);
+    }
+    return message;
   }
 
   // 3. التسجيل النهائي لولي الأمر → POST /api/parent/register
-  Future<void> registerParent(int otpCode) async {
+  // الـ OTP يُرسل مباشرة في الـ body مع بيانات التسجيل (لا يوجد verify endpoint منفصل)
+  Future<void> registerParent(String otpCode) async {
     emit(ParentRegisterLoading());
     try {
+      final parsedOtp = int.tryParse(otpCode);
+      if (parsedOtp == null) {
+        emit(ParentRegisterError('رمز التحقق غير صالح، يرجى إدخال 6 أرقام.'));
+        return;
+      }
+
       final request = ParentRegisterRequest(
         fullName: fullName ?? '',
         email: email ?? '',
@@ -128,13 +135,20 @@ class RegisterCubit extends Cubit<RegisterState> {
         alternativePhone: alternativePhone,
         password: password ?? '',
         passwordConfirmation: password ?? '',
-        otp: otpCode,
+        otp: parsedOtp,
         deviceName: _deviceName,
         platform: _platform,
         fcmToken: 'derbi_fcm_token_placeholder',
       );
 
       final response = await _repository.registerParent(request);
+
+      if (!response.status) {
+        emit(ParentRegisterError(
+          response.message.isNotEmpty ? response.message : 'فشل إنشاء الحساب.',
+        ));
+        return;
+      }
 
       // حفظ التوكن لاستخدامه في إضافة العنوان
       parentAccessToken = response.accessToken;
@@ -188,10 +202,14 @@ class RegisterCubit extends Cubit<RegisterState> {
   }
 
   // 2. إعادة إرسال OTP للسائق
-  Future<void> resendOtp(String emailAddress) async {
-    try {
-      await Future.delayed(const Duration(milliseconds: 500));
-    } catch (_) {}
+  Future<String> resendOtp(String emailAddress) async {
+    final responseData = await _repository.resendDriverOtp(emailAddress);
+    final bool success = _readBool(responseData['status']);
+    final String message = _readMessage(responseData, 'تم إعادة إرسال رمز التحقق.');
+    if (!success) {
+      throw ApiException(message);
+    }
+    return message;
   }
 
   // 3. المرحلة الثانية للسائق (التحقق من OTP)
@@ -266,7 +284,6 @@ class RegisterCubit extends Cubit<RegisterState> {
     try {
       final token = parentAccessToken ?? '';
       if (token.isEmpty) {
-        // لو ما فيه توكن، خطأ واضح
         emit(LocationSaveError('لا يوجد توكن صالح، يرجى تسجيل الدخول مرة أخرى.'));
         return;
       }
@@ -287,5 +304,16 @@ class RegisterCubit extends Cubit<RegisterState> {
     } catch (_) {
       emit(LocationSaveError('فشل حفظ الموقع، يرجى المحاولة مرة أخرى.'));
     }
+  }
+
+  bool _readBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) return value == '1' || value.toLowerCase() == 'true';
+    return false;
+  }
+
+  String _readMessage(Map<String, dynamic> data, String fallback) {
+    return ApiException.extractMessage(data) ?? fallback;
   }
 }

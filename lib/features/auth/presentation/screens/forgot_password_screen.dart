@@ -21,23 +21,49 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
 
   @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87)),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : Colors.black87,
+        ),
+      ),
       body: SafeArea(
         child: BlocConsumer<AuthCubit, AuthState>(
           listener: (context, state) {
             if (state is OtpSentSuccess) {
+              // عرض رسالة نجاح من الباك مباشرةً
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: AppColors.success),
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.success,
+                ),
               );
-              Navigator.push(context, MaterialPageRoute(builder: (_) => VerifyOtpScreen(email: state.email)));
+              // الانتقال لشاشة التحقق مع تمرير الإيميل
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => VerifyOtpScreen(email: state.email),
+                ),
+              );
             } else if (state is AuthError) {
+              // عرض رسائل الخطأ القادمة من الباك مباشرةً
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.errorMessage), backgroundColor: AppColors.error),
+                SnackBar(
+                  content: Text(state.errorMessage),
+                  backgroundColor: AppColors.error,
+                ),
               );
             }
           },
@@ -51,30 +77,44 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   children: [
                     const AuthHeaderSection(
                       title: 'نسيت كلمة المرور',
-                      subtitle: 'أدخل بريدك الإلكتروني المسجل لإرسال رمز التحقق (OTP)',
+                      subtitle:
+                          'أدخل بريدك الإلكتروني المسجل لإرسال رمز التحقق (OTP)',
                     ),
+                    SizedBox(height: 8.h),
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      textAlign: TextAlign.right,
-                      style: AppTextStyles.inputTextStyle(color: isDark ? Colors.white : Colors.black87),
+                      textDirection: TextDirection.ltr,
+                      textAlign: TextAlign.left,
+                      autocorrect: false,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
                       decoration: const InputDecoration(
-                        hintText: 'البريد الإلكتروني',
+                        hintText: 'example@gmail.com',
                         prefixIcon: Icon(Icons.email_outlined),
                       ),
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) return 'الرجاء إدخال البريد الإلكتروني';
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) return 'صيغة البريد الإلكتروني غير صحيحة';
+                        if (value == null || value.trim().isEmpty) {
+                          return 'الرجاء إدخال البريد الإلكتروني';
+                        }
+                        if (!RegExp(
+                          r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$',
+                        ).hasMatch(value.trim())) {
+                          return 'صيغة البريد الإلكتروني غير صحيحة';
+                        }
                         return null;
                       },
                     ),
                     SizedBox(height: 30.h),
                     CustomAuthButton(
-                      text: 'إرسال الرمز',
+                      text: 'إرسال رمز التحقق',
                       isLoading: state is AuthLoading,
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          context.read<AuthCubit>().sendOtp(email: _emailController.text.trim());
+                          context.read<AuthCubit>().sendOtp(
+                                email: _emailController.text.trim(),
+                              );
                         }
                       },
                     ),

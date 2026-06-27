@@ -27,6 +27,14 @@ class DriverRemoteDataSource {
     return _mapResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> resendOtp(String email) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.driverResendOtp,
+      data: {'email': email},
+    );
+    return _mapResponse(response.data);
+  }
+
   Future<Map<String, dynamic>> verifyOtp(String email, String otpCode) async {
     final response = await _apiClient.post(
       ApiEndpoints.driverVerifyOtp,

@@ -72,31 +72,36 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
-  Future<void> _resendCode() async {
+  void _resendCode() {
     setState(() {
       _resendLoading = true;
       _resendSucceeded = false;
     });
     context.read<AuthCubit>().sendOtp(email: widget.email);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
+  }
+
+  void _handleResendSuccess() {
+    if (!_resendLoading) return;
+
     setState(() {
       _resendLoading = false;
       _resendSucceeded = true;
       _isButtonDisabled = true;
     });
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    setState(() => _resendSucceeded = false);
-    _startTimer();
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      setState(() => _resendSucceeded = false);
+      _startTimer();
+    });
   }
 
-  void _openResetPassword(String code) {
+  void _openResetPassword() {
     _timer?.cancel();
     Navigator.pushNamed(
       context,
       AppRoutes.resetPassword,
-      arguments: {'email': widget.email, 'otpCode': code},
+      arguments: {'email': widget.email},
     );
   }
 
@@ -121,9 +126,16 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                   backgroundColor: AppColors.success,
                 ),
               );
+              _handleResendSuccess();
             } else if (state is PasswordOtpVerifiedSuccess) {
-              _openResetPassword(state.code);
+              _openResetPassword();
             } else if (state is AuthError) {
+              if (_resendLoading) {
+                setState(() {
+                  _resendLoading = false;
+                  _resendSucceeded = false;
+                });
+              }
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.errorMessage),
@@ -141,11 +153,11 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                   AuthHeaderSection(
                     title: 'رمز التحقق (OTP)',
                     subtitle:
-                        'أدخل الرمز المكون من 6 أرقام المرسل إلى:\n${widget.email}',
+                        'أدخل الرمز المكون من 6 أرقام المرسل إلى رقم:\n${widget.email}',
                   ),
                   SizedBox(height: 20.h),
                   Directionality(
-                    textDirection: TextDirection.rtl,
+                    textDirection: TextDirection.ltr,
                     child: PinCodeTextField(
                       appContext: context,
                       length: 6,
@@ -185,7 +197,12 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                       enableActiveFill: true,
                       onChanged: (_) {},
                       onCompleted: (code) {
-                        context.read<AuthCubit>().verifyOtp(email: widget.email, code: code);
+                        debugPrint('OTP Completed: $code');
+                        debugPrint('Identifier: ${widget.email}');
+                        context.read<AuthCubit>().verifyOtp(
+                          email: widget.email,
+                          code: code,
+                        );
                       },
                     ),
                   ),

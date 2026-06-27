@@ -1,10 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:kids_transport/features/admin/data/models/admin_user_model.dart';
-import 'package:dio/dio.dart';
+import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
-import 'package:kids_transport/core/network/api_endpoints.dart';
+import 'package:kids_transport/features/admin/data/models/admin_user_model.dart';
+import 'package:kids_transport/features/auth/data/models/login_request_model.dart';
+import 'package:kids_transport/features/auth/data/repositories/auth_repository.dart';
 
 class AdminAuthProvider with ChangeNotifier {
+  final AuthRepository _repository;
   bool _isLoading = false;
   String? _errorMessage;
   AdminUserModel? _currentUser;
@@ -15,7 +18,8 @@ class AdminAuthProvider with ChangeNotifier {
 
   bool get isAuthenticated => _currentUser != null;
 
-  AdminAuthProvider() {
+  AdminAuthProvider({AuthRepository? repository})
+      : _repository = repository ?? AuthRepository() {
     _loadSession();
   }
 
@@ -41,116 +45,85 @@ class AdminAuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final dio = Dio(BaseOptions(
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      ));
-
-      final response = await dio.post(
-        '${ApiEndpoints.baseUrl}${ApiEndpoints.login}',
-        data: {
-          'phone_number': phone,
-          'email': phone,
-          'password': password,
-          'device_name': 'Web_Admin_Panel',
-          'platform': 'web',
-        },
+      final response = await _repository.login(
+        LoginRequestModel(
+          phoneNumber: phone,
+          password: password,
+          deviceName: _deviceName,
+          platform: _platform,
+        ),
       );
 
-      final data = response.data;
-      if (data != null && data['status'] == true) {
-        final token = data['access_token'] ?? '';
-        final userJson = data['user'] ?? {};
-        final fullName = userJson['full_name'] ?? '';
-        final userPhone = userJson['phone_number'] ?? '';
-        final roleIdRaw = userJson['role_id'];
-        final roleId = roleIdRaw is int ? roleIdRaw : int.tryParse(roleIdRaw.toString()) ?? 1;
-        final roleName = data['role_name'] ?? 'أدمن';
-
-        _currentUser = AdminUserModel(
-          id: userJson['id']?.toString() ?? '',
-          name: fullName,
-          email: phone,
-          token: token,
-        );
-
-        await StorageService.saveUserSession(
-          token: token,
-          roleId: roleId,
-          roleName: roleName,
-          userId: userJson['id'] is int ? userJson['id'] : int.tryParse(userJson['id'].toString()),
-          fullName: fullName,
-          phoneNumber: userPhone,
-          isActive: userJson['is_active'] == true || userJson['is_active'] == 1,
-        );
-
-        _isLoading = false;
-        notifyListeners();
-        return true;
-      } else {
-        _errorMessage = data != null ? data['message'] ?? 'بيانات الدخول غير صحيحة' : 'بيانات الدخول غير صحيحة';
-        _isLoading = false;
-        notifyListeners();
+      if (!response.status) {
+        _errorMessage = _fallbackMessage(response.message, 'بيانات الدخول غير صحيحة');
         return false;
       }
-    } on DioException catch (e) {
-      final data = e.response?.data;
-      if (data is Map && data['message'] != null) {
-        _errorMessage = data['message'].toString();
-      } else if (data is Map && data['errors'] != null) {
-        final errors = data['errors'];
-        if (errors is Map && errors.isNotEmpty) {
-          final firstValue = errors.values.first;
-          if (firstValue is List && firstValue.isNotEmpty) {
-            _errorMessage = firstValue.first.toString();
-          } else {
-            _errorMessage = firstValue.toString();
-          }
-        } else {
-          _errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
-        }
-      } else {
-        _errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+
+      if (!_isAdminRole(response.user.roleId)) {
+        await StorageService.clearSession();
+        _currentUser = null;
+        _errorMessage = 'هذا الحساب ليس حساب مسؤول.';
+        return false;
       }
-      _isLoading = false;
-      notifyListeners();
+
+      _currentUser = AdminUserModel(
+        id: response.user.id.toString(),
+        name: response.user.fullName,
+        email: response.user.phoneNumber.isNotEmpty ? response.user.phoneNumber : phone,
+        token: response.accessToken,
+      );
+
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
       return false;
     } catch (e) {
       _errorMessage = 'حدث خطأ في الاتصال بالخادم';
+      return false;
+    } finally {
       _isLoading = false;
       notifyListeners();
-      return false;
     }
   }
 
   // دالة تسجيل الخروج
-  Future<void> logout() async {
+  Future<bool> logout() async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
-      final token = StorageService.getToken();
-      if (token != null) {
-        final dio = Dio();
-        await dio.post(
-          '${ApiEndpoints.baseUrl}${ApiEndpoints.logout}',
-          options: Options(
-            headers: {'Authorization': 'Bearer $token'},
-          ),
-        );
+      final response = await _repository.logout();
+      if (!response.status) {
+        _errorMessage = _fallbackMessage(response.message, 'فشل تسجيل الخروج.');
+        return false;
       }
-    } catch (e) {
-      debugPrint('خطأ أثناء تسجيل الخروج من السيرفر: $e');
+
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      return false;
+    } catch (_) {
+      _errorMessage = 'فشل تسجيل الخروج، يرجى المحاولة مرة أخرى.';
+      return false;
     } finally {
       await StorageService.clearSession();
       _currentUser = null;
-      _errorMessage = null;
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  bool _isAdminRole(int roleId) => roleId > 0 && roleId != 3 && roleId != 4;
+
+  String get _platform => kIsWeb ? 'web' : defaultTargetPlatform.name;
+
+  String get _deviceName {
+    if (kIsWeb) return 'Web_Admin_Panel';
+    return 'Derbi_Admin_${defaultTargetPlatform.name}';
+  }
+
+  String _fallbackMessage(String message, String fallback) {
+    return message.trim().isNotEmpty ? message : fallback;
   }
 }

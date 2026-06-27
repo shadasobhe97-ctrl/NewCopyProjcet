@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ? (StorageService.getIsActive() == true
                           ? AppRoutes.driverMainWrapper
                           : '/driverWaiting')
-                      : AppRoutes.adminLogin; // الأدمن (role != 3 و != 4)
+                      : AppRoutes.adminDashboard; // الأدمن (role != 3 و != 4)
 
               Navigator.pushNamedAndRemoveUntil(
                 context,

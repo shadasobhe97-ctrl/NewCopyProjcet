@@ -3,6 +3,8 @@ abstract class RegisterState {}
 class RegisterInitial extends RegisterState {}
 
 // ==================== [الحالات الخاصة بولي الأمر (Parent)] ====================
+
+/// إرسال OTP (وإعادة الإرسال) → POST /api/parent/send-otp
 class ParentOtpSentLoading extends RegisterState {}
 class ParentOtpSentSuccess extends RegisterState {
   final String message;
@@ -13,6 +15,7 @@ class ParentOtpSentError extends RegisterState {
   ParentOtpSentError(this.errorMessage);
 }
 
+/// التسجيل النهائي → POST /api/parent/register (يحتوي OTP في الـ body)
 class ParentRegisterLoading extends RegisterState {}
 class ParentRegisterSuccess extends RegisterState {
   final String message;

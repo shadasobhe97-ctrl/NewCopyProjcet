@@ -22,14 +22,13 @@ class AuthHeaderSection extends StatelessWidget {
       children: [
         SizedBox(height: 20.h),
         Text(
-          title, 
-          style: AppTextStyles.heading(color: isDark ? Colors.white : Colors.black87),
+          title,
+          style: AppTextStyles.heading(
+            color: isDark ? Colors.white : Colors.black87,
+          ),
         ),
         SizedBox(height: 8.h),
-        Text(
-          subtitle, 
-          style: AppTextStyles.body(color: AppColors.textMuted),
-        ),
+        Text(subtitle, style: AppTextStyles.body(color: AppColors.textMuted)),
         SizedBox(height: 40.h),
       ],
     );

@@ -22,13 +22,26 @@ class DriverDrawer extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return BlocListener<AuthCubit, AuthState>(
-      listenWhen: (_, state) => state is AuthLogoutSuccess || state is AuthError,
+      listenWhen: (_, state) =>
+          state is AuthLogoutSuccess || state is AuthLogoutFailure || state is AuthError,
       listener: (context, state) {
         if (state is AuthLogoutSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
               backgroundColor: AppColors.success,
+            ),
+          );
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.login,
+            (route) => false,
+          );
+        } else if (state is AuthLogoutFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage),
+              backgroundColor: AppColors.error,
             ),
           );
           Navigator.pushNamedAndRemoveUntil(

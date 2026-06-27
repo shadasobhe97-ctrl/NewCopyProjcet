@@ -7,11 +7,9 @@ class ApiException implements Exception {
   const ApiException(this.message, {this.statusCode});
 
   factory ApiException.fromDioException(DioException error) {
-    print("SERVER ERROR DATA: ${error.response?.data}"); 
-    print("STATUS CODE: ${error.response?.statusCode}");
     final response = error.response;
     final data = response?.data;
-    final serverMessage = _extractMessage(data);
+    final serverMessage = extractMessage(data);
     
 
     if (serverMessage != null && serverMessage.isNotEmpty) {
@@ -45,22 +43,44 @@ class ApiException implements Exception {
     }
   }
 
-  static String? _extractMessage(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      final message = data['message'];
-      if (message is String) return message;
+  static String? extractMessage(dynamic data) {
+    final messages = _collectMessages(data);
+    if (messages.isEmpty) return null;
+    return messages.join('\n');
+  }
 
-      final errors = data['errors'];
-      if (errors is Map && errors.isNotEmpty) {
-        final firstValue = errors.values.first;
-        if (firstValue is List && firstValue.isNotEmpty) {
-          return firstValue.first.toString();
-        }
-        return firstValue.toString();
-      }
+  static List<String> _collectMessages(dynamic value) {
+    if (value == null) return const [];
+
+    if (value is String) {
+      final trimmed = value.trim();
+      return trimmed.isEmpty ? const [] : [trimmed];
     }
 
-    return null;
+    if (value is Iterable) {
+      return value.expand(_collectMessages).toList();
+    }
+
+    if (value is Map) {
+      final errors = value['errors'];
+      final message = value['message'];
+      final error = value['error'];
+
+      final collected = <String>[
+        ..._collectMessages(errors),
+        ..._collectMessages(message),
+        ..._collectMessages(error),
+      ];
+
+      if (collected.isNotEmpty) {
+        return collected.toSet().toList();
+      }
+
+      return value.values.expand(_collectMessages).toSet().toList();
+    }
+
+    final fallback = value.toString().trim();
+    return fallback.isEmpty ? const [] : [fallback];
   }
 
   @override

@@ -13,8 +13,8 @@ class AdminLoginScreen extends StatefulWidget {
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'admin@copyproject.com'); // بيانات تجريبية جاهزة
-  final _passwordController = TextEditingController(text: 'admin123'); // بيانات تجريبية جاهزة
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
 
   @override
@@ -30,7 +30,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -40,7 +40,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       final provider = Provider.of<AdminAuthProvider>(context, listen: false);
       
       final success = await provider.login(
-        _emailController.text.trim(),
+        _phoneController.text.trim(),
         _passwordController.text,
       );
 
@@ -90,17 +90,24 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         ),
                         const SizedBox(height: 32),
                         
-                        // حقل الإيميل
+                        // حقل رقم الهاتف
                         TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          textDirection: TextDirection.ltr,
                           decoration: const InputDecoration(
-                            labelText: 'البريد الإلكتروني',
-                            prefixIcon: Icon(Icons.email),
+                            labelText: 'رقم الهاتف',
+                            hintText: '0925556666',
+                            prefixIcon: Icon(Icons.phone_android_rounded),
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) return 'الرجاء إدخال البريد الإلكتروني';
-                            if (!value.contains('@')) return 'بريد إلكتروني غير صالح';
+                            if (value == null || value.trim().isEmpty) {
+                              return 'الرجاء إدخال رقم الهاتف';
+                            }
+                            final regExp = RegExp(r'^(091|092|094|095)\d{7}$');
+                            if (!regExp.hasMatch(value.trim())) {
+                              return 'رقم هاتف ليبي غير صحيح';
+                            }
                             return null;
                           },
                         ),
