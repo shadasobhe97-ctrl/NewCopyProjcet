@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/admin/data/models/admin_user_model.dart';
-import 'package:kids_transport/features/auth/data/models/login_request_model.dart';
-import 'package:kids_transport/features/auth/data/repositories/auth_repository.dart';
+import 'package:kids_transport/features/auth/login/data/models/login_request_model.dart';
+import 'package:kids_transport/features/auth/login/data/repositories/auth_repository.dart';
 
 class AdminAuthProvider with ChangeNotifier {
   final AuthRepository _repository;

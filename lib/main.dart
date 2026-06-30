@@ -7,10 +7,10 @@ import 'package:provider/provider.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
-import 'features/auth/logic/auth_cubit.dart';
+import 'features/auth/login/logic/auth_cubit.dart';
 import 'core/theme/cubit/theme_cubit.dart';
 import 'features/app_entry/logic/app_entry_cubit.dart';
-import 'package:kids_transport/features/registration/logic/register_cubit.dart';
+import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
 import 'package:kids_transport/features/admin/logic/admin_auth_provider.dart';
 import 'package:kids_transport/features/admin/logic/admin_dashboard_provider.dart';
 

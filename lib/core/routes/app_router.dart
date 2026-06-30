@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/features/app_entry/presentation/screens/onboarding_screen.dart';
 import 'package:kids_transport/features/app_entry/presentation/screens/splash_screen.dart';
+import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
 import 'package:kids_transport/features/driver/presentation/screens/driver_home_screen.dart';
 import 'package:kids_transport/features/parent/presentation/screens/parent_home_screen.dart';
 import 'package:kids_transport/features/parent/presentation/screens/parent_main_wrapper.dart';
@@ -10,35 +12,35 @@ import 'package:kids_transport/features/parent/presentation/screens/child_detail
 import 'package:kids_transport/features/parent/presentation/screens/parent_profile_screen.dart';
 import 'package:kids_transport/features/parent/presentation/screens/saved_addresses_screen.dart';
 import 'package:kids_transport/features/parent/data/models/child_model.dart';
-import 'package:kids_transport/features/registration/presentation/screens/driver/driver_alternative_phone_screen.dart';
-import 'package:kids_transport/features/registration/presentation/screens/driver/driver_avatar_screen.dart';
-import 'package:kids_transport/features/registration/presentation/screens/driver/driver_basic_info_screen.dart';
-import 'package:kids_transport/features/registration/presentation/screens/driver/driver_docs_stage_screen.dart';
-import 'package:kids_transport/features/registration/presentation/screens/driver/driver_location_screen.dart';
-import 'package:kids_transport/features/registration/presentation/screens/driver/driver_national_info_screen.dart';
-import 'package:kids_transport/features/registration/presentation/screens/driver/driver_otp_screen.dart';
-import 'package:kids_transport/features/registration/presentation/screens/driver/driver_vehicle_stage_screen.dart';
-import 'package:kids_transport/features/registration/presentation/screens/driver/driver_waiting_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_alternative_phone_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_avatar_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_basic_info_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_docs_stage_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_location_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_national_info_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_otp_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_vehicle_stage_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_waiting_screen.dart';
 import 'package:kids_transport/features/driver/presentation/screens/driver_main_wrapper.dart';
 import 'package:kids_transport/features/driver/presentation/screens/driver_backup_vehicle_screen.dart';
 import 'package:kids_transport/features/driver/presentation/screens/driver_profile_screen.dart';
 import 'package:kids_transport/features/driver/presentation/screens/driver_primary_vehicle_screen.dart';
-import 'package:kids_transport/features/registration/presentation/screens/parent/parent_alternative_phone.dart';
-import 'package:kids_transport/features/registration/presentation/screens/parent/parent_avatar_screen.dart';
-import 'package:kids_transport/features/registration/presentation/screens/parent/parent_basic_info_screen.dart';
-import 'package:kids_transport/features/registration/presentation/screens/parent/parent_email_screen.dart';
-import 'package:kids_transport/features/registration/presentation/screens/parent/parent_otp_screen.dart';
-import 'package:kids_transport/features/registration/presentation/screens/select_role_screen.dart';
-import 'package:kids_transport/features/registration/presentation/screens/parent/parent_location_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_alternative_phone.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_avatar_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_basic_info_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_email_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_otp_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/select_role_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_location_screen.dart';
 
 // 🌟 استيراد شاشة تسجيل دخول الأدمن الجديدة
 import 'package:kids_transport/features/admin/presentation/screens/admin_login_screen.dart'; 
 import 'package:kids_transport/features/admin/presentation/screens/admin_dashboard_screen.dart';
 
-import '../../features/auth/presentation/screens/login_screen.dart';
-import '../../features/auth/presentation/screens/forgot_password_screen.dart';
-import '../../features/auth/presentation/screens/verify_otp_screen.dart';
-import '../../features/auth/presentation/screens/reset_password_screen.dart';
+import '../../features/auth/login/presentation/screens/login_screen.dart';
+import '../../features/auth/login/presentation/screens/forgot_password_screen.dart';
+import '../../features/auth/login/presentation/screens/verify_otp_screen.dart';
+import '../../features/auth/login/presentation/screens/reset_password_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -96,7 +98,9 @@ class AppRoutes {
         );
         
       case '/selectRole':
-        return MaterialPageRoute(builder: (_) => const SelectRoleScreen());
+        return MaterialPageRoute(
+          builder: (_) => const SelectRoleScreen(),
+        );
     
       case '/parentEmail':
         return MaterialPageRoute(builder: (_) => const ParentEmailScreen());
