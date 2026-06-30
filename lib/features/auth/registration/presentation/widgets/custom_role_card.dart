@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class CustomRoleCard extends StatelessWidget {
   final String title;
@@ -27,37 +29,45 @@ class CustomRoleCard extends StatelessWidget {
         duration: const Duration(milliseconds: 250),
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
+        decoration: AppTheme.boxDecoration(
           // لون الخلفية يتناسق مع الثيم
-          color: isSelected 
-              ? theme.primaryColor.withOpacity(isDark ? 0.15 : 0.08)
-              : (isDark ? Colors.grey[900] : Colors.grey[50]),
-          borderRadius: BorderRadius.circular(16),
+          color: isSelected
+              ? theme.primaryColor.withValues(alpha: isDark ? 0.15 : 0.08)
+              : (isDark ? AppColors.grey900 : AppColors.grey50),
+          borderRadius: AppTheme.radius(16),
           // حواف تتغير حسب الاختيار لإعطاء انطباع تفاعلي فخم
-          border: Border.all(
-            color: isSelected ? theme.primaryColor : (isDark ? Colors.grey[800]! : Colors.grey[300]!),
+          border: AppTheme.border(
+            color: isSelected
+                ? theme.primaryColor
+                : (isDark ? AppColors.grey800 : AppColors.grey300),
             width: isSelected ? 2.0 : 1.0,
           ),
-          boxShadow: isSelected ? [
-            BoxShadow(
-              color: theme.primaryColor.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            )
-          ] : [],
+          boxShadow: isSelected
+              ? [
+                  AppTheme.boxShadow(
+                    color: theme.primaryColor.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [],
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isSelected ? theme.primaryColor : (isDark ? Colors.grey[800] : Colors.grey[200]),
+              decoration: AppTheme.boxDecoration(
+                color: isSelected
+                    ? theme.primaryColor
+                    : (isDark ? AppColors.grey800 : AppColors.grey200),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 28,
-                color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                color: isSelected
+                    ? AppColors.white
+                    : (isDark ? AppColors.white70 : AppColors.black87),
               ),
             ),
             const SizedBox(width: 16),
@@ -76,7 +86,7 @@ class CustomRoleCard extends StatelessWidget {
                   Text(
                     description,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      color: isDark ? AppColors.grey400 : AppColors.grey600,
                     ),
                   ),
                 ],

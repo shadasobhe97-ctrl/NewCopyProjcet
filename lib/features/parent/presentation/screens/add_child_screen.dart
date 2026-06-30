@@ -5,6 +5,9 @@ import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/features/parent/data/models/child_model.dart';
 import 'package:kids_transport/features/parent/logic/child_cubit/child_cubit.dart';
 import 'package:kids_transport/features/parent/presentation/widgets/custom_search_dropdown.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 
 class AddChildScreen extends StatefulWidget {
   /// إذا كان لدينا طفل للتعديل يُمرر هنا، وإلا null = إضافة جديدة
@@ -58,8 +61,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
     final child = widget.childToEdit;
 
     _nameController = TextEditingController(text: child?.fullName ?? '');
-    _medicalNotesController =
-        TextEditingController(text: child?.medicalNotes ?? '');
+    _medicalNotesController = TextEditingController(
+      text: child?.medicalNotes ?? '',
+    );
     _birthDateController = TextEditingController(
       text: child != null
           ? "${child.birthDate.year}/${child.birthDate.month.toString().padLeft(2, '0')}/${child.birthDate.day.toString().padLeft(2, '0')}"
@@ -96,20 +100,24 @@ class _AddChildScreenState extends State<AddChildScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor:
-            isDark ? const Color(0xFF0F0F0F) : AppColors.backgroundLight,
+        backgroundColor: context.scaffoldBackgroundColor,
         appBar: AppBar(
           backgroundColor: AppColors.primaryLight,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.white,
           elevation: 0,
           title: Text(
             _isEditMode ? "تعديل بيانات الطفل" : "إضافة طفل جديد",
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold),
+            style: AppTextStyles.style(
+              color: AppColors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           centerTitle: true,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.white,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -119,9 +127,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
             padding: const EdgeInsets.all(20),
             children: [
               // ── 1. صورة الطفل ────────────────────────────────────────
-              _buildSection("الصورة الشخصية (اختياري)", Icons.camera_alt_outlined, [
-                _buildPhotoUploader(isDark),
-              ]),
+              _buildSection(
+                "الصورة الشخصية (اختياري)",
+                Icons.camera_alt_outlined,
+                [_buildPhotoUploader(isDark)],
+              ),
               const SizedBox(height: 20),
 
               // ── 2. الاسم الكامل ──────────────────────────────────────
@@ -129,8 +139,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 TextFormField(
                   controller: _nameController,
                   decoration: _inputDecoration("أدخل الاسم الرباعي للطفل"),
-                  validator: (val) =>
-                      val == null || val.isEmpty ? "يرجى إدخال اسم الطفل" : null,
+                  validator: (val) => val == null || val.isEmpty
+                      ? "يرجى إدخال اسم الطفل"
+                      : null,
                 ),
               ]),
               const SizedBox(height: 20),
@@ -147,12 +158,15 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   controller: _birthDateController,
                   readOnly: true,
                   decoration: _inputDecoration("اضغط لاختيار التاريخ").copyWith(
-                    suffixIcon: const Icon(Icons.calendar_today_rounded,
-                        color: AppColors.primaryLight),
+                    suffixIcon: const Icon(
+                      Icons.calendar_today_rounded,
+                      color: AppColors.primaryLight,
+                    ),
                   ),
                   onTap: _pickBirthDate,
-                  validator: (val) =>
-                      val == null || val.isEmpty ? "يرجى اختيار تاريخ الميلاد" : null,
+                  validator: (val) => val == null || val.isEmpty
+                      ? "يرجى اختيار تاريخ الميلاد"
+                      : null,
                 ),
               ]),
               const SizedBox(height: 20),
@@ -175,9 +189,10 @@ class _AddChildScreenState extends State<AddChildScreen> {
                     padding: const EdgeInsets.only(top: 6, right: 12),
                     child: Text(
                       "يرجى البحث واختيار مدرسة",
-                      style: TextStyle(
-                          color: AppColors.error.withOpacity(0.8),
-                          fontSize: 12),
+                      style: AppTextStyles.style(
+                        color: AppColors.error.withValues(alpha: 0.8),
+                        fontSize: 12,
+                      ),
                     ),
                   ),
               ]),
@@ -197,10 +212,10 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   onChanged: (val) {
                     setState(() {
                       _selectedAddressId = val;
-                      _selectedAddressTitle = _dummyAddresses
-                          .firstWhere((a) => a['id'] == val,
-                              orElse: () => {'name': ''})[
-                          'name'];
+                      _selectedAddressTitle = _dummyAddresses.firstWhere(
+                        (a) => a['id'] == val,
+                        orElse: () => {'name': ''},
+                      )['name'];
                     });
                   },
                   validator: (val) =>
@@ -213,26 +228,32 @@ class _AddChildScreenState extends State<AddChildScreen> {
                     // التوجيه المباشر لشاشة العناوين المحفوظة لإضافة عنوان جديد
                     Navigator.pushNamed(context, AppRoutes.savedAddresses);
                   },
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: AppTheme.radius(12),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                          color: AppColors.primaryLight.withOpacity(0.5),
-                          style: BorderStyle.solid),
-                      borderRadius: BorderRadius.circular(12),
-                      color: AppColors.primaryLight.withOpacity(0.05),
+                      horizontal: 16,
+                      vertical: 12,
                     ),
-                    child: const Row(
+                    decoration: AppTheme.boxDecoration(
+                      border: AppTheme.border(
+                        color: AppColors.primaryLight.withValues(alpha: 0.5),
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: AppTheme.radius(12),
+                      color: AppColors.primaryLight.withValues(alpha: 0.05),
+                    ),
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.add_location_alt_rounded,
-                            color: AppColors.primaryLight, size: 20),
+                        Icon(
+                          Icons.add_location_alt_rounded,
+                          color: AppColors.primaryLight,
+                          size: 20,
+                        ),
                         SizedBox(width: 8),
                         Text(
                           "+ إضافة عنوان جديد",
-                          style: TextStyle(
+                          style: AppTextStyles.style(
                             color: AppColors.primaryLight,
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
@@ -246,9 +267,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
               const SizedBox(height: 20),
 
               // ── 7. الفترة الزمنية ─────────────────────────────────────
-              _buildSection("الفترة الزمنية للتوصيل", Icons.access_time_rounded, [
-                _buildTimeSlotSelector(),
-              ]),
+              _buildSection(
+                "الفترة الزمنية للتوصيل",
+                Icons.access_time_rounded,
+                [_buildTimeSlotSelector()],
+              ),
               const SizedBox(height: 20),
 
               // ── 8. أوقات الذهاب والرجوع ─────────────────────────────
@@ -281,15 +304,18 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
               // ── 9. الملاحظات الصحية ─────────────────────────────────
               _buildSection(
-                  "ملاحظات صحية أو خاصة (اختياري)",
-                  Icons.medical_information_outlined, [
-                TextFormField(
-                  controller: _medicalNotesController,
-                  maxLines: 3,
-                  decoration: _inputDecoration(
-                      "مثل: يعاني من حساسية معينة، يرجى تركه في المقاعد الأمامية..."),
-                ),
-              ]),
+                "ملاحظات صحية أو خاصة (اختياري)",
+                Icons.medical_information_outlined,
+                [
+                  TextFormField(
+                    controller: _medicalNotesController,
+                    maxLines: 3,
+                    decoration: _inputDecoration(
+                      "مثل: يعاني من حساسية معينة، يرجى تركه في المقاعد الأمامية...",
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 20),
             ],
           ),
@@ -297,20 +323,18 @@ class _AddChildScreenState extends State<AddChildScreen> {
         // زر الحفظ مثبت في الأسفل وبتصميم عائم أنيق
         bottomNavigationBar: Container(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF111827) : Colors.white,
+          decoration: AppTheme.boxDecoration(
+            color: isDark ? AppColors.darkSurface : AppColors.white,
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
+              AppTheme.boxShadow(
+                color: AppColors.black.withValues(alpha: isDark ? 0.3 : 0.06),
                 blurRadius: 10,
                 offset: const Offset(0, -4),
               ),
             ],
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: AppTheme.verticalRadius(top: AppTheme.cornerRadius(20)),
           ),
-          child: SafeArea(
-            child: _buildSubmitButton(),
-          ),
+          child: SafeArea(child: _buildSubmitButton()),
         ),
       ),
     );
@@ -318,17 +342,16 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
   // ── مساعدات البناء ─────────────────────────────────────────────────
 
-  Widget _buildSection(
-      String title, IconData icon, List<Widget> children) {
+  Widget _buildSection(String title, IconData icon, List<Widget> children) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(18),
+      decoration: AppTheme.boxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.white,
+        borderRadius: AppTheme.radius(18),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.15 : 0.05),
+          AppTheme.boxShadow(
+            color: AppColors.black.withValues(alpha: isDark ? 0.15 : 0.05),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -341,17 +364,19 @@ class _AddChildScreenState extends State<AddChildScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(9),
+                decoration: AppTheme.boxDecoration(
+                  color: AppColors.primaryLight.withValues(alpha: 0.1),
+                  borderRadius: AppTheme.radius(9),
                 ),
                 child: Icon(icon, color: AppColors.primaryLight, size: 17),
               ),
               const SizedBox(width: 10),
               Text(
                 title,
-                style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.bold),
+                style: AppTextStyles.style(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -373,11 +398,13 @@ class _AddChildScreenState extends State<AddChildScreen> {
             Container(
               width: 100,
               height: 100,
-              decoration: BoxDecoration(
+              decoration: AppTheme.boxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primaryLight.withOpacity(0.08),
-                border: Border.all(
-                    color: AppColors.primaryLight.withOpacity(0.3), width: 2),
+                color: AppColors.primaryLight.withValues(alpha: 0.08),
+                border: AppTheme.border(
+                  color: AppColors.primaryLight.withValues(alpha: 0.3),
+                  width: 2,
+                ),
               ),
               child: const Icon(
                 Icons.camera_alt_rounded,
@@ -390,11 +417,15 @@ class _AddChildScreenState extends State<AddChildScreen> {
               left: 4,
               child: Container(
                 padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
+                decoration: AppTheme.boxDecoration(
                   color: AppColors.primaryLight,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.add_rounded, color: Colors.white, size: 14),
+                child: const Icon(
+                  Icons.add_rounded,
+                  color: AppColors.white,
+                  size: 14,
+                ),
               ),
             ),
           ],
@@ -410,7 +441,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
           child: _GenderChip(
             label: "ولد 👦",
             selected: _gender == 'MALE',
-            color: const Color(0xFF3B82F6),
+            color: AppColors.maleBlue,
             onTap: () => setState(() => _gender = 'MALE'),
           ),
         ),
@@ -419,7 +450,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
           child: _GenderChip(
             label: "بنت 👧",
             selected: _gender == 'FEMALE',
-            color: const Color(0xFFEC4899),
+            color: AppColors.femalePink,
             onTap: () => setState(() => _gender = 'FEMALE'),
           ),
         ),
@@ -433,19 +464,19 @@ class _AddChildScreenState extends State<AddChildScreen> {
         'slot': PreferredTimeSlot.MORNING,
         'label': 'فترة صباحية ',
         'emoji': '☀️',
-        'color': const Color(0xFFF59E0B),
+        'color': AppColors.accentAmber,
       },
       {
         'slot': PreferredTimeSlot.EVENING,
         'label': 'فترة مسائية ',
         'emoji': '🌙',
-        'color': const Color(0xFF6366F1),
+        'color': AppColors.accentBlue,
       },
       {
         'slot': PreferredTimeSlot.BOTH,
         'label': 'الفترتين',
         'emoji': '🔄',
-        'color': const Color(0xFF10B981),
+        'color': AppColors.accentGreen,
       },
     ];
 
@@ -458,29 +489,31 @@ class _AddChildScreenState extends State<AddChildScreen> {
           padding: const EdgeInsets.only(bottom: 8),
           child: InkWell(
             onTap: () => setState(() => _preferredTime = slot),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppTheme.radius(12),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
+              decoration: AppTheme.boxDecoration(
                 color: isSelected
-                    ? color.withOpacity(0.12)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected ? color : Colors.grey.withOpacity(0.3),
+                    ? color.withValues(alpha: 0.12)
+                    : AppColors.transparent,
+                borderRadius: AppTheme.radius(12),
+                border: AppTheme.border(
+                  color: isSelected ? color : AppColors.grey.withValues(alpha: 0.3),
                   width: isSelected ? 1.5 : 1,
                 ),
               ),
               child: Row(
                 children: [
-                  Text(s['emoji'] as String,
-                      style: const TextStyle(fontSize: 20)),
+                  Text(
+                    s['emoji'] as String,
+                    style: AppTextStyles.style(fontSize: 20),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       s['label'] as String,
-                      style: TextStyle(
+                      style: AppTextStyles.style(
                         fontWeight: FontWeight.w600,
                         color: isSelected ? color : null,
                       ),
@@ -506,14 +539,13 @@ class _AddChildScreenState extends State<AddChildScreen> {
   }) {
     return InkWell(
       onTap: onPick,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: AppTheme.radius(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(
-          border:
-              Border.all(color: color.withOpacity(0.4)),
-          borderRadius: BorderRadius.circular(12),
-          color: color.withOpacity(0.05),
+        decoration: AppTheme.boxDecoration(
+          border: AppTheme.border(color: color.withValues(alpha: 0.4)),
+          borderRadius: AppTheme.radius(12),
+          color: color.withValues(alpha: 0.05),
         ),
         child: Row(
           children: [
@@ -523,14 +555,17 @@ class _AddChildScreenState extends State<AddChildScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label,
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: color,
-                          fontWeight: FontWeight.w600)),
+                  Text(
+                    label,
+                    style: AppTextStyles.style(
+                      fontSize: 11,
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   Text(
                     value ?? "اضغط للاختيار",
-                    style: TextStyle(
+                    style: AppTextStyles.style(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                       color: value != null ? null : AppColors.textMuted,
@@ -548,11 +583,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
   Widget _buildSubmitButton() {
     return ElevatedButton(
       onPressed: _submitForm,
-      style: ElevatedButton.styleFrom(
+      style: AppTheme.elevatedButtonStyle(
         backgroundColor: AppColors.primaryLight,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.white,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: AppTheme.roundedRectangleBorder(borderRadius: AppTheme.radius(16)),
         elevation: 2,
       ),
       child: Row(
@@ -562,8 +597,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
           const SizedBox(width: 8),
           Text(
             _isEditMode ? "حفظ التعديلات" : "إضافة الطفل",
-            style: const TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold),
+            style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -571,30 +605,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
   }
 
   InputDecoration _inputDecoration(String hint) {
-    return InputDecoration(
+    return AppTheme.inputDecoration(context, 
       hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      filled: true,
-      fillColor: Colors.grey.withOpacity(0.05),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.withOpacity(0.25)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide:
-            const BorderSide(color: AppColors.primaryLight, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.error),
-      ),
+      hintStyle: AppTextStyles.style(color: AppColors.textMuted, fontSize: 13),
     );
   }
 
@@ -612,9 +625,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
       confirmText: "تأكيد",
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: AppColors.primaryLight,
-          ),
+          colorScheme: const ColorScheme.light(primary: AppColors.primaryLight),
         ),
         child: child!,
       ),
@@ -637,9 +648,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
       confirmText: "تأكيد",
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: AppColors.primaryLight,
-          ),
+          colorScheme: const ColorScheme.light(primary: AppColors.primaryLight),
         ),
         child: child!,
       ),
@@ -697,9 +706,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isEditMode
-              ? "✅ تم حفظ تعديلات بيانات الطفل"
-              : "✅ تمت إضافة الطفل بنجاح"),
+          content: Text(
+            _isEditMode
+                ? "✅ تم حفظ تعديلات بيانات الطفل"
+                : "✅ تمت إضافة الطفل بنجاح",
+          ),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
         ),
@@ -732,18 +743,18 @@ class _GenderChip extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: selected ? color.withOpacity(0.12) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected ? color : Colors.grey.withOpacity(0.35),
+        decoration: AppTheme.boxDecoration(
+          color: selected ? color.withValues(alpha: 0.12) : AppColors.transparent,
+          borderRadius: AppTheme.radius(12),
+          border: AppTheme.border(
+            color: selected ? color : AppColors.grey.withValues(alpha: 0.35),
             width: selected ? 1.5 : 1,
           ),
         ),
         child: Center(
           child: Text(
             label,
-            style: TextStyle(
+            style: AppTextStyles.style(
               fontWeight: FontWeight.bold,
               fontSize: 15,
               color: selected ? color : AppColors.textMuted,

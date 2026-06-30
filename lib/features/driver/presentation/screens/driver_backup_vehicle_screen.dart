@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 // ==========================================
 // شاشة معلومات المركبة الاحتياطية للسائق
@@ -9,7 +12,8 @@ class DriverBackupVehicleScreen extends StatefulWidget {
   const DriverBackupVehicleScreen({super.key});
 
   @override
-  State<DriverBackupVehicleScreen> createState() => _DriverBackupVehicleScreenState();
+  State<DriverBackupVehicleScreen> createState() =>
+      _DriverBackupVehicleScreenState();
 }
 
 class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
@@ -19,7 +23,7 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
   String _carType = 'هيونداي H1 2020';
   String _plateNumber = '98765 طرابلس';
   String _seatsCount = '9';
-  
+
   late TextEditingController _carTypeController;
   late TextEditingController _plateNumberController;
   late TextEditingController _seatsCountController;
@@ -59,9 +63,15 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('تأكيد التعديل', textAlign: TextAlign.center, style: TextStyle(color: AppColors.primaryLight)),
-          content: const Text(
+          shape: AppTheme.roundedRectangleBorder(
+            borderRadius: AppTheme.radius(20),
+          ),
+          title: Text(
+            'تأكيد التعديل',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.style(color: context.primaryColor),
+          ),
+          content: Text(
             'تم إرسال التعديلات بنجاح. لن يتم تطبيق التعديل حتى توافق عليه الإدارة لتتمكن من العمل.',
             textAlign: TextAlign.center,
           ),
@@ -76,13 +86,14 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
                   _seatsCount = _seatsCountController.text;
                   _isEditing = false;
                 });
-                
               },
-              style: ElevatedButton.styleFrom(
+              style: AppTheme.elevatedButtonStyle(
                 minimumSize: const Size(120, 44),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: AppTheme.roundedRectangleBorder(
+                  borderRadius: AppTheme.radius(12),
+                ),
               ),
-              child: const Text('حسناً'),
+              child: Text('حسناً'),
             ),
           ],
         ),
@@ -94,9 +105,13 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('حذف المركبة', textAlign: TextAlign.center, style: TextStyle(color: AppColors.error)),
-        content: const Text(
+        shape: AppTheme.roundedRectangleBorder(borderRadius: AppTheme.radius(20)),
+        title: Text(
+          'حذف المركبة',
+          textAlign: TextAlign.center,
+          style: AppTextStyles.style(color: context.errorColor),
+        ),
+        content: Text(
           'هل أنت متأكد من حذف هذه المركبة؟',
           textAlign: TextAlign.center,
         ),
@@ -104,27 +119,34 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
         actions: [
           OutlinedButton(
             onPressed: () => Navigator.pop(ctx),
-            style: OutlinedButton.styleFrom(
+            style: AppTheme.outlinedButtonStyle(
               minimumSize: const Size(100, 44),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: AppTheme.roundedRectangleBorder(
+                borderRadius: AppTheme.radius(12),
+              ),
             ),
-            child: const Text('إلغاء'),
+            child: Text('إلغاء'),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('تم تقديم طلب حذف المركبة للإدارة'), backgroundColor: AppColors.success),
+                SnackBar(
+                  content: Text('تم تقديم طلب حذف المركبة للإدارة'),
+                  backgroundColor: context.successColor,
+                ),
               );
               Navigator.pop(context);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
+            style: AppTheme.elevatedButtonStyle(
+              backgroundColor: context.errorColor,
               minimumSize: const Size(100, 44),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: AppTheme.roundedRectangleBorder(
+                borderRadius: AppTheme.radius(12),
+              ),
             ),
-            child: const Text('حذف'),
+            child: Text('حذف'),
           ),
         ],
       ),
@@ -139,11 +161,14 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        backgroundColor: context.backgroundSurface,
         appBar: AppBar(
-          title: const Text('المركبة الاحتياطية', style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
-          foregroundColor: isDark ? Colors.white : AppColors.textDark,
+          title: Text(
+            'المركبة الاحتياطية',
+            style: AppTextStyles.style(fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: context.darkSurface,
+          foregroundColor: isDark ? AppColors.white : context.textDark,
           elevation: 0,
           actions: [
             PopupMenuButton<String>(
@@ -155,23 +180,31 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
                 }
               },
               itemBuilder: (BuildContext context) => [
-                const PopupMenuItem<String>(
+                PopupMenuItem<String>(
                   value: 'edit',
                   child: Row(
                     children: [
-                      Icon(Icons.edit_rounded, color: AppColors.primaryLight, size: 20),
-                      SizedBox(width: 12),
+                      Icon(
+                        Icons.edit_rounded,
+                        color: context.primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
                       Text('تعديل'),
                     ],
                   ),
                 ),
-                const PopupMenuItem<String>(
+                PopupMenuItem<String>(
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_rounded, color: AppColors.error, size: 20),
-                      SizedBox(width: 12),
-                      Text('حذف', style: TextStyle(color: AppColors.error)),
+                      Icon(
+                        Icons.delete_rounded,
+                        color: context.errorColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Text('حذف', style: AppTextStyles.style(color: context.errorColor)),
                     ],
                   ),
                 ),
@@ -190,21 +223,30 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
                 // ── صورة السيارة ──
                 Container(
                   height: 180,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.surfaceDark : Colors.white,
-                    borderRadius: BorderRadius.circular(24),
+                  decoration: AppTheme.boxDecoration(
+                    color: context.darkSurface,
+                    borderRadius: AppTheme.radius(24),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                      AppTheme.boxShadow(
+                        color: AppColors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: AppTheme.radius(24),
                     child: Image.network(
                       'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=500&q=80',
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Center(
-                        child: Icon(Icons.directions_car_filled_rounded, size: 60, color: Colors.grey),
-                      ),
+                      errorBuilder: (context, error, stackTrace) =>
+                          Center(
+                            child: Icon(
+                              Icons.directions_car_filled_rounded,
+                              size: 60,
+                              color: AppColors.grey,
+                            ),
+                          ),
                     ),
                   ),
                 ),
@@ -217,7 +259,8 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
                   value: _carType,
                   controller: _carTypeController,
                   isDark: isDark,
-                  validator: (val) => val == null || val.isEmpty ? 'مطلوب' : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? 'مطلوب' : null,
                 ),
                 _buildField(
                   label: 'رقم اللوحة',
@@ -225,7 +268,8 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
                   value: _plateNumber,
                   controller: _plateNumberController,
                   isDark: isDark,
-                  validator: (val) => val == null || val.isEmpty ? 'مطلوب' : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? 'مطلوب' : null,
                 ),
                 _buildField(
                   label: 'عدد المقاعد',
@@ -234,20 +278,39 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
                   controller: _seatsCountController,
                   keyboardType: TextInputType.number,
                   isDark: isDark,
-                  validator: (val) => val == null || val.isEmpty ? 'مطلوب' : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? 'مطلوب' : null,
                 ),
 
                 const SizedBox(height: 16),
                 const Divider(),
                 const SizedBox(height: 16),
-                
+
                 // ── الوثائق (غير قابلة للتعديل مباشرة من هنا) ──
-                const Text('وثائق المركبة', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(
+                  'وثائق المركبة',
+                  style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
                 const SizedBox(height: 16),
-                
-                _buildDocItem('رخصة القيادة', Icons.badge_outlined, true, isDark),
-                _buildDocItem('وثيقة التأمين', Icons.verified_user_outlined, true, isDark),
-                _buildDocItem('الفحص الفني', Icons.fact_check_outlined, true, isDark),
+
+                _buildDocItem(
+                  'رخصة القيادة',
+                  Icons.badge_outlined,
+                  true,
+                  isDark,
+                ),
+                _buildDocItem(
+                  'وثيقة التأمين',
+                  Icons.verified_user_outlined,
+                  true,
+                  isDark,
+                ),
+                _buildDocItem(
+                  'الفحص الفني',
+                  Icons.fact_check_outlined,
+                  true,
+                  isDark,
+                ),
 
                 const SizedBox(height: 40),
 
@@ -258,22 +321,38 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
                       Expanded(
                         child: OutlinedButton(
                           onPressed: _toggleEditMode,
-                          style: OutlinedButton.styleFrom(
+                          style: AppTheme.outlinedButtonStyle(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: AppTheme.roundedRectangleBorder(
+                              borderRadius: AppTheme.radius(12),
+                            ),
                           ),
-                          child: const Text('إلغاء التعديل', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          child: Text(
+                            'إلغاء التعديل',
+                            style: AppTextStyles.style(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
                           onPressed: _saveVehicle,
-                          style: ElevatedButton.styleFrom(
+                          style: AppTheme.elevatedButtonStyle(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: AppTheme.roundedRectangleBorder(
+                              borderRadius: AppTheme.radius(12),
+                            ),
                           ),
-                          child: const Text('حفظ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          child: Text(
+                            'حفظ',
+                            style: AppTextStyles.style(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -304,39 +383,57 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
                 controller: controller,
                 keyboardType: keyboardType,
                 validator: validator,
-                decoration: InputDecoration(
+                decoration: AppTheme.inputDecoration(context, 
                   labelText: label,
-                  prefixIcon: Icon(icon, color: AppColors.primaryLight),
+                  prefixIcon: Icon(icon, color: context.primaryColor),
                 ),
               )
             : Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.surfaceDark : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                decoration: AppTheme.boxDecoration(
+                  color: context.darkSurface,
+                  borderRadius: AppTheme.radius(16),
+                  border: AppTheme.border(
+                    color: isDark ? AppColors.grey800 : AppColors.grey200,
+                  ),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 6, offset: const Offset(0, 2)),
+                    AppTheme.boxShadow(
+                      color: AppColors.black.withValues(alpha: 0.02),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
                   ],
                 ),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
+                      decoration: AppTheme.boxDecoration(
+                        color: context.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: AppTheme.radius(10),
                       ),
-                      child: Icon(icon, color: AppColors.primaryLight, size: 20),
+                      child: Icon(icon, color: context.primaryColor, size: 20),
                     ),
                     const SizedBox(width: 16),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                        Text(
+                          label,
+                          style: AppTextStyles.style(
+                            fontSize: 12,
+                            color: AppColors.grey500,
+                          ),
+                        ),
                         const SizedBox(height: 4),
-                        Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                        Text(
+                          value,
+                          style: AppTextStyles.style(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -351,20 +448,35 @@ class _DriverBackupVehicleScreenState extends State<DriverBackupVehicleScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+        decoration: AppTheme.boxDecoration(
+          color: context.darkSurface,
+          borderRadius: AppTheme.radius(12),
+          border: AppTheme.border(
+            color: isDark ? AppColors.grey800 : AppColors.grey200,
+          ),
         ),
         child: Row(
           children: [
-            Icon(icon, color: Colors.grey.shade600, size: 24),
+            Icon(icon, color: AppColors.grey600, size: 24),
             const SizedBox(width: 12),
-            Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTextStyles.style(fontWeight: FontWeight.w600),
+              ),
+            ),
             if (isValid)
-              const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 20)
+              Icon(
+                Icons.check_circle_rounded,
+                color: context.successColor,
+                size: 20,
+              )
             else
-              const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20),
+              Icon(
+                Icons.error_outline_rounded,
+                color: context.errorColor,
+                size: 20,
+              ),
           ],
         ),
       ),

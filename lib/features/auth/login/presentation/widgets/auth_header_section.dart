@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/utils/theme_context.dart';
 import '../../../../../core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
 
 class AuthHeaderSection extends StatelessWidget {
   final String title;
@@ -15,7 +16,7 @@ class AuthHeaderSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDarkMode;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -24,11 +25,11 @@ class AuthHeaderSection extends StatelessWidget {
         Text(
           title,
           style: AppTextStyles.heading(
-            color: isDark ? Colors.white : Colors.black87,
+            color: isDark ? AppColors.white : AppColors.black87,
           ),
         ),
         SizedBox(height: 8.h),
-        Text(subtitle, style: AppTextStyles.body(color: AppColors.textMuted)),
+        Text(subtitle, style: AppTextStyles.body(color: context.textMuted)),
         SizedBox(height: 40.h),
       ],
     );

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
-import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/cubit/theme_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_state.dart';
 import '../../data/models/driver_model.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 // ==========================================
 // السايد بار (الدروار) الخاص بالسائق
@@ -18,18 +21,19 @@ class DriverDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = context.isDarkMode;
 
     return BlocListener<AuthCubit, AuthState>(
       listenWhen: (_, state) =>
-          state is AuthLogoutSuccess || state is AuthLogoutFailure || state is AuthError,
+          state is AuthLogoutSuccess ||
+          state is AuthLogoutFailure ||
+          state is AuthError,
       listener: (context, state) {
         if (state is AuthLogoutSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: AppColors.success,
+              backgroundColor: context.successColor,
             ),
           );
           Navigator.pushNamedAndRemoveUntil(
@@ -41,7 +45,7 @@ class DriverDrawer extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage),
-              backgroundColor: AppColors.error,
+              backgroundColor: context.errorColor,
             ),
           );
           Navigator.pushNamedAndRemoveUntil(
@@ -53,152 +57,152 @@ class DriverDrawer extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage),
-              backgroundColor: AppColors.error,
+              backgroundColor: context.errorColor,
             ),
           );
         }
       },
       child: Drawer(
-      width: MediaQuery.of(context).size.width * 0.82,
-      backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.horizontal(left: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
-          // ─── هيدر الدروار ───────────────────────────────────────
-          _DriverDrawerHeader(driver: driver, isDark: isDark),
+        width: MediaQuery.of(context).size.width * 0.82,
+        backgroundColor: context.darkSurface,
+        shape: AppTheme.roundedRectangleBorder(
+          borderRadius: AppTheme.horizontalRadius(left: AppTheme.cornerRadius(24)),
+        ),
+        child: Column(
+          children: [
+            // ─── هيدر الدروار ───────────────────────────────────────
+            _DriverDrawerHeader(driver: driver, isDark: isDark),
 
-          // ─── قائمة العناصر ──────────────────────────────────────
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              children: [
-                // ── الملف الشخصي ──
-                _DrawerItem(
-                  icon: Icons.person_outline_rounded,
-                  iconColor: AppColors.primaryLight,
-                  label: 'الملف الشخصي',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/driverProfile');
-                  },
-                ),
+            // ─── قائمة العناصر ──────────────────────────────────────
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  // ── الملف الشخصي ──
+                  _DrawerItem(
+                    icon: Icons.person_outline_rounded,
+                    iconColor: context.primaryColor,
+                    label: 'الملف الشخصي',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/driverProfile');
+                    },
+                  ),
 
-                // ── معلومات المركبة الرئيسية ──
-                _DrawerItem(
-                  icon: Icons.directions_car_filled_rounded,
-                  iconColor: AppColors.primaryLight,
-                  label: 'معلومات المركبة الرئيسية',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/driverPrimaryVehicle');
-                  },
-                ),
+                  // ── معلومات المركبة الرئيسية ──
+                  _DrawerItem(
+                    icon: Icons.directions_car_filled_rounded,
+                    iconColor: context.primaryColor,
+                    label: 'معلومات المركبة الرئيسية',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/driverPrimaryVehicle');
+                    },
+                  ),
 
-                // ── المركبة الاحتياطية ──
-                _BackupVehicleDrawerItem(
-                  driver: driver,
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: التوجيه لشاشة إضافة/عرض المركبة الاحتياطية
-                    Navigator.pushNamed(
-                      context,
-                      '/driverBackupVehicle',
-                      arguments: {'collectedData': {}},
-                    );
-                  },
-                ),
+                  // ── المركبة الاحتياطية ──
+                  _BackupVehicleDrawerItem(
+                    driver: driver,
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: التوجيه لشاشة إضافة/عرض المركبة الاحتياطية
+                      Navigator.pushNamed(
+                        context,
+                        '/driverBackupVehicle',
+                        arguments: {'collectedData': {}},
+                      );
+                    },
+                  ),
 
-                // ── عقودي والتزاماتي ──
-                _DrawerItem(
-                  icon: Icons.description_outlined,
-                  iconColor: AppColors.pending,
-                  label: 'عقودي والتزاماتي',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: التوجيه لشاشة العقود والالتزامات
-                    // Navigator.pushNamed(context, AppRoutes.driverContracts);
-                  },
-                ),
+                  // ── عقودي والتزاماتي ──
+                  _DrawerItem(
+                    icon: Icons.description_outlined,
+                    iconColor: context.pendingColor,
+                    label: 'عقودي والتزاماتي',
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: التوجيه لشاشة العقود والالتزامات
+                      // Navigator.pushNamed(context, AppRoutes.driverContracts);
+                    },
+                  ),
 
-                const Divider(height: 20, indent: 16, endIndent: 16),
+                  const Divider(height: 20, indent: 16, endIndent: 16),
 
-                // ── الإعدادات ──
-                _DrawerItem(
-                  icon: Icons.settings_outlined,
-                  iconColor: AppColors.textMuted,
-                  label: 'الإعدادات',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: التوجيه لشاشة الإعدادات
-                    // Navigator.pushNamed(context, AppRoutes.driverSettings);
-                  },
-                ),
+                  // ── الإعدادات ──
+                  _DrawerItem(
+                    icon: Icons.settings_outlined,
+                    iconColor: context.textMuted,
+                    label: 'إعدادات التطبيق',
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: التوجيه لشاشة الإعدادات
+                      // Navigator.pushNamed(context, AppRoutes.driverSettings);
+                    },
+                  ),
 
-                // ── ميزات دربي ──
-                _DrawerItem(
-                  icon: Icons.auto_awesome_rounded,
-                  iconColor: const Color(0xFF8B5CF6),
-                  label: 'ميزات دربي',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: التوجيه لشاشة ميزات دربي
-                    // Navigator.pushNamed(context, AppRoutes.driverFeatures);
-                  },
-                ),
+                  // ── ميزات دربي ──
+                  _DrawerItem(
+                    icon: Icons.auto_awesome_rounded,
+                    iconColor: context.accentPurple,
+                    label: 'ميزات دربي',
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: التوجيه لشاشة ميزات دربي
+                      // Navigator.pushNamed(context, AppRoutes.driverFeatures);
+                    },
+                  ),
 
-                // ── التواصل مع الدعم ──
-                _DrawerItem(
-                  icon: Icons.support_agent_rounded,
-                  iconColor: AppColors.success,
-                  label: 'التواصل مع الدعم',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: فتح قناة الدعم (واتساب / اتصال / شات)
-                    // _launchSupportChannel();
-                  },
-                ),
+                  // ── التواصل مع الدعم ──
+                  _DrawerItem(
+                    icon: Icons.support_agent_rounded,
+                    iconColor: context.successColor,
+                    label: 'التواصل مع الدعم',
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: فتح قناة الدعم (واتساب / اتصال / شات)
+                      // _launchSupportChannel();
+                    },
+                  ),
 
-                const Divider(height: 20, indent: 16, endIndent: 16),
+                  const Divider(height: 20, indent: 16, endIndent: 16),
 
-                // ── تسجيل الخروج ──
-                BlocBuilder<AuthCubit, AuthState>(
-                  builder: (context, state) {
-                    final isLoading = state is AuthLoading;
-                    return _DrawerItem(
-                      icon: isLoading
-                          ? Icons.hourglass_empty_rounded
-                          : Icons.logout_rounded,
-                      iconColor: AppColors.error,
-                      label: isLoading
-                          ? 'جاري تسجيل الخروج...'
-                          : 'تسجيل الخروج',
-                      labelColor: AppColors.error,
-                      onTap: isLoading
-                          ? () {}
-                          : () => context.read<AuthCubit>().logout(),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-
-          // ─── Footer: نسخة التطبيق ──────────────────────────────
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'دربي v1.0.0 - نسخة تجريبية',
-              style: TextStyle(
-                fontSize: 11,
-                color: AppColors.textMuted.withOpacity(0.6),
+                  // ── تسجيل الخروج ──
+                  BlocBuilder<AuthCubit, AuthState>(
+                    builder: (context, state) {
+                      final isLoading = state is AuthLoading;
+                      return _DrawerItem(
+                        icon: isLoading
+                            ? Icons.hourglass_empty_rounded
+                            : Icons.logout_rounded,
+                        iconColor: context.errorColor,
+                        label: isLoading
+                            ? 'جاري تسجيل الخروج...'
+                            : 'تسجيل الخروج',
+                        labelColor: context.errorColor,
+                        onTap: isLoading
+                            ? () {}
+                            : () => context.read<AuthCubit>().logout(),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+
+            // ─── Footer: نسخة التطبيق ──────────────────────────────
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'دربي v1.0.0 - نسخة تجريبية',
+                style: AppTextStyles.style(
+                  fontSize: 11,
+                  color: context.textMuted.withValues(alpha: 0.6),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 }
@@ -214,17 +218,13 @@ class _DriverDrawerHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF1A2332), const Color(0xFF0F172A)]
-              : [AppColors.primaryLight, const Color(0xFF0E78C4)],
+      decoration: AppTheme.boxDecoration(
+        gradient: AppTheme.linearGradient(
+          colors: context.primaryGradient,
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-        ),
+        borderRadius: AppTheme.onlyRadius(topLeft: AppTheme.cornerRadius(24)),
       ),
       child: SafeArea(
         bottom: false,
@@ -238,21 +238,22 @@ class _DriverDrawerHeader extends StatelessWidget {
                 children: [
                   // ── أفاتار السائق ──
                   Container(
-                    decoration: BoxDecoration(
+                    decoration: AppTheme.boxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(
-                          color: Colors.white.withOpacity(0.4), width: 3),
+                      border: AppTheme.border(
+                        color: AppColors.white.withValues(alpha: 0.4),
+                        width: 3,
+                      ),
                     ),
                     child: CircleAvatar(
                       radius: 38,
-                      backgroundColor: Colors.white24,
-                      // TODO: استبدل هذا بصورة السائق الحقيقية من الـ API
-                      // backgroundImage: driver.avatarUrl != null
-                      //     ? NetworkImage(driver.avatarUrl!)
-                      //     : null,
+                      backgroundColor: AppColors.white24,
                       child: driver.avatarUrl == null
-                          ? const Icon(Icons.person_rounded,
-                              color: Colors.white, size: 36)
+                          ? const Icon(
+                              Icons.person_rounded,
+                              color: AppColors.white,
+                              size: 36,
+                            )
                           : null,
                     ),
                   ),
@@ -261,9 +262,9 @@ class _DriverDrawerHeader extends StatelessWidget {
                   BlocBuilder<ThemeCubit, ThemeState>(
                     builder: (context, themeState) {
                       return Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(12),
+                        decoration: AppTheme.boxDecoration(
+                          color: AppColors.white.withValues(alpha: 0.15),
+                          borderRadius: AppTheme.radius(12),
                         ),
                         child: IconButton(
                           tooltip: themeState.isDarkMode
@@ -273,23 +274,22 @@ class _DriverDrawerHeader extends StatelessWidget {
                             duration: const Duration(milliseconds: 300),
                             transitionBuilder: (child, animation) =>
                                 RotationTransition(
-                              turns: animation,
-                              child: FadeTransition(
-                                  opacity: animation, child: child),
-                            ),
+                                  turns: animation,
+                                  child: FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  ),
+                                ),
                             child: Icon(
-                              // لما يكون داكن اعرض الشمس للتحويل للايت
-                              // لما يكون فاتح اعرض الهلال للتحويل للدارك
                               themeState.isDarkMode
                                   ? Icons.wb_sunny_rounded
                                   : Icons.nightlight_round,
                               key: ValueKey(themeState.isDarkMode),
-                              color: Colors.white,
+                              color: AppColors.white,
                               size: 22,
                             ),
                           ),
                           onPressed: () {
-                            // تبديل الثيم باستخدام ThemeCubit الموجود في الـ root
                             context.read<ThemeCubit>().toggleTheme();
                           },
                         ),
@@ -302,10 +302,9 @@ class _DriverDrawerHeader extends StatelessWidget {
 
               // ── اسم السائق ──
               Text(
-                // TODO: استبدل بـ driver.fullName الحقيقي
                 driver.fullName,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: AppTextStyles.style(
+                  color: AppColors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -314,29 +313,37 @@ class _DriverDrawerHeader extends StatelessWidget {
 
               Row(
                 children: [
-                  const Icon(Icons.phone_rounded,
-                      color: Colors.white60, size: 14),
+                  const Icon(
+                    Icons.phone_rounded,
+                    color: AppColors.white60,
+                    size: 14,
+                  ),
                   const SizedBox(width: 6),
                   Text(
-                    // TODO: استبدل بـ driver.phone الحقيقي
                     driver.phone,
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    style: AppTextStyles.style(
+                      color: AppColors.white70,
+                      fontSize: 13,
+                    ),
                   ),
                   const Spacer(),
                   // شارة السائق
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
                     ),
-                    child: const Text(
+                    decoration: AppTheme.boxDecoration(
+                      color: AppColors.white.withValues(alpha: 0.2),
+                      borderRadius: AppTheme.radius(20),
+                    ),
+                    child: Text(
                       '🚐 سائق',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600),
+                      style: AppTextStyles.style(
+                        color: AppColors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -350,34 +357,26 @@ class _DriverDrawerHeader extends StatelessWidget {
 }
 
 // ─── عنصر المركبة الاحتياطية الذكي ────────────────────────────────────────
-/// يعرض "إضافة مركبة احتياطية" إذا لم توجد مركبة احتياطية
-/// ويعرض "معلومات المركبة الاحتياطية" إذا وجدت
 class _BackupVehicleDrawerItem extends StatelessWidget {
   final DriverModel driver;
   final VoidCallback onTap;
 
-  const _BackupVehicleDrawerItem({
-    required this.driver,
-    required this.onTap,
-  });
+  const _BackupVehicleDrawerItem({required this.driver, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    // TODO: تحقق من وجود المركبة الاحتياطية الحقيقية من بيانات السائق
     final hasBackupVehicle = driver.backupVehicle != null;
 
     return _DrawerItem(
       icon: hasBackupVehicle
           ? Icons.directions_car_rounded
           : Icons.add_circle_outline_rounded,
-      iconColor: hasBackupVehicle
-          ? const Color(0xFF8B5CF6)
-          : AppColors.primaryLight,
+      iconColor: hasBackupVehicle ? context.accentPurple : context.primaryColor,
       label: hasBackupVehicle
           ? 'معلومات المركبة الاحتياطية'
           : 'إضافة مركبة احتياطية',
-      badge: hasBackupVehicle &&
-              driver.backupVehicle!.approvalStatus == 'pending'
+      badge:
+          hasBackupVehicle && driver.backupVehicle!.approvalStatus == 'pending'
           ? 'قيد المراجعة'
           : null,
       onTap: onTap,
@@ -410,9 +409,9 @@ class _DrawerItem extends StatelessWidget {
       leading: Container(
         width: 38,
         height: 38,
-        decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(10),
+        decoration: AppTheme.boxDecoration(
+          color: iconColor.withValues(alpha: 0.12),
+          borderRadius: AppTheme.radius(10),
         ),
         child: Icon(icon, color: iconColor, size: 20),
       ),
@@ -420,7 +419,7 @@ class _DrawerItem extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: AppTextStyles.style(
               fontSize: 15,
               fontWeight: FontWeight.w500,
               color: labelColor,
@@ -429,28 +428,30 @@ class _DrawerItem extends StatelessWidget {
           if (badge != null) ...[
             const SizedBox(width: 8),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.pending.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(20),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: AppTheme.boxDecoration(
+                color: context.pendingColor.withValues(alpha: 0.15),
+                borderRadius: AppTheme.radius(20),
               ),
               child: Text(
                 badge!,
-                style: const TextStyle(
+                style: AppTextStyles.style(
                   fontSize: 10,
-                  color: AppColors.pending,
+                  color: context.pendingColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-          ]
+          ],
         ],
       ),
-      trailing: const Icon(Icons.chevron_left_rounded,
-          color: AppColors.textMuted, size: 20),
+      trailing: Icon(
+        Icons.chevron_left_rounded,
+        color: context.textMuted,
+        size: 20,
+      ),
       onTap: onTap,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: AppTheme.roundedRectangleBorder(borderRadius: AppTheme.radius(12)),
     );
   }
 }

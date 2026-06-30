@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class AuthPasswordField extends StatefulWidget {
   final TextEditingController controller;
@@ -28,12 +30,18 @@ class _AuthPasswordFieldState extends State<AuthPasswordField> {
       controller: widget.controller,
       obscureText: _isObscured,
       textAlign: TextAlign.right,
-      style: AppTextStyles.inputTextStyle(color: isDark ? Colors.white : Colors.black87),
-      decoration: InputDecoration(
+      style: AppTextStyles.inputTextStyle(
+        color: isDark ? AppColors.white : AppColors.black87,
+      ),
+      decoration: AppTheme.inputDecoration(context, 
         hintText: widget.hintText,
         prefixIcon: const Icon(Icons.lock_outline_rounded),
         suffixIcon: IconButton(
-          icon: Icon(_isObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+          icon: Icon(
+            _isObscured
+                ? Icons.visibility_off_outlined
+                : Icons.visibility_outlined,
+          ),
           onPressed: () {
             setState(() {
               _isObscured = !_isObscured;
@@ -41,17 +49,20 @@ class _AuthPasswordFieldState extends State<AuthPasswordField> {
           },
         ),
       ),
-      validator: widget.validator ?? (value) {
-        if (value == null || value.isEmpty) return 'الرجاء إدخال كلمة المرور';
-        if (value.length < 6) return 'كلمة المرور يجب أن لا تقل عن 6 خانات';
-        
-        final hasLetter = RegExp(r'[a-zA-Z]').hasMatch(value);
-        final hasDigit = RegExp(r'[0-9]').hasMatch(value);
-        if (!hasLetter || !hasDigit) {
-          return 'يجب أن تحتوي كلمة المرور على حروف وأرقام معاً';
-        }
-        return null;
-      },
+      validator:
+          widget.validator ??
+          (value) {
+            if (value == null || value.isEmpty)
+              return 'الرجاء إدخال كلمة المرور';
+            if (value.length < 6) return 'كلمة المرور يجب أن لا تقل عن 6 خانات';
+
+            final hasLetter = RegExp(r'[a-zA-Z]').hasMatch(value);
+            final hasDigit = RegExp(r'[0-9]').hasMatch(value);
+            if (!hasLetter || !hasDigit) {
+              return 'يجب أن تحتوي كلمة المرور على حروف وأرقام معاً';
+            }
+            return null;
+          },
     );
   }
 }

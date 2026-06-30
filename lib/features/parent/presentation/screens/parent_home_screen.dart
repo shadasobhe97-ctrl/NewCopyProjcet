@@ -6,6 +6,8 @@ import '../widgets/state_widgets/new_user_widget.dart';
 import '../widgets/state_widgets/has_kids_widget.dart';
 import '../widgets/state_widgets/pending_req_widget.dart';
 import '../widgets/state_widgets/active_trip_widget.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
 
 class ParentHomeScreen extends StatefulWidget {
   const ParentHomeScreen({super.key});
@@ -18,12 +20,15 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ParentHomeCubit()..fetchParentHomeData(3), // 🌟 غيري الرقم هنا (1، 2، 3، 4) لتجربة كل الحالات في النسخة التجريبية
+      create: (context) => ParentHomeCubit()
+        ..fetchParentHomeData(
+          3,
+        ), // 🌟 غيري الرقم هنا (1، 2، 3، 4) لتجربة كل الحالات في النسخة التجريبية
       child: Scaffold(
         body: BlocBuilder<ParentHomeCubit, ParentHomeState>(
           builder: (context, state) {
             if (state is ParentHomeLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(child: CircularProgressIndicator());
             } else if (state is ParentNewUserMode) {
               return const NewUserWidget();
             } else if (state is ParentHasKidsNoSubscription) {
@@ -31,9 +36,17 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
             } else if (state is ParentPendingRequestsMode) {
               return PendingReqWidget(requests: state.pendingRequests);
             } else if (state is ParentActiveTripMode) {
-              return ActiveTripWidget(todayTrips: state.todayTrips, activeTrip: state.activeTrip);
+              return ActiveTripWidget(
+                todayTrips: state.todayTrips,
+                activeTrip: state.activeTrip,
+              );
             } else if (state is ParentHomeError) {
-              return Center(child: Text(state.errorMessage, style: const TextStyle(color: Colors.red)));
+              return Center(
+                child: Text(
+                  state.errorMessage,
+                  style: AppTextStyles.style(color: AppColors.red),
+                ),
+              );
             }
             return const SizedBox.shrink();
           },

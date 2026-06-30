@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
-import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/features/parent/logic/home_cubit/home_cubit.dart';
 import 'package:kids_transport/features/parent/logic/child_cubit/child_cubit.dart';
 import '../widgets/parent_drawer.dart';
 import 'parent_home_screen.dart';
 import 'parent_search_screen.dart';
 import 'my_children_screen.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class ParentMainWrapper extends StatefulWidget {
   const ParentMainWrapper({super.key});
@@ -56,53 +59,51 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
       const ParentHomeScreen(),
       const MyChildrenScreen(),
       const ParentSearchScreen(),
-      const Center(
-          child: Text("📄 العقود والاشتراكات",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-      const Center(
-          child: Text("💳 المدفوعات والفواتير",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+      Center(
+        child: Text(
+          "📄 العقود والاشتراكات",
+          style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      ),
+      Center(
+        child: Text(
+          "💳 المدفوعات والفواتير",
+          style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      ),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return MultiBlocProvider(
       providers: [
         BlocProvider(
           create: (context) => ParentHomeCubit()..fetchParentHomeData(4),
         ),
-        BlocProvider(
-          create: (context) => ChildCubit()..loadChildren(),
-        ),
+        BlocProvider(create: (context) => ChildCubit()..loadChildren()),
       ],
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          backgroundColor:
-              isDark ? const Color(0xFF0F0F0F) : AppColors.backgroundLight,
+          backgroundColor: context.backgroundSurface,
 
           // ✅ AppBar مُوحد ومصمم بلمسة احترافية
-          appBar: _buildAppBar(context, theme, isDark),
+          appBar: _buildAppBar(context),
 
           // الدروار يفتح من جهة اليمين (drawer في RTL)
           drawer: const ParentDrawer(),
 
           body: IndexedStack(
             index: _selectedIndex,
-            children:
-                _screens.map((s) => _KeepAliveWrapper(child: s)).toList(),
+            children: _screens.map((s) => _KeepAliveWrapper(child: s)).toList(),
           ),
 
           bottomNavigationBar: ConvexAppBar(
             style: TabStyle.reactCircle,
-            backgroundColor:
-                isDark ? const Color(0xFF1E293B) : Colors.white,
-            activeColor: AppColors.primaryLight,
-            color: Colors.grey[400],
+            backgroundColor: context.cardSurface,
+            activeColor: context.primaryColor,
+            color: AppColors.grey400,
             initialActiveIndex: _selectedIndex,
             height: 52, // 🌟 تقليص الحجم ليكون أنيقاً وحديثاً
             curveSize: 72, // 🌟 مقاس منحنى أصغر
@@ -124,24 +125,21 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
   }
 
   /// ✅ بناء الـ AppBar الموحد بشكل احترافي مع تدرج لوني
-  PreferredSizeWidget _buildAppBar(
-      BuildContext context, ThemeData theme, bool isDark) {
-    final gradientColors = isDark
-        ? [const Color(0xFF1A2332), const Color(0xFF0F172A)]
-        : [AppColors.primaryLight, const Color(0xFF0D6EAD)];
-
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(60),
       child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: gradientColors,
+        decoration: AppTheme.boxDecoration(
+          gradient: AppTheme.linearGradient(
+            colors: context.primaryGradient,
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
           ),
           boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryLight.withValues(alpha: isDark ? 0.1 : 0.3),
+            AppTheme.boxShadow(
+              color: context.primaryColor.withValues(
+                alpha: context.isDarkMode ? 0.1 : 0.3,
+              ),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -149,27 +147,38 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: Row(
               children: [
                 // زر الدروار (يفتح من اليمين في RTL)
                 Builder(
                   builder: (ctx) => IconButton(
-                    icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
+                    icon: const Icon(
+                      Icons.menu_rounded,
+                      color: AppColors.white,
+                      size: 24,
+                    ),
                     onPressed: () => Scaffold.of(ctx).openDrawer(),
                   ),
                 ),
                 const SizedBox(width: 8),
 
                 // شعار التطبيق الأنيق (بدون اسم الصفحة)
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.directions_bus_rounded, color: Colors.white, size: 20),
+                    Icon(
+                      Icons.directions_bus_rounded,
+                      color: AppColors.white,
+                      size: 20,
+                    ),
                     SizedBox(width: 6),
                     Text(
                       "داربي",
-                      style: TextStyle(
-                        color: Colors.white,
+                      style: AppTextStyles.style(
+                        color: AppColors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 19,
                         letterSpacing: 0.5,
@@ -182,8 +191,11 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
 
                 // أيقونة الرسائل
                 IconButton(
-                  icon: const Icon(Icons.chat_bubble_outline_rounded,
-                      color: Colors.white, size: 20),
+                  icon: const Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    color: AppColors.white,
+                    size: 20,
+                  ),
                   onPressed: () {},
                 ),
 
@@ -192,8 +204,11 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                   clipBehavior: Clip.none,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.notifications_none_rounded,
-                          color: Colors.white, size: 22),
+                      icon: const Icon(
+                        Icons.notifications_none_rounded,
+                        color: AppColors.white,
+                        size: 22,
+                      ),
                       onPressed: () {},
                     ),
                     Positioned(
@@ -202,8 +217,8 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                       child: Container(
                         width: 7,
                         height: 7,
-                        decoration: const BoxDecoration(
-                          color: AppColors.error,
+                        decoration: AppTheme.boxDecoration(
+                          color: context.errorColor,
                           shape: BoxShape.circle,
                         ),
                       ),

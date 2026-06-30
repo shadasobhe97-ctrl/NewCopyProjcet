@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
 
 class DriverWaitingScreen extends StatelessWidget {
   const DriverWaitingScreen({super.key});
@@ -14,27 +16,48 @@ class DriverWaitingScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.access_time_filled, size: 100, color: Colors.orange),
+            const Icon(
+              Icons.access_time_filled,
+              size: 100,
+              color: AppColors.orange,
+            ),
             const SizedBox(height: 24),
-            Text("طلبكِ قيد المراجعة الآن", style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+            Text(
+              "طلبكِ قيد المراجعة الآن",
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 12),
-            const Text("تستغرق مراجعة وثائق المركبة ورخصة القيادة حوالي 24 ساعة. سيتم إخطاركِ فور تفعيل الحساب.", style: TextStyle(color: Colors.grey), textAlign: TextAlign.center),
+            Text(
+              "تستغرق مراجعة وثائق المركبة ورخصة القيادة حوالي 24 ساعة. سيتم إخطاركِ فور تفعيل الحساب.",
+              style: AppTextStyles.style(color: AppColors.grey),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 40),
             ElevatedButton.icon(
               onPressed: () {}, // إجراء مكالمة هاتفية حقيقية للإدارة
               icon: const Icon(Icons.phone),
-              label: const Text("اتصل بالدعم الفني والمراجعة"),
+              label: Text("اتصل بالدعم الفني والمراجعة"),
             ),
             TextButton(
               onPressed: () async {
                 // تراجع وإلغاء ومسح الستورج والعودة لشاشة الـ Login
                 await StorageService.clearSession();
                 if (context.mounted) {
-                  Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/login',
+                    (route) => false,
+                  );
                 }
               },
-              child: const Text("تسجيل الخروج والتراجع", style: TextStyle(color: Colors.red)),
-            )
+              child: Text(
+                "تسجيل الخروج والتراجع",
+                style: AppTextStyles.style(color: AppColors.red),
+              ),
+            ),
           ],
         ),
       ),

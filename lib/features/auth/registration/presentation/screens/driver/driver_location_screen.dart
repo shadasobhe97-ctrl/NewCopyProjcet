@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:flutter_map/flutter_map.dart'; // باقة OpenStreetMap
 import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
@@ -16,9 +19,9 @@ class DriverLocationScreen extends StatefulWidget {
 class _DriverLocationScreenState extends State<DriverLocationScreen> {
   final _labelController = TextEditingController(text: "موقع انطلاق الحافلة");
   final MapController _mapController = MapController();
-  
+
   // إحداثيات افتراضية لوسط طرابلس (ليبيا) كمثال للنسخة التجريبية
-  LatLng _currentCenter = const LatLng(32.8872, 13.1913); 
+  LatLng _currentCenter = const LatLng(32.8872, 13.1913);
   bool _isDefaultLocation = true;
 
   @override
@@ -38,14 +41,15 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
     );
   }
 
-// في ملف DriverLocationScreen.dart
+  // في ملف DriverLocationScreen.dart
 
   void _navigateToHome() {
-    // نستخدم pushNamedAndRemoveUntil لمسح سجل الشاشات السابقة 
+    // نستخدم pushNamedAndRemoveUntil لمسح سجل الشاشات السابقة
     // وضمان عدم عودة السائق لشاشة التسجيل بالضغط على زر الرجوع
     Navigator.pushNamedAndRemoveUntil(
-      context, 
-      AppRoutes.driverMainWrapper, // هذا هو الروت الخاص بالداشبورد الرئيسي للسائق
+      context,
+      AppRoutes
+          .driverMainWrapper, // هذا هو الروت الخاص بالداشبورد الرئيسي للسائق
       (route) => false,
     );
   }
@@ -57,9 +61,9 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("تحديد موقع انطلاق السائق"),
+        title: Text("تحديد موقع انطلاق السائق"),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         actions: [
           // زر تخطي خاص بالسائق يوجّه لشاشة الانتظار
@@ -67,7 +71,11 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
             onPressed: _navigateToHome,
             child: Text(
               "تخطي",
-              style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
+              style: AppTextStyles.style(
+                color: theme.primaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -78,12 +86,18 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
           listener: (context, state) {
             if (state is LocationSaveSuccess) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: Colors.green),
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.green,
+                ),
               );
               _navigateToHome(); // الانتقال لشاشة الانتظار بعد نجاح الحفظ
             } else if (state is LocationSaveError) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.errorMessage), backgroundColor: Colors.red),
+                SnackBar(
+                  content: Text(state.errorMessage),
+                  backgroundColor: AppColors.red,
+                ),
               );
             }
           },
@@ -92,14 +106,19 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 8.0,
+                  ),
                   child: Text(
                     "يرجى تحديد نقطة انطلاق الحافلة الأساسية (مثل موقع منزلك أو الجراج) لتسهيل حساب المسارات للطلاب.",
-                    style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.grey,
+                    ),
                     textAlign: TextAlign.right,
                   ),
                 ),
-                
+
                 // الخريطة (OpenStreetMap) تتبع السائق
                 Expanded(
                   child: Stack(
@@ -118,8 +137,9 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
                         ),
                         children: [
                           TileLayer(
-                            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.example.kids_transport', 
+                            urlTemplate:
+                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.example.kids_transport',
                             tileProvider: NetworkTileProvider(),
                           ),
                         ],
@@ -139,11 +159,18 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
                 // حقول البيانات والزر المخصص من الأسفل
                 Container(
                   padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.grey[950] : Colors.white,
-                    borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+                  decoration: AppTheme.boxDecoration(
+                    color: isDark ? AppColors.grey950 : AppColors.white,
+                    borderRadius: AppTheme.onlyRadius(
+                      topLeft: AppTheme.cornerRadius(24),
+                      topRight: AppTheme.cornerRadius(24),
+                    ),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))
+                      AppTheme.boxShadow(
+                        color: AppColors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -5),
+                      ),
                     ],
                   ),
                   child: Column(
@@ -153,16 +180,18 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
                       TextFormField(
                         controller: _labelController,
                         textAlign: TextAlign.right,
-                        decoration: const InputDecoration(
+                        decoration: AppTheme.inputDecoration(context, 
                           labelText: "تسمية موقع الانطلاق",
                           prefixIcon: Icon(Icons.pin_drop_outlined),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      
+
                       // خيار الموقع الأساسي
                       CheckboxListTile(
-                        title: const Text("تعيين هذا الموقع كموقع انطلاق أساسي لحافلتي"),
+                        title: Text(
+                          "تعيين هذا الموقع كموقع انطلاق أساسي لحافلتي",
+                        ),
                         value: _isDefaultLocation,
                         controlAffinity: ListTileControlAffinity.leading,
                         activeColor: theme.primaryColor,
@@ -176,19 +205,27 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
 
                       // زر حفظ الموقع
                       ElevatedButton(
-                        onPressed: state is LocationSaveLoading ? null : _submitLocation,
-                        style: ElevatedButton.styleFrom(
+                        onPressed: state is LocationSaveLoading
+                            ? null
+                            : _submitLocation,
+                        style: AppTheme.elevatedButtonStyle(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         child: state is LocationSaveLoading
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.white,
+                                ),
                               )
-                            : const Text(
+                            : Text(
                                 "حفظ وتأكيد موقع الحافلة",
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                style: AppTextStyles.style(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                       ),
                     ],

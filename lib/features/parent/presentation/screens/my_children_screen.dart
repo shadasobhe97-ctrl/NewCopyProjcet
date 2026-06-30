@@ -6,6 +6,9 @@ import 'package:kids_transport/features/parent/logic/child_cubit/child_cubit.dar
 import 'package:kids_transport/features/parent/logic/child_cubit/child_state.dart';
 import 'add_child_screen.dart';
 import 'child_detail_screen.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 
 class MyChildrenScreen extends StatelessWidget {
   const MyChildrenScreen({super.key});
@@ -15,7 +18,7 @@ class MyChildrenScreen extends StatelessWidget {
     return BlocBuilder<ChildCubit, ChildState>(
       builder: (context, state) {
         if (state is ChildLoading) {
-          return const Center(
+          return Center(
             child: CircularProgressIndicator(color: AppColors.primaryLight),
           );
         }
@@ -28,17 +31,21 @@ class MyChildrenScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline_rounded,
-                    size: 60, color: AppColors.error),
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 60,
+                  color: AppColors.error,
+                ),
                 const SizedBox(height: 12),
-                Text(state.message,
-                    style: const TextStyle(color: AppColors.error)),
+                Text(
+                  state.message,
+                  style: AppTextStyles.style(color: AppColors.error),
+                ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
-                  onPressed: () =>
-                      context.read<ChildCubit>().loadChildren(),
+                  onPressed: () => context.read<ChildCubit>().loadChildren(),
                   icon: const Icon(Icons.refresh_rounded),
-                  label: const Text("إعادة المحاولة"),
+                  label: Text("إعادة المحاولة"),
                 ),
               ],
             ),
@@ -61,8 +68,7 @@ class _ChildrenContent extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0F0F0F) : AppColors.backgroundLight,
+      backgroundColor: context.scaffoldBackgroundColor,
       body: children.isEmpty
           ? _buildEmptyState(context)
           : _buildList(context, isDark),
@@ -70,10 +76,12 @@ class _ChildrenContent extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddChild(context),
         backgroundColor: AppColors.primaryLight,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.white,
         icon: const Icon(Icons.add_rounded),
-        label: const Text("إضافة طفل",
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        label: Text(
+          "إضافة طفل",
+          style: AppTextStyles.style(fontWeight: FontWeight.bold),
+        ),
         elevation: 4,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -94,16 +102,18 @@ class _ChildrenContent extends StatelessWidget {
                     children: [
                       Text(
                         "أطفالي المسجلون 👨‍👧‍👦",
-                        style: TextStyle(
+                        style: AppTextStyles.style(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : const Color(0xFF1E293B),
+                          color: isDark ? AppColors.white : AppColors.darkCard,
                         ),
                       ),
                       Text(
                         "${children.length} ${children.length == 1 ? 'طفل مسجل' : 'أطفال مسجلون'}",
-                        style: const TextStyle(
-                            color: AppColors.textMuted, fontSize: 13),
+                        style: AppTextStyles.style(
+                          color: AppColors.textMuted,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
@@ -136,8 +146,8 @@ class _ChildrenContent extends StatelessWidget {
             Container(
               width: 120,
               height: 120,
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight.withOpacity(0.1),
+              decoration: AppTheme.boxDecoration(
+                color: AppColors.primaryLight.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -147,30 +157,31 @@ class _ChildrenContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               "لا يوجد أطفال مسجلون بعد",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTextStyles.style(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            const Text(
+            Text(
               "أضف طفلك الأول للاستفادة من خدمات النقل المدرسي الآمنة والموثوقة.",
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+              style: AppTextStyles.style(color: AppColors.textMuted, fontSize: 14),
             ),
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () => _openAddChild(context),
               icon: const Icon(Icons.add_rounded),
-              label: const Text("إضافة طفلك الأول",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
+              label: Text(
+                "إضافة طفلك الأول",
+                style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              style: AppTheme.elevatedButtonStyle(
                 backgroundColor: AppColors.primaryLight,
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                foregroundColor: AppColors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 14,
+                ),
               ),
             ),
           ],
@@ -208,29 +219,25 @@ class _ChildCard extends StatelessWidget {
     final isPresent = child.dailyStatus == DailyStatus.present;
 
     // ألوان تمييز الجنس
-    final avatarColor = isMale
-        ? const Color(0xFF3B82F6)
-        : const Color(0xFFEC4899);
-    final avatarBg = isMale
-        ? const Color(0xFFEFF6FF)
-        : const Color(0xFFFDF2F8);
+    final avatarColor = isMale ? AppColors.maleBlue : AppColors.femalePink;
+    final avatarBg = isMale ? AppColors.maleBlueBg : AppColors.femalePinkBg;
 
     // ألوان الفترة الزمنية
     final slotColors = {
-      PreferredTimeSlot.MORNING: [const Color(0xFFF59E0B), "صباحي ☀️"],
-      PreferredTimeSlot.EVENING: [const Color(0xFF6366F1), "مسائي 🌙"],
-      PreferredTimeSlot.BOTH: [const Color(0xFF10B981), "صباحي ومسائي 🔄"],
+      PreferredTimeSlot.MORNING: [AppColors.accentAmber, "صباحي ☀️"],
+      PreferredTimeSlot.EVENING: [AppColors.accentBlue, "مسائي 🌙"],
+      PreferredTimeSlot.BOTH: [AppColors.accentGreen, "صباحي ومسائي 🔄"],
     };
     final slotInfo = slotColors[child.preferredTimeSlot]!;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+      decoration: AppTheme.boxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.white,
+        borderRadius: AppTheme.radius(20),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+          AppTheme.boxShadow(
+            color: AppColors.black.withValues(alpha: isDark ? 0.2 : 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -249,20 +256,23 @@ class _ChildCard extends StatelessWidget {
                     Container(
                       width: 60,
                       height: 60,
-                      decoration: BoxDecoration(
+                      decoration: AppTheme.boxDecoration(
                         color: avatarBg,
                         shape: BoxShape.circle,
-                        border: Border.all(
-                            color: avatarColor.withOpacity(0.3), width: 2),
+                        border: AppTheme.border(
+                          color: avatarColor.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
                       ),
                       child: child.photoUrl != null
                           ? ClipOval(
-                              child: Image.network(child.photoUrl!,
-                                  fit: BoxFit.cover))
+                              child: Image.network(
+                                child.photoUrl!,
+                                fit: BoxFit.cover,
+                              ),
+                            )
                           : Icon(
-                              isMale
-                                  ? Icons.boy_rounded
-                                  : Icons.girl_rounded,
+                              isMale ? Icons.boy_rounded : Icons.girl_rounded,
                               color: avatarColor,
                               size: 34,
                             ),
@@ -274,13 +284,12 @@ class _ChildCard extends StatelessWidget {
                       child: Container(
                         width: 14,
                         height: 14,
-                        decoration: BoxDecoration(
+                        decoration: AppTheme.boxDecoration(
                           color: isPresent
                               ? AppColors.success
                               : AppColors.error,
                           shape: BoxShape.circle,
-                          border:
-                              Border.all(color: Colors.white, width: 2),
+                          border: AppTheme.border(color: AppColors.white, width: 2),
                         ),
                       ),
                     ),
@@ -294,21 +303,28 @@ class _ChildCard extends StatelessWidget {
                     children: [
                       Text(
                         child.fullName,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                        style: AppTextStyles.style(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.school_outlined,
-                              size: 14, color: AppColors.textMuted),
+                          const Icon(
+                            Icons.school_outlined,
+                            size: 14,
+                            color: AppColors.textMuted,
+                          ),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
                               child.schoolName,
-                              style: const TextStyle(
-                                  fontSize: 12, color: AppColors.textMuted),
+                              style: AppTextStyles.style(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -320,14 +336,16 @@ class _ChildCard extends StatelessWidget {
                 // بيدج الفترة
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: (slotInfo[0] as Color).withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20),
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: AppTheme.boxDecoration(
+                    color: (slotInfo[0] as Color).withValues(alpha: 0.12),
+                    borderRadius: AppTheme.radius(20),
                   ),
                   child: Text(
                     slotInfo[1] as String,
-                    style: TextStyle(
+                    style: AppTextStyles.style(
                       fontSize: 11,
                       color: slotInfo[0] as Color,
                       fontWeight: FontWeight.bold,
@@ -340,10 +358,11 @@ class _ChildCard extends StatelessWidget {
 
           // ─── فاصل ──────────────────────────────────────────────────
           Divider(
-              height: 1,
-              color: isDark
-                  ? Colors.white.withOpacity(0.07)
-                  : Colors.black.withOpacity(0.06)),
+            height: 1,
+            color: isDark
+                ? AppColors.white.withValues(alpha: 0.07)
+                : AppColors.black.withValues(alpha: 0.06),
+          ),
 
           // ─── أزرار الإجراءات ────────────────────────────────────────
           Row(
@@ -357,7 +376,7 @@ class _ChildCard extends StatelessWidget {
               _ActionButton(
                 icon: Icons.edit_outlined,
                 label: "تعديل",
-                color: const Color(0xFF8B5CF6),
+                color: AppColors.accentPurple,
                 onTap: () => _openEdit(context),
               ),
               _ActionButton(
@@ -376,9 +395,7 @@ class _ChildCard extends StatelessWidget {
   void _openDetails(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => ChildDetailScreen(child: child),
-      ),
+      MaterialPageRoute(builder: (_) => ChildDetailScreen(child: child)),
     );
   }
 
@@ -399,26 +416,26 @@ class _ChildCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("تأكيد الحذف"),
+        shape: AppTheme.roundedRectangleBorder(borderRadius: AppTheme.radius(20)),
+        title: Text("تأكيد الحذف"),
         content: Text(
           "هل أنت متأكد من حذف بيانات \"${child.fullName}\"؟\nلا يمكن التراجع عن هذا الإجراء.",
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("إلغاء"),
+            child: Text("إلغاء"),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               cubit.deleteChild(child.id!);
             },
-            style: ElevatedButton.styleFrom(
+            style: AppTheme.elevatedButtonStyle(
               backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.white,
             ),
-            child: const Text("حذف"),
+            child: Text("حذف"),
           ),
         ],
       ),
@@ -447,7 +464,7 @@ class _ActionButton extends StatelessWidget {
     return Expanded(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppTheme.radius(12),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Column(
@@ -456,10 +473,11 @@ class _ActionButton extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 label,
-                style: TextStyle(
-                    fontSize: 11,
-                    color: color,
-                    fontWeight: FontWeight.w600),
+                style: AppTextStyles.style(
+                  fontSize: 11,
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),

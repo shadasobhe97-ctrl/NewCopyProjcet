@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
-import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 import '../../logic/driver_home_cubit/driver_home_cubit.dart';
 import '../widgets/driver_drawer.dart';
 import 'driver_home_screen.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 // ==========================================
 // الحاضن الرئيسي لشاشات السائق (نظير ParentMainWrapper)
@@ -48,23 +51,29 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
       const DriverHomeScreen(),
 
       // TODO: استبدل هذه الشاشات بالشاشات الحقيقية عند إنشائها
-      const Center(
-        child: Text('🗺️ رحلاتي', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      Center(
+        child: Text(
+          '🗺️ رحلاتي',
+          style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
       ),
-      const Center(
-        child: Text('💰 المحفظة', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      Center(
+        child: Text(
+          '💰 المحفظة',
+          style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
       ),
-      const Center(
-        child: Text('📋 الطلبات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      Center(
+        child: Text(
+          '📋 الطلبات',
+          style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
       ),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return BlocProvider(
       create: (context) => DriverHomeCubit()..loadDriverHomeData(),
       child: BlocBuilder<DriverHomeCubit, DriverHomeState>(
@@ -75,30 +84,27 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
           return Directionality(
             textDirection: TextDirection.rtl,
             child: Scaffold(
-              backgroundColor:
-                  isDark ? const Color(0xFF0F0F0F) : AppColors.backgroundLight,
+              backgroundColor: context.backgroundSurface,
 
               // AppBar الرئيسي
-              appBar: _buildAppBar(context, theme, isDark, state),
+              appBar: _buildAppBar(context, state),
 
               // الدروار من جهة اليمين (في RTL يفتح من اليمين باستخدام drawer وليس endDrawer)
-              drawer: driver != null
-                  ? DriverDrawer(driver: driver)
-                  : null,
+              drawer: driver != null ? DriverDrawer(driver: driver) : null,
 
               body: IndexedStack(
                 index: _selectedIndex,
-                children:
-                    _screens.map((s) => _KeepAliveWrapper(child: s)).toList(),
+                children: _screens
+                    .map((s) => _KeepAliveWrapper(child: s))
+                    .toList(),
               ),
 
               // شريط التنقل السفلي - نفس مكتبة convex_bottom_bar كالـ parent
               bottomNavigationBar: ConvexAppBar(
                 style: TabStyle.reactCircle,
-                backgroundColor:
-                    isDark ? const Color(0xFF1E293B) : Colors.white,
-                activeColor: AppColors.primaryLight,
-                color: Colors.grey[400],
+                backgroundColor: context.cardSurface,
+                activeColor: context.primaryColor,
+                color: AppColors.grey400,
                 initialActiveIndex: _selectedIndex,
                 height: 60,
                 curveSize: 80,
@@ -106,7 +112,10 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
                 items: const [
                   TabItem(icon: Icons.home_rounded, title: 'الرئيسية'),
                   TabItem(icon: Icons.route_rounded, title: 'الرحلات'),
-                  TabItem(icon: Icons.account_balance_wallet_rounded, title: 'المحفظة'),
+                  TabItem(
+                    icon: Icons.account_balance_wallet_rounded,
+                    title: 'المحفظة',
+                  ),
                   TabItem(icon: Icons.assignment_rounded, title: 'الطلبات'),
                 ],
                 onTap: (int index) {
@@ -123,14 +132,9 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
   /// بناء الـ AppBar
   PreferredSizeWidget _buildAppBar(
     BuildContext context,
-    ThemeData theme,
-    bool isDark,
     DriverHomeState state,
   ) {
     final isHome = _selectedIndex == 0;
-    final gradientColors = isDark
-        ? [const Color(0xFF1A2332), const Color(0xFF0F172A)]
-        : [AppColors.primaryLight, const Color(0xFF0E78C4)];
 
     // اسم السائق للتحية
     // TODO: استبدل بالاسم الحقيقي من الـ API
@@ -142,26 +146,31 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
       preferredSize: Size.fromHeight(isHome ? 100 : 64),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: gradientColors,
+        decoration: AppTheme.boxDecoration(
+          gradient: AppTheme.linearGradient(
+            colors: context.primaryGradient,
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
           ),
           boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryLight.withOpacity(isDark ? 0.1 : 0.3),
+            AppTheme.boxShadow(
+              color: context.primaryColor.withValues(
+                alpha: context.isDarkMode ? 0.1 : 0.3,
+              ),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(isHome ? 24 : 0),
+          borderRadius: AppTheme.verticalRadius(
+            bottom: AppTheme.cornerRadius(isHome ? 24 : 0),
           ),
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: isHome
                 ? _buildHomeHeader(context, driverName)
                 : _buildStandardHeader(context),
@@ -178,7 +187,11 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
         // زر القائمة الجانبية - يفتح الـ drawer العادي ليكون من اليمين
         Builder(
           builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 26),
+            icon: const Icon(
+              Icons.menu_rounded,
+              color: AppColors.white,
+              size: 26,
+            ),
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
@@ -193,19 +206,21 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
               // TODO: استبدل النص باسم السائق الحقيقي القادم من الـ API
               Text(
                 'مرحباً، $driverName 👋',
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 17),
+                style: AppTextStyles.style(
+                  color: AppColors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 2),
-              const Text(
+              Text(
                 'لوحة تحكم السائق',
-                style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400),
+                style: AppTextStyles.style(
+                  color: AppColors.white70,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ],
           ),
@@ -213,8 +228,11 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
 
         // زر المحادثة - جهة اليسار
         IconButton(
-          icon: const Icon(Icons.chat_bubble_outline_rounded,
-              color: Colors.white, size: 22),
+          icon: const Icon(
+            Icons.chat_bubble_outline_rounded,
+            color: AppColors.white,
+            size: 22,
+          ),
           onPressed: () {
             // TODO: التوجيه لشاشة المحادثات
           },
@@ -225,8 +243,11 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
           clipBehavior: Clip.none,
           children: [
             IconButton(
-              icon: const Icon(Icons.notifications_none_rounded,
-                  color: Colors.white, size: 24),
+              icon: const Icon(
+                Icons.notifications_none_rounded,
+                color: AppColors.white,
+                size: 24,
+              ),
               onPressed: () {
                 // TODO: التوجيه لشاشة الإشعارات
               },
@@ -239,8 +260,8 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
               child: Container(
                 width: 9,
                 height: 9,
-                decoration: const BoxDecoration(
-                  color: AppColors.error,
+                decoration: AppTheme.boxDecoration(
+                  color: context.errorColor,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -257,20 +278,30 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
       children: [
         Builder(
           builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 26),
+            icon: const Icon(
+              Icons.menu_rounded,
+              color: AppColors.white,
+              size: 26,
+            ),
             onPressed: () => Scaffold.of(ctx).openEndDrawer(),
           ),
         ),
         const SizedBox(width: 8),
         Text(
           _getAppBarTitle(),
-          style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          style: AppTextStyles.style(
+            color: AppColors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         const Spacer(),
         IconButton(
-          icon: const Icon(Icons.notifications_none_rounded,
-              color: Colors.white, size: 24),
+          icon: const Icon(
+            Icons.notifications_none_rounded,
+            color: AppColors.white,
+            size: 24,
+          ),
           onPressed: () {
             // TODO: التوجيه لشاشة الإشعارات
           },

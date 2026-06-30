@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/features/parent/data/models/child_model.dart';
 import 'add_child_screen.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 
 class ChildDetailScreen extends StatelessWidget {
   final ChildModel child;
@@ -9,16 +12,14 @@ class ChildDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isMale = child.gender == 'MALE';
     final isPresent = child.dailyStatus == DailyStatus.present;
-    final avatarColor = isMale ? const Color(0xFF3B82F6) : const Color(0xFFEC4899);
+    final avatarColor = isMale ? AppColors.maleBlue : AppColors.femalePink;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor:
-            isDark ? const Color(0xFF0F0F0F) : AppColors.backgroundLight,
+        backgroundColor: context.scaffoldBackgroundColor,
         body: CustomScrollView(
           slivers: [
             // ─── هيدر الطفل ───────────────────────────────────────────
@@ -27,13 +28,15 @@ class ChildDetailScreen extends StatelessWidget {
               pinned: true,
               backgroundColor: AppColors.primaryLight,
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.white,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined, color: Colors.white),
+                  icon: const Icon(Icons.edit_outlined, color: AppColors.white),
                   tooltip: "تعديل البيانات",
                   onPressed: () {
                     Navigator.push(
@@ -47,9 +50,12 @@ class ChildDetailScreen extends StatelessWidget {
               ],
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppColors.primaryLight, Color(0xFF0E78C4)],
+                  decoration: AppTheme.boxDecoration(
+                    gradient: AppTheme.linearGradient(
+                      colors: [
+                        AppColors.primaryLight,
+                        AppColors.primaryGradientEnd,
+                      ],
                       begin: Alignment.topRight,
                       end: Alignment.bottomLeft,
                     ),
@@ -61,20 +67,22 @@ class ChildDetailScreen extends StatelessWidget {
                         const SizedBox(height: 40),
                         // أفاتار الطفل
                         Container(
-                          decoration: BoxDecoration(
+                          decoration: AppTheme.boxDecoration(
                             shape: BoxShape.circle,
-                            border:
-                                Border.all(color: Colors.white, width: 3),
+                            border: AppTheme.border(
+                              color: AppColors.white,
+                              width: 3,
+                            ),
                             boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
+                              AppTheme.boxShadow(
+                                color: AppColors.black.withValues(alpha: 0.2),
                                 blurRadius: 12,
-                              )
+                              ),
                             ],
                           ),
                           child: CircleAvatar(
                             radius: 48,
-                            backgroundColor: Colors.white.withOpacity(0.2),
+                            backgroundColor: AppColors.white.withValues(alpha: 0.2),
                             backgroundImage: child.photoUrl != null
                                 ? NetworkImage(child.photoUrl!)
                                 : null,
@@ -83,7 +91,7 @@ class ChildDetailScreen extends StatelessWidget {
                                     isMale
                                         ? Icons.boy_rounded
                                         : Icons.girl_rounded,
-                                    color: Colors.white,
+                                    color: AppColors.white,
                                     size: 48,
                                   )
                                 : null,
@@ -92,8 +100,8 @@ class ChildDetailScreen extends StatelessWidget {
                         const SizedBox(height: 12),
                         Text(
                           child.fullName,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: AppTextStyles.style(
+                            color: AppColors.white,
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                           ),
@@ -102,14 +110,17 @@ class ChildDetailScreen extends StatelessWidget {
                         // بيدج حالة الحضور
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: (isPresent
-                                    ? AppColors.success
-                                    : AppColors.error)
-                                .withOpacity(0.25),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
+                            horizontal: 14,
+                            vertical: 5,
+                          ),
+                          decoration: AppTheme.boxDecoration(
+                            color:
+                                (isPresent
+                                        ? AppColors.success
+                                        : AppColors.error)
+                                    .withValues(alpha: 0.25),
+                            borderRadius: AppTheme.radius(20),
+                            border: AppTheme.border(
                               color: isPresent
                                   ? AppColors.success
                                   : AppColors.error,
@@ -130,7 +141,7 @@ class ChildDetailScreen extends StatelessWidget {
                               const SizedBox(width: 5),
                               Text(
                                 isPresent ? "حاضر اليوم" : "غائب اليوم",
-                                style: TextStyle(
+                                style: AppTextStyles.style(
                                   color: isPresent
                                       ? AppColors.success
                                       : AppColors.error,
@@ -159,26 +170,31 @@ class ChildDetailScreen extends StatelessWidget {
                     icon: Icons.info_outline_rounded,
                     children: [
                       _InfoRow(
-                          icon: Icons.person_outline_rounded,
-                          label: "الاسم الكامل",
-                          value: child.fullName),
+                        icon: Icons.person_outline_rounded,
+                        label: "الاسم الكامل",
+                        value: child.fullName,
+                      ),
                       _InfoRow(
-                          icon: Icons.wc_rounded,
-                          label: "الجنس",
-                          value: isMale ? "ذكر 👦" : "أنثى 👧"),
+                        icon: Icons.wc_rounded,
+                        label: "الجنس",
+                        value: isMale ? "ذكر 👦" : "أنثى 👧",
+                      ),
                       _InfoRow(
-                          icon: Icons.cake_rounded,
-                          label: "تاريخ الميلاد",
-                          value:
-                              "${child.birthDate.year}/${child.birthDate.month}/${child.birthDate.day}"),
+                        icon: Icons.cake_rounded,
+                        label: "تاريخ الميلاد",
+                        value:
+                            "${child.birthDate.year}/${child.birthDate.month}/${child.birthDate.day}",
+                      ),
                       _InfoRow(
-                          icon: Icons.school_outlined,
-                          label: "المدرسة",
-                          value: child.schoolName),
+                        icon: Icons.school_outlined,
+                        label: "المدرسة",
+                        value: child.schoolName,
+                      ),
                       _InfoRow(
-                          icon: Icons.home_outlined,
-                          label: "عنوان الركوب",
-                          value: child.homeAddressTitle),
+                        icon: Icons.home_outlined,
+                        label: "عنوان الركوب",
+                        value: child.homeAddressTitle,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -223,13 +239,16 @@ class ChildDetailScreen extends StatelessWidget {
                       children: [
                         Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 4),
+                            horizontal: 4,
+                            vertical: 4,
+                          ),
                           child: Text(
                             child.medicalNotes!,
-                            style: const TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textMuted,
-                                height: 1.6),
+                            style: AppTextStyles.style(
+                              fontSize: 14,
+                              color: AppColors.textMuted,
+                              height: 1.6,
+                            ),
                           ),
                         ),
                       ],
@@ -249,29 +268,36 @@ class ChildDetailScreen extends StatelessWidget {
                                 width: 130,
                                 height: 130,
                                 margin: const EdgeInsets.symmetric(
-                                    vertical: 12),
-                                decoration: BoxDecoration(
-                                  color: avatarColor.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                      color: avatarColor.withOpacity(0.2)),
+                                  vertical: 12,
                                 ),
-                                child: Icon(Icons.qr_code_2_rounded,
-                                    size: 90, color: avatarColor),
+                                decoration: AppTheme.boxDecoration(
+                                  color: avatarColor.withValues(alpha: 0.05),
+                                  borderRadius: AppTheme.radius(16),
+                                  border: AppTheme.border(
+                                    color: avatarColor.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.qr_code_2_rounded,
+                                  size: 90,
+                                  color: avatarColor,
+                                ),
                               ),
                               Text(
                                 child.qrCodeToken!,
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.textMuted,
-                                    letterSpacing: 1.5),
+                                style: AppTextStyles.style(
+                                  fontSize: 12,
+                                  color: AppColors.textMuted,
+                                  letterSpacing: 1.5,
+                                ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
+                              Text(
                                 "يُستخدم لتسجيل الدخول والخروج في الحافلة",
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.textMuted),
+                                style: AppTextStyles.style(
+                                  fontSize: 11,
+                                  color: AppColors.textMuted,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                             ],
@@ -319,12 +345,12 @@ class _InfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+      decoration: AppTheme.boxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.white,
+        borderRadius: AppTheme.radius(20),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+          AppTheme.boxShadow(
+            color: AppColors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -340,27 +366,29 @@ class _InfoCard extends StatelessWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
+                  decoration: AppTheme.boxDecoration(
+                    color: AppColors.primaryLight.withValues(alpha: 0.1),
+                    borderRadius: AppTheme.radius(10),
                   ),
-                  child: Icon(icon,
-                      color: AppColors.primaryLight, size: 18),
+                  child: Icon(icon, color: AppColors.primaryLight, size: 18),
                 ),
                 const SizedBox(width: 10),
                 Text(
                   title,
-                  style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.bold),
+                  style: AppTextStyles.style(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
           ),
           Divider(
-              height: 1,
-              color: isDark
-                  ? Colors.white.withOpacity(0.07)
-                  : Colors.black.withOpacity(0.06)),
+            height: 1,
+            color: isDark
+                ? AppColors.white.withValues(alpha: 0.07)
+                : AppColors.black.withValues(alpha: 0.06),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             child: Column(children: children),
@@ -392,16 +420,16 @@ class _InfoRow extends StatelessWidget {
           const SizedBox(width: 10),
           Text(
             "$label: ",
-            style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textMuted,
-                fontWeight: FontWeight.w500),
+            style: AppTextStyles.style(
+              fontSize: 13,
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           Flexible(
             child: Text(
               value,
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600),
+              style: AppTextStyles.style(fontSize: 13, fontWeight: FontWeight.w600),
               overflow: TextOverflow.ellipsis,
             ),
           ),

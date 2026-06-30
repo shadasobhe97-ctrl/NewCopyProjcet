@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../logic/register_cubit.dart';
 import '../../../logic/register_state.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class DriverAlternativePhoneScreen extends StatefulWidget {
   const DriverAlternativePhoneScreen({super.key});
 
   @override
-  State<DriverAlternativePhoneScreen> createState() => _DriverAlternativePhoneScreenState();
+  State<DriverAlternativePhoneScreen> createState() =>
+      _DriverAlternativePhoneScreenState();
 }
 
-class _DriverAlternativePhoneScreenState extends State<DriverAlternativePhoneScreen> {
+class _DriverAlternativePhoneScreenState
+    extends State<DriverAlternativePhoneScreen> {
   final _formKey = GlobalKey<FormState>();
   final _altPhoneController = TextEditingController();
 
@@ -22,10 +27,10 @@ class _DriverAlternativePhoneScreenState extends State<DriverAlternativePhoneScr
 
   void _submitFirstStageRegistration({bool isSkipped = false}) {
     final cubit = context.read<RegisterCubit>();
-    
+
     // 1. حفظ رقم الهاتف البديل لو تم إدخاله ولم يتم التخطي
     cubit.alternativePhone = isSkipped ? null : _altPhoneController.text.trim();
-    
+
     // 2. استدعاء الدالة الأولى لريان لإنشاء الحساب وإرسال الـ OTP
     cubit.registerDriverFirstStage();
   }
@@ -37,10 +42,13 @@ class _DriverAlternativePhoneScreenState extends State<DriverAlternativePhoneScr
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black),
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: isDark ? AppColors.white : AppColors.black,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -49,7 +57,11 @@ class _DriverAlternativePhoneScreenState extends State<DriverAlternativePhoneScr
             onPressed: () => _submitFirstStageRegistration(isSkipped: true),
             child: Text(
               "تخطي",
-              style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
+              style: AppTextStyles.style(
+                color: theme.primaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -64,7 +76,10 @@ class _DriverAlternativePhoneScreenState extends State<DriverAlternativePhoneScr
             } else if (state is DriverRegisterFirstStageError) {
               // عرض رسالة الخطأ في حالة وجود مشكلة بالسيرفر أو تكرار البيانات
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.errorMessage), backgroundColor: Colors.red),
+                SnackBar(
+                  content: Text(state.errorMessage),
+                  backgroundColor: AppColors.red,
+                ),
               );
             }
           },
@@ -79,13 +94,17 @@ class _DriverAlternativePhoneScreenState extends State<DriverAlternativePhoneScr
                     const SizedBox(height: 20),
                     Text(
                       "رقم هاتف بديل للسائق",
-                      style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                       textAlign: TextAlign.right,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       "يمكنكِ إضافة رقم هاتف احتياطي آخر للاتصال به في حالات الطوارئ أو انقطاع الشبكة (اختياري).",
-                      style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: AppColors.grey,
+                      ),
                       textAlign: TextAlign.right,
                     ),
                     const SizedBox(height: 40),
@@ -96,19 +115,21 @@ class _DriverAlternativePhoneScreenState extends State<DriverAlternativePhoneScr
                       keyboardType: TextInputType.phone,
                       textDirection: TextDirection.ltr,
                       textAlign: TextAlign.left,
-                      decoration: const InputDecoration(
+                      decoration: AppTheme.inputDecoration(context, 
                         labelText: "رقم الهاتف البديل",
                         hintText: "09XXXXXXXX",
                         prefixIcon: Icon(Icons.phone_enabled_outlined),
                       ),
                       validator: (value) {
-                        if (value != null && value.trim().isNotEmpty && value.trim().length < 7) {
+                        if (value != null &&
+                            value.trim().isNotEmpty &&
+                            value.trim().length < 7) {
                           return "يجب ألا يقل رقم الهاتف عن 7 أرقام";
                         }
                         return null;
                       },
                     ),
-                    
+
                     const Spacer(),
 
                     // زر إرسال البيانات والارسال للباكيند مع الـ Loading
@@ -120,18 +141,24 @@ class _DriverAlternativePhoneScreenState extends State<DriverAlternativePhoneScr
                                 _submitFirstStageRegistration(isSkipped: false);
                               }
                             },
-                      style: ElevatedButton.styleFrom(
+                      style: AppTheme.elevatedButtonStyle(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: state is DriverRegisterFirstStageLoading
                           ? const SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.white,
+                              ),
                             )
-                          : const Text(
+                          : Text(
                               "إنشاء الحساب والمتابعة",
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: AppTextStyles.style(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                     ),
                     const SizedBox(height: 24),

@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,13 +27,12 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
   bool _canResend = false;
   bool _resendLoading = false;
   bool _resendSucceeded = false;
-  
+
   @override
   void initState() {
     super.initState();
     _startTimer();
   }
-
 
   void _startTimer() {
     setState(() {
@@ -65,7 +67,9 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
 
     try {
       // استدعاء نفس دالة الإيميل (send-otp endpoint)
-      final message = await context.read<RegisterCubit>().resendParentOtp(widget.email);
+      final message = await context.read<RegisterCubit>().resendParentOtp(
+        widget.email,
+      );
       if (!mounted) return;
 
       setState(() {
@@ -75,7 +79,7 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.green),
+        SnackBar(content: Text(message), backgroundColor: AppColors.green),
       );
 
       await Future.delayed(const Duration(seconds: 2));
@@ -96,7 +100,7 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
       _resendSucceeded = false;
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: AppColors.red),
     );
   }
 
@@ -106,7 +110,9 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
       context.read<RegisterCubit>().registerParent(otpValue);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("الرجاء إدخال الرمز كاملاً المكون من 6 أرقام")),
+        const SnackBar(
+          content: Text("الرجاء إدخال الرمز كاملاً المكون من 6 أرقام"),
+        ),
       );
     }
   }
@@ -134,10 +140,13 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black),
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: isDark ? AppColors.white : AppColors.black,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -147,13 +156,19 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
             if (state is ParentRegisterSuccess) {
               // تسجيل ناجح → الانتقال لشاشة الموقع
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: Colors.green),
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.green,
+                ),
               );
               Navigator.pushNamed(context, '/parentLocation');
             } else if (state is ParentRegisterError) {
               // خطأ في التسجيل (OTP خاطئ، إيميل مكرر، إلخ)
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.errorMessage), backgroundColor: Colors.red),
+                SnackBar(
+                  content: Text(state.errorMessage),
+                  backgroundColor: AppColors.red,
+                ),
               );
             }
           },
@@ -168,13 +183,17 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
                   const SizedBox(height: 20),
                   Text(
                     "رمز التحقق",
-                    style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.right,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     "تم إرسال كود التحقق المكون من 6 أرقام إلى بريدك الإلكتروني:\n${widget.email}",
-                    style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.grey,
+                    ),
                     textAlign: TextAlign.right,
                   ),
                   const SizedBox(height: 40),
@@ -191,11 +210,15 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
                       animationType: AnimationType.slide,
                       pinTheme: PinTheme(
                         shape: PinCodeFieldShape.box,
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: AppTheme.radius(30),
                         fieldHeight: 50,
                         fieldWidth: 45,
-                        activeFillColor: isDark ? Colors.grey[900] : Colors.grey[50],
-                        inactiveColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                        activeFillColor: isDark
+                            ? AppColors.grey900
+                            : AppColors.grey50,
+                        inactiveColor: isDark
+                            ? AppColors.grey800
+                            : AppColors.grey300,
                         selectedColor: theme.primaryColor,
                       ),
                       onChanged: (value) {},
@@ -212,12 +235,15 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
                             children: [
                               Text(
                                 "إعادة الإرسال بعد",
-                                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                style: AppTextStyles.style(
+                                  color: AppColors.grey600,
+                                  fontSize: 13,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 _formatTime(_timerSeconds),
-                                style: TextStyle(
+                                style: AppTextStyles.style(
                                   color: theme.primaryColor,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20,
@@ -234,18 +260,24 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
                     onPressed: isSubmitting
                         ? null
                         : () => _submitRegistration(_otpController.text),
-                    style: ElevatedButton.styleFrom(
+                    style: AppTheme.elevatedButtonStyle(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: isSubmitting
                         ? const SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.white,
+                            ),
                           )
-                        : const Text(
+                        : Text(
                             "تأكيد وإنشاء الحساب",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: AppTextStyles.style(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                   ),
                   const SizedBox(height: 24),
@@ -272,8 +304,8 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
         onPressed: null,
         child: Text(
           "تم إرسال الرمز ✓",
-          style: TextStyle(
-            color: Colors.grey[500],
+          style: AppTextStyles.style(
+            color: AppColors.grey500,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -284,7 +316,7 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
       onPressed: _resendOtp,
       child: Text(
         "إعادة إرسال رمز التحقق",
-        style: TextStyle(
+        style: AppTextStyles.style(
           color: theme.primaryColor,
           fontWeight: FontWeight.bold,
         ),

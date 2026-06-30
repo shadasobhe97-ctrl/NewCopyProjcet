@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
-import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/widgets/custom_auth_button.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_state.dart';
 import 'package:kids_transport/features/auth/login/presentation/widgets/auth_header_section.dart';
 import 'package:kids_transport/features/auth/login/presentation/widgets/auth_password_field.dart';
-
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String email;
@@ -28,62 +29,72 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   void _showSuccessDialog(BuildContext context, String message) {
     showDialog(
       context: context,
-      barrierDismissible: false, // يمنع إغلاق الدايلوق عند الضغط خارج الشاشة لإجبار المستخدم على الضغط على "تم"
+      barrierDismissible:
+          false, // يمنع إغلاق الدايلوق عند الضغط خارج الشاشة لإجبار المستخدم على الضغط على "تم"
       builder: (BuildContext dialogContext) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final isDark = context.isDarkMode;
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
-          backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
+          shape: AppTheme.roundedRectangleBorder(
+            borderRadius: AppTheme.radius(24.r),
+          ),
+          backgroundColor: context.darkSurface,
           title: Row(
             children: [
-              Icon(Icons.check_circle_rounded, color: AppColors.success, size: 28.r),
+              Icon(
+                Icons.check_circle_rounded,
+                color: context.successColor,
+                size: 28.r,
+              ),
               SizedBox(width: 8.w),
               Text(
                 'تم التعديل بنجاح',
-                style: AppTextStyles.heading(color: isDark ? Colors.white : Colors.black87)
-                    .copyWith(fontSize: 18.sp),
+                style: AppTextStyles.heading(
+                  color: isDark ? AppColors.white : AppColors.black87,
+                ).copyWith(fontSize: 18.sp),
               ),
             ],
           ),
           content: Text(
             'تم تغيير كلمة المرور بنجاح. يمكنك الآن العودة وتسجيل الدخول بحسابك التجاري مجدداً.',
-            style: AppTextStyles.body(color: isDark ? Colors.grey.shade300 : Colors.black54),
+            style: AppTextStyles.body(
+              color: isDark ? AppColors.grey300 : AppColors.black54,
+            ),
           ),
-actions: [
-  TextButton(
-    onPressed: () {
-      // 1. إغلاق الدايلوق باستخدام الـ context تبيع الدايلوق نفسه
-      Navigator.pop(dialogContext);
-      
-      // 2. التوجيه الآمن باستخدام الـ context تبيع الشاشة بعد التأكد أنها mounted
-      if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(
-          context, 
-          AppRoutes.login, 
-          (route) => false,
-        );
-      }
-    },
-    child: Text(
-      'تم، تسجيل الدخول',
-      style: AppTextStyles.body(
-        color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
-      ).copyWith(fontWeight: FontWeight.bold),
-    ),
-  ),
-],
+          actions: [
+            TextButton(
+              onPressed: () {
+                // 1. إغلاق الدايلوق باستخدام الـ context تبيع الدايلوق نفسه
+                Navigator.pop(dialogContext);
+
+                // 2. التوجيه الآمن باستخدام الـ context تبيع الشاشة بعد التأكد أنها mounted
+                if (mounted) {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.login,
+                    (route) => false,
+                  );
+                }
+              },
+              child: Text(
+                'تم، تسجيل الدخول',
+                style: AppTextStyles.body(
+                  color: context.primaryColor,
+                ).copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
         );
       },
     );
   }
   // ======================================================================
 
- @override
+  @override
   void dispose() {
     // 🌟 تصفير وتفريغ الحقول قبل الإغلاق لمنع الحقول من قراءتهم أثناء تدمير الشاشة
     _passwordController.clear();
     _confirmPasswordController.clear();
-    
+
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -92,8 +103,12 @@ actions: [
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, automaticallyImplyLeading: false),
+      backgroundColor: context.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: AppColors.transparent,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+      ),
       body: SafeArea(
         child: BlocConsumer<AuthCubit, AuthState>(
           listener: (context, state) {
@@ -102,7 +117,10 @@ actions: [
               _showSuccessDialog(context, state.message);
             } else if (state is AuthError) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.errorMessage), backgroundColor: AppColors.error),
+                SnackBar(
+                  content: Text(state.errorMessage),
+                  backgroundColor: context.errorColor,
+                ),
               );
             }
           },
@@ -116,10 +134,11 @@ actions: [
                   children: [
                     const AuthHeaderSection(
                       title: 'تعيين كلمة المرور الجديدة',
-                      subtitle: 'أدخل كلمة المرور الجديدة القوية لتحديث حسابك التجاري',
+                      subtitle:
+                          'أدخل كلمة المرور الجديدة القوية لتحديث حسابك التجاري',
                     ),
                     SizedBox(height: 20.h),
-                    
+
                     AuthPasswordField(
                       controller: _passwordController,
                       hintText: 'كلمة المرور الجديدة',
@@ -130,7 +149,8 @@ actions: [
                       controller: _confirmPasswordController,
                       hintText: 'تأكيد كلمة المرور الجديدة',
                       validator: (value) {
-                        if (value != _passwordController.text) return 'كلمات المرور غير متطابقة';
+                        if (value != _passwordController.text)
+                          return 'كلمات المرور غير متطابقة';
                         return null;
                       },
                     ),
@@ -142,10 +162,10 @@ actions: [
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
                           context.read<AuthCubit>().resetPassword(
-                                email: widget.email,
-                                password: _passwordController.text,
-                                confirmPassword: _confirmPasswordController.text,
-                              );
+                            email: widget.email,
+                            password: _passwordController.text,
+                            confirmPassword: _confirmPasswordController.text,
+                          );
                         }
                       },
                     ),

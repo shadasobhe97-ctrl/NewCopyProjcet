@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
-import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_state.dart';
@@ -107,14 +109,16 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDarkMode;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: context.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
-        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
+        iconTheme: IconThemeData(
+          color: isDark ? AppColors.white : AppColors.black87,
+        ),
       ),
       body: SafeArea(
         child: BlocListener<AuthCubit, AuthState>(
@@ -123,7 +127,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: AppColors.success,
+                  backgroundColor: context.successColor,
                 ),
               );
               _handleResendSuccess();
@@ -139,7 +143,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.errorMessage),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: context.errorColor,
                 ),
               );
             }
@@ -169,31 +173,24 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       pinTheme: PinTheme(
                         shape: PinCodeFieldShape.box,
-                        borderRadius: BorderRadius.circular(12.r),
+                        borderRadius: AppTheme.radius(12.r),
                         fieldHeight: 54.h,
                         fieldWidth: 44.w,
-                        activeFillColor:
-                            isDark ? AppColors.surfaceDark : Colors.white,
+                        activeFillColor: context.darkSurface,
                         inactiveFillColor: isDark
-                            ? AppColors.surfaceDark
-                            : Colors.grey.shade100,
-                        selectedFillColor:
-                            isDark ? AppColors.surfaceDark : Colors.white,
-                        activeColor: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
-                        selectedColor: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
+                            ? context.darkSurface
+                            : AppColors.grey100,
+                        selectedFillColor: context.darkSurface,
+                        activeColor: context.primaryColor,
+                        selectedColor: context.primaryColor,
                         inactiveColor: isDark
-                            ? Colors.grey.shade700
-                            : Colors.grey.shade300,
+                            ? AppColors.grey700
+                            : AppColors.grey300,
                       ),
                       textStyle: AppTextStyles.heading(
-                        color: isDark ? Colors.white : Colors.black87,
+                        color: isDark ? AppColors.white : AppColors.black87,
                       ),
-                      cursorColor:
-                          isDark ? AppColors.primaryDark : AppColors.primaryLight,
+                      cursorColor: context.primaryColor,
                       enableActiveFill: true,
                       onChanged: (_) {},
                       onCompleted: (code) {
@@ -215,36 +212,45 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                             children: [
                               Text(
                                 'إعادة الإرسال بعد',
-                                style: AppTextStyles.body(color: AppColors.textMuted),
+                                style: AppTextStyles.body(
+                                  color: context.textMuted,
+                                ),
                               ),
                               SizedBox(height: 4.h),
                               Text(
                                 _formatTime(_startSeconds),
-                                style: AppTextStyles.body(
-                                  color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
-                                ).copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
-                                  letterSpacing: 2,
-                                ),
+                                style:
+                                    AppTextStyles.body(
+                                      color: context.primaryColor,
+                                    ).copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                      letterSpacing: 2,
+                                    ),
                               ),
                             ],
                           )
                         else
                           TextButton(
-                            onPressed: (_resendLoading || _resendSucceeded) ? null : _resendCode,
+                            onPressed: (_resendLoading || _resendSucceeded)
+                                ? null
+                                : _resendCode,
                             child: _resendLoading
                                 ? const SizedBox(
                                     height: 18,
                                     width: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : Text(
-                                    _resendSucceeded ? 'تم إرسال الرمز ✓' : 'إعادة إرسال الرمز',
+                                    _resendSucceeded
+                                        ? 'تم إرسال الرمز ✓'
+                                        : 'إعادة إرسال الرمز',
                                     style: AppTextStyles.body(
                                       color: _resendSucceeded
-                                          ? Colors.grey
-                                          : (isDark ? AppColors.primaryDark : AppColors.primaryLight),
+                                          ? AppColors.grey
+                                          : context.primaryColor,
                                     ).copyWith(fontWeight: FontWeight.bold),
                                   ),
                           ),

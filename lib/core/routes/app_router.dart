@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/features/app_entry/presentation/screens/onboarding_screen.dart';
 import 'package:kids_transport/features/app_entry/presentation/screens/splash_screen.dart';
-import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
 import 'package:kids_transport/features/driver/presentation/screens/driver_home_screen.dart';
 import 'package:kids_transport/features/parent/presentation/screens/parent_home_screen.dart';
 import 'package:kids_transport/features/parent/presentation/screens/parent_main_wrapper.dart';
@@ -63,7 +61,6 @@ class AppRoutes {
   static const String savedAddresses = '/savedAddresses';
 
   // روتس فلو السائق
-  // TODO: عند الربط الكامل، يُوجَّه السائق هنا بعد قبول الأدمن لحسابه
   static const String driverMainWrapper = '/driverMainWrapper';
   static const String driverBackupVehicle = '/driverBackupVehicle';
 
@@ -220,7 +217,6 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const DriverWaitingScreen());
 
       // ── الهوم سكرين الخاص بالسائق (بعد القبول من الأدمن) ──
-      // TODO: عند الربط، تأكد من التحقق من حالة السائق قبل الدخول لهذه الشاشة
       case AppRoutes.driverMainWrapper:
         return MaterialPageRoute(builder: (_) => const DriverMainWrapper());
 

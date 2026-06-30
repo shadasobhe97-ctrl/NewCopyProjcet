@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 // ==========================================
 // شاشة الملف الشخصي الكاملة للسائق
@@ -83,11 +86,11 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
       // TODO: [ربط API] - قم باستدعاء دالة تحديث بيانات السائق هنا (UpdateDriverProfile)
       // مثال:
       // context.read<DriverProfileCubit>().updateProfile(name: _name, phone: _phone, ...);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('تم حفظ التعديلات بنجاح'),
-          backgroundColor: AppColors.success,
+          backgroundColor: context.successColor,
         ),
       );
     }
@@ -101,11 +104,14 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        backgroundColor: context.backgroundSurface,
         appBar: AppBar(
-          title: const Text('الملف الشخصي', style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
-          foregroundColor: isDark ? Colors.white : AppColors.textDark,
+          title: Text(
+            'الملف الشخصي',
+            style: AppTextStyles.style(fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: context.darkSurface,
+          foregroundColor: isDark ? AppColors.white : context.textDark,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
@@ -116,7 +122,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
             IconButton(
               icon: Icon(
                 _isEditing ? Icons.close_rounded : Icons.edit_rounded,
-                color: _isEditing ? AppColors.error : AppColors.primaryLight,
+                color: _isEditing ? context.errorColor : context.primaryColor,
               ),
               onPressed: _toggleEditMode,
               tooltip: _isEditing ? 'إلغاء التعديل' : 'تعديل البيانات',
@@ -136,14 +142,23 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   child: Stack(
                     children: [
                       Container(
-                        decoration: BoxDecoration(
+                        decoration: AppTheme.boxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.primaryLight.withOpacity(0.3), width: 4),
+                          border: AppTheme.border(
+                            color: context.primaryColor.withValues(alpha: 0.3),
+                            width: 4,
+                          ),
                         ),
                         child: CircleAvatar(
                           radius: 50,
-                          backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
-                          child: const Icon(Icons.person, size: 50, color: Colors.grey),
+                          backgroundColor: isDark
+                              ? AppColors.grey800
+                              : AppColors.grey200,
+                          child: const Icon(
+                            Icons.person,
+                            size: 50,
+                            color: AppColors.grey,
+                          ),
                         ),
                       ),
                       if (_isEditing)
@@ -151,12 +166,16 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                           bottom: 0,
                           right: 0,
                           child: Container(
-                            decoration: const BoxDecoration(
-                              color: AppColors.primaryLight,
+                            decoration: AppTheme.boxDecoration(
+                              color: context.primaryColor,
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
-                              icon: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                              icon: const Icon(
+                                Icons.camera_alt,
+                                color: AppColors.white,
+                                size: 18,
+                              ),
                               onPressed: () {
                                 // TODO: دالة تغيير الصورة
                               },
@@ -175,7 +194,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   value: _name,
                   controller: _nameController,
                   isDark: isDark,
-                  validator: (val) => val == null || val.isEmpty ? 'مطلوب' : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? 'مطلوب' : null,
                 ),
                 _buildField(
                   label: 'رقم الهاتف',
@@ -184,7 +204,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   isDark: isDark,
-                  validator: (val) => val == null || val.isEmpty ? 'مطلوب' : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? 'مطلوب' : null,
                 ),
                 _buildField(
                   label: 'رقم هاتف احتياطي',
@@ -210,18 +231,36 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   isDark: isDark,
                   readOnly: true, // يفضل جعله DatePicker مستقبلاً
                 ),
-                
+
                 // ── بيانات غير قابلة للتعديل مباشرة (للعرض فقط) ──
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: Divider(),
                 ),
-                const Text('بيانات العمل والتغطية', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(
+                  'بيانات العمل والتغطية',
+                  style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
                 const SizedBox(height: 16),
 
-                _buildInfoRow('فترة العمل', _shift, Icons.access_time_rounded, isDark),
-                _buildInfoRow('المناطق المغطاة', _coveredAreas, Icons.map_outlined, isDark),
-                _buildInfoRow('الموقع الجغرافي', _currentLocation, Icons.location_on_outlined, isDark),
+                _buildInfoRow(
+                  'فترة العمل',
+                  _shift,
+                  Icons.access_time_rounded,
+                  isDark,
+                ),
+                _buildInfoRow(
+                  'المناطق المغطاة',
+                  _coveredAreas,
+                  Icons.map_outlined,
+                  isDark,
+                ),
+                _buildInfoRow(
+                  'الموقع الجغرافي',
+                  _currentLocation,
+                  Icons.location_on_outlined,
+                  isDark,
+                ),
 
                 const SizedBox(height: 40),
 
@@ -229,11 +268,19 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 if (_isEditing)
                   ElevatedButton(
                     onPressed: _saveProfile,
-                    style: ElevatedButton.styleFrom(
+                    style: AppTheme.elevatedButtonStyle(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: AppTheme.roundedRectangleBorder(
+                        borderRadius: AppTheme.radius(12),
+                      ),
                     ),
-                    child: const Text('حفظ التعديلات', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'حفظ التعديلات',
+                      style: AppTextStyles.style(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -264,29 +311,43 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 keyboardType: keyboardType,
                 validator: validator,
                 readOnly: readOnly,
-                decoration: InputDecoration(
+                decoration: AppTheme.inputDecoration(context, 
                   labelText: label,
-                  prefixIcon: Icon(icon, color: AppColors.primaryLight),
+                  prefixIcon: Icon(icon, color: context.primaryColor),
                 ),
               )
             : Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.surfaceDark : Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                decoration: AppTheme.boxDecoration(
+                  color: context.darkSurface,
+                  borderRadius: AppTheme.radius(16),
+                  border: AppTheme.border(
+                    color: isDark ? AppColors.grey800 : AppColors.grey200,
+                  ),
                 ),
                 child: Row(
                   children: [
-                    Icon(icon, color: AppColors.primaryLight, size: 22),
+                    Icon(icon, color: context.primaryColor, size: 22),
                     const SizedBox(width: 16),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                        Text(
+                          label,
+                          style: AppTextStyles.style(
+                            fontSize: 12,
+                            color: AppColors.grey500,
+                          ),
+                        ),
                         const SizedBox(height: 4),
-                        Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                        Text(
+                          value,
+                          style: AppTextStyles.style(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -304,20 +365,29 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
+            decoration: AppTheme.boxDecoration(
+              color: context.primaryColor.withValues(alpha: 0.1),
+              borderRadius: AppTheme.radius(10),
             ),
-            child: Icon(icon, color: AppColors.primaryLight, size: 20),
+            child: Icon(icon, color: context.primaryColor, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                Text(
+                  label,
+                  style: AppTextStyles.style(fontSize: 12, color: AppColors.grey500),
+                ),
                 const SizedBox(height: 2),
-                Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                Text(
+                  value,
+                  style: AppTextStyles.style(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ),

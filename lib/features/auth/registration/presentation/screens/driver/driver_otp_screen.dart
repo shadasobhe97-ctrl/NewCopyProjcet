@@ -5,6 +5,9 @@ import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import '../../../logic/register_cubit.dart';
 import '../../../logic/register_state.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class DriverOtpScreen extends StatefulWidget {
   const DriverOtpScreen({super.key});
@@ -66,14 +69,11 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
       setState(() {
         _resendLoading = false;
         _resendSucceeded = true; // يتحول لرمادي = نجح الإرسال
-        _canResend = false;       // نخفي الزر مؤقتاً ونبدأ التايمر
+        _canResend = false; // نخفي الزر مؤقتاً ونبدأ التايمر
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.green,
-        ),
+        SnackBar(content: Text(message), backgroundColor: AppColors.green),
       );
 
       // إعادة بدء التايمر بعد 2 ثانية
@@ -97,7 +97,7 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
       _resendSucceeded = false;
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: AppColors.red),
     );
   }
 
@@ -125,10 +125,13 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black),
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: isDark ? AppColors.white : AppColors.black,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -139,7 +142,10 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
               Navigator.pushNamed(context, '/driverNationalInfo');
             } else if (state is DriverVerifyOtpError) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.errorMessage), backgroundColor: Colors.red),
+                SnackBar(
+                  content: Text(state.errorMessage),
+                  backgroundColor: AppColors.red,
+                ),
               );
             }
           },
@@ -152,13 +158,17 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
                   const SizedBox(height: 20),
                   Text(
                     "رمز التحقق",
-                    style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.right,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     "تم إرسال كود التحقق المكون من 6 أرقام إلى رقم هاتفك:\n${cubit.phoneNumber ?? ''}",
-                    style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.grey,
+                    ),
                     textAlign: TextAlign.right,
                   ),
                   const SizedBox(height: 40),
@@ -175,11 +185,15 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
                       animationType: AnimationType.slide,
                       pinTheme: PinTheme(
                         shape: PinCodeFieldShape.box,
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: AppTheme.radius(30),
                         fieldHeight: 50,
                         fieldWidth: 45,
-                        activeFillColor: isDark ? Colors.grey[900] : Colors.grey[50],
-                        inactiveColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                        activeFillColor: isDark
+                            ? AppColors.grey900
+                            : AppColors.grey50,
+                        inactiveColor: isDark
+                            ? AppColors.grey800
+                            : AppColors.grey300,
                         selectedColor: theme.primaryColor,
                       ),
                       onChanged: (value) {},
@@ -200,12 +214,15 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
                             children: [
                               Text(
                                 "إعادة الإرسال بعد",
-                                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                style: AppTextStyles.style(
+                                  color: AppColors.grey600,
+                                  fontSize: 13,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 _formatTime(_timerSeconds),
-                                style: TextStyle(
+                                style: AppTextStyles.style(
                                   color: theme.primaryColor,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20,
@@ -226,22 +243,32 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
                               cubit.verifyDriverOtp(_otpController.text);
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("الرجاء إدخال الرمز كاملاً المكون من 6 أرقام")),
+                                const SnackBar(
+                                  content: Text(
+                                    "الرجاء إدخال الرمز كاملاً المكون من 6 أرقام",
+                                  ),
+                                ),
                               );
                             }
                           },
-                    style: ElevatedButton.styleFrom(
+                    style: AppTheme.elevatedButtonStyle(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: state is DriverVerifyOtpLoading
                         ? const SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.white,
+                            ),
                           )
-                        : const Text(
+                        : Text(
                             "تأكيد الرمز",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: AppTextStyles.style(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                   ),
                   const SizedBox(height: 24),
@@ -269,8 +296,8 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
         onPressed: null,
         child: Text(
           "تم إرسال الرمز ✓",
-          style: TextStyle(
-            color: Colors.grey[500],
+          style: AppTextStyles.style(
+            color: AppColors.grey500,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -282,7 +309,7 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
       onPressed: _resendOtp,
       child: Text(
         "إعادة إرسال رمز التحقق",
-        style: TextStyle(
+        style: AppTextStyles.style(
           color: theme.primaryColor,
           fontWeight: FontWeight.bold,
         ),

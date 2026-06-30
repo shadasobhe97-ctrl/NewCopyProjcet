@@ -1,29 +1,33 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; 
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../widgets/document_upload_tile.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class DriverVehicleStageScreen extends StatefulWidget {
-  final Map<String, dynamic> collectedData; 
+  final Map<String, dynamic> collectedData;
 
   const DriverVehicleStageScreen({super.key, required this.collectedData});
 
   @override
-  State<DriverVehicleStageScreen> createState() => _DriverVehicleStageScreenState();
+  State<DriverVehicleStageScreen> createState() =>
+      _DriverVehicleStageScreenState();
 }
 
 class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
 
-  final _plateNumberController = TextEditingController();   
-  final _brandController = TextEditingController();         
-  final _modelController = TextEditingController();         
-  final _yearController = TextEditingController();          
-  final _colorController = TextEditingController(); 
-  final _capacityController = TextEditingController();      
+  final _plateNumberController = TextEditingController();
+  final _brandController = TextEditingController();
+  final _modelController = TextEditingController();
+  final _yearController = TextEditingController();
+  final _colorController = TextEditingController();
+  final _capacityController = TextEditingController();
 
-  File? _selectedVehicleImage; 
+  File? _selectedVehicleImage;
 
   final List<Map<String, String>> _vehicleTypes = [
     {'en': 'Car', 'ar': 'سيارة صغيرة (Car)'},
@@ -32,9 +36,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
     {'en': 'Coach', 'ar': 'حافلة كبيرة (Coach)'},
     {'en': 'Other', 'ar': 'أخرى / نوع آخر'},
   ];
-  
-  String _selectedTypeEnglish = 'Bus'; 
-  bool _hasAc = true; 
+
+  String _selectedTypeEnglish = 'Bus';
+  bool _hasAc = true;
 
   @override
   void dispose() {
@@ -52,8 +56,8 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      shape: AppTheme.roundedRectangleBorder(
+        borderRadius: AppTheme.verticalRadius(top: AppTheme.cornerRadius(16)),
       ),
       builder: (BuildContext bc) {
         return Container(
@@ -62,8 +66,14 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
             child: Wrap(
               children: <Widget>[
                 ListTile(
-                  leading: const Icon(Icons.photo_library, color: Colors.blue),
-                  title: const Text('اختيار من معرض الصور (الاستوديو)', textAlign: TextAlign.right),
+                  leading: const Icon(
+                    Icons.photo_library,
+                    color: AppColors.blue,
+                  ),
+                  title: Text(
+                    'اختيار من معرض الصور (الاستوديو)',
+                    textAlign: TextAlign.right,
+                  ),
                   onTap: () {
                     Navigator.of(context).pop(); // إغلاق القائمة أولاً
                     _pickImage(ImageSource.gallery);
@@ -71,8 +81,14 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                 ),
                 const Divider(),
                 ListTile(
-                  leading: const Icon(Icons.photo_camera, color: Colors.green),
-                  title: const Text('التقاط صورة بالكاميرا', textAlign: TextAlign.right),
+                  leading: const Icon(
+                    Icons.photo_camera,
+                    color: AppColors.green,
+                  ),
+                  title: Text(
+                    'التقاط صورة بالكاميرا',
+                    textAlign: TextAlign.right,
+                  ),
                   onTap: () {
                     Navigator.of(context).pop(); // إغلاق القائمة أولاً
                     _pickImage(ImageSource.camera);
@@ -91,9 +107,10 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
-        imageQuality: 60, // تقليل الجودة لمنع كراش الذاكرة المتلئة في الأجهزة المتوسطة
+        imageQuality:
+            60, // تقليل الجودة لمنع كراش الذاكرة المتلئة في الأجهزة المتوسطة
       );
-      
+
       if (pickedFile != null) {
         setState(() {
           _selectedVehicleImage = File(pickedFile.path);
@@ -112,10 +129,13 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black),
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: isDark ? AppColors.white : AppColors.black,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -130,13 +150,17 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
               children: [
                 Text(
                   "تفاصيل المركبة",
-                  style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.right,
                 ),
                 const SizedBox(height: 6),
                 Text(
                   "الرجاء إدخال معلومات الحافلة أو السيارة لتفعيل حسابك.",
-                  style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColors.grey600,
+                  ),
                   textAlign: TextAlign.right,
                 ),
                 const SizedBox(height: 25),
@@ -148,18 +172,24 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                     TextFormField(
                       controller: _brandController,
                       textAlign: TextAlign.right,
-                      decoration: _buildInputDecoration("الشركة المصنعة (مثال: Toyota)", Icons.directions_car),
+                      decoration: _buildInputDecoration("الشركة المصنعة (مثال: Toyota)",
+                        Icons.directions_car,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _modelController,
                       textAlign: TextAlign.right,
-                      decoration: _buildInputDecoration("الموديل (مثال: Hiace / Camry)", Icons.local_offer_outlined),
+                      decoration: _buildInputDecoration("الموديل (مثال: Hiace / Camry)",
+                        Icons.local_offer_outlined,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       value: _selectedTypeEnglish,
-                      decoration: _buildInputDecoration("نوع المركبة", Icons.merge_type_outlined),
+                      decoration: _buildInputDecoration("نوع المركبة",
+                        Icons.merge_type_outlined,
+                      ),
                       isExpanded: true,
                       alignment: Alignment.centerRight,
                       items: _vehicleTypes.map((type) {
@@ -167,12 +197,16 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                           value: type['en'],
                           child: Align(
                             alignment: Alignment.centerRight,
-                            child: Text(type['ar']!, textDirection: TextDirection.rtl),
+                            child: Text(
+                              type['ar']!,
+                              textDirection: TextDirection.rtl,
+                            ),
                           ),
                         );
                       }).toList(),
                       onChanged: (val) {
-                        if (val != null) setState(() => _selectedTypeEnglish = val);
+                        if (val != null)
+                          setState(() => _selectedTypeEnglish = val);
                       },
                     ),
                   ],
@@ -186,14 +220,18 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                     TextFormField(
                       controller: _plateNumberController,
                       textAlign: TextAlign.right,
-                      decoration: _buildInputDecoration("رقم لوحة المركبة الرسمي", Icons.pin_outlined),
+                      decoration: _buildInputDecoration("رقم لوحة المركبة الرسمي",
+                        Icons.pin_outlined,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _yearController,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.right,
-                      decoration: _buildInputDecoration("سنة الصنع (مثال: 2023)", Icons.calendar_today_outlined),
+                      decoration: _buildInputDecoration("سنة الصنع (مثال: 2023)",
+                        Icons.calendar_today_outlined,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -204,7 +242,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                             controller: _capacityController,
                             keyboardType: TextInputType.number,
                             textAlign: TextAlign.right,
-                            decoration: _buildInputDecoration("عدد المقاعد", Icons.airline_seat_recline_normal),
+                            decoration: _buildInputDecoration("عدد المقاعد",
+                              Icons.airline_seat_recline_normal,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -212,14 +252,20 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                           child: TextFormField(
                             controller: _colorController,
                             textAlign: TextAlign.right,
-                            decoration: _buildInputDecoration("اللون (أبيض..)", Icons.color_lens_outlined),
+                            decoration: _buildInputDecoration("اللون (أبيض..)",
+                              Icons.color_lens_outlined,
+                            ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
                     SwitchListTile.adaptive(
-                      title: const Text("هل المركبة مكيّفة؟", textAlign: TextAlign.right, style: TextStyle(fontSize: 15)),
+                      title: Text(
+                        "هل المركبة مكيّفة؟",
+                        textAlign: TextAlign.right,
+                        style: AppTextStyles.style(fontSize: 15),
+                      ),
                       value: _hasAc,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (val) => setState(() => _hasAc = val),
@@ -233,9 +279,15 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                   onTap: () => _showImageSourceOptions(context),
                   child: IgnorePointer(
                     child: DocumentUploadTile(
-                      title: _selectedVehicleImage != null ? "تم إرفاق الصورة بنجاح ✓" : "صورة المركبة",
-                      description: _selectedVehicleImage != null ? "اضغط لتغيير الصورة الحالية" : "الرجاء رفع صورة للمركبة واضحة المعالم",
-                      icon: _selectedVehicleImage != null ? Icons.check_circle_outline : Icons.camera_enhance_outlined,
+                      title: _selectedVehicleImage != null
+                          ? "تم إرفاق الصورة بنجاح ✓"
+                          : "صورة المركبة",
+                      description: _selectedVehicleImage != null
+                          ? "اضغط لتغيير الصورة الحالية"
+                          : "الرجاء رفع صورة للمركبة واضحة المعالم",
+                      icon: _selectedVehicleImage != null
+                          ? Icons.check_circle_outline
+                          : Icons.camera_enhance_outlined,
                       onImagePicked: (file) {
                         // أمان إضافي للباكج الممررة
                         _showImageSourceOptions(context);
@@ -247,32 +299,50 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
 
                 ElevatedButton(
                   onPressed: () {
-                    widget.collectedData['brand'] = _brandController.text.trim().isEmpty ? "Toyota" : _brandController.text.trim();
-                    widget.collectedData['model'] = _modelController.text.trim().isEmpty ? "Hiace" : _modelController.text.trim();
-                    widget.collectedData['year'] = int.tryParse(_yearController.text.trim()) ?? 2023;
-                    widget.collectedData['plate_number'] = _plateNumberController.text.trim().isEmpty ? "12345-Libya" : _plateNumberController.text.trim();
-                    widget.collectedData['color'] = _colorController.text.trim().isEmpty ? "White" : _colorController.text.trim();
-                    widget.collectedData['type'] = _selectedTypeEnglish; 
-                    widget.collectedData['capacity_manual'] = int.tryParse(_capacityController.text.trim()) ?? 14;
-                    widget.collectedData['has_ac'] = _hasAc ? 1 : 0; 
-                    
+                    widget.collectedData['brand'] =
+                        _brandController.text.trim().isEmpty
+                        ? "Toyota"
+                        : _brandController.text.trim();
+                    widget.collectedData['model'] =
+                        _modelController.text.trim().isEmpty
+                        ? "Hiace"
+                        : _modelController.text.trim();
+                    widget.collectedData['year'] =
+                        int.tryParse(_yearController.text.trim()) ?? 2023;
+                    widget.collectedData['plate_number'] =
+                        _plateNumberController.text.trim().isEmpty
+                        ? "12345-Libya"
+                        : _plateNumberController.text.trim();
+                    widget.collectedData['color'] =
+                        _colorController.text.trim().isEmpty
+                        ? "White"
+                        : _colorController.text.trim();
+                    widget.collectedData['type'] = _selectedTypeEnglish;
+                    widget.collectedData['capacity_manual'] =
+                        int.tryParse(_capacityController.text.trim()) ?? 14;
+                    widget.collectedData['has_ac'] = _hasAc ? 1 : 0;
+
                     if (widget.collectedData['vehicle_image_file'] == null) {
-                      widget.collectedData['vehicle_image_file'] = File('dummy_path.jpg');
+                      widget.collectedData['vehicle_image_file'] = File(
+                        'dummy_path.jpg',
+                      );
                     }
 
                     Navigator.pushNamed(
                       context,
                       '/driverDocsStage',
-                      arguments: widget.collectedData, 
+                      arguments: widget.collectedData,
                     );
                   },
-                  style: ElevatedButton.styleFrom(
+                  style: AppTheme.elevatedButtonStyle(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: AppTheme.roundedRectangleBorder(
+                      borderRadius: AppTheme.radius(12),
+                    ),
                   ),
-                  child: const Text(
+                  child: Text(
                     "متابعة لرفع الوثائق",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 30),
@@ -284,14 +354,12 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
     );
   }
 
-  Widget _buildSectionCard(ThemeData theme, {required String title, required List<Widget> children}) {
+  Widget _buildSectionCard(
+    ThemeData theme, {
+    required String title,
+    required List<Widget> children,
+  }) {
     return Card(
-      elevation: 0,
-      color: theme.brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[50],
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: (theme.brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200])!),
-      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -299,7 +367,10 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
           children: [
             Text(
               title,
-              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: theme.primaryColor),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.primaryColor,
+              ),
               textAlign: TextAlign.right,
             ),
             const SizedBox(height: 16),
@@ -311,11 +382,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
   }
 
   InputDecoration _buildInputDecoration(String hint, IconData icon) {
-    return InputDecoration(
+    return AppTheme.inputDecoration(context, 
       labelText: hint,
       prefixIcon: Icon(icon, size: 20),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       alignLabelWithHint: true,
     );
   }

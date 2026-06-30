@@ -3,12 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
-import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/widgets/custom_auth_button.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_state.dart';
 import 'package:kids_transport/features/auth/login/presentation/widgets/login_form_fields.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,10 +32,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDarkMode;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: context.scaffoldBackgroundColor,
       body: SafeArea(
         child: BlocConsumer<AuthCubit, AuthState>(
           listener: (context, state) {
@@ -42,17 +43,17 @@ class _LoginScreenState extends State<LoginScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: AppColors.success,
+                  backgroundColor: context.successColor,
                 ),
               );
 
               final targetRoute = state.roleId == 3
                   ? AppRoutes.parentHome
                   : state.roleId == 4
-                      ? (StorageService.getIsActive() == true
-                          ? AppRoutes.driverMainWrapper
-                          : '/driverWaiting')
-                      : AppRoutes.adminDashboard; // الأدمن (role != 3 و != 4)
+                  ? (StorageService.getIsActive() == true
+                        ? AppRoutes.driverMainWrapper
+                        : '/driverWaiting')
+                  : AppRoutes.adminDashboard;
 
               Navigator.pushNamedAndRemoveUntil(
                 context,
@@ -63,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.errorMessage),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: context.errorColor,
                 ),
               );
             }
@@ -85,20 +86,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       errorBuilder: (context, error, stackTrace) => Icon(
                         Icons.directions_bus_rounded,
                         size: 100.r,
-                        color: Theme.of(context).primaryColor,
+                        color: context.primaryColor,
                       ),
                     ),
                     Text(
                       'تسجيل الدخول',
                       style: AppTextStyles.heading(
-                        color: isDark ? Colors.white : Colors.black87,
+                        color: isDark ? AppColors.white : AppColors.black87,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     SizedBox(height: 8.h),
                     Text(
                       'أهلاً بك مجدداً في تطبيق دربي',
-                      style: AppTextStyles.body(color: AppColors.textMuted),
+                      style: AppTextStyles.body(color: context.textMuted),
                       textAlign: TextAlign.center,
                     ),
                     SizedBox(height: 25.h),
@@ -119,9 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Text(
                           'نسيت كلمة المرور؟',
                           style: AppTextStyles.body(
-                            color: isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight,
+                            color: context.primaryColor,
                           ),
                         ),
                       ),
@@ -133,9 +132,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
                           context.read<AuthCubit>().login(
-                                phone: _phoneController.text.trim(),
-                                password: _passwordController.text,
-                              );
+                            phone: _phoneController.text.trim(),
+                            password: _passwordController.text,
+                          );
                         }
                       },
                     ),
@@ -145,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Text(
                           'ليس لديك حساب؟ ',
-                          style: AppTextStyles.body(color: AppColors.textMuted),
+                          style: AppTextStyles.body(color: context.textMuted),
                         ),
                         GestureDetector(
                           onTap: () {
@@ -154,9 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Text(
                             'إنشاء حساب',
                             style: AppTextStyles.body(
-                              color: isDark
-                                  ? AppColors.primaryDark
-                                  : AppColors.primaryLight,
+                              color: context.primaryColor,
                             ).copyWith(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -169,13 +166,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                       icon: Icon(
                         Icons.admin_panel_settings_outlined,
-                        color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+                        color: context.primaryColor,
                       ),
                       label: Text(
                         'تسجيل دخول المسؤول (الأدمن)',
-                        style: TextStyle(
-                          color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
-                        ),
+                        style: AppTextStyles.style(color: context.primaryColor),
                       ),
                     ),
                   ],

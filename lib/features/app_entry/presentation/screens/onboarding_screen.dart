@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:kids_transport/core/theme/app_colors.dart'; 
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/core/routes/app_router.dart'; // استيراد الـ AppRoutes للراوتر المركزي
-import 'package:kids_transport/core/services/storage_service.dart'; // استيراد الـ Storage لـحفظ الحالة محلياً
+import 'package:kids_transport/core/routes/app_router.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -19,24 +21,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, String>> _onboardingData = [
     {
       'title': 'مرحباً بك في دربي',
-      'description': 'المنصة الذكية لتأمين وتتبع رحلات المدارس لأبنائك خطوة بخطوة وبكل سلاسة.',
+      'description':
+          'المنصة الذكية لتأمين وتتبع رحلات المدارس لأبنائك خطوة بخطوة وبكل سلاسة.',
     },
     {
       'title': 'تتبع مباشر ولحظي',
-      'description': 'تابع حركة الحافلة المدرسية على الخريطة مباشرة واعرف موعد وصول ابنك بدقة.',
+      'description':
+          'تابع حركة الحافلة المدرسية على الخريطة مباشرة واعرف موعد وصول ابنك بدقة.',
     },
     {
       'title': 'أمان وراحة بال',
-      'description': 'إشعارات فورية عند ركوب طفلك أو نزوله من الحافلة لتطمئن عليه أينما كنت.',
+      'description':
+          'إشعارات فورية عند ركوب طفلك أو نزوله من الحافلة لتطمئن عليه أينما كنت.',
     },
   ];
 
-  // دالة موحدة لإنهاء الأونبوردينق وحفظ الحالة والتوجيه للـ Login لمنع التكرار
   Future<void> _completeOnboarding() async {
-    // 1. إخبار الستورج المحلي بأن المستخدم تخطى الأونبوردينق ولن يراها مجدداً
     await StorageService.setFirstTimeComplete();
-    
-    // 2. التوجيه الاحترافي عبر الراوتر المركزي وإغلاق شاشات الـ Onboarding بالكامل من الخلفية
     if (mounted) {
       Navigator.pushNamedAndRemoveUntil(
         context,
@@ -48,32 +49,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    final textColor = isDark ? Colors.white70 : AppColors.textMuted; 
-    final activeDotColor = isDark ? AppColors.primaryDark : AppColors.primaryLight;
+    final isDark = context.isDarkMode;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: context.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            // زر التخطي (Skip)
             Align(
               alignment: Alignment.topLeft,
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                 child: TextButton(
-                  onPressed: _completeOnboarding, // تفعيل التخطي الحقيقي
+                  onPressed: _completeOnboarding,
                   child: Text(
                     'تخطي',
-                    style: AppTextStyles.body(color: activeDotColor),
+                    style: AppTextStyles.body(color: context.primaryColor),
                   ),
                 ),
               ),
             ),
-
-            // الصفحات
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -92,18 +87,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Icon(
                           Icons.directions_bus_rounded,
                           size: 120.r,
-                          color: activeDotColor,
+                          color: context.primaryColor,
                         ),
                         SizedBox(height: 40.h),
                         Text(
                           _onboardingData[index]['title']!,
-                          style: AppTextStyles.heading(color: isDark ? Colors.white : Colors.black87),
+                          style: AppTextStyles.heading(
+                            color: isDark ? AppColors.white : AppColors.black87,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         SizedBox(height: 16.h),
                         Text(
                           _onboardingData[index]['description']!,
-                          style: AppTextStyles.body(color: textColor).copyWith(height: 1.5),
+                          style: AppTextStyles.body(
+                            color: context.textMuted,
+                          ).copyWith(height: 1.5),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -112,14 +111,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
               ),
             ),
-
-            // التحكم السفلي (النقاط والأزرار)
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // النقاط المؤشرة في المنتصف تماماً
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(
@@ -129,23 +125,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         margin: EdgeInsets.symmetric(horizontal: 4.w),
                         height: 8.h,
                         width: _currentIndex == index ? 24.w : 8.w,
-                        decoration: BoxDecoration(
-                          color: _currentIndex == index ? activeDotColor : Colors.grey.shade400,
-                          borderRadius: BorderRadius.circular(4.r),
+                        decoration: AppTheme.boxDecoration(
+                          color: _currentIndex == index
+                              ? context.primaryColor
+                              : AppColors.grey400,
+                          borderRadius: AppTheme.radius(4.r),
                         ),
                       ),
                     ),
                   ),
                   SizedBox(height: 24.h),
-
-                  // زر التالي / ابدأ الآن ممتد بشكل عصري ورائع
                   SizedBox(
                     width: double.infinity,
                     height: 56.h,
                     child: ElevatedButton(
                       onPressed: () {
                         if (_currentIndex == _onboardingData.length - 1) {
-                          _completeOnboarding(); // تفعيل إنهاء شاشة التعريف بالكامل والدخول للتطبيق
+                          _completeOnboarding();
                         } else {
                           _pageController.nextPage(
                             duration: const Duration(milliseconds: 400),
@@ -154,8 +150,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         }
                       },
                       child: Text(
-                        _currentIndex == _onboardingData.length - 1 ? 'ابدأ الآن' : 'التالي',
-                        style: AppTextStyles.button(color: isDark ? AppColors.backgroundDark : Colors.white),
+                        _currentIndex == _onboardingData.length - 1
+                            ? 'ابدأ الآن'
+                            : 'التالي',
+                        style: AppTextStyles.button(
+                          color: isDark
+                              ? context.backgroundSurface
+                              : AppColors.white,
+                        ),
                       ),
                     ),
                   ),

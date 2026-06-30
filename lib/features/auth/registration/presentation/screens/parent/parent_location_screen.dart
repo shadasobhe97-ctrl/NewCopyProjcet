@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:flutter_map/flutter_map.dart'; // باقة OpenStreetMap
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_state.dart';
@@ -39,7 +42,11 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
 
   void _navigateToHome() {
     // 🌟 تعديل: التوجيه النهائي للداشبورد الرئيسي ومسح فلو الـ Register بالكامل دون مشاكل
-    Navigator.pushNamedAndRemoveUntil(context, '/parentMainWrapper', (route) => false);
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/parentMainWrapper',
+      (route) => false,
+    );
   }
 
   @override
@@ -49,9 +56,9 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("تحديد موقع المنزل"),
+        title: Text("تحديد موقع المنزل"),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         actions: [
           // زر تخطي من فوق لأن الإدخال اختياري
@@ -59,7 +66,7 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
             onPressed: _navigateToHome,
             child: Text(
               "تخطي",
-              style: TextStyle(
+              style: AppTextStyles.style(
                 color: theme.primaryColor,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -76,7 +83,7 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: Colors.green,
+                  backgroundColor: AppColors.green,
                 ),
               );
               // 🌟 تعديل: الانتقال مباشرة للداشبورد الرئيسي بعد نجاح الحفظ
@@ -85,7 +92,7 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.errorMessage),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.red,
                 ),
               );
             }
@@ -102,7 +109,7 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
                   child: Text(
                     "يرجى تحديد موقع المنزل الأساسي على الخريطة لتسهيل عملية التوصيل والربط مع الحافلة.",
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey,
+                      color: AppColors.grey,
                     ),
                     textAlign: TextAlign.right,
                   ),
@@ -150,15 +157,15 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
                 // حقول البيانات والزر المخصص من لوطة
                 Container(
                   padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.grey[950] : Colors.white,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(24),
-                      topRight: Radius.circular(24),
+                  decoration: AppTheme.boxDecoration(
+                    color: isDark ? AppColors.grey950 : AppColors.white,
+                    borderRadius: AppTheme.onlyRadius(
+                      topLeft: AppTheme.cornerRadius(24),
+                      topRight: AppTheme.cornerRadius(24),
                     ),
                     boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                      AppTheme.boxShadow(
+                        color: AppColors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, -5),
                       ),
@@ -171,7 +178,7 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
                       TextFormField(
                         controller: _labelController,
                         textAlign: TextAlign.right,
-                        decoration: const InputDecoration(
+                        decoration: AppTheme.inputDecoration(context, 
                           labelText: "تسمية الموقع (مثال: منزلي، بيت الجدة)",
                           prefixIcon: Icon(Icons.label_outline_rounded),
                         ),
@@ -180,7 +187,7 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
 
                       // خيار الموقع الأساسي
                       CheckboxListTile(
-                        title: const Text(
+                        title: Text(
                           "تعيين هذا الموقع كموقع منزلي الأساسي",
                         ),
                         value: _isDefaultLocation,
@@ -199,7 +206,7 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
                         onPressed: state is LocationSaveLoading
                             ? null
                             : _submitLocation,
-                        style: ElevatedButton.styleFrom(
+                        style: AppTheme.elevatedButtonStyle(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         child: state is LocationSaveLoading
@@ -208,12 +215,12 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
                                 width: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                 ),
                               )
-                            : const Text(
+                            : Text(
                                 "حفظ وتأكيد الموقع",
-                                style: TextStyle(
+                                style: AppTextStyles.style(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),

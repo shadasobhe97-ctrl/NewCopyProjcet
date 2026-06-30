@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class ParentAlternativePhoneScreen extends StatefulWidget {
   const ParentAlternativePhoneScreen({super.key});
 
   @override
-  State<ParentAlternativePhoneScreen> createState() => _ParentAlternativePhoneScreenState();
+  State<ParentAlternativePhoneScreen> createState() =>
+      _ParentAlternativePhoneScreenState();
 }
 
-class _ParentAlternativePhoneScreenState extends State<ParentAlternativePhoneScreen> {
+class _ParentAlternativePhoneScreenState
+    extends State<ParentAlternativePhoneScreen> {
   final _formKey = GlobalKey<FormState>();
   final _altPhoneController = TextEditingController();
 
@@ -36,18 +41,26 @@ class _ParentAlternativePhoneScreenState extends State<ParentAlternativePhoneScr
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black),
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: isDark ? AppColors.white : AppColors.black,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           TextButton(
-            onPressed: () => _goToEmailScreen(isSkipped: true), // تخطي الحقل وحفظه null
+            onPressed: () =>
+                _goToEmailScreen(isSkipped: true), // تخطي الحقل وحفظه null
             child: Text(
               "تخطي",
-              style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
+              style: AppTextStyles.style(
+                color: theme.primaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -64,20 +77,24 @@ class _ParentAlternativePhoneScreenState extends State<ParentAlternativePhoneScr
                 const SizedBox(height: 20),
                 Text(
                   "رقم هاتف بديل",
-                  style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.right,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   "يمكنكِ إضافة رقم هاتف احتياطي آخر للاتصال به في حالات الطوارئ (اختياري).",
-                  style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColors.grey,
+                  ),
                   textAlign: TextAlign.right,
                 ),
                 const SizedBox(height: 40),
 
                 Text(
                   "رقم الهاتف البديل",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: AppTextStyles.style(fontWeight: FontWeight.bold),
                   textAlign: TextAlign.right,
                 ),
                 const SizedBox(height: 8),
@@ -86,12 +103,14 @@ class _ParentAlternativePhoneScreenState extends State<ParentAlternativePhoneScr
                   keyboardType: TextInputType.phone,
                   textDirection: TextDirection.ltr,
                   textAlign: TextAlign.left,
-                  decoration: const InputDecoration(
+                  decoration: AppTheme.inputDecoration(context, 
                     hintText: "09XXXXXXXX",
                     prefixIcon: Icon(Icons.phone_enabled_outlined),
                   ),
                   validator: (value) {
-                    if (value != null && value.trim().isNotEmpty && value.trim().length < 7) {
+                    if (value != null &&
+                        value.trim().isNotEmpty &&
+                        value.trim().length < 7) {
                       return "يجب ألا يقل رقم الهاتف عن 7 أرقام";
                     }
                     return null;
@@ -106,12 +125,12 @@ class _ParentAlternativePhoneScreenState extends State<ParentAlternativePhoneScr
                       _goToEmailScreen(isSkipped: false); // حفظ الرقم المكتوب
                     }
                   },
-                  style: ElevatedButton.styleFrom(
+                  style: AppTheme.elevatedButtonStyle(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text(
+                  child: Text(
                     "التالي",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 24),

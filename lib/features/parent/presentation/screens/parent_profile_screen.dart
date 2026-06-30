@@ -2,6 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 
 class ParentProfileScreen extends StatefulWidget {
   const ParentProfileScreen({super.key});
@@ -37,7 +40,8 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
 
     _emailController.addListener(() {
       setState(() {
-        _showVerificationOption = _emailController.text.trim() != _originalEmail;
+        _showVerificationOption =
+            _emailController.text.trim() != _originalEmail;
         if (_emailController.text.trim() != _originalEmail) {
           _isEmailVerified = false;
         } else {
@@ -65,9 +69,9 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("فشل في اختيار الصورة: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("فشل في اختيار الصورة: $e")));
     }
   }
 
@@ -82,11 +86,13 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: AppTheme.roundedRectangleBorder(
+              borderRadius: AppTheme.radius(20),
+            ),
             backgroundColor: Theme.of(context).cardTheme.color,
-            title: const Text(
+            title: Text(
               "التحقق من البريد الإلكتروني",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 18),
               textAlign: TextAlign.center,
             ),
             content: Column(
@@ -95,7 +101,11 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                 Text(
                   "تم إرسال رمز التحقق المكون من 4 أرقام إلى بريدك الجديد:\n${_emailController.text}",
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
+                  style: AppTextStyles.style(
+                    color: AppColors.textMuted,
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Row(
@@ -109,18 +119,12 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                         textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
                         maxLength: 1,
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        decoration: InputDecoration(
+                        style: AppTextStyles.style(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: AppTheme.inputDecoration(context, 
                           counterText: "",
-                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
-                          ),
                         ),
                         onChanged: (value) {
                           if (value.isNotEmpty && index < 3) {
@@ -137,10 +141,23 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("لم يصلك الرمز؟ ", style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                    Text(
+                      "لم يصلك الرمز؟ ",
+                      style: AppTextStyles.style(
+                        color: AppColors.textMuted,
+                        fontSize: 12,
+                      ),
+                    ),
                     TextButton(
                       onPressed: () {},
-                      child: const Text("إعادة إرسال", style: TextStyle(color: AppColors.primaryLight, fontSize: 12, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        "إعادة إرسال",
+                        style: AppTextStyles.style(
+                          color: AppColors.primaryLight,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -149,7 +166,10 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text("إلغاء", style: TextStyle(color: AppColors.error)),
+                child: Text(
+                  "إلغاء",
+                  style: AppTextStyles.style(color: AppColors.error),
+                ),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -167,12 +187,20 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                     ),
                   );
                 },
-                style: ElevatedButton.styleFrom(
+                style: AppTheme.elevatedButtonStyle(
                   backgroundColor: AppColors.primaryLight,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: AppTheme.roundedRectangleBorder(
+                    borderRadius: AppTheme.radius(12),
+                  ),
                   minimumSize: const Size(100, 40),
                 ),
-                child: const Text("تأكيد", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text(
+                  "تأكيد",
+                  style: AppTextStyles.style(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
@@ -220,18 +248,21 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F0F0F) : AppColors.backgroundLight,
+        backgroundColor: context.scaffoldBackgroundColor,
         appBar: AppBar(
           backgroundColor: AppColors.primaryLight,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.white,
           elevation: 0,
-          title: const Text(
+          title: Text(
             "تعديل الملف الشخصي",
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: AppTextStyles.style(fontWeight: FontWeight.bold),
           ),
           centerTitle: true,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.white,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -247,12 +278,15 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                   child: Stack(
                     children: [
                       Container(
-                        decoration: BoxDecoration(
+                        decoration: AppTheme.boxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.primaryLight, width: 3),
+                          border: AppTheme.border(
+                            color: AppColors.primaryLight,
+                            width: 3,
+                          ),
                           boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primaryLight.withOpacity(0.2),
+                            AppTheme.boxShadow(
+                              color: AppColors.primaryLight.withValues(alpha: 0.2),
                               blurRadius: 10,
                               spreadRadius: 2,
                             ),
@@ -260,12 +294,20 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                         ),
                         child: CircleAvatar(
                           radius: 55,
-                          backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                          backgroundColor: isDark
+                              ? AppColors.grey800
+                              : AppColors.grey200,
                           backgroundImage: _avatarImage != null
                               ? FileImage(_avatarImage!)
                               : null,
                           child: _avatarImage == null
-                              ? Icon(Icons.person_rounded, size: 55, color: isDark ? Colors.grey[400] : Colors.grey[600])
+                              ? Icon(
+                                  Icons.person_rounded,
+                                  size: 55,
+                                  color: isDark
+                                      ? AppColors.grey400
+                                      : AppColors.grey600,
+                                )
                               : null,
                         ),
                       ),
@@ -276,7 +318,11 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                           radius: 18,
                           backgroundColor: AppColors.primaryLight,
                           child: IconButton(
-                            icon: const Icon(Icons.camera_alt_rounded, size: 16, color: Colors.white),
+                            icon: const Icon(
+                              Icons.camera_alt_rounded,
+                              size: 16,
+                              color: AppColors.white,
+                            ),
                             onPressed: _pickImage,
                           ),
                         ),
@@ -290,8 +336,12 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                 _buildFieldLabel("الاسم بالكامل"),
                 TextFormField(
                   controller: _nameController,
-                  decoration: _inputDecoration("أدخل اسمك الكامل", Icons.person_outline_rounded),
-                  validator: (val) => val == null || val.isEmpty ? "يرجى إدخال الاسم" : null,
+                  decoration: _inputDecoration(
+                    "أدخل اسمك الكامل",
+                    Icons.person_outline_rounded,
+                  ),
+                  validator: (val) =>
+                      val == null || val.isEmpty ? "يرجى إدخال الاسم" : null,
                 ),
                 const SizedBox(height: 20),
 
@@ -300,8 +350,13 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  decoration: _inputDecoration("أدخل رقم الهاتف الأساسي", Icons.phone_rounded),
-                  validator: (val) => val == null || val.isEmpty ? "يرجى إدخال رقم الهاتف" : null,
+                  decoration: _inputDecoration(
+                    "أدخل رقم الهاتف الأساسي",
+                    Icons.phone_rounded,
+                  ),
+                  validator: (val) => val == null || val.isEmpty
+                      ? "يرجى إدخال رقم الهاتف"
+                      : null,
                 ),
                 const SizedBox(height: 20),
 
@@ -310,7 +365,10 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                 TextFormField(
                   controller: _backupPhoneController,
                   keyboardType: TextInputType.phone,
-                  decoration: _inputDecoration("أدخل رقم هاتف الاحتياط", Icons.phone_android_rounded),
+                  decoration: _inputDecoration(
+                    "أدخل رقم هاتف الاحتياط",
+                    Icons.phone_android_rounded,
+                  ),
                 ),
                 const SizedBox(height: 20),
 
@@ -323,14 +381,27 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                       child: TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: _inputDecoration("أدخل البريد الإلكتروني", Icons.email_outlined).copyWith(
-                          suffixIcon: _isEmailVerified
-                              ? const Icon(Icons.verified_rounded, color: AppColors.success)
-                              : const Icon(Icons.warning_amber_rounded, color: AppColors.pending),
-                        ),
+                        decoration:
+                            _inputDecoration(
+                              "أدخل البريد الإلكتروني",
+                              Icons.email_outlined,
+                            ).copyWith(
+                              suffixIcon: _isEmailVerified
+                                  ? const Icon(
+                                      Icons.verified_rounded,
+                                      color: AppColors.success,
+                                    )
+                                  : const Icon(
+                                      Icons.warning_amber_rounded,
+                                      color: AppColors.pending,
+                                    ),
+                            ),
                         validator: (val) {
-                          if (val == null || val.isEmpty) return "يرجى إدخال البريد الإلكتروني";
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(val)) {
+                          if (val == null || val.isEmpty)
+                            return "يرجى إدخال البريد الإلكتروني";
+                          if (!RegExp(
+                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                          ).hasMatch(val)) {
                             return "يرجى إدخال بريد إلكتروني صالح";
                           }
                           return null;
@@ -343,14 +414,25 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                         padding: const EdgeInsets.only(top: 4.0),
                         child: ElevatedButton(
                           onPressed: _showVerificationDialog,
-                          style: ElevatedButton.styleFrom(
+                          style: AppTheme.elevatedButtonStyle(
                             backgroundColor: AppColors.pending,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            foregroundColor: AppColors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
+                            ),
                             minimumSize: Size.zero,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                            shape: AppTheme.roundedRectangleBorder(
+                              borderRadius: AppTheme.radius(30),
+                            ),
                           ),
-                          child: const Text("تحقق", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          child: Text(
+                            "تحقق",
+                            style: AppTextStyles.style(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -361,14 +443,20 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                 // زر الحفظ
                 ElevatedButton(
                   onPressed: _saveProfile,
-                  style: ElevatedButton.styleFrom(
+                  style: AppTheme.elevatedButtonStyle(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: AppColors.primaryLight,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    shape: AppTheme.roundedRectangleBorder(
+                      borderRadius: AppTheme.radius(30),
+                    ),
                   ),
-                  child: const Text(
+                  child: Text(
                     "حفظ التغييرات",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: AppTextStyles.style(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.white,
+                    ),
                   ),
                 ),
               ],
@@ -384,35 +472,19 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
       padding: const EdgeInsets.only(right: 12.0, bottom: 8.0),
       child: Text(
         label,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textMuted),
+        style: AppTextStyles.style(
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+          color: AppColors.textMuted,
+        ),
       ),
     );
   }
 
   InputDecoration _inputDecoration(String hint, IconData icon) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return InputDecoration(
+    return AppTheme.inputDecoration(context, 
       hintText: hint,
-      prefixIcon: Icon(icon, color: AppColors.primaryLight),
-      filled: true,
-      fillColor: isDark ? AppColors.surfaceDark : Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(30),
-        borderSide: BorderSide(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200, width: 1.5),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(30),
-        borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(30),
-        borderSide: const BorderSide(color: AppColors.errorLight, width: 1.5),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(30),
-        borderSide: const BorderSide(color: AppColors.errorLight, width: 2),
-      ),
+      prefixIcon: Icon(icon, color: context.primaryColor),
     );
   }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../../core/theme/text_styles.dart';
 import 'auth_password_field.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class LoginFormFields extends StatelessWidget {
   final TextEditingController phoneController;
@@ -23,13 +25,16 @@ class LoginFormFields extends StatelessWidget {
           controller: phoneController,
           keyboardType: TextInputType.phone,
           textAlign: TextAlign.right,
-          style: AppTextStyles.inputTextStyle(color: isDark ? Colors.white : Colors.black87),
-          decoration: const InputDecoration(
+          style: AppTextStyles.inputTextStyle(
+            color: isDark ? AppColors.white : AppColors.black87,
+          ),
+          decoration: AppTheme.inputDecoration(context, 
             hintText: 'رقم الهاتف (مثال: 0925556666)',
             prefixIcon: Icon(Icons.phone_android_rounded),
           ),
           validator: (value) {
-            if (value == null || value.trim().isEmpty) return 'الرجاء إدخال رقم الهاتف';
+            if (value == null || value.trim().isEmpty)
+              return 'الرجاء إدخال رقم الهاتف';
             final regExp = RegExp(r'^(091|092|094|095)\d{7}$');
             if (!regExp.hasMatch(value.trim())) {
               return 'رقم هاتف ليبي غير صحيح (يجب أن يبدأ بـ 09X ويتكون من 10 أرقام)';

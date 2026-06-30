@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class PendingReqWidget extends StatelessWidget {
   final List<Map<String, dynamic>> requests;
@@ -14,9 +17,9 @@ class PendingReqWidget extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       children: [
         // عنوان قسم الطلبات المعلقة
-        const Text(
+        Text(
           "الطلبات بانتظار المراجعة",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         const SizedBox(height: 16),
 
@@ -25,45 +28,51 @@ class PendingReqWidget extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: AppColors.pending.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(9),
+              decoration: AppTheme.boxDecoration(
+                color: context.pendingColor.withValues(alpha: 0.12),
+                borderRadius: AppTheme.radius(9),
               ),
-              child: const Icon(Icons.pending_actions_rounded,
-                  color: AppColors.pending, size: 18),
+              child: Icon(
+                Icons.pending_actions_rounded,
+                color: context.pendingColor,
+                size: 18,
+              ),
             ),
             const SizedBox(width: 10),
-            const Text(
+            Text(
               "الإجراءات والطلبات المعلقة",
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              style: AppTextStyles.style(fontSize: 15, fontWeight: FontWeight.bold),
             ),
           ],
         ),
         const SizedBox(height: 12),
 
         // كروت الطلبات
-        ...requests.map((req) => _buildRequestCard(req, isDark)),
+        ...requests.map((req) => _buildRequestCard(context, req, isDark)),
         const SizedBox(height: 24),
 
         // تنبيه
         Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppColors.primaryLight.withOpacity(0.06),
-            borderRadius: BorderRadius.circular(14),
-            border:
-                Border.all(color: AppColors.primaryLight.withOpacity(0.2)),
+          decoration: AppTheme.boxDecoration(
+            color: context.primaryColor.withValues(alpha: 0.06),
+            borderRadius: AppTheme.radius(14),
+            border: AppTheme.border(
+              color: context.primaryColor.withValues(alpha: 0.2),
+            ),
           ),
           child: Row(
             children: [
-              const Icon(Icons.info_outline_rounded,
-                  color: AppColors.primaryLight, size: 18),
+              Icon(
+                Icons.info_outline_rounded,
+                color: context.primaryColor,
+                size: 18,
+              ),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Text(
                   "سيتم إخطارك فور استجابة السائق لطلبكِ",
-                  style: TextStyle(
-                      fontSize: 13, color: AppColors.primaryLight),
+                  style: AppTextStyles.style(fontSize: 13, color: context.primaryColor),
                 ),
               ),
             ],
@@ -73,16 +82,20 @@ class PendingReqWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildRequestCard(Map<String, dynamic> req, bool isDark) {
+  Widget _buildRequestCard(
+    BuildContext context,
+    Map<String, dynamic> req,
+    bool isDark,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.pending.withOpacity(0.3)),
+      decoration: AppTheme.boxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.white,
+        borderRadius: AppTheme.radius(18),
+        border: AppTheme.border(color: context.pendingColor.withValues(alpha: 0.3)),
         boxShadow: [
-          BoxShadow(
-            color: AppColors.pending.withOpacity(0.06),
+          AppTheme.boxShadow(
+            color: context.pendingColor.withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -93,30 +106,35 @@ class PendingReqWidget extends StatelessWidget {
           // رأس الكرت
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.pending.withOpacity(0.06),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(18)),
+            decoration: AppTheme.boxDecoration(
+              color: context.pendingColor.withValues(alpha: 0.06),
+              borderRadius: AppTheme.verticalRadius(
+                top: AppTheme.cornerRadius(18),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   req['type'] ?? '',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 14),
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.pending.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: AppTheme.boxDecoration(
+                    color: context.pendingColor.withValues(alpha: 0.15),
+                    borderRadius: AppTheme.radius(20),
                   ),
                   child: Text(
                     req['status'] ?? '',
-                    style: const TextStyle(
-                      color: AppColors.pending,
+                    style: AppTextStyles.style(
+                      color: context.pendingColor,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
@@ -130,11 +148,21 @@ class PendingReqWidget extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _reqRow(Icons.child_care_rounded, "الأطفال",
-                    req['children'] ?? '', AppColors.primaryLight),
+                _reqRow(
+                  context,
+                  Icons.child_care_rounded,
+                  "الأطفال",
+                  req['children'] ?? '',
+                  context.primaryColor,
+                ),
                 const SizedBox(height: 10),
-                _reqRow(Icons.person_outline_rounded, "السائق",
-                    req['driver_name'] ?? '', const Color(0xFF8B5CF6)),
+                _reqRow(
+                  context,
+                  Icons.person_outline_rounded,
+                  "السائق",
+                  req['driver_name'] ?? '',
+                  context.accentPurple,
+                ),
               ],
             ),
           ),
@@ -143,23 +171,29 @@ class PendingReqWidget extends StatelessWidget {
     );
   }
 
-  Widget _reqRow(IconData icon, String label, String value, Color color) {
+  Widget _reqRow(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
     return Row(
       children: [
         Icon(icon, color: color, size: 18),
         const SizedBox(width: 10),
         Text(
           "$label: ",
-          style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 13,
-              fontWeight: FontWeight.w500),
+          style: AppTextStyles.style(
+            color: context.textMuted,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         Flexible(
           child: Text(
             value,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, fontSize: 13),
+            style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 13),
           ),
         ),
       ],

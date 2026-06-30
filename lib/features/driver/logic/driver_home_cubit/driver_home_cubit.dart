@@ -60,15 +60,10 @@ class DriverHomeCubit extends Cubit<DriverHomeState> {
     }
   }
 
-  /// تبديل حالة الاتصال (متصل/غير متصل)
-  /// TODO: ربط بـ API endpoint لتحديث حالة السائق في السيرفر
   Future<void> toggleOnlineStatus() async {
     final currentState = state;
     if (currentState is DriverHomeLoaded) {
       final newStatus = !currentState.isOnline;
-
-      // TODO: إرسال طلب تحديث الحالة للـ API
-      // مثال: await _driverRepository.updateDriverStatus(newStatus ? 'online' : 'offline');
 
       emit(currentState.copyWith(isOnline: newStatus));
     }

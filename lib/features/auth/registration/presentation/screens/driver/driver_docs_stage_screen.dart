@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../logic/register_cubit.dart';
 import '../../../logic/register_state.dart';
 import '../../widgets/document_upload_tile.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class DriverDocsStageScreen extends StatefulWidget {
   final Map<String, dynamic> finalData;
@@ -23,12 +26,12 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new,
-            color: isDark ? Colors.white : Colors.black,
+            color: isDark ? AppColors.white : AppColors.black,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -46,7 +49,7 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.errorMessage),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.red,
                 ),
               );
             }
@@ -69,7 +72,7 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                   Text(
                     "يرجى تصوير الوثائق الرسمية بوضوح تام لتسهيل عملية المراجعة والتفعيل من قبل الإدارة.",
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey,
+                      color: AppColors.grey,
                     ),
                     textAlign: TextAlign.right,
                   ),
@@ -164,28 +167,33 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                         : () {
                             // التحقق من وجود الملفات الإلزامية قبل الإرسال
                             final missingDocs = <String>[];
-                            if (widget.finalData['license_doc'] == null) missingDocs.add('رخصة القيادة');
-                            if (widget.finalData['criminal_doc'] == null) missingDocs.add('شهادة الحالة الجنائية');
-                            if (widget.finalData['logbook_doc'] == null) missingDocs.add('كتيب المركبة');
+                            if (widget.finalData['license_doc'] == null)
+                              missingDocs.add('رخصة القيادة');
+                            if (widget.finalData['criminal_doc'] == null)
+                              missingDocs.add('شهادة الحالة الجنائية');
+                            if (widget.finalData['logbook_doc'] == null)
+                              missingDocs.add('كتيب المركبة');
 
                             if (missingDocs.isNotEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('يرجى إرفاق: ${missingDocs.join('، ')}'),
-                                  backgroundColor: Colors.orange,
+                                  content: Text(
+                                    'يرجى إرفاق: ${missingDocs.join('، ')}',
+                                  ),
+                                  backgroundColor: AppColors.orange,
                                 ),
                               );
                               return;
                             }
 
-                            context
-                                .read<RegisterCubit>()
-                                .completeDriverProfile(widget.finalData);
+                            context.read<RegisterCubit>().completeDriverProfile(
+                              widget.finalData,
+                            );
                           },
-                    style: ElevatedButton.styleFrom(
+                    style: AppTheme.elevatedButtonStyle(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      shape: AppTheme.roundedRectangleBorder(
+                        borderRadius: AppTheme.radius(12),
                       ),
                     ),
                     child: state is DriverCompleteProfileLoading
@@ -194,12 +202,12 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: AppColors.white,
                             ),
                           )
-                        : const Text(
+                        : Text(
                             "إتمام ورفع الملفات",
-                            style: TextStyle(
+                            style: AppTextStyles.style(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),

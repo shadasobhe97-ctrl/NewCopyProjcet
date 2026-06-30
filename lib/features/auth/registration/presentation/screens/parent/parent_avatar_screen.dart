@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:image_picker/image_picker.dart'; // تحتاجي تضيفي باقة image_picker في الـ pubspec
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
 
@@ -17,7 +20,10 @@ class _ParentAvatarScreenState extends State<ParentAvatarScreen> {
 
   Future<void> _pickImage() async {
     try {
-      final pickedFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+      final pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
       if (pickedFile != null) {
         setState(() {
           _imageFile = File(pickedFile.path);
@@ -37,8 +43,10 @@ class _ParentAvatarScreenState extends State<ParentAvatarScreen> {
     if (_imageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("الرجاء اختيار صورة الشخصية للمتابعة أو اضغط على 'تخطي'"),
-          backgroundColor: Colors.orange,
+          content: Text(
+            "الرجاء اختيار صورة الشخصية للمتابعة أو اضغط على 'تخطي'",
+          ),
+          backgroundColor: AppColors.orange,
         ),
       );
       return;
@@ -54,10 +62,13 @@ class _ParentAvatarScreenState extends State<ParentAvatarScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black),
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: isDark ? AppColors.white : AppColors.black,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -66,7 +77,11 @@ class _ParentAvatarScreenState extends State<ParentAvatarScreen> {
             onPressed: _skipStep,
             child: Text(
               "تخطي",
-              style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
+              style: AppTextStyles.style(
+                color: theme.primaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -81,13 +96,17 @@ class _ParentAvatarScreenState extends State<ParentAvatarScreen> {
               const SizedBox(height: 20),
               Text(
                 "الصورة الشخصية",
-                style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.right,
               ),
               const SizedBox(height: 8),
               Text(
                 "هل ترغب في إضافة صورة شخصية لحسابكِ؟ تزيد من موثوقية الحساب عند التعامل مع السائقين.",
-                style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.grey,
+                ),
                 textAlign: TextAlign.right,
               ),
               Expanded(
@@ -99,20 +118,37 @@ class _ParentAvatarScreenState extends State<ParentAvatarScreen> {
                       children: [
                         CircleAvatar(
                           radius: 110,
-                          backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
-                          backgroundImage: _imageFile != null ? FileImage(_imageFile!) : null,
+                          backgroundColor: isDark
+                              ? AppColors.grey800
+                              : AppColors.grey200,
+                          backgroundImage: _imageFile != null
+                              ? FileImage(_imageFile!)
+                              : null,
                           child: _imageFile == null
-                              ? Icon(Icons.person_rounded, size: 110, color: isDark ? Colors.grey[600] : Colors.grey[400])
+                              ? Icon(
+                                  Icons.person_rounded,
+                                  size: 110,
+                                  color: isDark
+                                      ? AppColors.grey600
+                                      : AppColors.grey400,
+                                )
                               : null,
                         ),
                         Container(
                           padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
+                          decoration: AppTheme.boxDecoration(
                             color: theme.primaryColor,
                             shape: BoxShape.circle,
-                            border: Border.all(color: isDark ? Colors.black : Colors.white, width: 2.5),
+                            border: AppTheme.border(
+                              color: isDark ? AppColors.black : AppColors.white,
+                              width: 2.5,
+                            ),
                           ),
-                          child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 24),
+                          child: const Icon(
+                            Icons.camera_alt_rounded,
+                            color: AppColors.white,
+                            size: 24,
+                          ),
                         ),
                       ],
                     ),
@@ -123,12 +159,12 @@ class _ParentAvatarScreenState extends State<ParentAvatarScreen> {
               // زر التالي من لوطة
               ElevatedButton(
                 onPressed: _submitNext,
-                style: ElevatedButton.styleFrom(
+                style: AppTheme.elevatedButtonStyle(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text(
+                child: Text(
                   "التالي",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(height: 24),

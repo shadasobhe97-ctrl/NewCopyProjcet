@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class ParentBasicInfoScreen extends StatefulWidget {
   const ParentBasicInfoScreen({super.key});
@@ -48,10 +51,13 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black),
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: isDark ? AppColors.white : AppColors.black,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -66,13 +72,17 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                 const SizedBox(height: 10),
                 Text(
                   "البيانات الشخصية",
-                  style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.right,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   "الرجاء إدخال بياناتكِ الشخصية الحقيقية لإتمام إنشاء حساب ولي الأمر.",
-                  style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColors.grey,
+                  ),
                   textAlign: TextAlign.right,
                 ),
                 const SizedBox(height: 30),
@@ -81,7 +91,7 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                 TextFormField(
                   controller: _nameController,
                   textAlign: TextAlign.right,
-                  decoration: const InputDecoration(
+                  decoration: AppTheme.inputDecoration(context, 
                     labelText: "الاسم الكامل (الثلاثي بالعربي)",
                     prefixIcon: Icon(Icons.person_outline),
                   ),
@@ -103,7 +113,7 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                   keyboardType: TextInputType.phone,
                   textDirection: TextDirection.ltr,
                   textAlign: TextAlign.left,
-                  decoration: const InputDecoration(
+                  decoration: AppTheme.inputDecoration(context, 
                     labelText: "رقم الهاتف الأساسي",
                     hintText: "091XXXXXXX",
                     prefixIcon: Icon(Icons.phone_android_outlined),
@@ -126,12 +136,18 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                   obscureText: _isPasswordObscured,
                   textDirection: TextDirection.ltr,
                   textAlign: TextAlign.left,
-                  decoration: InputDecoration(
+                  decoration: AppTheme.inputDecoration(context, 
                     labelText: "كلمة المرور",
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
-                      icon: Icon(_isPasswordObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                      onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
+                      icon: Icon(
+                        _isPasswordObscured
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: () => setState(
+                        () => _isPasswordObscured = !_isPasswordObscured,
+                      ),
                     ),
                   ),
                   validator: (value) {
@@ -141,7 +157,9 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                     if (value.length < 7) {
                       return "كلمة المرور يجب ألا تقل عن 7 خانات";
                     }
-                    if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{7,}$').hasMatch(value)) {
+                    if (!RegExp(
+                      r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{7,}$',
+                    ).hasMatch(value)) {
                       return "يجب أن تحتوي على حروف وأرقام بدون رموز خاصة";
                     }
                     return null;
@@ -155,12 +173,19 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                   obscureText: _isConfirmPasswordObscured,
                   textDirection: TextDirection.ltr,
                   textAlign: TextAlign.left,
-                  decoration: InputDecoration(
+                  decoration: AppTheme.inputDecoration(context, 
                     labelText: "تأكيد كلمة المرور",
                     prefixIcon: const Icon(Icons.lock_reset_outlined),
                     suffixIcon: IconButton(
-                      icon: Icon(_isConfirmPasswordObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                      onPressed: () => setState(() => _isConfirmPasswordObscured = !_isConfirmPasswordObscured),
+                      icon: Icon(
+                        _isConfirmPasswordObscured
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: () => setState(
+                        () => _isConfirmPasswordObscured =
+                            !_isConfirmPasswordObscured,
+                      ),
                     ),
                   ),
                   validator: (value) {
@@ -178,12 +203,12 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                 // زر التالي
                 ElevatedButton(
                   onPressed: _submit,
-                  style: ElevatedButton.styleFrom(
+                  style: AppTheme.elevatedButtonStyle(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text(
+                  child: Text(
                     "التالي",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 24),

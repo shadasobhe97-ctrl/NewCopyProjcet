@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class CustomSearchDropdown extends StatefulWidget {
   final String hintText;
@@ -56,9 +58,11 @@ class _CustomSearchDropdownState extends State<CustomSearchDropdown> {
       _filteredItems = query.isEmpty
           ? widget.items
           : widget.items
-              .where((item) =>
-                  item['name']!.toLowerCase().contains(query.toLowerCase()))
-              .toList();
+                .where(
+                  (item) =>
+                      item['name']!.toLowerCase().contains(query.toLowerCase()),
+                )
+                .toList();
       _isDropdownOpen = true;
     });
   }
@@ -91,15 +95,23 @@ class _CustomSearchDropdownState extends State<CustomSearchDropdown> {
             });
           },
           onChanged: _filterList,
-          decoration: InputDecoration(
+          decoration: AppTheme.inputDecoration(context, 
             hintText: widget.hintText,
-            hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-            prefixIcon: const Icon(Icons.search_rounded,
-                color: AppColors.primaryLight),
+            hintStyle: AppTextStyles.style(
+              color: AppColors.textMuted,
+              fontSize: 13,
+            ),
+            prefixIcon: const Icon(
+              Icons.search_rounded,
+              color: AppColors.primaryLight,
+            ),
             suffixIcon: _selectedItem != null
                 ? IconButton(
-                    icon: const Icon(Icons.clear_rounded,
-                        color: AppColors.textMuted, size: 18),
+                    icon: const Icon(
+                      Icons.clear_rounded,
+                      color: AppColors.textMuted,
+                      size: 18,
+                    ),
                     onPressed: () {
                       setState(() {
                         _selectedItem = null;
@@ -115,25 +127,6 @@ class _CustomSearchDropdownState extends State<CustomSearchDropdown> {
                         : Icons.arrow_drop_down_rounded,
                     color: AppColors.textMuted,
                   ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            filled: true,
-            fillColor: Colors.grey.withOpacity(0.05),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: Colors.grey.withOpacity(0.3)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: Colors.grey.withOpacity(0.25)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                  color: AppColors.primaryLight, width: 1.5),
-            ),
           ),
         ),
 
@@ -142,39 +135,40 @@ class _CustomSearchDropdownState extends State<CustomSearchDropdown> {
           Container(
             constraints: const BoxConstraints(maxHeight: 220),
             margin: const EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: BorderRadius.circular(14),
+            decoration: AppTheme.boxDecoration(
+              color: isDark ? AppColors.darkCard : AppColors.white,
+              borderRadius: AppTheme.radius(14),
               boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryLight.withOpacity(0.1),
+                AppTheme.boxShadow(
+                  color: AppColors.primaryLight.withValues(alpha: 0.1),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
-              border: Border.all(
-                  color: AppColors.primaryLight.withOpacity(0.2)),
+              border: AppTheme.border(
+                color: AppColors.primaryLight.withValues(alpha: 0.2),
+              ),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: AppTheme.radius(14),
               child: ListView.separated(
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 itemCount: _filteredItems.length,
-                separatorBuilder: (_, __) => Divider(
-                  height: 1,
-                  color: Colors.grey.withOpacity(0.1),
-                ),
+                separatorBuilder: (_, __) =>
+                    Divider(height: 1, color: AppColors.grey.withValues(alpha: 0.1)),
                 itemBuilder: (context, index) {
                   final item = _filteredItems[index];
                   final isSelected = _selectedItem?['id'] == item['id'];
                   return ListTile(
                     dense: true,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     title: Text(
                       item['name']!,
-                      style: TextStyle(
+                      style: AppTextStyles.style(
                         fontWeight: isSelected
                             ? FontWeight.bold
                             : FontWeight.normal,
@@ -182,8 +176,11 @@ class _CustomSearchDropdownState extends State<CustomSearchDropdown> {
                       ),
                     ),
                     trailing: isSelected
-                        ? const Icon(Icons.check_rounded,
-                            color: AppColors.primaryLight, size: 18)
+                        ? const Icon(
+                            Icons.check_rounded,
+                            color: AppColors.primaryLight,
+                            size: 18,
+                          )
                         : null,
                     onTap: () => _selectItem(item),
                   );
@@ -197,15 +194,15 @@ class _CustomSearchDropdownState extends State<CustomSearchDropdown> {
           Container(
             margin: const EdgeInsets.only(top: 4),
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.withOpacity(0.2)),
+            decoration: AppTheme.boxDecoration(
+              color: isDark ? AppColors.darkCard : AppColors.white,
+              borderRadius: AppTheme.radius(14),
+              border: AppTheme.border(color: AppColors.grey.withValues(alpha: 0.2)),
             ),
-            child: const Center(
+            child: Center(
               child: Text(
                 "لا توجد نتائج مطابقة",
-                style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                style: AppTextStyles.style(color: AppColors.textMuted, fontSize: 13),
               ),
             ),
           ),

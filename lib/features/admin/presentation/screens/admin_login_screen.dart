@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/cubit/theme_cubit.dart';
-import 'package:kids_transport/features/admin/logic/admin_auth_provider.dart';
+import 'package:kids_transport/features/admin/logic/admin_auth_cubit.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({super.key});
@@ -21,8 +24,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<AdminAuthProvider>(context, listen: false);
-      if (provider.isAuthenticated) {
+      final authCubit = context.read<AdminAuthCubit>();
+      if (authCubit.isAuthenticated) {
         Navigator.pushReplacementNamed(context, '/admin/dashboard');
       }
     });
@@ -37,18 +40,21 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      final provider = Provider.of<AdminAuthProvider>(context, listen: false);
-      
-      final success = await provider.login(
+      final authCubit = context.read<AdminAuthCubit>();
+
+      final success = await authCubit.login(
         _phoneController.text.trim(),
         _passwordController.text,
       );
 
       if (success && mounted) {
         Navigator.pushReplacementNamed(context, '/admin/dashboard');
-      } else if (mounted && provider.errorMessage != null) {
+      } else if (mounted && authCubit.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(provider.errorMessage!), backgroundColor: AppColors.errorLight),
+          SnackBar(
+            content: Text(authCubit.errorMessage!),
+            backgroundColor: context.errorColor,
+          ),
         );
       }
     }
@@ -64,10 +70,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 450), // لعدم تمدد الحقول في الويب
+              constraints: const BoxConstraints(
+                maxWidth: 450,
+              ), // لعدم تمدد الحقول في الويب
               child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 child: Padding(
                   padding: const EdgeInsets.all(32.0),
                   child: Form(
@@ -84,18 +90,22 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           fit: BoxFit.contain,
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'تسجيل دخول المسؤول',
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryLight),
+                          style: AppTextStyles.style(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: context.primaryColor,
+                          ),
                         ),
                         const SizedBox(height: 32),
-                        
+
                         // حقل رقم الهاتف
                         TextFormField(
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
                           textDirection: TextDirection.ltr,
-                          decoration: const InputDecoration(
+                          decoration: AppTheme.inputDecoration(context, 
                             labelText: 'رقم الهاتف',
                             hintText: '0925556666',
                             prefixIcon: Icon(Icons.phone_android_rounded),
@@ -112,18 +122,20 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           },
                         ),
                         const SizedBox(height: 20),
-                        
+
                         // حقل كلمة المرور
                         TextFormField(
                           controller: _passwordController,
                           obscureText: !_isPasswordVisible,
-                          decoration: InputDecoration(
+                          decoration: AppTheme.inputDecoration(context, 
                             labelText: 'كلمة المرور',
                             prefixIcon: const Icon(Icons.lock),
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                                color: Colors.grey,
+                                _isPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: AppColors.grey,
                               ),
                               onPressed: () {
                                 setState(() {
@@ -133,23 +145,31 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                             ),
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) return 'الرجاء إدخال كلمة المرور';
-                            if (value.length < 6) return 'كلمة المرور قصيرة جداً';
+                            if (value == null || value.isEmpty) {
+                              return 'الرجاء إدخال كلمة المرور';
+                            }
+                            if (value.length < 6) {
+                              return 'كلمة المرور قصيرة جداً';
+                            }
                             return null;
                           },
                         ),
                         const SizedBox(height: 32),
-                        
+
                         // زر تسجيل الدخول
-                        Consumer<AdminAuthProvider>(
-                          builder: (context, provider, child) {
+                        BlocBuilder<AdminAuthCubit, AdminAuthState>(
+                          builder: (context, state) {
                             return SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: provider.isLoading ? null : _handleLogin,
-                                child: provider.isLoading
-                                    ? const CircularProgressIndicator(color: Colors.white)
-                                    : const Text('تسجيل الدخول'),
+                                onPressed: state.isLoading
+                                    ? null
+                                    : _handleLogin,
+                                child: state.isLoading
+                                    ? const CircularProgressIndicator(
+                                        color: AppColors.white,
+                                      )
+                                    : Text('تسجيل الدخول'),
                               ),
                             );
                           },
@@ -159,10 +179,13 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           onPressed: () {
                             Navigator.pushReplacementNamed(context, '/login');
                           },
-                          icon: const Icon(Icons.phone_android_rounded, color: AppColors.primaryLight),
-                          label: const Text(
+                          icon: Icon(
+                            Icons.phone_android_rounded,
+                            color: context.primaryColor,
+                          ),
+                          label: Text(
                             'التحويل لتسجيل دخول المستخدمين (سائق / ولي أمر)',
-                            style: TextStyle(color: AppColors.primaryLight),
+                            style: AppTextStyles.style(color: context.primaryColor),
                           ),
                         ),
                       ],

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/widgets/custom_auth_button.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_state.dart';
 import 'package:kids_transport/features/auth/login/presentation/screens/verify_otp_screen.dart';
 import 'package:kids_transport/features/auth/login/presentation/widgets/auth_header_section.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -28,15 +30,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDarkMode;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: context.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(
-          color: isDark ? Colors.white : Colors.black87,
+          color: isDark ? AppColors.white : AppColors.black87,
         ),
       ),
       body: SafeArea(
@@ -47,7 +49,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: AppColors.success,
+                  backgroundColor: context.successColor,
                 ),
               );
               // الانتقال لشاشة التحقق مع تمرير الإيميل
@@ -62,7 +64,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.errorMessage),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: context.errorColor,
                 ),
               );
             }
@@ -88,9 +90,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       textAlign: TextAlign.left,
                       autocorrect: false,
                       style: AppTextStyles.inputTextStyle(
-                        color: isDark ? Colors.white : Colors.black87,
+                        color: isDark ? AppColors.white : AppColors.black87,
                       ),
-                      decoration: const InputDecoration(
+                      decoration: AppTheme.inputDecoration(context, 
                         hintText: 'example@gmail.com',
                         prefixIcon: Icon(Icons.email_outlined),
                       ),
@@ -113,8 +115,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
                           context.read<AuthCubit>().sendOtp(
-                                email: _emailController.text.trim(),
-                              );
+                            email: _emailController.text.trim(),
+                          );
                         }
                       },
                     ),
