@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -58,7 +57,7 @@ class TransportApp extends StatelessWidget {
                 darkTheme: AppTheme.darkTheme,
                 themeMode:
                     themeState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-                initialRoute: _getInitialRoute(),
+                initialRoute: AppRoutes.getInitialRoute(),
                 onGenerateRoute: AppRoutes.generateRoute,
               );
             },
@@ -66,13 +65,5 @@ class TransportApp extends StatelessWidget {
         },
       ),
     );
-  }
-
-  String _getInitialRoute() {
-    if (kIsWeb) {
-      return AppRoutes.adminLogin;
-    }
-
-    return AppRoutes.splash;
   }
 }

@@ -9,6 +9,7 @@ import 'package:kids_transport/features/auth/login/logic/auth_state.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/widgets/app_drawer_item.dart';
 
 class ParentDrawer extends StatelessWidget {
   const ParentDrawer({super.key});
@@ -69,7 +70,7 @@ class ParentDrawer extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
-                  _DrawerItem(
+                  AppDrawerItem(
                     icon: Icons.person_outline_rounded,
                     iconColor: context.primaryColor,
                     label: 'الملف الشخصي',
@@ -78,7 +79,7 @@ class ParentDrawer extends StatelessWidget {
                       Navigator.pushNamed(context, AppRoutes.parentProfile);
                     },
                   ),
-                  _DrawerItem(
+                  AppDrawerItem(
                     icon: Icons.people_alt_rounded,
                     iconColor: context.accentPurple,
                     label: 'أطفالي',
@@ -87,7 +88,7 @@ class ParentDrawer extends StatelessWidget {
                       Navigator.pushNamed(context, AppRoutes.myChildren);
                     },
                   ),
-                  _DrawerItem(
+                  AppDrawerItem(
                     icon: Icons.location_on_outlined,
                     iconColor: context.successColor,
                     label: 'إدارة العناوين المحفوظة',
@@ -96,32 +97,32 @@ class ParentDrawer extends StatelessWidget {
                       Navigator.pushNamed(context, AppRoutes.savedAddresses);
                     },
                   ),
-                  _DrawerItem(
+                  AppDrawerItem(
                     icon: Icons.description_outlined,
                     iconColor: context.pendingColor,
                     label: 'عقودي واشتراكاتي',
                     onTap: () => Navigator.pop(context),
                   ),
-                  _DrawerItem(
+                  AppDrawerItem(
                     icon: Icons.credit_card_rounded,
                     iconColor: context.genderFemaleColor,
                     label: 'المحفظة والفواتير',
                     onTap: () => Navigator.pop(context),
                   ),
                   const Divider(height: 24, indent: 16, endIndent: 16),
-                  _DrawerItem(
+                  AppDrawerItem(
                     icon: Icons.settings_outlined,
                     iconColor: context.textMuted,
                     label: 'الإعدادات',
                     onTap: () => Navigator.pop(context),
                   ),
-                  _DrawerItem(
+                  AppDrawerItem(
                     icon: Icons.help_outline_rounded,
                     iconColor: context.textMuted,
                     label: 'ميزات دربي',
                     onTap: () => Navigator.pop(context),
                   ),
-                  _DrawerItem(
+                  AppDrawerItem(
                     icon: Icons.support_agent_rounded,
                     iconColor: context.textMuted,
                     label: 'التواصل مع الدعم',
@@ -131,7 +132,7 @@ class ParentDrawer extends StatelessWidget {
                   BlocBuilder<AuthCubit, AuthState>(
                     builder: (context, state) {
                       final isLoading = state is AuthLoading;
-                      return _DrawerItem(
+                      return AppDrawerItem(
                         icon: isLoading
                             ? Icons.hourglass_empty_rounded
                             : Icons.logout_rounded,
@@ -294,44 +295,4 @@ class _DrawerHeader extends StatelessWidget {
   }
 }
 
-class _DrawerItem extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String label;
-  final Color? labelColor;
-  final VoidCallback onTap;
-
-  const _DrawerItem({
-    required this.icon,
-    required this.iconColor,
-    required this.label,
-    required this.onTap,
-    this.labelColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-      leading: Container(
-        width: 38,
-        height: 38,
-        decoration: AppTheme.boxDecoration(
-          color: iconColor.withValues(alpha: 0.12),
-          borderRadius: AppTheme.radius(10),
-        ),
-        child: Icon(icon, color: iconColor, size: 20),
-      ),
-      title: Text(
-        label,
-        style: AppTextStyles.style(
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-          color: labelColor,
-        ),
-      ),
-      onTap: onTap,
-      shape: AppTheme.roundedRectangleBorder(borderRadius: AppTheme.radius(12)),
-    );
-  }
-}
+// _DrawerItem removed and replaced with AppDrawerItem

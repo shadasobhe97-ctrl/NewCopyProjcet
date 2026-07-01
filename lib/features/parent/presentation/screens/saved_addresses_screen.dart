@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
+import 'package:kids_transport/core/widgets/app_bars.dart';
+import 'package:kids_transport/core/widgets/empty_state_placeholder.dart';
+import 'package:kids_transport/features/parent/presentation/widgets/add_address_sheet.dart';
+import 'package:kids_transport/features/parent/presentation/widgets/address_card.dart';
 
 class SavedAddressesScreen extends StatefulWidget {
   const SavedAddressesScreen({super.key});
@@ -14,7 +15,6 @@ class SavedAddressesScreen extends StatefulWidget {
 }
 
 class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
-  // قائمة افتراضية تحاكي العناوين المخزنة من قبل
   final List<Map<String, dynamic>> _addresses = [
     {
       'id': 'addr-1',
@@ -42,7 +42,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("تم تعيين '${_addresses[index]['title']}' كعنوان رئيسي"),
+        content: Text(
+          "تم تعيين '${_addresses[index]['title']}' كعنوان رئيسي",
+        ),
         backgroundColor: AppColors.success,
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
@@ -51,11 +53,11 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
   }
 
   void _deleteAddress(int index) {
-    if (_addresses[index]['is_default']) {
+    if (_addresses[index]['is_default'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            "لا يمكن حذف العنوان الرئيسي، يرجى تعيين عنوان آخر كرئيسي أولاً",
+            'لا يمكن حذف العنوان الرئيسي، يرجى تعيين عنوان آخر كرئيسي أولاً',
           ),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
@@ -63,12 +65,10 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
       );
       return;
     }
-    setState(() {
-      _addresses.removeAt(index);
-    });
+    setState(() => _addresses.removeAt(index));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text("تم حذف العنوان بنجاح"),
+        content: Text('تم حذف العنوان بنجاح'),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
       ),
@@ -76,481 +76,61 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
   }
 
   void _showAddAddressSheet() {
-    final MapController mapController = MapController();
-    final labelController = TextEditingController();
-    final detailsController = TextEditingController();
-    LatLng currentCenter = const LatLng(32.8872, 13.1913); // طرابلس
-    bool isDefaultLocation = false;
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.transparent,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setSheetState) {
-            final theme = Theme.of(context);
-            final isDark = theme.brightness == Brightness.dark;
-
-            return Directionality(
-              textDirection: TextDirection.rtl,
-              child: Container(
-                height: MediaQuery.of(context).size.height * 0.85,
-                decoration: AppTheme.boxDecoration(
-                  color: isDark ? AppColors.darkSurface : AppColors.white,
-                  borderRadius: AppTheme.verticalRadius(
-                    top: AppTheme.cornerRadius(24),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // شريط السحب
-                    Center(
-                      child: Container(
-                        margin: const EdgeInsets.only(top: 12, bottom: 8),
-                        width: 40,
-                        height: 5,
-                        decoration: AppTheme.boxDecoration(
-                          color: AppColors.grey400,
-                          borderRadius: AppTheme.radius(10),
-                        ),
-                      ),
-                    ),
-                    // العنوان
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20.0,
-                        vertical: 8.0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "إضافة عنوان جديد",
-                            style: AppTextStyles.style(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1),
-
-                    // الخريطة لتحديد الموقع
-                    Expanded(
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          FlutterMap(
-                            mapController: mapController,
-                            options: MapOptions(
-                              initialCenter: currentCenter,
-                              initialZoom: 14.5,
-                              onPositionChanged: (position, hasGesture) {
-                                if (hasGesture && position.center != null) {
-                                  currentCenter = position.center!;
-                                }
-                              },
-                            ),
-                            children: [
-                              TileLayer(
-                                urlTemplate:
-                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                userAgentPackageName:
-                                    'com.example.kids_transport',
-                              ),
-                            ],
-                          ),
-                          // علامة الدبوس الثابتة
-                          IgnorePointer(
-                            child: Icon(
-                              Icons.location_on_rounded,
-                              size: 45,
-                              color: theme.primaryColor,
-                            ),
-                          ),
-                          // إرشادات فوق الخريطة
-                          Positioned(
-                            top: 10,
-                            right: 10,
-                            left: 10,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              decoration: AppTheme.boxDecoration(
-                                color: AppColors.black.withValues(alpha: 0.7),
-                                borderRadius: AppTheme.radius(10),
-                              ),
-                              child: Text(
-                                "قم بسحب الخريطة لتركيز الدبوس في موقعك بدقة",
-                                textAlign: TextAlign.center,
-                                style: AppTextStyles.style(
-                                  color: AppColors.white,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // نموذج إدخال البيانات والزر
-                    Padding(
-                      padding: EdgeInsets.only(
-                        left: 20,
-                        right: 20,
-                        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-                        top: 16,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // اسم العنوان
-                          TextFormField(
-                            controller: labelController,
-                            textAlign: TextAlign.right,
-                            decoration: AppTheme.inputDecoration(context, 
-                              labelText: "اسم العنوان (مثال: العمل، بيت الجدة)",
-                              prefixIcon: Icon(
-                                Icons.label_outline_rounded,
-                                color: AppColors.primaryLight,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-
-                          // تفاصيل إضافية
-                          TextFormField(
-                            controller: detailsController,
-                            textAlign: TextAlign.right,
-                            decoration: AppTheme.inputDecoration(context, 
-                              labelText: "تفاصيل العنوان / الشقة / علامة مميزة",
-                              prefixIcon: Icon(
-                                Icons.info_outline_rounded,
-                                color: AppColors.primaryLight,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-
-                          // تعيين كرئيسي
-                          CheckboxListTile(
-                            title: Text("تعيين كعنوان رئيسي"),
-                            value: isDefaultLocation,
-                            controlAffinity: ListTileControlAffinity.leading,
-                            activeColor: AppColors.primaryLight,
-                            onChanged: (val) {
-                              setSheetState(() {
-                                isDefaultLocation = val ?? false;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 16),
-
-                          // زر الحفظ
-                          ElevatedButton(
-                            onPressed: () {
-                              if (labelController.text.trim().isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "يرجى إدخال اسم العنوان أولاً",
-                                    ),
-                                    backgroundColor: AppColors.error,
-                                  ),
-                                );
-                                return;
-                              }
-
-                              setState(() {
-                                if (isDefaultLocation) {
-                                  for (var addr in _addresses) {
-                                    addr['is_default'] = false;
-                                  }
-                                }
-                                _addresses.add({
-                                  'id':
-                                      'addr-${DateTime.now().millisecondsSinceEpoch}',
-                                  'title': labelController.text.trim(),
-                                  'latitude': currentCenter.latitude,
-                                  'longitude': currentCenter.longitude,
-                                  'is_default': isDefaultLocation,
-                                  'details': detailsController.text.trim(),
-                                });
-                              });
-
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "تم إضافة العنوان الجديد بنجاح",
-                                  ),
-                                  backgroundColor: AppColors.success,
-                                ),
-                              );
-                            },
-                            style: AppTheme.elevatedButtonStyle(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              backgroundColor: AppColors.primaryLight,
-                            ),
-                            child: Text(
-                              "حفظ العنوان",
-                              style: AppTextStyles.style(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: AppColors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    ).then((_) {
-      labelController.dispose();
-      detailsController.dispose();
-      mapController.dispose();
-    });
+      builder: (_) => AddAddressSheet(
+        onSave: (newAddress) {
+          setState(() {
+            if (newAddress['is_default'] == true) {
+              for (var addr in _addresses) {
+                addr['is_default'] = false;
+              }
+            }
+            _addresses.add(newAddress);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تم إضافة العنوان الجديد بنجاح'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: context.scaffoldBackgroundColor,
-        appBar: AppBar(
-          backgroundColor: AppColors.primaryLight,
-          foregroundColor: AppColors.white,
-          elevation: 0,
-          title: Text(
-            "إدارة العناوين المحفوظة",
-            style: AppTextStyles.style(fontWeight: FontWeight.bold),
-          ),
-          centerTitle: true,
-          leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: AppColors.white,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
+        appBar: const AppPrimaryAppBar(title: 'إدارة العناوين المحفوظة'),
         body: Column(
           children: [
             Expanded(
               child: _addresses.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.location_off_outlined,
-                            size: 64,
-                            color: AppColors.textMuted.withValues(alpha: 0.5),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            "لا يوجد عناوين محفوظة حالياً",
-                            style: AppTextStyles.style(
-                              color: AppColors.textMuted,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
+                  ? const EmptyStatePlaceholder(
+                      icon: Icons.location_off_outlined,
+                      title: 'لا يوجد عناوين محفوظة حالياً',
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.all(20),
                       itemCount: _addresses.length,
                       itemBuilder: (context, index) {
-                        final address = _addresses[index];
-                        final isPrimary = address['is_default'] == true;
-
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: AppTheme.boxDecoration(
-                            color: isDark
-                                ? AppColors.darkCard
-                                : AppColors.white,
-                            borderRadius: AppTheme.radius(16),
-                            border: AppTheme.border(
-                              color: isPrimary
-                                  ? AppColors.primaryLight
-                                  : AppColors.transparent,
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              AppTheme.boxShadow(
-                                color: AppColors.black.withValues(alpha: 
-                                  isDark ? 0.2 : 0.05,
-                                ),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: AppTheme.radius(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                // تفاصيل العنوان
-                                Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Row(
-                                    children: [
-                                      // أيقونة الموقع
-                                      CircleAvatar(
-                                        radius: 20,
-                                        backgroundColor: isPrimary
-                                            ? AppColors.primaryLight
-                                                  .withValues(alpha: 0.12)
-                                            : AppColors.textMuted.withValues(alpha: 
-                                                0.12,
-                                              ),
-                                        child: Icon(
-                                          isPrimary
-                                              ? Icons.home_rounded
-                                              : Icons.location_on_rounded,
-                                          color: isPrimary
-                                              ? AppColors.primaryLight
-                                              : AppColors.textMuted,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 14),
-                                      // نصوص تفصيلية
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              address['title'],
-                                              style: AppTextStyles.style(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 15,
-                                              ),
-                                            ),
-                                            if (address['details'] != null &&
-                                                address['details']
-                                                    .toString()
-                                                    .isNotEmpty) ...[
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                address['details'],
-                                                style: AppTextStyles.style(
-                                                  color: AppColors.textMuted,
-                                                  fontSize: 12,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              "إحداثيات: (${address['latitude'].toStringAsFixed(4)}, ${address['longitude'].toStringAsFixed(4)})",
-                                              style: AppTextStyles.style(
-                                                color: AppColors.textMuted
-                                                    .withValues(alpha: 0.7),
-                                                fontSize: 11,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Divider(height: 1),
-                                // التحكم (العنوان الرئيسي وحذف)
-                                Container(
-                                  color: isDark
-                                      ? AppColors.black26
-                                      : AppColors.grey50,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      // اختيار كعنوان رئيسي
-                                      InkWell(
-                                        onTap: () => _setAsDefault(index),
-                                        borderRadius: AppTheme.radius(10),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 6,
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Checkbox(
-                                                value: isPrimary,
-                                                activeColor:
-                                                    AppColors.primaryLight,
-                                                shape: AppTheme.roundedRectangleBorder(
-                                                  borderRadius:
-                                                      AppTheme.radius(4),
-                                                ),
-                                                onChanged: (_) =>
-                                                    _setAsDefault(index),
-                                              ),
-                                              Text(
-                                                "العنوان الرئيسي",
-                                                style: AppTextStyles.style(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                  color: AppColors.textMuted,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      // زر الحذف
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.delete_outline_rounded,
-                                          color: AppColors.error,
-                                          size: 20,
-                                        ),
-                                        onPressed: () => _deleteAddress(index),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        return AddressCard(
+                          address: _addresses[index],
+                          isPrimary: _addresses[index]['is_default'] == true,
+                          onSetDefault: () => _setAsDefault(index),
+                          onDelete: () => _deleteAddress(index),
                         );
                       },
                     ),
             ),
-            // زر الإضافة العائم/المثبت
             Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(20),
               child: ElevatedButton.icon(
                 onPressed: _showAddAddressSheet,
                 icon: const Icon(
@@ -558,7 +138,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                   color: AppColors.white,
                 ),
                 label: Text(
-                  "إضافة عنوان جديد",
+                  'إضافة عنوان جديد',
                   style: AppTextStyles.style(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

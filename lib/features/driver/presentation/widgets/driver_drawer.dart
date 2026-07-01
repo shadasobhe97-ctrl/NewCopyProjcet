@@ -9,6 +9,7 @@ import '../../data/models/driver_model.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/widgets/app_drawer_item.dart';
 
 // ==========================================
 // السايد بار (الدروار) الخاص بالسائق
@@ -78,25 +79,24 @@ class DriverDrawer extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
-                  // ── الملف الشخصي ──
-                  _DrawerItem(
+                  AppDrawerItem(
                     icon: Icons.person_outline_rounded,
                     iconColor: context.primaryColor,
                     label: 'الملف الشخصي',
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.pushNamed(context, '/driverProfile');
+                      Navigator.pushNamed(context, AppRoutes.driverProfile);
                     },
                   ),
 
                   // ── معلومات المركبة الرئيسية ──
-                  _DrawerItem(
+                  AppDrawerItem(
                     icon: Icons.directions_car_filled_rounded,
                     iconColor: context.primaryColor,
                     label: 'معلومات المركبة الرئيسية',
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.pushNamed(context, '/driverPrimaryVehicle');
+                      Navigator.pushNamed(context, AppRoutes.driverPrimaryVehicle);
                     },
                   ),
 
@@ -108,14 +108,14 @@ class DriverDrawer extends StatelessWidget {
                       // TODO: التوجيه لشاشة إضافة/عرض المركبة الاحتياطية
                       Navigator.pushNamed(
                         context,
-                        '/driverBackupVehicle',
+                        AppRoutes.driverBackupVehicle,
                         arguments: {'collectedData': {}},
                       );
                     },
                   ),
 
                   // ── عقودي والتزاماتي ──
-                  _DrawerItem(
+                  AppDrawerItem(
                     icon: Icons.description_outlined,
                     iconColor: context.pendingColor,
                     label: 'عقودي والتزاماتي',
@@ -129,7 +129,7 @@ class DriverDrawer extends StatelessWidget {
                   const Divider(height: 20, indent: 16, endIndent: 16),
 
                   // ── الإعدادات ──
-                  _DrawerItem(
+                  AppDrawerItem(
                     icon: Icons.settings_outlined,
                     iconColor: context.textMuted,
                     label: 'إعدادات التطبيق',
@@ -141,7 +141,7 @@ class DriverDrawer extends StatelessWidget {
                   ),
 
                   // ── ميزات دربي ──
-                  _DrawerItem(
+                  AppDrawerItem(
                     icon: Icons.auto_awesome_rounded,
                     iconColor: context.accentPurple,
                     label: 'ميزات دربي',
@@ -153,7 +153,7 @@ class DriverDrawer extends StatelessWidget {
                   ),
 
                   // ── التواصل مع الدعم ──
-                  _DrawerItem(
+                  AppDrawerItem(
                     icon: Icons.support_agent_rounded,
                     iconColor: context.successColor,
                     label: 'التواصل مع الدعم',
@@ -170,7 +170,7 @@ class DriverDrawer extends StatelessWidget {
                   BlocBuilder<AuthCubit, AuthState>(
                     builder: (context, state) {
                       final isLoading = state is AuthLoading;
-                      return _DrawerItem(
+                      return AppDrawerItem(
                         icon: isLoading
                             ? Icons.hourglass_empty_rounded
                             : Icons.logout_rounded,
@@ -367,7 +367,7 @@ class _BackupVehicleDrawerItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasBackupVehicle = driver.backupVehicle != null;
 
-    return _DrawerItem(
+    return AppDrawerItem(
       icon: hasBackupVehicle
           ? Icons.directions_car_rounded
           : Icons.add_circle_outline_rounded,
@@ -385,73 +385,4 @@ class _BackupVehicleDrawerItem extends StatelessWidget {
 }
 
 // ─── عنصر قائمة الدروار المُعاد استخدامه ─────────────────────────────────
-class _DrawerItem extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String label;
-  final Color? labelColor;
-  final String? badge; // شارة اختيارية
-  final VoidCallback onTap;
-
-  const _DrawerItem({
-    required this.icon,
-    required this.iconColor,
-    required this.label,
-    required this.onTap,
-    this.labelColor,
-    this.badge,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-      leading: Container(
-        width: 38,
-        height: 38,
-        decoration: AppTheme.boxDecoration(
-          color: iconColor.withValues(alpha: 0.12),
-          borderRadius: AppTheme.radius(10),
-        ),
-        child: Icon(icon, color: iconColor, size: 20),
-      ),
-      title: Row(
-        children: [
-          Text(
-            label,
-            style: AppTextStyles.style(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: labelColor,
-            ),
-          ),
-          if (badge != null) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: AppTheme.boxDecoration(
-                color: context.pendingColor.withValues(alpha: 0.15),
-                borderRadius: AppTheme.radius(20),
-              ),
-              child: Text(
-                badge!,
-                style: AppTextStyles.style(
-                  fontSize: 10,
-                  color: context.pendingColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-      trailing: Icon(
-        Icons.chevron_left_rounded,
-        color: context.textMuted,
-        size: 20,
-      ),
-      onTap: onTap,
-      shape: AppTheme.roundedRectangleBorder(borderRadius: AppTheme.radius(12)),
-    );
-  }
-}
+// تم نقله إلى core/widgets/app_drawer_item.dart
