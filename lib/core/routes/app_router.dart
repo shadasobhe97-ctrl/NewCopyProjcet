@@ -14,14 +14,14 @@ import 'package:kids_transport/features/admin/presentation/screens/admin_login_s
 import 'package:kids_transport/features/admin/presentation/screens/admin_dashboard_screen.dart';
 
 // Parent Features
-import 'package:kids_transport/features/parent/presentation/screens/parent_home_screen.dart';
-import 'package:kids_transport/features/parent/presentation/screens/parent_main_wrapper.dart';
-import 'package:kids_transport/features/parent/presentation/screens/add_child_screen.dart';
-import 'package:kids_transport/features/parent/presentation/screens/my_children_screen.dart';
-import 'package:kids_transport/features/parent/presentation/screens/child_detail_screen.dart';
-import 'package:kids_transport/features/parent/presentation/screens/parent_profile_screen.dart';
-import 'package:kids_transport/features/parent/presentation/screens/saved_addresses_screen.dart';
-import 'package:kids_transport/features/parent/data/models/child_model.dart';
+import 'package:kids_transport/features/parent/home/presentation/screens/parent_home_screen.dart';
+import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
+import 'package:kids_transport/features/parent/children/presentation/screens/add_child_screen.dart';
+import 'package:kids_transport/features/parent/children/presentation/screens/my_children_screen.dart';
+import 'package:kids_transport/features/parent/children/presentation/screens/child_detail_screen.dart';
+import 'package:kids_transport/features/parent/profile/presentation/screens/parent_profile_screen.dart';
+import 'package:kids_transport/features/parent/addresses/presentation/screens/saved_addresses_screen.dart';
+import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
 
 // Parent Registration
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_alternative_phone.dart';
