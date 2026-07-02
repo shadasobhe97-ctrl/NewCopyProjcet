@@ -3,8 +3,8 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
-import 'package:kids_transport/features/driver/presentation/widgets/editable_vehicle_field.dart';
-import 'package:kids_transport/features/driver/presentation/widgets/vehicle_document_status.dart';
+import 'package:kids_transport/features/driver/vehicles/presentation/widgets/editable_vehicle_field.dart';
+import 'package:kids_transport/features/driver/documents/presentation/widgets/vehicle_document_status.dart';
 
 // ==========================================
 // شاشة معلومات المركبة الأساسية للسائق

@@ -5,7 +5,7 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/cubit/theme_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_state.dart';
-import '../../data/models/driver_model.dart';
+import 'package:kids_transport/features/driver/profile/data/models/driver_model.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';

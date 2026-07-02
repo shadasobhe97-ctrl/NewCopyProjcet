@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../data/models/driver_model.dart';
+import 'package:kids_transport/features/driver/profile/data/models/driver_model.dart';
 
 part 'driver_home_state.dart';
 

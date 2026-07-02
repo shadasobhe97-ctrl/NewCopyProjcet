@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/features/driver/logic/driver_home_cubit/driver_home_cubit.dart';
+import 'package:kids_transport/features/driver/home/logic/driver_home_cubit/driver_home_cubit.dart';
 
 class OnlineStatusCard extends StatelessWidget {
   final bool isOnline;

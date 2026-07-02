@@ -32,11 +32,11 @@ import 'package:kids_transport/features/auth/registration/presentation/screens/p
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_location_screen.dart';
 
 // Driver Features
-import 'package:kids_transport/features/driver/presentation/screens/driver_home_screen.dart';
-import 'package:kids_transport/features/driver/presentation/screens/driver_main_wrapper.dart';
-import 'package:kids_transport/features/driver/presentation/screens/driver_backup_vehicle_screen.dart';
-import 'package:kids_transport/features/driver/presentation/screens/driver_profile_screen.dart';
-import 'package:kids_transport/features/driver/presentation/screens/driver_primary_vehicle_screen.dart';
+import 'package:kids_transport/features/driver/home/presentation/screens/driver_home_screen.dart';
+import 'package:kids_transport/features/driver/dashboard/presentation/screens/driver_main_wrapper.dart';
+import 'package:kids_transport/features/driver/vehicles/presentation/screens/driver_backup_vehicle_screen.dart';
+import 'package:kids_transport/features/driver/profile/presentation/screens/driver_profile_screen.dart';
+import 'package:kids_transport/features/driver/vehicles/presentation/screens/driver_primary_vehicle_screen.dart';
 
 // Driver Registration
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_alternative_phone_screen.dart';

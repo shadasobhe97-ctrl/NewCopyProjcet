@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
-import 'package:kids_transport/features/driver/presentation/widgets/driver_drawer.dart';
+import 'package:kids_transport/features/driver/dashboard/presentation/widgets/driver_drawer.dart';
 
 // Components
-import 'package:kids_transport/features/driver/presentation/widgets/online_status_card.dart';
-import 'package:kids_transport/features/driver/presentation/widgets/work_areas_card.dart';
-import 'package:kids_transport/features/driver/presentation/widgets/welcome_guide_card.dart';
-import 'package:kids_transport/features/driver/presentation/widgets/daily_stats_row.dart';
-import 'package:kids_transport/features/driver/presentation/widgets/active_trip_card.dart';
-import 'package:kids_transport/features/driver/presentation/widgets/new_requests_section.dart';
+import 'package:kids_transport/features/driver/home/presentation/widgets/online_status_card.dart';
+import 'package:kids_transport/features/driver/work_areas/presentation/widgets/work_areas_card.dart';
+import 'package:kids_transport/features/driver/home/presentation/widgets/welcome_guide_card.dart';
+import 'package:kids_transport/features/driver/home/presentation/widgets/daily_stats_row.dart';
+import 'package:kids_transport/features/driver/home/presentation/widgets/active_trip_card.dart';
+import 'package:kids_transport/features/driver/requests/presentation/widgets/new_requests_section.dart';
 
-import '../../logic/driver_home_cubit/driver_home_cubit.dart';
+import 'package:kids_transport/features/driver/home/logic/driver_home_cubit/driver_home_cubit.dart';
 
 class DriverHomeScreen extends StatefulWidget {
   const DriverHomeScreen({super.key});
