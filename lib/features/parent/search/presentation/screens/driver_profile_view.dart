@@ -24,7 +24,6 @@ class _DriverProfileViewState extends State<DriverProfileView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -283,9 +282,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     }
 
     // هنا تجميع البيانات النهائية لإرسالها للـ API
-    print("إرسال طلب اشتراك للسائق: ${widget.driver.id}");
-    print("الأطفال المختارون: $selectedKidIds");
-    print("الملاحظة: ${_notesController.text}");
+    debugPrint("إرسال طلب اشتراك للسائق: ${widget.driver.id}");
+    debugPrint("الأطفال المختارون: $selectedKidIds");
+    debugPrint("الملاحظة: ${_notesController.text}");
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

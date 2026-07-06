@@ -155,7 +155,7 @@ class _CustomSearchDropdownState extends State<CustomSearchDropdown> {
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 itemCount: _filteredItems.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     Divider(height: 1, color: AppColors.grey.withValues(alpha: 0.1)),
                 itemBuilder: (context, index) {
                   final item = _filteredItems[index];

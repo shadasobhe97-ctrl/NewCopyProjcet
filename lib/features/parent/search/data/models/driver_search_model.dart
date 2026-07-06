@@ -4,6 +4,8 @@ class DriverSearchModel {
   final String? photoUrl;
   final String gender;          // 'MALE' أو 'FEMALE' للفلترة حسب جنس السائق
   final double rating;          // التقييم (مثال: 4.9)
+  final int reviewsCount;       // عدد التقييمات (مثال: 128)
+  final double price;           // السعر ابتداءً من (مثال: 65.0)
   final String vehicleType;     // نوع السيارة (باص، هونداي H1، إلخ)
   final int totalSeats;         // السعة الإجمالية للسيارة
   final int availableSeats;     // المقاعد الشاغرة الحالية (مهم جداً لفلترة عدد الأطفال)
@@ -21,6 +23,8 @@ class DriverSearchModel {
     this.photoUrl,
     required this.gender,
     required this.rating,
+    this.reviewsCount = 0,
+    this.price = 0.0,
     required this.vehicleType,
     required this.totalSeats,
     required this.availableSeats,
@@ -38,6 +42,8 @@ class DriverSearchModel {
       photoUrl: json['photo_url'],
       gender: json['gender'] ?? 'MALE',
       rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
+      reviewsCount: json['reviews_count'] ?? 0,
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
       vehicleType: json['vehicle_type'] ?? '',
       totalSeats: json['total_seats'] ?? 0,
       availableSeats: json['available_seats'] ?? 0,

@@ -60,7 +60,10 @@ class HasKidsWidget extends StatelessWidget {
               const SizedBox(height: 14),
               Text(
                 "لا يوجد اشتراك نشط حالياً",
-                style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 16),
+                style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
@@ -100,7 +103,7 @@ class HasKidsWidget extends StatelessWidget {
   }
 
   Widget _buildChildCard(BuildContext context, ChildModel child, bool isDark) {
-    final isMale = child.gender == 'MALE';
+    final isMale = child.gender.toLowerCase() == 'male';
     final avatarColor = isMale
         ? context.genderMaleColor
         : context.genderFemaleColor;
@@ -136,7 +139,7 @@ class HasKidsWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  child.fullName,
+                  child.name,
                   style: AppTextStyles.style(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -145,7 +148,10 @@ class HasKidsWidget extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   child.schoolName,
-                  style: AppTextStyles.style(fontSize: 12, color: context.textMuted),
+                  style: AppTextStyles.style(
+                    fontSize: 12,
+                    color: context.textMuted,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],

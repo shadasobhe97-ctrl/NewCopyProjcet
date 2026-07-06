@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
-import 'package:kids_transport/features/parent/home/logic/home_cubit/home_cubit.dart';
-import 'package:kids_transport/features/parent/children/logic/child_cubit/child_cubit.dart';
 import 'package:kids_transport/features/parent/dashboard/presentation/widgets/parent_drawer.dart';
 import 'package:kids_transport/features/parent/home/presentation/screens/parent_home_screen.dart';
 import 'package:kids_transport/features/parent/search/presentation/screens/parent_search_screen.dart';
@@ -76,49 +73,41 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) => ParentHomeCubit()..fetchParentHomeData(4),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: context.backgroundSurface,
+
+        // ✅ AppBar مُوحد ومصمم بلمسة احترافية
+        appBar: _buildAppBar(context),
+
+        // الدروار يفتح من جهة اليمين (drawer في RTL)
+        drawer: const ParentDrawer(),
+
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: _screens.map((s) => _KeepAliveWrapper(child: s)).toList(),
         ),
-        BlocProvider(create: (context) => ChildCubit()..loadChildren()),
-      ],
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Scaffold(
-          backgroundColor: context.backgroundSurface,
 
-          // ✅ AppBar مُوحد ومصمم بلمسة احترافية
-          appBar: _buildAppBar(context),
-
-          // الدروار يفتح من جهة اليمين (drawer في RTL)
-          drawer: const ParentDrawer(),
-
-          body: IndexedStack(
-            index: _selectedIndex,
-            children: _screens.map((s) => _KeepAliveWrapper(child: s)).toList(),
-          ),
-
-          bottomNavigationBar: ConvexAppBar(
-            style: TabStyle.reactCircle,
-            backgroundColor: context.cardSurface,
-            activeColor: context.primaryColor,
-            color: AppColors.grey400,
-            initialActiveIndex: _selectedIndex,
-            height: 52, // 🌟 تقليص الحجم ليكون أنيقاً وحديثاً
-            curveSize: 72, // 🌟 مقاس منحنى أصغر
-            top: -14, // 🌟 تقليص الارتفاع العلوي
-            items: const [
-              TabItem(icon: Icons.home_rounded, title: 'الرئيسية'),
-              TabItem(icon: Icons.people_alt_rounded, title: 'أطفالي'),
-              TabItem(icon: Icons.search_rounded, title: 'البحث'),
-              TabItem(icon: Icons.description_rounded, title: 'العقود'),
-              TabItem(icon: Icons.credit_card_rounded, title: 'المدفوعات'),
-            ],
-            onTap: (int index) {
-              setState(() => _selectedIndex = index);
-            },
-          ),
+        bottomNavigationBar: ConvexAppBar(
+          style: TabStyle.reactCircle,
+          backgroundColor: context.cardSurface,
+          activeColor: context.primaryColor,
+          color: AppColors.grey400,
+          initialActiveIndex: _selectedIndex,
+          height: 52, // 🌟 تقليص الحجم ليكون أنيقاً وحديثاً
+          curveSize: 72, // 🌟 مقاس منحنى أصغر
+          top: -14, // 🌟 تقليص الارتفاع العلوي
+          items: const [
+            TabItem(icon: Icons.home_rounded, title: 'الرئيسية'),
+            TabItem(icon: Icons.people_alt_rounded, title: 'أطفالي'),
+            TabItem(icon: Icons.search_rounded, title: 'البحث'),
+            TabItem(icon: Icons.description_rounded, title: 'العقود'),
+            TabItem(icon: Icons.credit_card_rounded, title: 'المدفوعات'),
+          ],
+          onTap: (int index) {
+            setState(() => _selectedIndex = index);
+          },
         ),
       ),
     );

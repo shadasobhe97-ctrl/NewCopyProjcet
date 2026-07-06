@@ -23,7 +23,7 @@ class ParentPendingRequestsMode extends ParentHomeState {
 class ParentActiveTripMode extends ParentHomeState {
   final List<Map<String, dynamic>> todayTrips;
   final Map<String, dynamic>? activeTrip; // بيانات الرحلة الجارية إن وجدت
-  
+
   ParentActiveTripMode({required this.todayTrips, this.activeTrip});
 }
 
