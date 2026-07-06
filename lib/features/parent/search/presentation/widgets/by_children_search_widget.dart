@@ -4,7 +4,7 @@ import 'package:kids_transport/features/parent/search/data/models/driver_search_
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'driver_search_card_widget.dart';
-import 'edit_transport_bottom_sheet.dart';
+import 'package:kids_transport/features/parent/children/presentation/screens/transport_details_screen.dart';
 
 /// البحث بناءً على الأطفال.
 /// يدعم theme-aware colors بالكامل.
@@ -299,11 +299,14 @@ class ByChildrenSearchWidget extends StatelessWidget {
 
                     // رابط تعديل بيانات النقل
                     GestureDetector(
-                      onTap: () => EditTransportBottomSheet.show(
-                        context,
-                        kid: current,
-                        onSaved: onKidEdited,
-                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TransportDetailsScreen(child: current),
+                          ),
+                        );
+                      },
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [

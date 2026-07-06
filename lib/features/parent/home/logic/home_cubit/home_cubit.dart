@@ -10,6 +10,7 @@ class ParentHomeCubit extends Cubit<ParentHomeState> {
     emit(ParentHomeLoading());
 
     Future.delayed(const Duration(milliseconds: 800), () {
+      
       switch (simulatedStateCase) {
         case 1:
           emit(ParentNewUserMode());

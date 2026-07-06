@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:convex_bottom_bar/convex_bottom_bar.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/features/parent/dashboard/presentation/widgets/parent_drawer.dart';
 import 'package:kids_transport/features/parent/home/presentation/screens/parent_home_screen.dart';
@@ -46,6 +46,17 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
 
   late final List<Widget> _screens;
 
+  String _getAppBarTitle() {
+    switch (_selectedIndex) {
+      case 0: return 'الرئيسية';
+      case 1: return 'أطفالي';
+      case 2: return 'البحث عن سائق';
+      case 3: return 'العقود والاشتراكات';
+      case 4: return 'المدفوعات والفواتير';
+      default: return 'داربي';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -89,25 +100,47 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
           children: _screens.map((s) => _KeepAliveWrapper(child: s)).toList(),
         ),
 
-        bottomNavigationBar: ConvexAppBar(
-          style: TabStyle.reactCircle,
-          backgroundColor: context.cardSurface,
-          activeColor: context.primaryColor,
-          color: AppColors.grey400,
-          initialActiveIndex: _selectedIndex,
-          height: 52, // 🌟 تقليص الحجم ليكون أنيقاً وحديثاً
-          curveSize: 72, // 🌟 مقاس منحنى أصغر
-          top: -14, // 🌟 تقليص الارتفاع العلوي
-          items: const [
-            TabItem(icon: Icons.home_rounded, title: 'الرئيسية'),
-            TabItem(icon: Icons.people_alt_rounded, title: 'أطفالي'),
-            TabItem(icon: Icons.search_rounded, title: 'البحث'),
-            TabItem(icon: Icons.description_rounded, title: 'العقود'),
-            TabItem(icon: Icons.credit_card_rounded, title: 'المدفوعات'),
-          ],
-          onTap: (int index) {
-            setState(() => _selectedIndex = index);
-          },
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: context.cardSurface,
+            boxShadow: [
+              BoxShadow(
+                blurRadius: 15,
+                color: Colors.black.withValues(alpha: context.isDarkMode ? 0.3 : 0.05),
+                offset: const Offset(0, -2),
+              )
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
+              child: GNav(
+                gap: 6,
+                activeColor: context.primaryColor,
+                iconSize: 22,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                duration: const Duration(milliseconds: 300),
+                tabBackgroundColor: context.primaryColor.withValues(alpha: 0.1),
+                color: AppColors.grey400,
+                textStyle: AppTextStyles.style(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: context.primaryColor,
+                ),
+                selectedIndex: _selectedIndex,
+                onTabChange: (index) {
+                  setState(() => _selectedIndex = index);
+                },
+                tabs: const [
+                  GButton(icon: Icons.home_rounded, text: 'الرئيسية'),
+                  GButton(icon: Icons.people_alt_rounded, text: 'أطفالي'),
+                  GButton(icon: Icons.search_rounded, text: 'البحث'),
+                  GButton(icon: Icons.description_rounded, text: 'العقود'),
+                  GButton(icon: Icons.credit_card_rounded, text: 'المدفوعات'),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -155,17 +188,11 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                 ),
                 const SizedBox(width: 8),
 
-                // شعار التطبيق الأنيق (بدون اسم الصفحة)
+                // عنوان التطبيق الديناميكي
                 Row(
                   children: [
-                    Icon(
-                      Icons.directions_bus_rounded,
-                      color: AppColors.white,
-                      size: 20,
-                    ),
-                    SizedBox(width: 6),
                     Text(
-                      "داربي",
+                      _getAppBarTitle(),
                       style: AppTextStyles.style(
                         color: AppColors.white,
                         fontWeight: FontWeight.bold,
