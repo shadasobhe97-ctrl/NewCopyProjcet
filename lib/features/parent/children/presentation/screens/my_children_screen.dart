@@ -5,14 +5,13 @@ import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/empty_state_placeholder.dart';
-import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
-import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
-import 'package:kids_transport/features/parent/children/logic/children_cubit/children_state.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step1_screen.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/child_data_details_screen.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/child_pass_screen.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/transport_details_screen.dart';
-import 'package:kids_transport/features/parent/children/presentation/widgets/child_card_widget.dart';
+import '../../data/models/child_model.dart';
+import '../../logic/children_cubit/children_cubit.dart';
+import 'add_child_step1_screen.dart';
+import 'child_data_details_screen.dart';
+import 'child_pass_screen.dart';
+import 'transport_details_screen.dart';
+import '../widgets/child_card_widget.dart';
 
 class MyChildrenScreen extends StatefulWidget {
   const MyChildrenScreen({super.key});
@@ -81,156 +80,209 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.scaffoldBackgroundColor,
-      body: BlocBuilder<ChildrenCubit, ChildrenState>(
+      body: BlocConsumer<ChildrenCubit, ChildrenState>(
+        listener: (context, state) {
+          if (state is ChildrenActionSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.success,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          } else if (state is ChildrenActionError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
         builder: (context, state) {
-          if (state is ChildrenLoading || state is ChildrenInitial) {
+          final List<ChildModel> children = state is ChildrenLoaded
+              ? state.children
+              : const [];
+          final bool isActionLoading = state is ChildrenActionLoading;
+          final bool isFullLoading = state is ChildrenLoading || state is ChildrenInitial;
+
+          if (isFullLoading) {
             return const Center(
               child: CircularProgressIndicator(color: AppColors.primaryLight),
             );
           }
-          
+
           if (state is ChildrenError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.error_outline_rounded,
-                    size: 60,
-                    color: AppColors.error,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    state.message,
-                    style: AppTextStyles.style(color: AppColors.error),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () => context.read<ChildrenCubit>().fetchChildren(),
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('إعادة المحاولة'),
-                  ),
-                ],
+            return InkWell(
+              onTap: () => context.read<ChildrenCubit>().fetchChildren(),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.refresh_rounded,
+                      size: 48,
+                      color: AppColors.errorLight,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'إعادة المحاولة',
+                      style: AppTextStyles.style(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.errorLight,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        state.message,
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.style(
+                          color: AppColors.textMuted,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           }
-          
-          if (state is ChildrenLoaded) {
-            final children = state.children;
-            return CustomScrollView(
-              slivers: [
-                // البطاقة العلوية الثابتة
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: context.isDarkMode ? AppColors.darkCard : AppColors.white,
-                        borderRadius: AppTheme.radius(16),
-                        border: AppTheme.border(color: AppColors.grey200),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.black.withValues(alpha: context.isDarkMode ? 0.3 : 0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'أطفالي',
-                            style: AppTextStyles.style(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+
+          return Stack(
+            children: [
+              CustomScrollView(
+                slivers: [
+                  // البطاقة العلوية الثابتة
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: context.isDarkMode ? AppColors.darkCard : AppColors.white,
+                          borderRadius: AppTheme.radius(16),
+                          border: AppTheme.border(color: AppColors.grey200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.black.withValues(alpha: context.isDarkMode ? 0.3 : 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            children.isEmpty
-                                ? 'ابدأ بإضافة طفلك الأول.'
-                                : 'لديك ${children.length} طفل مسجل.',
-                            style: AppTextStyles.style(
-                              color: AppColors.textMuted,
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () => _openAddChild(context),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryLight,
-                                foregroundColor: AppColors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: AppTheme.radius(12),
-                                ),
-                              ),
-                              child: Text(
-                                'إضافة طفل جديد',
-                                style: AppTextStyles.style(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'أطفالي',
+                              style: AppTextStyles.style(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              children.isEmpty
+                                  ? 'ابدأ بإضافة طفلك الأول.'
+                                  : 'لديك ${children.length} طفل مسجل.',
+                              style: AppTextStyles.style(
+                                color: AppColors.textMuted,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: isActionLoading || isFullLoading ? null : () => _openAddChild(context),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryLight,
+                                  foregroundColor: AppColors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: AppTheme.radius(12),
+                                  ),
+                                ),
+                                child: Text(
+                                  'إضافة طفل جديد',
+                                  style: AppTextStyles.style(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
+                  ),
+
+                  // محتوى القائمة أو الحالة الفارغة
+                  if (children.isEmpty)
+                    SliverToBoxAdapter(
+                      child: EmptyStatePlaceholder(
+                        icon: Icons.child_care_rounded,
+                        title: 'لا يوجد أطفال مسجلون بعد',
+                        subtitle:
+                            'أضف طفلك الأول للاستفادة من خدمات النقل المدرسي الآمنة والموثوقة.',
+                        actionLabel: 'إضافة طفلك الأول',
+                        onAction: isActionLoading || isFullLoading ? null : () => _openAddChild(context),
+                      ),
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final child = children[index];
+                            return ChildCardWidget(
+                              child: child,
+                              onPassTap: isActionLoading || isFullLoading
+                                  ? () {}
+                                  : () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => ChildPassScreen(child: child)),
+                                      ),
+                              onDataTap: isActionLoading || isFullLoading
+                                  ? () {}
+                                  : () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => ChildDataDetailsScreen(child: child)),
+                                      ),
+                              onTransportTap: isActionLoading || isFullLoading
+                                  ? () {}
+                                  : () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => TransportDetailsScreen(child: child)),
+                                      ),
+                              onDelete: isActionLoading || isFullLoading
+                                  ? () {}
+                                  : () => _confirmDelete(context, child),
+                            );
+                          },
+                          childCount: children.length,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              if (isActionLoading)
+                const Positioned.fill(
+                  child: ColoredBox(
+                    color: Color(0x33000000),
+                    child: Center(child: CircularProgressIndicator(color: AppColors.primaryLight)),
                   ),
                 ),
-
-                // محتوى القائمة أو الحالة الفارغة
-                if (children.isEmpty)
-                  SliverToBoxAdapter(
-                    child: EmptyStatePlaceholder(
-                      icon: Icons.child_care_rounded,
-                      title: 'لا يوجد أطفال مسجلون بعد',
-                      subtitle:
-                          'أضف طفلك الأول للاستفادة من خدمات النقل المدرسي الآمنة والموثوقة.',
-                      actionLabel: 'إضافة طفلك الأول',
-                      onAction: () => _openAddChild(context),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final child = children[index];
-                          return ChildCardWidget(
-                            child: child,
-                            onPassTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => ChildPassScreen(child: child)),
-                            ),
-                            onDataTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => ChildDataDetailsScreen(child: child)),
-                            ),
-                            onTransportTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => TransportDetailsScreen(child: child)),
-                            ),
-                            onDelete: () => _confirmDelete(context, child),
-                          );
-                        },
-                        childCount: children.length,
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          }
-          return const SizedBox.shrink();
+            ],
+          );
         },
       ),
     );

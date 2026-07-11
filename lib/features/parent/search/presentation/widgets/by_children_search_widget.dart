@@ -217,7 +217,7 @@ class ByChildrenSearchWidget extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onTap: () => onKidToggle(kid.id, !isSelected),
+        onTap: () => onKidToggle(kid.id ?? 0, !isSelected),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
@@ -231,7 +231,7 @@ class ByChildrenSearchWidget extends StatelessWidget {
                   value: isSelected,
                   activeColor: cs.primary,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  onChanged: (v) => onKidToggle(kid.id, v ?? false),
+                  onChanged: (v) => onKidToggle(kid.id ?? 0, v ?? false),
                 ),
               ),
               const SizedBox(width: 10),

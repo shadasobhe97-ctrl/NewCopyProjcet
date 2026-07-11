@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
-import 'package:kids_transport/features/parent/children/data/models/transport_pref_model.dart';
+import 'package:kids_transport/features/parent/children/data/models/logistics_model.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -449,23 +449,27 @@ class _EditTransportBottomSheetState extends State<EditTransportBottomSheet> {
             onPressed: () {
               final updatedKid = ChildModel(
                 id: widget.kid.id,
-                name: widget.kid.name,
+                parentId: widget.kid.parentId,
+                schoolId: widget.kid.schoolId,
+                addressId: widget.kid.addressId,
+                fullName: widget.kid.fullName,
                 gender: widget.kid.gender,
                 birthDate: widget.kid.birthDate,
-                gradeLevel: widget.kid.gradeLevel,
-                schoolId: widget.kid.schoolId,
-                schoolName: widget.kid.schoolName,
-                addressId: widget.kid.addressId,
-                addressName: widget.kid.addressName,
-                qrToken: widget.kid.qrToken,
-                transportPref: TransportPrefModel(
-                  subscriptionType: _subscriptionType,
-                  period: _period,
-                  serviceType: _serviceType,
+                grade: widget.kid.grade,
+                photoUrl: widget.kid.photoUrl,
+                medicalNotes: widget.kid.medicalNotes,
+                notificationRadius: widget.kid.notificationRadius,
+                qrCodeToken: widget.kid.qrCodeToken,
+                school: widget.kid.school,
+                address: widget.kid.address,
+                logistics: LogisticsModel(
+                  preferredTimeSlot: _period,
+                  tripDirection: _serviceType,
+                  pickupTime: _formatTimeOfDay(_startTime),
+                  dropoffTime: _formatTimeOfDay(_endTime),
                   startDate: _startDate,
                   endDate: _endDate,
-                  schoolStartTime: _formatTimeOfDay(_startTime),
-                  schoolEndTime: _formatTimeOfDay(_endTime),
+                  subscriptionType: _subscriptionType,
                 ),
               );
               widget.onSaved(updatedKid);

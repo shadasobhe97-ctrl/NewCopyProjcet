@@ -24,6 +24,39 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
   TimeOfDay _schoolStartTime = const TimeOfDay(hour: 8, minute: 0);
   TimeOfDay _schoolEndTime = const TimeOfDay(hour: 13, minute: 30);
 
+  @override
+  void initState() {
+    super.initState();
+    final editingChild = context.read<AddChildCubit>().editingChild;
+    if (editingChild != null) {
+      final pref = editingChild.transportPref;
+      _subType = pref.subscriptionType;
+      _period = pref.period;
+      _serviceType = pref.serviceType;
+      _schoolStartTime = _parseTimeOfDay(pref.schoolStartTime);
+      _schoolEndTime = _parseTimeOfDay(pref.schoolEndTime);
+    }
+  }
+
+  TimeOfDay _parseTimeOfDay(String timeStr) {
+    try {
+      final format = RegExp(r'(\d+):(\d+)\s*(AM|PM|am|pm)?');
+      final match = format.firstMatch(timeStr);
+      if (match != null) {
+        int hour = int.parse(match.group(1)!);
+        final int minute = int.parse(match.group(2)!);
+        final String? ampm = match.group(3);
+        if (ampm != null) {
+          final isPm = ampm.toUpperCase() == 'PM';
+          if (isPm && hour < 12) hour += 12;
+          if (!isPm && hour == 12) hour = 0;
+        }
+        return TimeOfDay(hour: hour, minute: minute);
+      }
+    } catch (_) {}
+    return const TimeOfDay(hour: 8, minute: 0);
+  }
+
   void _submitFinal() {
     final pref = TransportPrefModel(
       subscriptionType: _subType,
@@ -79,7 +112,7 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
       child: Scaffold(
         backgroundColor: context.backgroundSurface,
         appBar: AppBar(
-          title: const Text('إضافة طفل'),
+          title: Text(context.read<AddChildCubit>().editingChild != null ? 'تعديل بيانات الطفل' : 'إضافة طفل'),
           flexibleSpace: Container(
             decoration: BoxDecoration(
               gradient: AppTheme.linearGradient(
@@ -95,9 +128,10 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
           listener: (context, state) {
             if (state is AddChildSuccess) {
               context.read<ChildrenCubit>().childAdded(state.child);
+              final isEdit = context.read<AddChildCubit>().editingChild != null;
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('تمت إضافة الطفل بنجاح'),
+                SnackBar(
+                  content: Text(isEdit ? 'تم تحديث بيانات الطفل بنجاح' : 'تمت إضافة الطفل بنجاح'),
                   backgroundColor: Colors.green,
                 ),
               );

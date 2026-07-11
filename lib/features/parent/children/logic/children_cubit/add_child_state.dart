@@ -10,8 +10,9 @@ class AddChildSubmitting extends AddChildState {}
 
 class AddChildSuccess extends AddChildState {
   final ChildModel child;
+  final String message;
   
-  AddChildSuccess(this.child);
+  AddChildSuccess(this.child, this.message);
 }
 
 class AddChildError extends AddChildState {

@@ -5,7 +5,6 @@ import 'children_state.dart';
 
 export 'children_state.dart';
 
-// --- Cubit ---
 class ChildrenCubit extends Cubit<ChildrenState> {
   final ChildrenRepository _repository;
 
@@ -13,11 +12,11 @@ class ChildrenCubit extends Cubit<ChildrenState> {
 
   Future<void> fetchChildren() async {
     emit(ChildrenLoading());
-    try {
-      final children = await _repository.getMyChildren();
-      emit(ChildrenLoaded(children));
-    } catch (e) {
-      emit(ChildrenError("حدث خطأ أثناء جلب بيانات الأطفال."));
+    final (children, error) = await _repository.getMyChildren();
+    if (error != null) {
+      emit(ChildrenError(error));
+    } else {
+      emit(ChildrenLoaded(children ?? []));
     }
   }
 
@@ -25,17 +24,35 @@ class ChildrenCubit extends Cubit<ChildrenState> {
   void childAdded(ChildModel newChild) {
     if (state is ChildrenLoaded) {
       final currentList = (state as ChildrenLoaded).children;
-      emit(ChildrenLoaded([...currentList, newChild]));
+      // استبدال الطفل إذا كان موجوداً بالفعل (وضع التعديل) أو إضافته
+      final index = currentList.indexWhere((c) => c.id == newChild.id);
+      final updatedList = List<ChildModel>.from(currentList);
+      if (index != -1) {
+        updatedList[index] = newChild;
+      } else {
+        updatedList.add(newChild);
+      }
+      emit(ChildrenLoaded(updatedList));
     } else {
       emit(ChildrenLoaded([newChild]));
     }
   }
-  // دالة لحذف طفل من القائمة
-  void deleteChild(int childId) {
-    if (state is ChildrenLoaded) {
-      final currentList = List<ChildModel>.from((state as ChildrenLoaded).children);
-      currentList.removeWhere((child) => child.id == childId);
-      emit(ChildrenLoaded(currentList));
+
+  // دالة لحذف طفل من القائمة عبر الـ API والـ UI
+  Future<void> deleteChild(int childId) async {
+    final currentList = state is ChildrenLoaded
+        ? (state as ChildrenLoaded).children
+        : <ChildModel>[];
+
+    emit(ChildrenActionLoading(List.from(currentList)));
+
+    final (success, message) = await _repository.deleteChild(childId.toString());
+    if (success) {
+      final updatedList = List<ChildModel>.from(currentList)
+        ..removeWhere((c) => c.id == childId);
+      emit(ChildrenActionSuccess(updatedList, message));
+    } else {
+      emit(ChildrenActionError(List.from(currentList), message));
     }
   }
 }

@@ -1,30 +1,18 @@
 import '../models/child_model.dart';
 import '../models/school_model.dart';
-import '../models/transport_pref_model.dart';
 
 class ChildrenMockDataSource {
   // بيانات تجريبية تحاكي استجابة API
-  List<ChildModel> _mockChildren = [
+  final List<ChildModel> _mockChildren = [
     ChildModel(
       id: 1,
-      name: "أحمد محمود",
+      schoolId: 101,
+      addressId: 1,
+      fullName: "أحمد محمود",
       gender: "male",
       birthDate: DateTime(2014, 5, 12),
-      gradeLevel: 2, // ابتدائي
-      schoolId: 101,
-      schoolName: "مدرسة طرابلس المركزية",
-      addressId: 1,
-      addressName: "المنزل - حي الأندلس",
-      qrToken: "darbi_qr_token_88f9a2b",
-      transportPref: TransportPrefModel(
-        subscriptionType: "monthly",
-        period: "morning",
-        serviceType: "both",
-        startDate: DateTime.now(),
-        schoolStartTime: "08:00 AM",
-        schoolEndTime: "01:30 PM",
-      ),
-      hasActiveSubscription: true,
+      grade: "ابتدائي",
+      qrCodeToken: "darbi_qr_token_88f9a2b",
     ),
   ];
 

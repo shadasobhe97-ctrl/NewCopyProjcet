@@ -12,6 +12,22 @@ class ChildrenLoaded extends ChildrenState {
   ChildrenLoaded(this.children);
 }
 
+class ChildrenActionLoading extends ChildrenLoaded {
+  ChildrenActionLoading(super.children);
+}
+
+class ChildrenActionSuccess extends ChildrenLoaded {
+  final String message;
+  
+  ChildrenActionSuccess(super.children, this.message);
+}
+
+class ChildrenActionError extends ChildrenLoaded {
+  final String message;
+  
+  ChildrenActionError(super.children, this.message);
+}
+
 class ChildrenError extends ChildrenState {
   final String message;
   

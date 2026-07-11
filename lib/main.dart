@@ -11,7 +11,8 @@ import 'package:kids_transport/features/admin/logic/admin_dashboard_cubit.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
-import 'package:kids_transport/features/parent/children/data/datasources/children_mock_data_source.dart';
+import 'package:kids_transport/core/network/api_client.dart';
+import 'package:kids_transport/features/parent/children/data/datasources/children_remote_data_source.dart';
 import 'package:kids_transport/features/parent/children/data/repositories/children_repository.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/add_child_cubit.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
@@ -30,7 +31,9 @@ class TransportApp extends StatelessWidget {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<ChildrenRepository>(
-          create: (_) => ChildrenRepository(ChildrenMockDataSource()),
+          create: (_) => ChildrenRepository(
+            ChildrenRemoteDataSource(ApiClient()),
+          ),
         ),
       ],
       child: MultiBlocProvider(

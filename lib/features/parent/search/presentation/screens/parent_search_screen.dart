@@ -5,7 +5,6 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
-import 'package:kids_transport/features/parent/children/data/models/transport_pref_model.dart';
 
 import 'driver_profile_view.dart';
 import '../widgets/search_method_selection_widget.dart';
@@ -76,37 +75,19 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
   // ─── Fallback children ───
   final List<ChildModel> _fallbackKids = [
     ChildModel(
-      id: 1, name: 'أحمد محمود', gender: 'male',
-      birthDate: DateTime(2015, 5, 20), gradeLevel: 4,
-      schoolId: 101, schoolName: 'مدرسة طرابلس المركزية',
-      addressId: 1, addressName: 'المنزل - حي الأندلس', qrToken: 'qr_ahmed',
-      transportPref: TransportPrefModel(
-        subscriptionType: 'monthly', period: 'morning', serviceType: 'both',
-        startDate: DateTime(2024, 5, 20), endDate: DateTime(2024, 8, 20),
-        schoolStartTime: '07:30 AM', schoolEndTime: '01:30 PM',
-      ),
+      id: 1, fullName: 'أحمد محمود', gender: 'male',
+      birthDate: DateTime(2015, 5, 20), grade: 'ثانوي',
+      schoolId: 101, addressId: 1,
     ),
     ChildModel(
-      id: 2, name: 'سارة محمود', gender: 'female',
-      birthDate: DateTime(2017, 9, 10), gradeLevel: 2,
-      schoolId: 102, schoolName: 'مدرسة حطين',
-      addressId: 1, addressName: 'المنزل - حي الأندلس', qrToken: 'qr_sara',
-      transportPref: TransportPrefModel(
-        subscriptionType: 'monthly', period: 'morning', serviceType: 'both',
-        startDate: DateTime(2024, 5, 20), endDate: DateTime(2024, 8, 20),
-        schoolStartTime: '07:30 AM', schoolEndTime: '01:30 PM',
-      ),
+      id: 2, fullName: 'سارة محمود', gender: 'female',
+      birthDate: DateTime(2017, 9, 10), grade: 'ابتدائي',
+      schoolId: 102, addressId: 1,
     ),
     ChildModel(
-      id: 3, name: 'محمد عبد الله', gender: 'male',
-      birthDate: DateTime(2019, 11, 1), gradeLevel: 1,
-      schoolId: 103, schoolName: 'روضة الرابع - التمهيدي',
-      addressId: 1, addressName: 'المنزل - حي الأندلس', qrToken: 'qr_mohamed',
-      transportPref: TransportPrefModel(
-        subscriptionType: 'monthly', period: 'morning', serviceType: 'both',
-        startDate: DateTime(2024, 5, 20), endDate: DateTime(2024, 8, 20),
-        schoolStartTime: '07:30 AM', schoolEndTime: '01:30 PM',
-      ),
+      id: 3, fullName: 'محمد عبد الله', gender: 'male',
+      birthDate: DateTime(2019, 11, 1), grade: 'روضة',
+      schoolId: 103, addressId: 1,
     ),
   ];
 
@@ -332,11 +313,11 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                 // Kids list
                 ..._currentKids.map((kid) {
                   final isMale = kid.gender.toLowerCase() == 'male';
-                  final checked = tempSelected.contains(kid.id);
+                  final checked = tempSelected.contains(kid.id ?? 0);
                   return GestureDetector(
                     onTap: () => setSheet(() => checked
-                        ? tempSelected.remove(kid.id)
-                        : tempSelected.add(kid.id)),
+                        ? tempSelected.remove(kid.id ?? 0)
+                        : tempSelected.add(kid.id ?? 0)),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
                       margin: const EdgeInsets.only(bottom: 10),
@@ -398,8 +379,8 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                             value: checked,
                             activeColor: cs.primary,
                             onChanged: (v) => setSheet(() => v == true
-                                ? tempSelected.add(kid.id)
-                                : tempSelected.remove(kid.id)),
+                                ? tempSelected.add(kid.id ?? 0)
+                                : tempSelected.remove(kid.id ?? 0)),
                           ),
                         ],
                       ),
@@ -550,7 +531,7 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                             }
                           }),
                           onKidEdited: (kid) =>
-                              setState(() => _editedKids[kid.id] = kid),
+                              setState(() => _editedKids[kid.id ?? 0] = kid),
                           onGenderChanged: (v) =>
                               setState(() => _selectedGender = v ?? 'ALL'),
                           onSearchPressed: () => setState(() {

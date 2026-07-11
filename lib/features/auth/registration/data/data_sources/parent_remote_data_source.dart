@@ -38,7 +38,7 @@ class ParentRemoteDataSource {
     required bool isDefault,
   }) async {
     final response = await _apiClient.post(
-      ApiEndpoints.parentAddAddress,
+      ApiEndpoints.parentAddresses,
       data: {
         'label': label,
         'lat': lat,

@@ -1,3 +1,5 @@
+import 'logistics_model.dart';
+
 class TransportPrefModel {
   final String subscriptionType; // monthly, weekly, days
   final String period; // morning, evening
@@ -19,13 +21,37 @@ class TransportPrefModel {
 
   factory TransportPrefModel.fromJson(Map<String, dynamic> json) {
     return TransportPrefModel(
-      subscriptionType: json['subscription_type'],
-      period: json['period'],
-      serviceType: json['service_type'],
-      startDate: DateTime.parse(json['start_date']),
-      endDate: json['end_date'] != null ? DateTime.parse(json['end_date']) : null,
-      schoolStartTime: json['school_start_time'],
-      schoolEndTime: json['school_end_time'],
+      subscriptionType: json['subscription_type'] ?? 'monthly',
+      period: json['period'] ?? 'morning',
+      serviceType: json['service_type'] ?? 'both',
+      startDate: DateTime.tryParse(json['start_date'] as String? ?? '') ?? DateTime.now(),
+      endDate: json['end_date'] != null ? DateTime.tryParse(json['end_date'] as String) : null,
+      schoolStartTime: json['school_start_time'] ?? '08:00 AM',
+      schoolEndTime: json['school_end_time'] ?? '01:30 PM',
+    );
+  }
+
+  factory TransportPrefModel.fromLogistics(LogisticsModel logistics) {
+    return TransportPrefModel(
+      subscriptionType: logistics.subscriptionType,
+      period: logistics.preferredTimeSlot,
+      serviceType: logistics.tripDirection,
+      startDate: logistics.startDate,
+      endDate: logistics.endDate,
+      schoolStartTime: logistics.pickupTime ?? '08:00 AM',
+      schoolEndTime: logistics.dropoffTime ?? '01:30 PM',
+    );
+  }
+
+  LogisticsModel toLogistics() {
+    return LogisticsModel(
+      preferredTimeSlot: period,
+      tripDirection: serviceType,
+      pickupTime: schoolStartTime,
+      dropoffTime: schoolEndTime,
+      startDate: startDate,
+      endDate: endDate,
+      subscriptionType: subscriptionType,
     );
   }
 

@@ -7,17 +7,17 @@ class ApiClient {
   final Dio _dio;
 
   ApiClient()
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: ApiEndpoints.baseUrl,
-            connectTimeout: const Duration(seconds: 15),
-            receiveTimeout: const Duration(seconds: 15),
-            headers: const {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-          ),
-        );
+    : _dio = Dio(
+        BaseOptions(
+          baseUrl: ApiEndpoints.baseUrl,
+          connectTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 15),
+          headers: const {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        ),
+      );
 
   Future<Response<dynamic>> post(
     String path, {
@@ -46,6 +46,17 @@ class ApiClient {
         queryParameters: queryParameters,
         options: Options(headers: headers),
       );
+    } on DioException catch (error) {
+      throw ApiException.fromDioException(error);
+    }
+  }
+
+  Future<Response<dynamic>> delete(
+    String path, {
+    Map<String, dynamic>? headers,
+  }) async {
+    try {
+      return await _dio.delete(path, options: Options(headers: headers));
     } on DioException catch (error) {
       throw ApiException.fromDioException(error);
     }

@@ -4,12 +4,21 @@ import 'package:latlong2/latlong.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/features/parent/addresses/data/models/address_model.dart';
 
-/// Bottom Sheet إضافة عنوان جديد بالخريطة.
+/// Bottom Sheet إضافة / تعديل عنوان بالخريطة.
 class AddAddressSheet extends StatefulWidget {
-  final void Function(Map<String, dynamic> newAddress) onSave;
+  /// يُستدعى عند الحفظ — يُمرَّر النموذج المكتمل.
+  final void Function(AddressModel address) onSave;
 
-  const AddAddressSheet({super.key, required this.onSave});
+  /// إذا كان غير null فهذا وضع التعديل.
+  final AddressModel? initialAddress;
+
+  const AddAddressSheet({
+    super.key,
+    required this.onSave,
+    this.initialAddress,
+  });
 
   @override
   State<AddAddressSheet> createState() => _AddAddressSheetState();
@@ -19,8 +28,25 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
   final MapController _mapController = MapController();
   final _labelController = TextEditingController();
   final _detailsController = TextEditingController();
-  LatLng _currentCenter = const LatLng(32.8872, 13.1913);
+  late LatLng _currentCenter;
   bool _isDefault = false;
+  bool _isLoading = false;
+
+  bool get _isEditMode => widget.initialAddress != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final addr = widget.initialAddress;
+    if (addr != null) {
+      _labelController.text = addr.title;
+      _detailsController.text = addr.addressDetails ?? '';
+      _currentCenter = LatLng(addr.latitude, addr.longitude);
+      _isDefault = addr.isDefault;
+    } else {
+      _currentCenter = const LatLng(32.8872, 13.1913);
+    }
+  }
 
   @override
   void dispose() {
@@ -64,7 +90,7 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'إضافة عنوان جديد',
+                    _isEditMode ? 'تعديل العنوان' : 'إضافة عنوان جديد',
                     style: AppTextStyles.style(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
@@ -72,7 +98,7 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _isLoading ? null : () => Navigator.pop(context),
                   ),
                 ],
               ),
@@ -90,8 +116,8 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
                       initialCenter: _currentCenter,
                       initialZoom: 14.5,
                       onPositionChanged: (position, hasGesture) {
-                        if (hasGesture && position.center != null) {
-                          _currentCenter = position.center!;
+                        if (hasGesture) {
+                          _currentCenter = position.center;
                         }
                       },
                     ),
@@ -154,6 +180,7 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
                   TextFormField(
                     controller: _labelController,
                     textAlign: TextAlign.right,
+                    enabled: !_isLoading,
                     decoration: AppTheme.inputDecoration(
                       context,
                       labelText: 'اسم العنوان (مثال: العمل، بيت الجدة)',
@@ -167,6 +194,7 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
                   TextFormField(
                     controller: _detailsController,
                     textAlign: TextAlign.right,
+                    enabled: !_isLoading,
                     decoration: AppTheme.inputDecoration(
                       context,
                       labelText: 'تفاصيل العنوان / الشقة / علامة مميزة',
@@ -182,23 +210,34 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
                     value: _isDefault,
                     controlAffinity: ListTileControlAffinity.leading,
                     activeColor: AppColors.primaryLight,
-                    onChanged: (val) => setState(() => _isDefault = val ?? false),
+                    onChanged: _isLoading
+                        ? null
+                        : (val) => setState(() => _isDefault = val ?? false),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: _save,
+                    onPressed: _isLoading ? null : _save,
                     style: AppTheme.elevatedButtonStyle(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       backgroundColor: AppColors.primaryLight,
                     ),
-                    child: Text(
-                      'حفظ العنوان',
-                      style: AppTextStyles.style(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: AppColors.white,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.white,
+                            ),
+                          )
+                        : Text(
+                            _isEditMode ? 'تحديث العنوان' : 'حفظ العنوان',
+                            style: AppTextStyles.style(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppColors.white,
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -210,23 +249,55 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
   }
 
   void _save() {
-    if (_labelController.text.trim().isEmpty) {
+    final labelText = _labelController.text.trim();
+    if (labelText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('يرجى إدخال اسم العنوان أولاً'),
+          content: Text('اسم العنوان مطلوب'),
           backgroundColor: AppColors.error,
         ),
       );
       return;
     }
-    widget.onSave({
-      'id': 'addr-${DateTime.now().millisecondsSinceEpoch}',
-      'title': _labelController.text.trim(),
-      'latitude': _currentCenter.latitude,
-      'longitude': _currentCenter.longitude,
-      'is_default': _isDefault,
-      'details': _detailsController.text.trim(),
-    });
-    Navigator.pop(context);
+
+    final lat = _currentCenter.latitude;
+    final lng = _currentCenter.longitude;
+
+    if (lat == 0.0 && lng == 0.0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يرجى تحديد موقع صالح على الخريطة'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    if (lat < -90.0 || lat > 90.0 || lng < -180.0 || lng > 180.0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('إحداثيات الموقع غير صالحة'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final address = AddressModel(
+      id: widget.initialAddress?.id,
+      label: labelText,
+      lat: lat,
+      lng: lng,
+      addressDetails: _detailsController.text.trim().isEmpty
+          ? null
+          : _detailsController.text.trim(),
+      isDefault: _isDefault,
+    );
+
+    widget.onSave(address);
+    // الـ Sheet ستُغلق من خلال الـ Screen بعد نجاح العملية
+    setState(() => _isLoading = false);
   }
 }

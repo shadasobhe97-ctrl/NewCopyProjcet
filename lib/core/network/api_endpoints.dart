@@ -30,6 +30,13 @@ class ApiEndpoints {
   // POST /api/parent/register  → التسجيل النهائي (يحتوي على OTP)
   static const String parentRegister = 'parent/register';
 
-  // مسار إدارة العناوين (يتطلب Bearer token)
-  static const String parentAddAddress = 'parent/addresses';
+  // مسارات إدارة العناوين (تتطلب Bearer token)
+  static const String parentAddresses = 'parent/addresses';
+  static String parentAddressById(String id) => 'parent/addresses/$id';
+
+  // مسارات إدارة الأطفال والمدارس (تتطلب Bearer token)
+  static const String parentChildren = 'parent/children';
+  static String parentChildById(String id) => 'parent/children/$id';
+  static String parentChildSubscription(String id) => 'parent/children/$id/subscription';
+  static const String parentSchools = 'parent/schools';
 }

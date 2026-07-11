@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/text_styles.dart';
 import '../../../../../core/utils/theme_context.dart';
 import '../../data/models/school_model.dart';
-import '../../data/datasources/children_mock_data_source.dart'; // أو Repository
+import '../../data/repositories/children_repository.dart';
 
 class SchoolSearchBottomSheet extends StatefulWidget {
   const SchoolSearchBottomSheet({super.key});
@@ -14,7 +15,7 @@ class SchoolSearchBottomSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const SchoolSearchBottomSheet(),
+      builder: (_) => const SchoolSearchBottomSheet(),
     );
   }
 
@@ -36,11 +37,10 @@ class _SchoolSearchBottomSheetState extends State<SchoolSearchBottomSheet> {
   Future<void> _fetchSchools(String query) async {
     setState(() => _isLoading = true);
     try {
-      // TODO: استخدام الـ Repository أو الـ Cubit الخاص بالمدارس هنا
-      final dataSource = ChildrenMockDataSource();
-      final results = await dataSource.searchSchools(query);
+      final repository = context.read<ChildrenRepository>();
+      final (results, error) = await repository.searchSchools(query);
       setState(() {
-        _schools = results;
+        _schools = results ?? [];
         _isLoading = false;
       });
     } catch (e) {

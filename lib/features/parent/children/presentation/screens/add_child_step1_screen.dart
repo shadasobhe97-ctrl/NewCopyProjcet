@@ -9,11 +9,13 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/theme/text_styles.dart';
 import '../../../../../core/utils/theme_context.dart';
+import '../../data/models/child_model.dart';
 import '../../logic/children_cubit/add_child_cubit.dart';
 import 'add_child_step2_screen.dart';
 
 class AddChildStep1Screen extends StatefulWidget {
-  const AddChildStep1Screen({super.key});
+  final ChildModel? child;
+  const AddChildStep1Screen({super.key, this.child});
 
   @override
   State<AddChildStep1Screen> createState() => _AddChildStep1ScreenState();
@@ -35,6 +37,27 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
   String? _selectedAddressName;
 
   @override
+  void initState() {
+    super.initState();
+    final cubit = context.read<AddChildCubit>();
+    if (widget.child != null) {
+      cubit.setEditingChild(widget.child!);
+      _nameController.text = widget.child!.fullName;
+      _medicalNotesController.text = widget.child!.medicalNotes ?? '';
+      _selectedGender = widget.child!.gender;
+      _selectedGrade = widget.child!.gradeLevel;
+      _selectedDate = widget.child!.birthDate;
+      _selectedSchoolId = widget.child!.schoolId;
+      _selectedSchoolName = widget.child!.schoolName;
+      _selectedAddressId = widget.child!.addressId;
+      _selectedAddressName = widget.child!.addressName;
+    } else {
+      cubit.clear();
+      _selectedDate = DateTime(2015);
+    }
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _medicalNotesController.dispose();
@@ -46,7 +69,10 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: source, imageQuality: 80);
     if (picked != null) {
-      setState(() => _selectedImage = File(picked.path));
+      setState(() {
+        _selectedImage = File(picked.path);
+        context.read<AddChildCubit>().imagePath = picked.path;
+      });
     }
   }
 
@@ -112,7 +138,8 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
       }
 
       context.read<AddChildCubit>().submitStep1(
-        name: _nameController.text,
+        img: context.read<AddChildCubit>().imagePath,
+        name: _nameController.text.trim(),
         gen: _selectedGender,
         dob: _selectedDate,
         grade: _selectedGrade,
@@ -120,7 +147,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
         sName: _selectedSchoolName!,
         aId: _selectedAddressId!,
         aName: _selectedAddressName!,
-        notes: _medicalNotesController.text.isNotEmpty ? _medicalNotesController.text : null,
+        notes: _medicalNotesController.text.trim().isNotEmpty ? _medicalNotesController.text.trim() : null,
       );
 
       Navigator.push(
@@ -142,12 +169,14 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
 
   @override
   Widget build(BuildContext context) {
+    final hasRemoteImage = widget.child?.photoUrl != null && widget.child!.photoUrl!.startsWith('http');
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: context.backgroundSurface,
         appBar: AppBar(
-          title: const Text('إضافة طفل'),
+          title: Text(widget.child != null ? 'تعديل بيانات الطفل' : 'إضافة طفل'),
           flexibleSpace: Container(
             decoration: BoxDecoration(
               gradient: AppTheme.linearGradient(
@@ -186,9 +215,11 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                     border: Border.all(color: context.primaryColor.withOpacity(0.3), width: 2),
                                     image: _selectedImage != null
                                         ? DecorationImage(image: FileImage(_selectedImage!), fit: BoxFit.cover)
-                                        : null,
+                                        : (hasRemoteImage
+                                            ? DecorationImage(image: NetworkImage(widget.child!.photoUrl!), fit: BoxFit.cover)
+                                            : null),
                                   ),
-                                  child: _selectedImage == null
+                                  child: _selectedImage == null && !hasRemoteImage
                                       ? Icon(Icons.person_rounded, size: 50, color: context.primaryColor.withOpacity(0.5))
                                       : null,
                                 ),
@@ -228,7 +259,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                 prefixIcon: const Icon(Icons.badge_outlined),
                                 border: OutlineInputBorder(borderRadius: AppTheme.radius(10)),
                               ),
-                              validator: (v) => v!.isEmpty ? 'مطلوب' : null,
+                              validator: (v) => v!.trim().isEmpty ? 'مطلوب' : null,
                             ),
                             const SizedBox(height: 14),
 
@@ -357,7 +388,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                 final address = await AddressSelectionBottomSheet.show(context);
                                 if (address != null) {
                                   setState(() {
-                                    _selectedAddressId = address.id;
+                                    _selectedAddressId = int.tryParse(address.id ?? '');
                                     _selectedAddressName = address.title;
                                   });
                                 }

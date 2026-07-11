@@ -1,25 +1,78 @@
-import '../datasources/children_mock_data_source.dart';
+import 'package:kids_transport/core/network/api_exception.dart';
+import '../datasources/children_remote_data_source.dart';
 import '../models/child_model.dart';
 import '../models/school_model.dart';
 
 class ChildrenRepository {
-  final ChildrenMockDataSource _dataSource;
+  final ChildrenRemoteDataSource _dataSource;
 
   ChildrenRepository(this._dataSource);
 
-  Future<List<ChildModel>> getMyChildren() {
-    return _dataSource.getMyChildren();
+  Future<(List<ChildModel>?, String?)> getMyChildren() async {
+    try {
+      final children = await _dataSource.getChildren();
+      return (children, null);
+    } on ApiException catch (e) {
+      return (null, e.message);
+    } catch (_) {
+      return (null, 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
+    }
   }
 
-  Future<List<SchoolModel>> searchSchools(String query) {
-    return _dataSource.searchSchools(query);
+  Future<(List<SchoolModel>?, String?)> searchSchools(String query) async {
+    try {
+      final schools = await _dataSource.getSchools();
+      if (query.isEmpty) return (schools, null);
+      final filtered = schools.where((s) => s.name.toLowerCase().contains(query.toLowerCase())).toList();
+      return (filtered, null);
+    } on ApiException catch (e) {
+      return (null, e.message);
+    } catch (_) {
+      return (null, 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
+    }
   }
 
-  Future<ChildModel> addChild(ChildModel child) {
-    final childData = child.toJson()
-      ..['school_name'] = child.schoolName
-      ..['address_name'] = child.addressName;
+  Future<(ChildModel?, String)> addChild(ChildModel child, String? localImagePath) async {
+    try {
+      final (newChild, message) = await _dataSource.addChild(child, localImagePath);
+      return (newChild, message);
+    } on ApiException catch (e) {
+      return (null, e.message);
+    } catch (_) {
+      return (null, 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
+    }
+  }
 
-    return _dataSource.addChild(childData);
+  Future<(ChildModel?, String)> updateChild(ChildModel child, String? localImagePath) async {
+    try {
+      final (updatedChild, message) = await _dataSource.updateChild(child, localImagePath);
+      return (updatedChild, message);
+    } on ApiException catch (e) {
+      return (null, e.message);
+    } catch (_) {
+      return (null, 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
+    }
+  }
+
+  Future<(bool, String)> deleteChild(String id) async {
+    try {
+      final message = await _dataSource.deleteChild(id);
+      return (true, message);
+    } on ApiException catch (e) {
+      return (false, e.message);
+    } catch (_) {
+      return (false, 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
+    }
+  }
+
+  Future<(ChildModel?, String?)> getChildDetails(String id) async {
+    try {
+      final child = await _dataSource.getChildDetails(id);
+      return (child, null);
+    } on ApiException catch (e) {
+      return (null, e.message);
+    } catch (_) {
+      return (null, 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
+    }
   }
 }
