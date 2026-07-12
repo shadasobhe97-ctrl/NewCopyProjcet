@@ -3,11 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/features/driver/profile/data/models/driver_model.dart';
 import 'package:kids_transport/features/driver/home/logic/driver_home_cubit/driver_home_cubit.dart';
 
 class NewRequestsSection extends StatelessWidget {
-  final List<SubscriptionRequest> requests;
+  // 1. تم التعديل هنا إلى dynamic ليتوافق مع الـ State
+  final List<dynamic> requests;
 
   const NewRequestsSection({super.key, required this.requests});
 
@@ -30,7 +30,10 @@ class NewRequestsSection extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               'طلبات الاشتراك الجديدة (${requests.length})',
-              style: AppTextStyles.style(fontSize: 17, fontWeight: FontWeight.bold),
+              style: AppTextStyles.style(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -43,7 +46,8 @@ class NewRequestsSection extends StatelessWidget {
           ...requests.map(
             (req) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: _RequestCard(request: req),
+              // 2. تحويل الـ dynamic إلى الموديل لكي تعمل الواجهة
+              child: _RequestCard(request: req as SubscriptionRequest),
             ),
           ),
       ],
@@ -63,7 +67,9 @@ class _EmptyRequestsState extends StatelessWidget {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: AppTheme.radius(20),
         border: AppTheme.border(
-          color: isDark ? AppColors.grey800 : AppColors.grey.withValues(alpha: 0.15),
+          color: isDark
+              ? AppColors.grey800
+              : AppColors.grey.withValues(alpha: 0.15),
         ),
       ),
       child: Column(
@@ -93,7 +99,10 @@ class _EmptyRequestsState extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'ستظهر هنا طلبات اشتراك أولياء الأمور',
-            style: AppTextStyles.style(fontSize: 12, color: AppColors.textMuted),
+            style: AppTextStyles.style(
+              fontSize: 12,
+              color: AppColors.textMuted,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -118,7 +127,9 @@ class _RequestCard extends StatelessWidget {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: AppTheme.radius(20),
         border: AppTheme.border(
-          color: isDark ? AppColors.grey800 : AppColors.grey.withValues(alpha: 0.15),
+          color: isDark
+              ? AppColors.grey800
+              : AppColors.grey.withValues(alpha: 0.15),
         ),
         boxShadow: [
           AppTheme.boxShadow(
@@ -233,7 +244,10 @@ class _RequestCard extends StatelessWidget {
                     style: AppTextStyles.style(color: AppColors.error),
                   ),
                   style: AppTheme.outlinedButtonStyle(
-                    side: AppTheme.borderSide(color: AppColors.error, width: 1.5),
+                    side: AppTheme.borderSide(
+                      color: AppColors.error,
+                      width: 1.5,
+                    ),
                     minimumSize: const Size(0, 46),
                     shape: AppTheme.roundedRectangleBorder(
                       borderRadius: AppTheme.radius(12),
@@ -293,11 +307,35 @@ class _InfoRow extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: AppTextStyles.style(fontSize: 13, color: AppColors.textMuted),
+            style: AppTextStyles.style(
+              fontSize: 13,
+              color: AppColors.textMuted,
+            ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
     );
   }
+}
+
+// 3. تمت إضافة هذا الكلاس الوهمي مؤقتاً في الأسفل لإزالة الخطأ الأحمر
+class SubscriptionRequest {
+  final int id;
+  final String? studentAvatarUrl;
+  final String studentName;
+  final String schoolName;
+  final String tripPeriodArabic;
+  final String district;
+  final String address;
+
+  SubscriptionRequest({
+    required this.id,
+    this.studentAvatarUrl,
+    required this.studentName,
+    required this.schoolName,
+    required this.tripPeriodArabic,
+    required this.district,
+    required this.address,
+  });
 }

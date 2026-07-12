@@ -67,7 +67,9 @@ class DriverDrawer extends StatelessWidget {
         width: MediaQuery.of(context).size.width * 0.82,
         backgroundColor: context.darkSurface,
         shape: AppTheme.roundedRectangleBorder(
-          borderRadius: AppTheme.horizontalRadius(left: AppTheme.cornerRadius(24)),
+          borderRadius: AppTheme.horizontalRadius(
+            left: AppTheme.cornerRadius(24),
+          ),
         ),
         child: Column(
           children: [
@@ -96,12 +98,15 @@ class DriverDrawer extends StatelessWidget {
                     label: 'معلومات المركبة الرئيسية',
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.pushNamed(context, AppRoutes.driverPrimaryVehicle);
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.driverPrimaryVehicle,
+                      );
                     },
                   ),
 
                   // ── المركبة الاحتياطية ──
-                  _BackupVehicleDrawerItem(
+                  /*BackupVehicleDrawerItem(
                     driver: driver,
                     onTap: () {
                       Navigator.pop(context);
@@ -112,7 +117,7 @@ class DriverDrawer extends StatelessWidget {
                         arguments: {'collectedData': {}},
                       );
                     },
-                  ),
+                  ),*/
 
                   // ── عقودي والتزاماتي ──
                   AppDrawerItem(
@@ -320,7 +325,7 @@ class _DriverDrawerHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    driver.phone,
+                    driver.phoneNumber,
                     style: AppTextStyles.style(
                       color: AppColors.white70,
                       fontSize: 13,
@@ -357,7 +362,7 @@ class _DriverDrawerHeader extends StatelessWidget {
 }
 
 // ─── عنصر المركبة الاحتياطية الذكي ────────────────────────────────────────
-class _BackupVehicleDrawerItem extends StatelessWidget {
+/*class _BackupVehicleDrawerItem extends StatelessWidget {
   final DriverModel driver;
   final VoidCallback onTap;
 
@@ -382,7 +387,7 @@ class _BackupVehicleDrawerItem extends StatelessWidget {
       onTap: onTap,
     );
   }
-}
+}*/
 
 // ─── عنصر قائمة الدروار المُعاد استخدامه ─────────────────────────────────
 // تم نقله إلى core/widgets/app_drawer_item.dart

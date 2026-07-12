@@ -24,37 +24,32 @@ class DriverHomeCubit extends Cubit<DriverHomeState> {
       // ────────────────────────────────────────────
       await Future.delayed(const Duration(milliseconds: 500));
 
+      // تم تعديل البيانات لتطابق DriverModel المربوط بالباك إند
       final mockDriver = DriverModel(
-        id: 1,
-        fullName: 'محمد العربي', // TODO: اسم السائق الحقيقي من الـ API
-        phone: '+218 91 234 5678', // TODO: رقم الهاتف الحقيقي
-        avatarUrl: null, // TODO: رابط الصورة الحقيقية
-        status: 'offline',
-        vehicle: const VehicleInfo(
-          brand: 'Toyota',
-          model: 'Hiace',
-          plateNumber: '12345-ط',
-          color: 'أبيض',
-          type: 'Van',
-          year: 2022,
-          capacity: 14,
-          hasAc: true,
-          approvalStatus: 'approved',
-        ),
+        driverId: 1,
+        userId: 1,
+        fullName: 'محمد العربي',
+        email: 'driver@test.com',
+        phoneNumber: '+218 91 234 5678',
+        alternativePhone: null,
+        avatarUrl: null,
+        gender: 'male',
+        accountStatus: 'Approved',
       );
 
-      // طلبات اشتراك تجريبية - فارغة للمستخدم الجديد
-      // TODO: جلب الطلبات الحقيقية من الـ API
-      const mockRequests = <SubscriptionRequest>[];
+      // طلبات اشتراك تجريبية - تم تركها كقائمة فارغة عادية لتجنب أخطاء SubscriptionRequest
+      const mockRequests = [];
 
-      emit(DriverHomeLoaded(
-        driver: mockDriver,
-        isOnline: false,
-        todayTripsCount: 0, // TODO: جلب عدد الرحلات الحقيقي
-        todayStudentsCount: 0, // TODO: جلب عدد الطلاب الحقيقي
-        newRequests: mockRequests,
-        hasActiveTrip: false, // TODO: التحقق من وجود رحلة نشطة
-      ));
+      emit(
+        DriverHomeLoaded(
+          driver: mockDriver,
+          isOnline: false,
+          todayTripsCount: 0,
+          todayStudentsCount: 0,
+          newRequests: mockRequests,
+          hasActiveTrip: false,
+        ),
+      );
     } catch (e) {
       emit(DriverHomeError('حدث خطأ في تحميل البيانات: ${e.toString()}'));
     }
@@ -69,26 +64,12 @@ class DriverHomeCubit extends Cubit<DriverHomeState> {
     }
   }
 
- 
+  // تم إيقاف محتوى هذه الدوال مؤقتاً لتجنب الأخطاء حتى تقومي بإنشاء موديل الطلبات
   Future<void> acceptRequest(int requestId) async {
-    final currentState = state;
-    if (currentState is DriverHomeLoaded) {
-
-      final updatedRequests = currentState.newRequests
-          .where((r) => r.id != requestId)
-          .toList();
-      emit(currentState.copyWith(newRequests: updatedRequests));
-    }
+    // TODO: سيتم برمجتها لاحقاً
   }
 
   Future<void> rejectRequest(int requestId) async {
-    final currentState = state;
-    if (currentState is DriverHomeLoaded) {
-
-      final updatedRequests = currentState.newRequests
-          .where((r) => r.id != requestId)
-          .toList();
-      emit(currentState.copyWith(newRequests: updatedRequests));
-    }
+    // TODO: سيتم برمجتها لاحقاً
   }
 }
