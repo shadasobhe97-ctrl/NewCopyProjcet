@@ -74,19 +74,7 @@ class AddressCard extends StatelessWidget {
                             fontSize: 15,
                           ),
                         ),
-                        if ((address['details'] as String?)?.isNotEmpty ==
-                            true) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            address['details'] as String,
-                            style: AppTextStyles.style(
-                              color: AppColors.textMuted,
-                              fontSize: 12,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+
                         const SizedBox(height: 4),
                         Text(
                           'إحداثيات: (${(address['latitude'] as double).toStringAsFixed(4)}, ${(address['longitude'] as double).toStringAsFixed(4)})',

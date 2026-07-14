@@ -1,10 +1,11 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
-import 'package:image_picker/image_picker.dart'; // تحتاجي تضيفي باقة image_picker في الـ pubspec
+import 'package:image_picker/image_picker.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
 
 class ParentAvatarScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class ParentAvatarScreen extends StatefulWidget {
 
 class _ParentAvatarScreenState extends State<ParentAvatarScreen> {
   File? _imageFile;
+  String? _imagePathWeb;
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage() async {
@@ -26,7 +28,11 @@ class _ParentAvatarScreenState extends State<ParentAvatarScreen> {
       );
       if (pickedFile != null) {
         setState(() {
-          _imageFile = File(pickedFile.path);
+          if (kIsWeb) {
+            _imagePathWeb = pickedFile.path;
+          } else {
+            _imageFile = File(pickedFile.path);
+          }
         });
       }
     } catch (e) {
@@ -40,7 +46,7 @@ class _ParentAvatarScreenState extends State<ParentAvatarScreen> {
   }
 
   void _submitNext() {
-    if (_imageFile == null) {
+    if (_imageFile == null && _imagePathWeb == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -123,8 +129,10 @@ class _ParentAvatarScreenState extends State<ParentAvatarScreen> {
                               : AppColors.grey200,
                           backgroundImage: _imageFile != null
                               ? FileImage(_imageFile!)
-                              : null,
-                          child: _imageFile == null
+                              : (_imagePathWeb != null
+                                  ? NetworkImage(_imagePathWeb!)
+                                  : null),
+                          child: (_imageFile == null && _imagePathWeb == null)
                               ? Icon(
                                   Icons.person_rounded,
                                   size: 110,

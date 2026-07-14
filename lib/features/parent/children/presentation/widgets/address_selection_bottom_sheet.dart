@@ -21,9 +21,7 @@ class AddressSelectionBottomSheet extends StatefulWidget {
       isScrollControlled: true,
       builder: (_) => BlocProvider(
         create: (_) => AddressCubit(
-          AddressRepository(
-            AddressRemoteDataSource(ApiClient()),
-          ),
+          AddressRepository(AddressRemoteDataSource(ApiClient())),
         )..loadAddresses(),
         child: const AddressSelectionBottomSheet(),
       ),
@@ -31,10 +29,12 @@ class AddressSelectionBottomSheet extends StatefulWidget {
   }
 
   @override
-  State<AddressSelectionBottomSheet> createState() => _AddressSelectionBottomSheetState();
+  State<AddressSelectionBottomSheet> createState() =>
+      _AddressSelectionBottomSheetState();
 }
 
-class _AddressSelectionBottomSheetState extends State<AddressSelectionBottomSheet> {
+class _AddressSelectionBottomSheetState
+    extends State<AddressSelectionBottomSheet> {
   int? _selectedIndex;
 
   /// فتح AddAddressSheet لإضافة عنوان جديد
@@ -45,9 +45,9 @@ class _AddressSelectionBottomSheetState extends State<AddressSelectionBottomShee
       isScrollControlled: true,
       backgroundColor: AppColors.transparent,
       builder: (_) => AddAddressSheet(
-        onSave: (newAddress) {
-          Navigator.pop(context); // إغلاق الـ AddAddressSheet
-          cubit.addAddress(newAddress);
+        onSave: (newAddress) async {
+          await cubit.addAddress(newAddress);
+          return null;
         },
       ),
     );
@@ -92,7 +92,9 @@ class _AddressSelectionBottomSheetState extends State<AddressSelectionBottomShee
           return Container(
             decoration: BoxDecoration(
               color: context.backgroundSurface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
             ),
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
             child: Stack(
@@ -120,13 +122,19 @@ class _AddressSelectionBottomSheetState extends State<AddressSelectionBottomShee
                       children: [
                         Text(
                           'اختر عنوان المنزل',
-                          style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: AppTextStyles.style(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         TextButton.icon(
                           onPressed: isFullLoading || isActionLoading
                               ? null
                               : () => _openAddAddress(context),
-                          icon: const Icon(Icons.add_location_alt_rounded, size: 18),
+                          icon: const Icon(
+                            Icons.add_location_alt_rounded,
+                            size: 18,
+                          ),
                           label: const Text('إضافة عنوان'),
                         ),
                       ],
@@ -143,7 +151,8 @@ class _AddressSelectionBottomSheetState extends State<AddressSelectionBottomShee
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 24),
                         child: InkWell(
-                          onTap: () => context.read<AddressCubit>().loadAddresses(),
+                          onTap: () =>
+                              context.read<AddressCubit>().loadAddresses(),
                           child: Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -164,7 +173,9 @@ class _AddressSelectionBottomSheetState extends State<AddressSelectionBottomShee
                                 ),
                                 const SizedBox(height: 8),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 32,
+                                  ),
                                   child: Text(
                                     state.message,
                                     textAlign: TextAlign.center,
@@ -185,11 +196,17 @@ class _AddressSelectionBottomSheetState extends State<AddressSelectionBottomShee
                         child: Center(
                           child: Column(
                             children: [
-                              Icon(Icons.location_off_outlined, size: 48, color: AppColors.grey300),
+                              Icon(
+                                Icons.location_off_outlined,
+                                size: 48,
+                                color: AppColors.grey300,
+                              ),
                               const SizedBox(height: 8),
                               Text(
                                 'لا توجد عناوين محفوظة',
-                                style: AppTextStyles.style(color: AppColors.grey400),
+                                style: AppTextStyles.style(
+                                  color: AppColors.grey400,
+                                ),
                               ),
                               const SizedBox(height: 16),
                               TextButton(
@@ -212,18 +229,26 @@ class _AddressSelectionBottomSheetState extends State<AddressSelectionBottomShee
                             return GestureDetector(
                               onTap: isActionLoading
                                   ? null
-                                  : () => setState(() => _selectedIndex = index),
+                                  : () =>
+                                        setState(() => _selectedIndex = index),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
                                 margin: const EdgeInsets.only(bottom: 10),
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? context.primaryColor.withOpacity(0.08)
-                                      : (context.isDarkMode ? AppColors.darkCard : AppColors.grey50),
+                                      ? context.primaryColor.withValues(alpha: 0.08)
+                                      : (context.isDarkMode
+                                            ? AppColors.darkCard
+                                            : AppColors.grey50),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isSelected ? context.primaryColor : AppColors.grey200,
+                                    color: isSelected
+                                        ? context.primaryColor
+                                        : AppColors.grey200,
                                     width: isSelected ? 2 : 1,
                                   ),
                                 ),
@@ -231,24 +256,32 @@ class _AddressSelectionBottomSheetState extends State<AddressSelectionBottomShee
                                   children: [
                                     Icon(
                                       Icons.home_rounded,
-                                      color: isSelected ? context.primaryColor : AppColors.grey400,
+                                      color: isSelected
+                                          ? context.primaryColor
+                                          : AppColors.grey400,
                                       size: 22,
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             address.title,
                                             style: AppTextStyles.style(
                                               fontWeight: FontWeight.bold,
-                                              color: isSelected ? context.primaryColor : null,
+                                              color: isSelected
+                                                  ? context.primaryColor
+                                                  : null,
                                             ),
                                           ),
                                           Text(
-                                            address.addressDetails ?? '',
-                                            style: AppTextStyles.style(fontSize: 12, color: AppColors.grey400),
+                                            'إحداثيات: (${address.lat.toStringAsFixed(4)}, ${address.lng.toStringAsFixed(4)})',
+                                            style: AppTextStyles.style(
+                                              fontSize: 12,
+                                              color: AppColors.grey400,
+                                            ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
@@ -256,10 +289,21 @@ class _AddressSelectionBottomSheetState extends State<AddressSelectionBottomShee
                                       ),
                                     ),
                                     AnimatedSwitcher(
-                                      duration: const Duration(milliseconds: 200),
+                                      duration: const Duration(
+                                        milliseconds: 200,
+                                      ),
                                       child: isSelected
-                                          ? Icon(Icons.check_circle_rounded, color: context.primaryColor, key: const ValueKey('checked'))
-                                          : Icon(Icons.radio_button_unchecked_rounded, color: AppColors.grey300, key: const ValueKey('unchecked')),
+                                          ? Icon(
+                                              Icons.check_circle_rounded,
+                                              color: context.primaryColor,
+                                              key: const ValueKey('checked'),
+                                            )
+                                          : Icon(
+                                              Icons
+                                                  .radio_button_unchecked_rounded,
+                                              color: AppColors.grey300,
+                                              key: const ValueKey('unchecked'),
+                                            ),
                                     ),
                                   ],
                                 ),
@@ -271,7 +315,8 @@ class _AddressSelectionBottomSheetState extends State<AddressSelectionBottomShee
                       const SizedBox(height: 12),
 
                       // زر التأكيد
-                      if (_selectedIndex != null && _selectedIndex! < savedAddresses.length)
+                      if (_selectedIndex != null &&
+                          _selectedIndex! < savedAddresses.length)
                         Padding(
                           padding: const EdgeInsets.only(top: 4, bottom: 12),
                           child: SizedBox(
@@ -279,16 +324,26 @@ class _AddressSelectionBottomSheetState extends State<AddressSelectionBottomShee
                             child: ElevatedButton(
                               onPressed: isActionLoading
                                   ? null
-                                  : () => Navigator.pop(context, savedAddresses[_selectedIndex!]),
+                                  : () => Navigator.pop(
+                                      context,
+                                      savedAddresses[_selectedIndex!],
+                                    ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: context.primaryColor,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                               child: Text(
                                 'تأكيد الاختيار',
-                                style: AppTextStyles.style(fontWeight: FontWeight.bold, color: Colors.white),
+                                style: AppTextStyles.style(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),

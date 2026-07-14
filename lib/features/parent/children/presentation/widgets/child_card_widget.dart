@@ -74,7 +74,29 @@ class ChildCardWidget extends StatelessWidget {
                   ),
                   child: child.image != null
                       ? ClipOval(
-                          child: Image.network(child.image!, fit: BoxFit.cover),
+                          child: Image.network(
+                            child.image!,
+                            fit: BoxFit.cover,
+                            width: 60,
+                            height: 60,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.person_rounded,
+                              color: child.gender == 'male'
+                                  ? context.genderMaleColor
+                                  : context.genderFemaleColor,
+                              size: 32,
+                            ),
+                            loadingBuilder: (_, w, p) => p == null
+                                ? w
+                                : Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: child.gender == 'male'
+                                          ? context.genderMaleColor
+                                          : context.genderFemaleColor,
+                                    ),
+                                  ),
+                          ),
                         )
                       : Icon(
                           Icons.person_rounded,

@@ -39,4 +39,8 @@ class ApiEndpoints {
   static String parentChildById(String id) => 'parent/children/$id';
   static String parentChildSubscription(String id) => 'parent/children/$id/subscription';
   static const String parentSchools = 'parent/schools';
+
+  // مسار البحث عن السائقين وإرسال طلبات الاشتراك
+  static const String parentDriversSearch = 'parent/drivers/search';
+  static const String parentSubscriptions = 'parent';
 }

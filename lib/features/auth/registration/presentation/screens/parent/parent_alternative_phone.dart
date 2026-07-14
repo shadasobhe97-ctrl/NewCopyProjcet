@@ -121,6 +121,16 @@ class _ParentAlternativePhoneScreenState
 
                 ElevatedButton(
                   onPressed: () {
+                    final phone = _altPhoneController.text.trim();
+                    if (phone.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('الرجاء إدخال رقم الهاتف البديل أو اضغط "تخطي"'),
+                          backgroundColor: AppColors.orange,
+                        ),
+                      );
+                      return;
+                    }
                     if (_formKey.currentState!.validate()) {
                       _goToEmailScreen(isSkipped: false); // حفظ الرقم المكتوب
                     }

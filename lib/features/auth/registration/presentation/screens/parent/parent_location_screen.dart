@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -7,7 +8,6 @@ import 'package:flutter_map/flutter_map.dart'; // باقة OpenStreetMap
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_state.dart';
 import 'package:latlong2/latlong.dart';
-// استيراد ملف الـ Routes لضمان الوصول لـ Routes.parentMainWrapper
 
 class ParentLocationScreen extends StatefulWidget {
   const ParentLocationScreen({super.key});
@@ -25,6 +25,42 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
   bool _isDefaultLocation = true;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _determinePosition();
+    });
+  }
+
+  Future<void> _determinePosition() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+      
+      if (permission == LocationPermission.deniedForever) return;
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      
+      if (mounted) {
+        setState(() {
+          _currentCenter = LatLng(position.latitude, position.longitude);
+        });
+        _mapController.move(_currentCenter, 14.5);
+      }
+    } catch (e) {
+      debugPrint("خطأ أثناء جلب الموقع الحالي: $e");
+    }
+  }
+
+  @override
   void dispose() {
     _labelController.dispose();
     _mapController.dispose();
@@ -32,8 +68,18 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
   }
 
   void _submitLocation() {
+    final labelText = _labelController.text.trim();
+    if (labelText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("الرجاء إدخال تسمية للموقع أولاً (مثال: منزلي)."),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
     context.read<RegisterCubit>().saveLocation(
-      label: _labelController.text.trim(),
+      label: labelText,
       lat: _currentCenter.latitude,
       lng: _currentCenter.longitude,
       isDefault: _isDefaultLocation,
@@ -41,7 +87,6 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
   }
 
   void _navigateToHome() {
-    // 🌟 تعديل: التوجيه النهائي للداشبورد الرئيسي ومسح فلو الـ Register بالكامل دون مشاكل
     Navigator.pushNamedAndRemoveUntil(
       context,
       '/parentMainWrapper',
@@ -126,9 +171,9 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
                           initialCenter: _currentCenter,
                           initialZoom: 14.5,
                           onPositionChanged: (position, hasGesture) {
-                            if (hasGesture && position.center != null) {
+                            if (hasGesture) {
                               // تحديث الإحداثيات عند سحب الخريطة من المستخدم
-                              _currentCenter = position.center!;
+                              _currentCenter = position.center;
                             }
                           },
                         ),

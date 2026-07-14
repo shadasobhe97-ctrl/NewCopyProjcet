@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -16,6 +17,7 @@ class DriverAvatarScreen extends StatefulWidget {
 
 class _DriverAvatarScreenState extends State<DriverAvatarScreen> {
   File? _imageFile;
+  String? _imagePathWeb;
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage() async {
@@ -26,7 +28,11 @@ class _DriverAvatarScreenState extends State<DriverAvatarScreen> {
       );
       if (pickedFile != null) {
         setState(() {
-          _imageFile = File(pickedFile.path);
+          if (kIsWeb) {
+            _imagePathWeb = pickedFile.path;
+          } else {
+            _imageFile = File(pickedFile.path);
+          }
         });
       }
     } catch (e) {
@@ -40,7 +46,7 @@ class _DriverAvatarScreenState extends State<DriverAvatarScreen> {
   }
 
   void _submitNext() {
-    if (_imageFile == null) {
+    if (_imageFile == null && _imagePathWeb == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -123,8 +129,10 @@ class _DriverAvatarScreenState extends State<DriverAvatarScreen> {
                               : AppColors.grey200,
                           backgroundImage: _imageFile != null
                               ? FileImage(_imageFile!)
-                              : null,
-                          child: _imageFile == null
+                              : (_imagePathWeb != null
+                                  ? NetworkImage(_imagePathWeb!)
+                                  : null),
+                          child: (_imageFile == null && _imagePathWeb == null)
                               ? Icon(
                                   Icons.person_rounded,
                                   size: 110,

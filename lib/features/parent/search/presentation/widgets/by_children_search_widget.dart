@@ -3,78 +3,166 @@ import 'package:kids_transport/features/parent/children/data/models/child_model.
 import 'package:kids_transport/features/parent/search/data/models/driver_search_model.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'driver_search_card_widget.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/transport_details_screen.dart';
+import 'package:kids_transport/features/parent/children/presentation/screens/child_data_details_screen.dart';
+import 'driver_search_card_widget.dart';
+import 'warning_card.dart';
+import 'filter_sheet.dart';
+import 'empty_state_widget.dart';
+import 'search_loading_widget.dart';
 
-/// البحث بناءً على الأطفال.
-/// يدعم theme-aware colors بالكامل.
 class ByChildrenSearchWidget extends StatelessWidget {
   final List<ChildModel> kids;
   final List<int> selectedKidsIds;
-  final Map<int, ChildModel> editedKids;
-  final String selectedGender;
   final bool hasSearched;
+  final bool isLoading;
   final List<DriverSearchModel> filteredDrivers;
-  final List<String> selectedDriverIds;
+
+  final String selectedGender;
+  final bool hasAcOnly;
 
   final Function(int, bool) onKidToggle;
-  final Function(ChildModel) onKidEdited;
-  final ValueChanged<String?> onGenderChanged;
   final VoidCallback onSearchPressed;
   final VoidCallback onBack;
-  final Function(String, bool) onDriverSelectedChanged;
   final Function(DriverSearchModel) onTapViewProfile;
   final VoidCallback onEditTransportSearchBack;
+
+  final Function(String gender, bool hasAc) onApplyFilters;
+  final VoidCallback onResetFilters;
 
   const ByChildrenSearchWidget({
     super.key,
     required this.kids,
     required this.selectedKidsIds,
-    required this.editedKids,
-    required this.selectedGender,
     required this.hasSearched,
+    this.isLoading = false,
     required this.filteredDrivers,
-    required this.selectedDriverIds,
+    required this.selectedGender,
+    required this.hasAcOnly,
     required this.onKidToggle,
-    required this.onKidEdited,
-    required this.onGenderChanged,
     required this.onSearchPressed,
     required this.onBack,
-    required this.onDriverSelectedChanged,
     required this.onTapViewProfile,
     required this.onEditTransportSearchBack,
+    required this.onApplyFilters,
+    required this.onResetFilters,
   });
 
-  // ── نصوص التحويل ──
-  String _subscriptionText(String t) => switch (t.toLowerCase()) {
-    'monthly' => 'شهري',
-    'weekly' => 'أسبوعي',
-    _ => 'يومي',
-  };
+  void _showEditChoiceDialog(BuildContext context, ChildModel kid) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-  String _periodText(String p) => switch (p.toLowerCase()) {
-    'morning' => 'صباحية',
-    'evening' => 'مسائية',
-    _ => 'صباحية ومسائية',
-  };
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
+          title: Text(
+            "ماذا تود أن تعدل؟",
+            style: AppTextStyles.style(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: isDark ? AppColors.white : AppColors.textDark,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                leading: Icon(Icons.edit_road_rounded, color: theme.colorScheme.primary),
+                title: Text(
+                  "بيانات النقل",
+                  style: AppTextStyles.style(
+                    fontSize: 14,
+                    color: isDark ? AppColors.grey200 : AppColors.textDark,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TransportDetailsScreen(child: kid),
+                    ),
+                  ).then((_) {
+                    if (context.mounted) {
+                      context.read<ChildrenCubit>().fetchChildren();
+                    }
+                  });
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                leading: Icon(Icons.person_outline_rounded, color: theme.colorScheme.primary),
+                title: Text(
+                  "بيانات الطفل",
+                  style: AppTextStyles.style(
+                    fontSize: 14,
+                    color: isDark ? AppColors.grey200 : AppColors.textDark,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChildDataDetailsScreen(child: kid),
+                    ),
+                  ).then((_) {
+                    if (context.mounted) {
+                      context.read<ChildrenCubit>().fetchChildren();
+                    }
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-  String _serviceText(String s) => switch (s.toLowerCase()) {
-    'go' => 'ذهاب فقط',
-    'return' => 'عودة فقط',
-    _ => 'ذهاب وعودة',
-  };
+  void _showFilterBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => FilterSheet(
+        selectedGender: selectedGender,
+        hasAcOnly: hasAcOnly,
+        onApply: onApplyFilters,
+        onReset: onResetFilters,
+      ),
+    );
+  }
 
-  String _gradeText(int level, String school) {
-    const grades = [
-      'التمهيدي',
-      'الصف الأول',
-      'الصف الثاني',
-      'الصف الثالث',
-      'الصف الرابع',
-      'الصف الخامس',
-    ];
-    final grade = (level >= 1 && level <= 6) ? grades[level - 1] : 'طالب';
-    return '$grade · $school';
+  void _onMessageTap(BuildContext context) {
+    // TODO: navigate to in-app chat screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Text(
+            'ميزة المراسلة ستكون متاحة قريباً.',
+            style: AppTextStyles.style(
+              color: AppColors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        backgroundColor: AppColors.grey700,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
@@ -83,355 +171,245 @@ class ByChildrenSearchWidget extends StatelessWidget {
   }
 
   // ══════════════════════════════════════════════════════════════════
-  // 1. واجهة اختيار الأطفال
+  // 1. واجهة اختيار الأطفال (Choose Children) — لا تعديل هنا
   // ══════════════════════════════════════════════════════════════════
   Widget _buildSelection(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final hPad = screenWidth < 360 ? 12.0 : 16.0;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── بطاقة التعليمات ──
-          _buildInfoCard(context, cs, isDark),
-          const SizedBox(height: 12),
-
-          // ── فلتر الجنس ──
-          _genderFilterBar(context, cs, isDark),
-          const SizedBox(height: 12),
-
-          // ── تنبيه اختيار أكثر من طفل ──
-          if (selectedKidsIds.length > 1)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: AppColors.orange.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.group_add_rounded,
-                      color: AppColors.orange,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'عند اختيار أكثر من طفل يُرسل طلب واحد للسائق.',
-                        style: AppTextStyles.style(
-                          fontSize: 11,
-                          color: isDark ? AppColors.grey300 : AppColors.grey700,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          // عنوان الصفحة
+          Text(
+            "اختر الأطفال",
+            style: AppTextStyles.style(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.white : AppColors.textDark,
             ),
+          ),
+          const SizedBox(height: 16),
 
-          // ── قائمة الأطفال ──
+          // بطاقة التنبيه العلوي ℹ️
+          WarningCard(
+            icon: Icons.info_outline_rounded,
+            color: theme.colorScheme.primary,
+            message: "سيتم البحث اعتمادًا على بيانات النقل الخاصة بالأطفال الذين ستحددهم.",
+          ),
+          const SizedBox(height: 16),
+
+          // قائمة الأطفال
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: kids.length,
             itemBuilder: (context, i) {
               final kid = kids[i];
-              final current = editedKids[kid.id] ?? kid;
-              final selected = selectedKidsIds.contains(kid.id);
-              return _kidCard(context, kid, current, selected, cs, isDark);
-            },
-          ),
-          const SizedBox(height: 20),
+              final isSelected = selectedKidsIds.contains(kid.id);
+              final isMale = kid.gender.toLowerCase() == 'male';
 
-          // ── زر البحث ──
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: selectedKidsIds.isEmpty ? null : onSearchPressed,
-              icon: const Icon(Icons.search_rounded, size: 20),
-              label: const Text('بحث عن سائق مناسب'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: cs.primary,
-                foregroundColor: cs.onPrimary,
-                disabledBackgroundColor: isDark
-                    ? AppColors.grey800
-                    : AppColors.grey300,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.1 : 0.04)
+                      : (isDark ? AppColors.surfaceDark : AppColors.white),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : (isDark ? AppColors.grey800 : AppColors.grey200),
+                    width: isSelected ? 1.5 : 1,
+                  ),
                 ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── بطاقة الطفل ──
-  Widget _kidCard(
-    BuildContext context,
-    ChildModel kid,
-    ChildModel current,
-    bool isSelected,
-    ColorScheme cs,
-    bool isDark,
-  ) {
-    final isMale = kid.gender.toLowerCase() == 'male';
-    final cardColor = isDark ? AppColors.surfaceDark : AppColors.white;
-    final borderColor = isSelected
-        ? cs.primary
-        : (isDark ? AppColors.grey800 : AppColors.grey200);
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? cs.primary.withValues(alpha: isDark ? 0.1 : 0.04)
-            : cardColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: borderColor, width: isSelected ? 1.5 : 1),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: isDark ? 0.15 : 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () => onKidToggle(kid.id ?? 0, !isSelected),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Checkbox
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: Checkbox(
-                  value: isSelected,
-                  activeColor: cs.primary,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  onChanged: (v) => onKidToggle(kid.id ?? 0, v ?? false),
-                ),
-              ),
-              const SizedBox(width: 10),
-
-              // أيقونة الطفل
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: (isMale ? cs.primary : AppColors.accentPurple)
-                    .withValues(alpha: 0.1),
-                child: Icon(
-                  isMale ? Icons.face_rounded : Icons.face_4_rounded,
-                  color: isMale ? cs.primary : AppColors.accentPurple,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // بيانات الطفل
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      current.name,
-                      style: AppTextStyles.style(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: isDark ? AppColors.grey100 : AppColors.textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _gradeText(current.gradeLevel, current.schoolName),
-                      style: AppTextStyles.style(
-                        fontSize: 11,
-                        color: isDark ? AppColors.grey400 : AppColors.textMuted,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-
-                    // شارات التفضيلات
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: () => onKidToggle(kid.id ?? 0, !isSelected),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
                       children: [
-                        _badge(
-                          _serviceText(current.transportPref.serviceType),
-                          AppColors.accentBlue,
+                        Checkbox(
+                          value: isSelected,
+                          activeColor: theme.colorScheme.primary,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          onChanged: (val) => onKidToggle(kid.id ?? 0, val ?? false),
                         ),
-                        _badge(
-                          _subscriptionText(
-                            current.transportPref.subscriptionType,
+                        const SizedBox(width: 8),
+
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: (isMale ? theme.colorScheme.primary : AppColors.femalePink)
+                              .withValues(alpha: 0.1),
+                          child: Icon(
+                            isMale ? Icons.face_rounded : Icons.face_4_rounded,
+                            color: isMale ? theme.colorScheme.primary : AppColors.femalePink,
+                            size: 22,
                           ),
-                          AppColors.accentPurple,
                         ),
-                        _badge(
-                          _periodText(current.transportPref.period),
-                          AppColors.accentAmber,
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                kid.name,
+                                style: AppTextStyles.style(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: isDark ? AppColors.white : AppColors.textDark,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                kid.schoolName,
+                                style: AppTextStyles.style(
+                                  fontSize: 12,
+                                  color: isDark ? AppColors.grey400 : AppColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        IconButton(
+                          icon: Icon(Icons.edit_rounded, size: 20, color: theme.colorScheme.primary),
+                          onPressed: () => _showEditChoiceDialog(context, kid),
+                          tooltip: 'تعديل',
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
 
-                    // رابط تعديل بيانات النقل
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => TransportDetailsScreen(child: current),
+          // بطاقة التنبيه السفلي ⚠️
+          WarningCard(
+            icon: Icons.warning_amber_rounded,
+            color: AppColors.orange,
+            message: "يمكنك اختيار سائق مختلف لكل طفل.\nإذا حددت أكثر من طفل وأرسلت طلبًا واحدًا، فسيتم قبولهم أو رفضهم معًا.",
+          ),
+          const SizedBox(height: 24),
+
+          // زر البحث
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: () {
+                if (selectedKidsIds.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Directionality(
+                        textDirection: TextDirection.rtl,
+                        child: Text(
+                          'يرجى اختيار طفل واحد على الأقل قبل البحث.',
+                          style: AppTextStyles.style(
+                            color: AppColors.white,
+                            fontWeight: FontWeight.w600,
                           ),
-                        );
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.edit_note_rounded,
-                            color: cs.primary,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'تعديل بيانات النقل',
-                            style: AppTextStyles.style(
-                              color: cs.primary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
+                      backgroundColor: AppColors.error,
+                      behavior: SnackBarBehavior.floating,
+                      margin: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                  ],
+                  );
+                } else {
+                  onSearchPressed();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              child: Text(
+                'ابحث عن سائقين',
+                style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: theme.colorScheme.onPrimary,
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   // ══════════════════════════════════════════════════════════════════
-  // 2. واجهة نتائج البحث
+  // 2. واجهة نتائج البحث — مُعاد تصميمها بالكامل
   // ══════════════════════════════════════════════════════════════════
   Widget _buildResults(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final hPad = screenWidth < 360 ? 12.0 : 16.0;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final List<String> selectedNames = kids
+        .where((k) => selectedKidsIds.contains(k.id))
+        .map((k) => k.name.split(' ')[0])
+        .toList();
+
+    final bool hasActiveFilter =
+        selectedGender != 'ALL' || hasAcOnly;
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── فلتر الجنس ──
-          _genderFilterBar(context, cs, isDark),
-          const SizedBox(height: 10),
-
-          // ── بنر تعديل البحث ──
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: cs.primary.withValues(alpha: isDark ? 0.08 : 0.04),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline_rounded, color: cs.primary, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'البحث بناءً على تفضيلات أطفالك.',
-                    style: AppTextStyles.style(
-                      fontSize: 12,
-                      color: isDark ? AppColors.grey300 : AppColors.grey700,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: onEditTransportSearchBack,
-                  child: Text(
-                    'تعديل',
-                    style: AppTextStyles.style(
-                      color: cs.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // ─── Header: "Results for" + child pills ───
+          _buildResultsHeader(context, theme, isDark, selectedNames),
           const SizedBox(height: 16),
 
-          // ── رأس النتائج ──
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '${filteredDrivers.length} سائق متاح',
+          // ─── Filter Button ───
+          _buildFilterButton(context, theme, isDark, hasActiveFilter),
+          const SizedBox(height: 16),
+
+          // بطاقة إرشادية حول إرسال الطلبات لأكثر من سائق
+          WarningCard(
+            icon: Icons.info_outline_rounded,
+            color: theme.colorScheme.primary,
+            message: "يمكنك إرسال طلبات اشتراك لأكثر من سائق في نفس الوقت. بمجرد قبول أحد السائقين لطلبك، سيتم إلغاء بقية الطلبات تلقائيًا تفاديًا للازدواجية.",
+          ),
+          const SizedBox(height: 20),
+
+          // ─── Drivers count label ───
+          if (!isLoading && filteredDrivers.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                'السائقون المتاحون (${filteredDrivers.length})',
                 style: AppTextStyles.style(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
-                  color: isDark ? AppColors.grey100 : AppColors.textDark,
+                  color: isDark ? AppColors.grey200 : AppColors.textDark,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
+            ),
 
-          // ── قائمة السائقين ──
-          if (filteredDrivers.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.search_off_rounded,
-                      size: 48,
-                      color: isDark ? AppColors.grey700 : AppColors.grey400,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'لم يتم العثور على سائقين يطابقون هذه المواصفات.',
-                      style: AppTextStyles.style(
-                        color: isDark ? AppColors.grey500 : AppColors.textMuted,
-                        fontSize: 13,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
+          // ─── Content: loading / empty / list ───
+          if (isLoading)
+            const SearchLoadingWidget(itemCount: 3)
+          else if (filteredDrivers.isEmpty)
+            EmptyStateWidget(
+              icon: Icons.search_off_rounded,
+              title: 'لم يتم العثور على سائقين مناسبين.',
+              description:
+                  'جرّب تعديل بيانات النقل الخاصة بأطفالك أو تغيير معايير البحث.',
+              buttonText: 'تعديل بيانات النقل',
+              onButtonPressed: onEditTransportSearchBack,
             )
           else
             ListView.builder(
@@ -440,14 +418,19 @@ class ByChildrenSearchWidget extends StatelessWidget {
               itemCount: filteredDrivers.length,
               itemBuilder: (context, i) {
                 final driver = filteredDrivers[i];
-                final isSelected = selectedDriverIds.contains(driver.id);
+                // السعر الإجمالي = سعر السائق × عدد الأطفال المحددين
+                final totalPrice = driver.price * selectedKidsIds.length;
+
                 return DriverSearchCardWidget(
                   driver: driver,
-                  isSelected: isSelected,
-                  // checkbox مفعّل في وضع البحث بالأطفال
-                  onSelectedChanged: (val) =>
-                      onDriverSelectedChanged(driver.id, val ?? false),
+                  isSelected: false,
+                  showPricing: true,
+                  calculatedPrice: totalPrice,
+                  priceCaption: 'يشمل الأطفال المحددين',
+                  showCheckbox: false,
+                  showMessageButton: true,
                   onTap: () => onTapViewProfile(driver),
+                  onMessageTap: () => _onMessageTap(context),
                 );
               },
             ),
@@ -456,190 +439,112 @@ class ByChildrenSearchWidget extends StatelessWidget {
     );
   }
 
-  // ── مكونات مشتركة ──
-
-  Widget _genderFilterBar(BuildContext context, ColorScheme cs, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.tune_rounded, color: cs.primary, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'اختيار جنس السائق',
-              style: AppTextStyles.style(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-                color: isDark ? AppColors.grey200 : AppColors.textDark,
-              ),
-            ),
-          ),
-          DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: selectedGender,
-              dropdownColor: isDark ? AppColors.surfaceDark : AppColors.white,
-              icon: Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: isDark ? AppColors.grey400 : AppColors.grey600,
-                size: 18,
-              ),
-              onChanged: onGenderChanged,
-              style: AppTextStyles.style(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: cs.primary,
-              ),
-              items: const [
-                DropdownMenuItem(value: 'ALL', child: Text('الكل')),
-                DropdownMenuItem(value: 'MALE', child: Text('ذكر')),
-                DropdownMenuItem(value: 'FEMALE', child: Text('أنثى')),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoCard(BuildContext context, ColorScheme cs, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.accentBlue.withValues(alpha: 0.1)
-            : const Color(0xFFE8F0FE),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark
-              ? AppColors.accentBlue.withValues(alpha: 0.3)
-              : AppColors.accentBlue.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _infoRow(
-            context,
-            icon: Icons.edit_note_rounded,
-            title: 'تعديل بيانات النقل',
-            desc: 'يعتمد البحث على ',
-            linkText: 'بيانات النقل',
-            descEnd: '، يمكنك تعديلها قبل البحث.',
-            isDark: isDark,
-            cs: cs,
-          ),
-          Divider(
-            color: isDark
-                ? AppColors.grey800
-                : AppColors.accentBlue.withValues(alpha: 0.15),
-            height: 16,
-            thickness: 1,
-          ),
-          _infoRow(
-            context,
-            icon: Icons.person_rounded,
-            title: 'البحث لطفل واحد',
-            desc: 'يمكنك اختيار طفل واحد للبحث له بشكل مستقل.',
-            isDark: isDark,
-            cs: cs,
-          ),
-          Divider(
-            color: isDark
-                ? AppColors.grey800
-                : AppColors.accentBlue.withValues(alpha: 0.15),
-            height: 16,
-            thickness: 1,
-          ),
-          _infoRow(
-            context,
-            icon: Icons.group_rounded,
-            title: 'البحث لأكثر من طفل',
-            desc: 'يُرسل كطلب واحد، يُقبل أو يُرفض للجميع معاً.',
-            isDark: isDark,
-            cs: cs,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoRow(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String desc,
-    String? linkText,
-    String? descEnd,
-    required bool isDark,
-    required ColorScheme cs,
-  }) {
-    return Row(
+  Widget _buildResultsHeader(
+    BuildContext context,
+    ThemeData theme,
+    bool isDark,
+    List<String> selectedNames,
+  ) {
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: cs.primary),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: AppTextStyles.style(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? AppColors.grey200 : AppColors.textDark,
-                ),
-              ),
-              const SizedBox(height: 2),
-              RichText(
-                text: TextSpan(
-                  style: AppTextStyles.style(
-                    fontSize: 10,
-                    color: isDark ? AppColors.grey400 : AppColors.grey700,
-                  ),
-                  children: [
-                    TextSpan(text: desc),
-                    if (linkText != null)
-                      TextSpan(
-                        text: linkText,
-                        style: AppTextStyles.style(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: cs.primary,
-                        ),
-                      ),
-                    if (descEnd != null) TextSpan(text: descEnd),
-                  ],
-                ),
-              ),
-            ],
+        Text(
+          'نتائج البحث',
+          style: AppTextStyles.style(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: isDark ? AppColors.white : AppColors.textDark,
           ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: selectedNames.map((name) {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.08),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.3 : 0.2),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle_rounded,
+                    size: 14,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    name,
+                    style: AppTextStyles.style(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
         ),
       ],
     );
   }
 
-  Widget _badge(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: AppTextStyles.style(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
+  Widget _buildFilterButton(
+    BuildContext context,
+    ThemeData theme,
+    bool isDark,
+    bool hasActiveFilter,
+  ) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () => _showFilterBottomSheet(context),
+        icon: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Icon(Icons.tune_rounded, size: 18, color: theme.colorScheme.primary),
+            if (hasActiveFilter)
+              Positioned(
+                top: -3,
+                left: -3,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: AppColors.orange,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        label: Text(
+          hasActiveFilter ? 'تصفية (نشطة)' : 'تصفية السائقين',
+          style: AppTextStyles.style(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          side: BorderSide(
+            color: hasActiveFilter
+                ? AppColors.orange
+                : theme.colorScheme.primary.withValues(alpha: 0.35),
+            width: hasActiveFilter ? 1.5 : 1,
+          ),
+          backgroundColor: hasActiveFilter
+              ? AppColors.orange.withValues(alpha: isDark ? 0.08 : 0.04)
+              : null,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
     );

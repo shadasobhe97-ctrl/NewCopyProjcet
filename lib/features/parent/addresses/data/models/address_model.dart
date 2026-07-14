@@ -3,7 +3,6 @@ class AddressModel {
   final String label;
   final double lat;
   final double lng;
-  final String? addressDetails;
   final bool isDefault;
 
   AddressModel({
@@ -11,7 +10,6 @@ class AddressModel {
     required this.label,
     required this.lat,
     required this.lng,
-    this.addressDetails,
     this.isDefault = false,
   });
 
@@ -26,7 +24,6 @@ class AddressModel {
       label: json['label'] as String? ?? '',
       lat: (json['lat'] as num).toDouble(),
       lng: (json['lng'] as num).toDouble(),
-      addressDetails: json['address_details'] as String?,
       isDefault: (json['is_default'] as bool?) ?? false,
     );
   }
@@ -37,8 +34,6 @@ class AddressModel {
       'lat': lat,
       'lng': lng,
       'is_default': isDefault,
-      if (addressDetails != null && addressDetails!.isNotEmpty)
-        'address_details': addressDetails,
     };
   }
 
@@ -50,7 +45,7 @@ class AddressModel {
       'latitude': lat,
       'longitude': lng,
       'is_default': isDefault,
-      'details': addressDetails ?? '',
+      'details': '',
     };
   }
 }

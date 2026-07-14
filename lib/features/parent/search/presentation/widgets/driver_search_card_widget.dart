@@ -6,26 +6,34 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 class DriverSearchCardWidget extends StatelessWidget {
   final DriverSearchModel driver;
   final bool isSelected;
-
-  /// يُستدعى عند تغيير حالة الاختيار (الـ checkbox).
-  /// يكون null عند وضع البحث بالاسم لمنع التحديد المباشر.
+  final bool showPricing;
+  final double? calculatedPrice;
+  final String? priceCaption;
+  final bool showCheckbox;
+  final bool showMessageButton;
   final ValueChanged<bool?>? onSelectedChanged;
-
-  /// يُستدعى عند الضغط على الكرت كاملاً أو زر "عرض الملف".
   final VoidCallback onTap;
+  final VoidCallback? onMessageTap;
 
   const DriverSearchCardWidget({
     super.key,
     required this.driver,
     required this.isSelected,
     required this.onTap,
+    this.showPricing = true,
+    this.calculatedPrice,
+    this.priceCaption,
+    this.showCheckbox = false,
+    this.showMessageButton = false,
     this.onSelectedChanged,
+    this.onMessageTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     final cardColor = isDark ? AppColors.surfaceDark : AppColors.white;
     final borderColor = isSelected
@@ -33,243 +41,267 @@ class DriverSearchCardWidget extends StatelessWidget {
         : (isDark ? AppColors.grey800 : AppColors.grey200);
     final subTextColor = isDark ? AppColors.grey400 : AppColors.textMuted;
     final bodyTextColor = isDark ? AppColors.grey200 : AppColors.textDark;
-    final badgeBg = isDark ? AppColors.grey800 : AppColors.grey100;
 
-    return GestureDetector(
-      onTap: () {
-        if (onSelectedChanged != null) {
-          onSelectedChanged!(!isSelected);
-        } else {
-          onTap();
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 14),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? cs.primary.withValues(alpha: isDark ? 0.12 : 0.04)
-              : cardColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: borderColor, width: isSelected ? 1.5 : 1),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.black.withValues(alpha: isDark ? 0.15 : 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── صورة السائق ──
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: isDark ? AppColors.grey800 : AppColors.grey100,
-                  child: Icon(
-                    driver.gender == 'FEMALE' ? Icons.face_4_rounded : Icons.person_rounded,
-                    size: 30,
-                    color: isDark ? AppColors.grey500 : AppColors.grey400,
-                  ),
-                ),
-                const SizedBox(width: 12),
+    final displayPrice = calculatedPrice ?? driver.price;
+    final displayCaption = priceCaption ?? 'ابتداءً من';
 
-                // ── تفاصيل السائق ──
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // الاسم + شارة متاح
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              driver.fullName,
-                              style: AppTextStyles.style(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: bodyTextColor,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.success.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              'متاح',
-                              style: AppTextStyles.style(
-                                color: AppColors.success,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-
-                      // التقييم
-                      Row(
-                        children: [
-                          const Icon(Icons.star_rounded, color: AppColors.amber, size: 15),
-                          const SizedBox(width: 3),
-                          Text(
-                            '${driver.rating} (${driver.reviewsCount})',
-                            style: AppTextStyles.style(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                              color: isDark ? AppColors.grey300 : AppColors.grey800,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 5),
-
-                      // مناطق الخدمة
-                      Text(
-                        'يغطي: ${driver.serviceZones.take(2).join('، ')}${driver.serviceZones.length > 2 ? '...' : ''}',
-                        style: AppTextStyles.style(fontSize: 11, color: subTextColor),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-
-                      // الشارات
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          _badge(
-                            context,
-                            icon: Icons.airline_seat_recline_normal_rounded,
-                            label: '${driver.availableSeats} مقاعد',
-                            bg: badgeBg,
-                            fg: isDark ? AppColors.grey300 : AppColors.grey700,
-                          ),
-                          _coloredBadge(context, 'صباحية', AppColors.accentAmber),
-                          _coloredBadge(context, 'ذهاب وعودة', AppColors.accentBlue),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // ── الجهة اليسرى: السعر ثم مربع الاختيار فوقه ──
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (onSelectedChanged != null)
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Checkbox(
-                          value: isSelected,
-                          activeColor: cs.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          onChanged: onSelectedChanged,
-                        ),
-                      )
-                    else
-                      IconButton(
-                        onPressed: () {},
-                        icon: Icon(
-                          Icons.favorite_border_rounded,
-                          color: isDark ? AppColors.grey600 : AppColors.grey400,
-                          size: 20,
-                        ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'ابتداءً من',
-                      style: AppTextStyles.style(fontSize: 10, color: subTextColor),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? cs.primary.withValues(alpha: isDark ? 0.10 : 0.04)
+            : cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor, width: isSelected ? 1.5 : 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withValues(alpha: isDark ? 0.18 : 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ─── Row 1: Avatar + Info + Price ───
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Avatar
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: (driver.gender == 'FEMALE'
+                              ? AppColors.femalePink
+                              : cs.primary)
+                          .withValues(alpha: isDark ? 0.15 : 0.10),
                     ),
-                    Text(
-                      '${driver.price.toInt()} د.ل',
-                      style: AppTextStyles.style(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: cs.primary,
+                    child: Icon(
+                      driver.gender == 'FEMALE'
+                          ? Icons.face_4_rounded
+                          : Icons.person_rounded,
+                      size: 30,
+                      color: driver.gender == 'FEMALE'
+                          ? AppColors.femalePink
+                          : cs.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+
+                  // Driver Info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Name
+                        Text(
+                          driver.fullName,
+                          style: AppTextStyles.style(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: bodyTextColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 5),
+
+                        // Rating
+                        Row(
+                          children: [
+                            const Icon(Icons.star_rounded,
+                                color: AppColors.amber, size: 15),
+                            const SizedBox(width: 3),
+                            Text(
+                              driver.rating.toStringAsFixed(1),
+                              style: AppTextStyles.style(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: isDark
+                                    ? AppColors.grey200
+                                    : AppColors.grey800,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '(${driver.reviewsCount})',
+                              style: AppTextStyles.style(
+                                fontSize: 11,
+                                color: subTextColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+
+                        // Vehicle
+                        Row(
+                          children: [
+                            Icon(Icons.directions_bus_filled_outlined,
+                                size: 13, color: subTextColor),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                driver.vehicleType,
+                                style: AppTextStyles.style(
+                                    fontSize: 12, color: subTextColor),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+
+                        // Working Zone
+                        Row(
+                          children: [
+                            Icon(Icons.location_on_outlined,
+                                size: 13, color: subTextColor),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                driver.serviceZones.join('، '),
+                                style: AppTextStyles.style(
+                                    fontSize: 12, color: subTextColor),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Price column
+                  if (showPricing) ...[
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (showCheckbox && onSelectedChanged != null)
+                          SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: Checkbox(
+                              value: isSelected,
+                              activeColor: cs.primary,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4)),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              onChanged: onSelectedChanged,
+                            ),
+                          ),
+                        Text(
+                          '${displayPrice.toInt()} د.ل',
+                          style: AppTextStyles.style(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: cs.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          displayCaption,
+                          style: AppTextStyles.style(
+                            fontSize: 10,
+                            color: subTextColor,
+                          ),
+                          textAlign: TextAlign.end,
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // ─── Row 2: Action Buttons ───
+              Row(
+                children: [
+                  // View Details (outlined with sky-blue border and white/card background)
+                  Expanded(
+                    flex: showMessageButton ? 2 : 1,
+                    child: SizedBox(
+                      height: 40,
+                      child: OutlinedButton(
+                        onPressed: onTap,
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
+                          foregroundColor: cs.primary,
+                          side: BorderSide(color: cs.primary, width: 1.5),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          'عرض التفاصيل',
+                          style: AppTextStyles.style(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: cs.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Message button (only shown in Flow 2)
+                  if (showMessageButton) ...[
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 1,
+                      child: SizedBox(
+                        height: 40,
+                        child: OutlinedButton(
+                          onPressed: onMessageTap,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: cs.primary,
+                            side: BorderSide(
+                              color: cs.primary.withValues(alpha: 0.4),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.chat_bubble_outline_rounded,
+                                  size: 14, color: cs.primary),
+                              const SizedBox(width: 4),
+                              Text(
+                                'رسالة',
+                                style: AppTextStyles.style(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: cs.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // ── زر عرض الملف ──
-            Align(
-              alignment: Alignment.centerRight,
-              child: SizedBox(
-                height: 32,
-                child: OutlinedButton(
-                  onPressed: onTap,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: cs.primary,
-                    side: BorderSide(color: cs.primary.withValues(alpha: 0.5)),
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: Text(
-                    'عرض الملف',
-                    style: AppTextStyles.style(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
+                ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _badge(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Color bg,
-    required Color fg,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: fg),
-          const SizedBox(width: 3),
-          Text(label, style: AppTextStyles.style(fontSize: 10, color: fg, fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
-  }
-
-  Widget _coloredBadge(BuildContext context, String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: AppTextStyles.style(color: color, fontSize: 10, fontWeight: FontWeight.bold),
       ),
     );
   }

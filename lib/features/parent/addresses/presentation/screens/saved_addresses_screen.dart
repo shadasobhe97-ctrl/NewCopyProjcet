@@ -53,13 +53,14 @@ class _SavedAddressesView extends StatelessWidget {
       backgroundColor: AppColors.transparent,
       builder: (_) => AddAddressSheet(
         initialAddress: address,
-        onSave: (newAddress) {
-          Navigator.pop(context);
+        onSave: (newAddress) async {
           if (address == null) {
-            cubit.addAddress(newAddress);
+            await cubit.addAddress(newAddress);
           } else {
-            cubit.updateAddress(newAddress);
+            await cubit.updateAddress(newAddress);
           }
+          // إعادة null تعني النجاح، الـ Cubit يتكفل بإظهار الـ Snack
+          return null;
         },
       ),
     );

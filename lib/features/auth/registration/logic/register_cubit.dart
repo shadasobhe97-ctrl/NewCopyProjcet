@@ -11,12 +11,12 @@ class RegisterCubit extends Cubit<RegisterState> {
   final RegistrationRepository _repository;
 
   RegisterCubit({RegistrationRepository? repository})
-      : _repository = repository ?? RegistrationRepository(),
-        super(RegisterInitial());
+    : _repository = repository ?? RegistrationRepository(),
+      super(RegisterInitial());
 
   // --- [المخزن المؤقت لتجميع بيانات الشاشات محلياً] ---
   String? selectedRole; // 'parent' أو 'driver'
-  int? selectedRoleId;  // 3 للأب، 4 للسائق
+  int? selectedRoleId; // 3 للأب، 4 للسائق
 
   // بيانات أساسية مشتركة
   String? fullName;
@@ -37,7 +37,8 @@ class RegisterCubit extends Cubit<RegisterState> {
 
   String get _deviceName {
     if (kIsWeb) return 'Derbi_Flutter_Web';
-    if (defaultTargetPlatform == TargetPlatform.android) return 'Derbi_Flutter_Android';
+    if (defaultTargetPlatform == TargetPlatform.android)
+      return 'Derbi_Flutter_Android';
     if (defaultTargetPlatform == TargetPlatform.iOS) return 'Derbi_Flutter_iOS';
     return 'Derbi_Flutter';
   }
@@ -87,16 +88,17 @@ class RegisterCubit extends Cubit<RegisterState> {
 
   // 1. إرسال OTP لولي الأمر → POST /api/parent/send-otp
   // يُستخدم لأول إرسال وأيضاً لإعادة الإرسال (نفس الـ endpoint)
-Future<void> sendParentOtp(String targetEmail) async {
+  Future<void> sendParentOtp(String targetEmail) async {
     emit(ParentOtpSentLoading());
     try {
       email = targetEmail;
       final responseData = await _repository.sendParentOtp(targetEmail);
-      
+
       // تعديل مباشر وآمن لقراءة الـ status والـ message
       final bool success = responseData['status'] == true;
-      final String message = responseData['message']?.toString() ?? 'تم إرسال رمز التحقق.';
-      
+      final String message =
+          responseData['message']?.toString() ?? 'تم إرسال رمز التحقق.';
+
       if (success) {
         emit(ParentOtpSentSuccess(message));
       } else {
@@ -113,7 +115,10 @@ Future<void> sendParentOtp(String targetEmail) async {
   Future<String> resendParentOtp(String targetEmail) async {
     final responseData = await _repository.resendParentOtp(targetEmail);
     final bool success = _readBool(responseData['status']);
-    final String message = _readMessage(responseData, 'تم إعادة إرسال رمز التحقق.');
+    final String message = _readMessage(
+      responseData,
+      'تم إعادة إرسال رمز التحقق.',
+    );
     if (!success) {
       throw ApiException(message);
     }
@@ -144,12 +149,21 @@ Future<void> sendParentOtp(String targetEmail) async {
         fcmToken: 'derbi_fcm_token_placeholder',
       );
 
+      // طباعة الـ payload للتأكد من صحته وعدم قلب الرمز
+      print('=== Parent Registration Request Payload ===');
+      print(request.toJson());
+      print('===========================================');
+
       final response = await _repository.registerParent(request);
 
       if (!response.status) {
-        emit(ParentRegisterError(
-          response.message.isNotEmpty ? response.message : 'فشل إنشاء الحساب.',
-        ));
+        emit(
+          ParentRegisterError(
+            response.message.isNotEmpty
+                ? response.message
+                : 'فشل إنشاء الحساب.',
+          ),
+        );
         return;
       }
 
@@ -157,9 +171,13 @@ Future<void> sendParentOtp(String targetEmail) async {
       parentAccessToken = response.accessToken;
       registeredUserId = response.id;
 
-      emit(ParentRegisterSuccess(response.fullName.isNotEmpty
-          ? 'مرحباً ${response.fullName}، تم إنشاء حسابك بنجاح.'
-          : 'تم إنشاء الحساب بنجاح.'));
+      emit(
+        ParentRegisterSuccess(
+          response.fullName.isNotEmpty
+              ? 'مرحباً ${response.fullName}، تم إنشاء حسابك بنجاح.'
+              : 'تم إنشاء الحساب بنجاح.',
+        ),
+      );
     } on ApiException catch (e) {
       emit(ParentRegisterError(e.message));
     } catch (_) {
@@ -189,9 +207,13 @@ Future<void> sendParentOtp(String targetEmail) async {
       final response = await _repository.registerDriver(request);
 
       if (!response.status) {
-        emit(DriverRegisterFirstStageError(
-          response.message.isNotEmpty ? response.message : 'فشل إنشاء الحساب.',
-        ));
+        emit(
+          DriverRegisterFirstStageError(
+            response.message.isNotEmpty
+                ? response.message
+                : 'فشل إنشاء الحساب.',
+          ),
+        );
         return;
       }
 
@@ -200,7 +222,11 @@ Future<void> sendParentOtp(String targetEmail) async {
     } on ApiException catch (e) {
       emit(DriverRegisterFirstStageError(e.message));
     } catch (_) {
-      emit(DriverRegisterFirstStageError('فشل الاتصال بالخادم، يرجى المحاولة مرة أخرى.'));
+      emit(
+        DriverRegisterFirstStageError(
+          'فشل الاتصال بالخادم، يرجى المحاولة مرة أخرى.',
+        ),
+      );
     }
   }
 
@@ -208,7 +234,10 @@ Future<void> sendParentOtp(String targetEmail) async {
   Future<String> resendOtp(String emailAddress) async {
     final responseData = await _repository.resendDriverOtp(emailAddress);
     final bool success = _readBool(responseData['status']);
-    final String message = _readMessage(responseData, 'تم إعادة إرسال رمز التحقق.');
+    final String message = _readMessage(
+      responseData,
+      'تم إعادة إرسال رمز التحقق.',
+    );
     if (!success) {
       throw ApiException(message);
     }
@@ -222,9 +251,13 @@ Future<void> sendParentOtp(String targetEmail) async {
       final response = await _repository.verifyDriverOtp(email ?? '', otpCode);
 
       if (!response.status) {
-        emit(DriverVerifyOtpError(
-          response.message.isNotEmpty ? response.message : 'رمز التحقق غير صحيح.',
-        ));
+        emit(
+          DriverVerifyOtpError(
+            response.message.isNotEmpty
+                ? response.message
+                : 'رمز التحقق غير صحيح.',
+          ),
+        );
         return;
       }
 
@@ -235,12 +268,16 @@ Future<void> sendParentOtp(String targetEmail) async {
     } on ApiException catch (e) {
       emit(DriverVerifyOtpError(e.message));
     } catch (_) {
-      emit(DriverVerifyOtpError('فشل التحقق من الرمز، يرجى المحاولة مرة أخرى.'));
+      emit(
+        DriverVerifyOtpError('فشل التحقق من الرمز، يرجى المحاولة مرة أخرى.'),
+      );
     }
   }
 
   // 4. إكمال ملف السائق
-  Future<void> completeDriverProfile(Map<String, dynamic> vehicleAndDocsData) async {
+  Future<void> completeDriverProfile(
+    Map<String, dynamic> vehicleAndDocsData,
+  ) async {
     emit(DriverCompleteProfileLoading());
     try {
       final combinedData = {
@@ -258,9 +295,11 @@ Future<void> sendParentOtp(String targetEmail) async {
       );
 
       if (!response.status) {
-        emit(DriverCompleteProfileError(
-          response.message.isNotEmpty ? response.message : 'فشل رفع الملف.',
-        ));
+        emit(
+          DriverCompleteProfileError(
+            response.message.isNotEmpty ? response.message : 'فشل رفع الملف.',
+          ),
+        );
         return;
       }
 
@@ -268,7 +307,9 @@ Future<void> sendParentOtp(String targetEmail) async {
     } on ApiException catch (e) {
       emit(DriverCompleteProfileError(e.message));
     } catch (_) {
-      emit(DriverCompleteProfileError('فشل رفع البيانات، يرجى المحاولة مرة أخرى.'));
+      emit(
+        DriverCompleteProfileError('فشل رفع البيانات، يرجى المحاولة مرة أخرى.'),
+      );
     }
   }
 
@@ -287,7 +328,9 @@ Future<void> sendParentOtp(String targetEmail) async {
     try {
       final token = parentAccessToken ?? '';
       if (token.isEmpty) {
-        emit(LocationSaveError('لا يوجد توكن صالح، يرجى تسجيل الدخول مرة أخرى.'));
+        emit(
+          LocationSaveError('لا يوجد توكن صالح، يرجى تسجيل الدخول مرة أخرى.'),
+        );
         return;
       }
 
@@ -299,9 +342,13 @@ Future<void> sendParentOtp(String targetEmail) async {
         isDefault: isDefault,
       );
 
-      emit(LocationSaveSuccess(response.message.isNotEmpty
-          ? response.message
-          : 'تم حفظ العنوان بنجاح.'));
+      emit(
+        LocationSaveSuccess(
+          response.message.isNotEmpty
+              ? response.message
+              : 'تم حفظ العنوان بنجاح.',
+        ),
+      );
     } on ApiException catch (e) {
       emit(LocationSaveError(e.message));
     } catch (_) {

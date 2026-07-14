@@ -6,6 +6,7 @@ import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
 import '../models/child_model.dart';
 import '../models/school_model.dart';
+import '../models/logistics_model.dart';
 
 class ChildrenRemoteDataSource {
   final ApiClient _client;
@@ -210,5 +211,30 @@ class ChildrenRemoteDataSource {
     }
     final list = data['data'] as List<dynamic>? ?? [];
     return list.map((e) => SchoolModel.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  /// GET /api/parent/children/{id}/subscription
+  Future<LogisticsModel?> getChildSubscription(String id) async {
+    try {
+      final response = await _client.get(
+        ApiEndpoints.parentChildSubscription(id),
+        headers: _authHeader,
+      );
+      final data = response.data;
+      if (data is Map) {
+        final success = data['success'];
+        if (success == false) {
+          final serverMessage = ApiException.extractMessage(data);
+          throw ApiException(serverMessage ?? 'تعذر تحميل بيانات الاشتراك.');
+        }
+        final subData = data['data'];
+        if (subData != null) {
+          return LogisticsModel.fromJson(subData as Map<String, dynamic>);
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 }

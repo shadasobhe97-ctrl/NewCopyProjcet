@@ -41,6 +41,8 @@ import 'package:kids_transport/features/parent/children/presentation/screens/tra
 import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
 import 'package:kids_transport/features/parent/home/presentation/screens/parent_home_screen.dart';
 import 'package:kids_transport/features/parent/profile/presentation/screens/parent_profile_screen.dart';
+import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscription_details_screen.dart';
+
 
 class AppRoutes {
   static const String splash = '/';
@@ -68,6 +70,7 @@ class AppRoutes {
   static const String childDataDetails = '/children/data';
   static const String childPass = '/children/pass';
   static const String transportDetails = '/children/transport';
+  static const String subscriptionDetails = '/parent/subscriptionDetails';
 
   static const String parentEmail = '/parentEmail';
   static const String parentOtp = '/parentOtp';
@@ -182,6 +185,12 @@ class AppRoutes {
         return _childRoute(
           settings,
           (child) => TransportDetailsScreen(child: child),
+        );
+      case subscriptionDetails:
+        final subscriptionId = settings.arguments as int;
+        return _route(
+          settings,
+          SubscriptionDetailsScreen(subscriptionId: subscriptionId),
         );
       case parentEmail:
         return _route(settings, const ParentEmailScreen());

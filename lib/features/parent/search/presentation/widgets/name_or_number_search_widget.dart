@@ -1,201 +1,157 @@
 import 'package:flutter/material.dart';
-import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
 import 'package:kids_transport/features/parent/search/data/models/driver_search_model.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'driver_search_card_widget.dart';
+import 'empty_state_widget.dart';
+import 'search_loading_widget.dart';
+import 'warning_card.dart';
 
-/// البحث بالاسم أو الرقم.
-/// - الكرت لا يحتوي على checkbox - الضغط على الكرت يفتح sheet اختيار الأطفال مباشرة.
-/// - يدعم theme-aware colors.
-class NameOrNumberSearchWidget extends StatelessWidget {
-  final String searchQuery;
-  final String selectedGender;
+
+class NameOrNumberSearchWidget extends StatefulWidget {
   final List<DriverSearchModel> filteredDrivers;
-  final List<ChildModel> availableKids;
-
-  final ValueChanged<String> onSearchQueryChanged;
-  final ValueChanged<String?> onGenderChanged;
-
-  /// يُستدعى عند الضغط على كرت سائق → يفتح sheet اختيار الأطفال
+  final bool isLoading;
+  final ValueChanged<String> onSearch;
   final Function(DriverSearchModel) onDriverTapped;
-
   final VoidCallback onBack;
 
   const NameOrNumberSearchWidget({
     super.key,
-    required this.searchQuery,
-    required this.selectedGender,
     required this.filteredDrivers,
-    required this.availableKids,
-    required this.onSearchQueryChanged,
-    required this.onGenderChanged,
+    this.isLoading = false,
+    required this.onSearch,
     required this.onDriverTapped,
     required this.onBack,
   });
 
   @override
+  State<NameOrNumberSearchWidget> createState() => _NameOrNumberSearchWidgetState();
+}
+
+class _NameOrNumberSearchWidgetState extends State<NameOrNumberSearchWidget> {
+  final TextEditingController _controller = TextEditingController();
+  bool _hasSearched = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleSearch() {
+    widget.onSearch(_controller.text);
+    setState(() {
+      _hasSearched = true;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmall = screenWidth < 360;
-    final hPad = isSmall ? 12.0 : 16.0;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── عنوان ──
-          Text(
-            'البحث بالاسم أو الرقم',
-            style: AppTextStyles.style(
-              fontSize: isSmall ? 16 : 18,
-              fontWeight: FontWeight.bold,
-              color: isDark ? AppColors.grey100 : AppColors.textDark,
+          // حقل البحث (SearchBar)
+          TextField(
+            controller: _controller,
+            textDirection: TextDirection.rtl,
+            decoration: AppTheme.inputDecoration(
+              context,
+              hintText: 'البحث باسم السائق أو رقم الهاتف',
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: isDark ? AppColors.grey400 : AppColors.grey500,
+              ),
             ),
+            onSubmitted: (_) => _handleSearch(),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'ابحث عن سائق ثم اضغط على الكرت لإرسال طلب',
-            style: AppTextStyles.style(
-              fontSize: isSmall ? 11 : 13,
-              color: isDark ? AppColors.grey400 : AppColors.textMuted,
-            ),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // ── صف حقل البحث + فلتر الجنس ──
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: TextField(
-                  onChanged: onSearchQueryChanged,
-                  decoration: AppTheme.inputDecoration(
-                    context,
-                    hintText: 'الاسم أو رقم الهاتف',
-                    prefixIcon: Icon(
-                      Icons.search_rounded,
-                      color: isDark ? AppColors.grey500 : AppColors.grey500,
-                    ),
-                  ),
+          // زر البحث (Search Button)
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: widget.isLoading ? null : _handleSearch,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+                disabledBackgroundColor: isDark ? AppColors.grey800 : AppColors.grey200,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                elevation: 0,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: _buildGenderDropdown(context, cs, isDark),
-              ),
-            ],
+              child: widget.isLoading
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: theme.colorScheme.onPrimary,
+                      ),
+                    )
+                  : Text(
+                      'بحث',
+                      style: AppTextStyles.style(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: theme.colorScheme.onPrimary,
+                      ),
+                    ),
+            ),
           ),
           const SizedBox(height: 20),
 
-          // ── رأس القائمة ──
-          _buildResultsHeader(context, filteredDrivers.length, cs, isDark),
-          const SizedBox(height: 12),
-
-          // ── قائمة السائقين ──
-          _buildDriversList(context, isDark),
+          // النتائج (Results)
+          if (widget.isLoading && _hasSearched)
+            const SearchLoadingWidget(itemCount: 3)
+          else if (_hasSearched)
+            _buildDriversList(context),
         ],
       ),
     );
   }
 
-  Widget _buildGenderDropdown(BuildContext context, ColorScheme cs, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
-        ),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: selectedGender,
-          isExpanded: true,
-          dropdownColor: isDark ? AppColors.surfaceDark : AppColors.white,
-          icon: Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: isDark ? AppColors.grey400 : AppColors.grey600,
-            size: 18,
-          ),
-          onChanged: onGenderChanged,
-          style: AppTextStyles.style(
-            fontSize: 12,
-            color: isDark ? AppColors.grey200 : AppColors.textDark,
-          ),
-          items: const [
-            DropdownMenuItem(value: 'ALL',    child: Text('الكل')),
-            DropdownMenuItem(value: 'MALE',   child: Text('ذكر')),
-            DropdownMenuItem(value: 'FEMALE', child: Text('أنثى')),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildResultsHeader(
-      BuildContext context, int count, ColorScheme cs, bool isDark) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          '$count سائق متاح',
-          style: AppTextStyles.style(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            color: isDark ? AppColors.grey100 : AppColors.textDark,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDriversList(BuildContext context, bool isDark) {
-    if (filteredDrivers.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 40),
-        child: Center(
-          child: Column(
-            children: [
-              Icon(
-                Icons.search_off_rounded,
-                size: 48,
-                color: isDark ? AppColors.grey700 : AppColors.grey400,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'لم يتم العثور على سائقين يطابقون هذه المواصفات.',
-                style: AppTextStyles.style(
-                  color: isDark ? AppColors.grey500 : AppColors.textMuted,
-                  fontSize: 13,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
+  Widget _buildDriversList(BuildContext context) {
+    if (widget.filteredDrivers.isEmpty) {
+      return const EmptyStateWidget(
+        icon: Icons.person_search_rounded,
+        title: 'لم يتم العثور على نتائج.',
+        description: 'تأكد من كتابة الاسم أو رقم الهاتف بشكل صحيح وحاول مرة أخرى.',
       );
     }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: filteredDrivers.length,
-      itemBuilder: (context, index) {
-        final driver = filteredDrivers[index];
-        return DriverSearchCardWidget(
-          driver: driver,
-          isSelected: false,           // لا تحديد مسبق في وضع البحث بالاسم
-          onSelectedChanged: null,     // null = لا checkbox
-          onTap: () => onDriverTapped(driver),
-        );
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        WarningCard(
+          icon: Icons.info_outline_rounded,
+          color: Theme.of(context).colorScheme.primary,
+          message: "يمكنك إرسال طلبات اشتراك لأكثر من سائق في نفس الوقت. بمجرد قبول أحد السائقين لطلبك، سيتم إلغاء بقية الطلبات تلقائيًا تفاديًا للازدواجية.",
+        ),
+        const SizedBox(height: 16),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: widget.filteredDrivers.length,
+          itemBuilder: (context, index) {
+            final driver = widget.filteredDrivers[index];
+            return DriverSearchCardWidget(
+              driver: driver,
+              isSelected: false,
+              showPricing: false, // لا تظهر الأسعار لأن الأطفال لم يتم تحديدهم بعد
+              showCheckbox: false,
+              onTap: () => widget.onDriverTapped(driver),
+            );
+          },
+        ),
+      ],
     );
   }
 }

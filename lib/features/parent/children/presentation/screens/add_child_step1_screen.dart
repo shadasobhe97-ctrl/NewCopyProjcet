@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -30,6 +31,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
   int _selectedGrade = 1;
   DateTime _selectedDate = DateTime(2015);
   File? _selectedImage;
+  String? _imagePathWeb;
 
   int? _selectedSchoolId;
   String? _selectedSchoolName;
@@ -70,7 +72,11 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
     final picked = await picker.pickImage(source: source, imageQuality: 80);
     if (picked != null) {
       setState(() {
-        _selectedImage = File(picked.path);
+        if (kIsWeb) {
+          _imagePathWeb = picked.path;
+        } else {
+          _selectedImage = File(picked.path);
+        }
         context.read<AddChildCubit>().imagePath = picked.path;
       });
     }
@@ -211,16 +217,18 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                   height: 100,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: context.primaryColor.withOpacity(0.1),
-                                    border: Border.all(color: context.primaryColor.withOpacity(0.3), width: 2),
+                                    color: context.primaryColor.withValues(alpha: 0.1),
+                                    border: Border.all(color: context.primaryColor.withValues(alpha: 0.3), width: 2),
                                     image: _selectedImage != null
                                         ? DecorationImage(image: FileImage(_selectedImage!), fit: BoxFit.cover)
-                                        : (hasRemoteImage
-                                            ? DecorationImage(image: NetworkImage(widget.child!.photoUrl!), fit: BoxFit.cover)
-                                            : null),
+                                        : (_imagePathWeb != null
+                                            ? DecorationImage(image: NetworkImage(_imagePathWeb!), fit: BoxFit.cover)
+                                            : (hasRemoteImage
+                                                ? DecorationImage(image: NetworkImage(widget.child!.photoUrl!), fit: BoxFit.cover)
+                                                : null)),
                                   ),
-                                  child: _selectedImage == null && !hasRemoteImage
-                                      ? Icon(Icons.person_rounded, size: 50, color: context.primaryColor.withOpacity(0.5))
+                                  child: _selectedImage == null && _imagePathWeb == null && !hasRemoteImage
+                                      ? Icon(Icons.person_rounded, size: 50, color: context.primaryColor.withValues(alpha: 0.5))
                                       : null,
                                 ),
                                 Positioned(
@@ -429,13 +437,19 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                         SizedBox(
                           width: double.infinity,
                           height: 52,
-                          child: ElevatedButton.icon(
+                          child: ElevatedButton(
                             onPressed: _submitStep1,
                             style: AppTheme.elevatedButtonStyle(backgroundColor: context.primaryColor),
-                            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                            label: const Text(
-                              'التالي: تفضيلات النقل',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  ' التالي تفضيلات النقل ',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
+                                SizedBox(width: 8),
+                                Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                              ],
                             ),
                           ),
                         ),
@@ -465,9 +479,9 @@ class _ImageSourceOption extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: context.primaryColor.withOpacity(0.08),
+          color: context.primaryColor.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: context.primaryColor.withOpacity(0.2)),
+          border: Border.all(color: context.primaryColor.withValues(alpha: 0.2)),
         ),
         child: Column(
           children: [

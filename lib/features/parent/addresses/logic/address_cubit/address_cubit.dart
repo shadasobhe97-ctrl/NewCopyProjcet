@@ -71,6 +71,8 @@ class AddressCubit extends Cubit<AddressState> {
     emit(AddressActionSuccess(List.from(_addresses), successMessage));
     if (_addresses.isEmpty) {
       emit(AddressEmpty());
+    } else {
+      emit(AddressLoaded(List.from(_addresses)));
     }
   }
 }

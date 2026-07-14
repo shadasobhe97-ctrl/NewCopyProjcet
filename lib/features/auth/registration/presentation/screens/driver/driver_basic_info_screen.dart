@@ -21,7 +21,7 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  String _selectedGender = 'male';
+  String selectedGender = 'male';
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
@@ -100,7 +100,8 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                 TextFormField(
                   controller: _nameController,
                   textAlign: TextAlign.right,
-                  decoration: AppTheme.inputDecoration(context, 
+                  decoration: AppTheme.inputDecoration(
+                    context,
                     labelText: "الاسم الكامل (الثلاثي على الأقل)",
                     prefixIcon: Icon(Icons.person_outline),
                   ),
@@ -118,7 +119,8 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: AppTheme.inputDecoration(context, 
+                  decoration: AppTheme.inputDecoration(
+                    context,
                     labelText: "البريد الإلكتروني",
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
@@ -134,7 +136,8 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                   keyboardType: TextInputType.phone,
                   textDirection: TextDirection.ltr,
                   textAlign: TextAlign.left,
-                  decoration: AppTheme.inputDecoration(context, 
+                  decoration: AppTheme.inputDecoration(
+                    context,
                     labelText: "رقم الهاتف",
                     hintText: "09XXXXXXXX",
                     prefixIcon: Icon(Icons.phone_android),
@@ -154,7 +157,8 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
-                  decoration: AppTheme.inputDecoration(context, 
+                  decoration: AppTheme.inputDecoration(
+                    context,
                     labelText: "كلمة المرور",
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
@@ -176,7 +180,8 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: !_isConfirmPasswordVisible,
-                  decoration: AppTheme.inputDecoration(context, 
+                  decoration: AppTheme.inputDecoration(
+                    context,
                     labelText: "تأكيد كلمة المرور",
                     prefixIcon: const Icon(Icons.lock_reset),
                     suffixIcon: IconButton(
@@ -221,7 +226,10 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                   ),
                   child: Text(
                     "التالي",
-                    style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: AppTextStyles.style(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),

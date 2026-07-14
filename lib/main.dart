@@ -16,10 +16,18 @@ import 'package:kids_transport/features/parent/children/data/datasources/childre
 import 'package:kids_transport/features/parent/children/data/repositories/children_repository.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/add_child_cubit.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
+import 'package:kids_transport/features/parent/subscriptions/data/datasources/subscriptions_data_source.dart';
+import 'package:kids_transport/features/parent/subscriptions/data/repositories/subscriptions_repository.dart';
+import 'package:kids_transport/features/parent/subscriptions/logic/subscriptions_cubit/subscriptions_cubit.dart';
+import 'package:kids_transport/core/di/dependency_injection.dart';
+import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
+import 'package:kids_transport/core/services/hive_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await StorageService.init();
+  await HiveHelper.init(); // تهيئة قاعدة بيانات Hive
+  setupDependencyInjection();
   runApp(const TransportApp());
 }
 
@@ -33,6 +41,11 @@ class TransportApp extends StatelessWidget {
         RepositoryProvider<ChildrenRepository>(
           create: (_) => ChildrenRepository(
             ChildrenRemoteDataSource(ApiClient()),
+          ),
+        ),
+        RepositoryProvider<SubscriptionsRepository>(
+          create: (_) => SubscriptionsRepository(
+            SubscriptionsMockDataSourceImpl(),
           ),
         ),
       ],
@@ -55,6 +68,13 @@ class TransportApp extends StatelessWidget {
           BlocProvider<AddChildCubit>(
             create: (context) =>
                 AddChildCubit(context.read<ChildrenRepository>()),
+          ),
+          BlocProvider<SubscriptionsCubit>(
+            create: (context) =>
+                SubscriptionsCubit(context.read<SubscriptionsRepository>()),
+          ),
+          BlocProvider<SearchCubit>(
+            create: (_) => getIt<SearchCubit>(),
           ),
         ],
         child: BlocBuilder<ThemeCubit, ThemeState>(

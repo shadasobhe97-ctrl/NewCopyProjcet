@@ -8,8 +8,8 @@ import 'package:kids_transport/features/parent/addresses/data/models/address_mod
 
 /// Bottom Sheet إضافة / تعديل عنوان بالخريطة.
 class AddAddressSheet extends StatefulWidget {
-  /// يُستدعى عند الحفظ — يُمرَّر النموذج المكتمل.
-  final void Function(AddressModel address) onSave;
+  /// يُستدعى عند الحفظ — يعيد رسالة الخطأ أو null عند النجاح.
+  final Future<String?> Function(AddressModel address) onSave;
 
   /// إذا كان غير null فهذا وضع التعديل.
   final AddressModel? initialAddress;
@@ -27,7 +27,6 @@ class AddAddressSheet extends StatefulWidget {
 class _AddAddressSheetState extends State<AddAddressSheet> {
   final MapController _mapController = MapController();
   final _labelController = TextEditingController();
-  final _detailsController = TextEditingController();
   late LatLng _currentCenter;
   bool _isDefault = false;
   bool _isLoading = false;
@@ -40,7 +39,6 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
     final addr = widget.initialAddress;
     if (addr != null) {
       _labelController.text = addr.title;
-      _detailsController.text = addr.addressDetails ?? '';
       _currentCenter = LatLng(addr.latitude, addr.longitude);
       _isDefault = addr.isDefault;
     } else {
@@ -52,7 +50,6 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
   void dispose() {
     _mapController.dispose();
     _labelController.dispose();
-    _detailsController.dispose();
     super.dispose();
   }
 
@@ -190,20 +187,7 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _detailsController,
-                    textAlign: TextAlign.right,
-                    enabled: !_isLoading,
-                    decoration: AppTheme.inputDecoration(
-                      context,
-                      labelText: 'تفاصيل العنوان / الشقة / علامة مميزة',
-                      prefixIcon: const Icon(
-                        Icons.info_outline_rounded,
-                        color: AppColors.primaryLight,
-                      ),
-                    ),
-                  ),
+
                   const SizedBox(height: 10),
                   CheckboxListTile(
                     title: const Text('تعيين كعنوان رئيسي'),
@@ -219,7 +203,8 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
                     onPressed: _isLoading ? null : _save,
                     style: AppTheme.elevatedButtonStyle(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      backgroundColor: AppColors.primaryLight,
+                      backgroundColor: _isLoading ? AppColors.grey400 : AppColors.primaryLight,
+                      foregroundColor: AppColors.white,
                     ),
                     child: _isLoading
                         ? const SizedBox(
@@ -248,7 +233,7 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
     );
   }
 
-  void _save() {
+  Future<void> _save() async {
     final labelText = _labelController.text.trim();
     if (labelText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -290,14 +275,25 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
       label: labelText,
       lat: lat,
       lng: lng,
-      addressDetails: _detailsController.text.trim().isEmpty
-          ? null
-          : _detailsController.text.trim(),
       isDefault: _isDefault,
     );
 
-    widget.onSave(address);
-    // الـ Sheet ستُغلق من خلال الـ Screen بعد نجاح العملية
-    setState(() => _isLoading = false);
+    final errorMsg = await widget.onSave(address);
+
+    if (!mounted) return;
+
+    if (errorMsg != null) {
+      // فشلت العملية — أظهر خطأ وأبق الـ Sheet مفتوحة
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMsg),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } else {
+      // نجحت العملية — أغلق الـ Sheet
+      Navigator.pop(context);
+    }
   }
 }

@@ -2,11 +2,18 @@ import 'package:kids_transport/core/network/api_exception.dart';
 import '../datasources/children_remote_data_source.dart';
 import '../models/child_model.dart';
 import '../models/school_model.dart';
+import '../models/logistics_model.dart';
+
+import '../../../../../data/local/children_local_data_source.dart';
 
 class ChildrenRepository {
   final ChildrenRemoteDataSource _dataSource;
+  final ChildrenLocalDataSource _localDataSource;
 
-  ChildrenRepository(this._dataSource);
+  ChildrenRepository(
+    this._dataSource, [
+    ChildrenLocalDataSource? localDataSource,
+  ]) : _localDataSource = localDataSource ?? ChildrenLocalDataSourceImpl();
 
   Future<(List<ChildModel>?, String?)> getMyChildren() async {
     try {
@@ -69,6 +76,17 @@ class ChildrenRepository {
     try {
       final child = await _dataSource.getChildDetails(id);
       return (child, null);
+    } on ApiException catch (e) {
+      return (null, e.message);
+    } catch (_) {
+      return (null, 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
+    }
+  }
+
+  Future<(LogisticsModel?, String?)> getChildSubscription(String id) async {
+    try {
+      final logistics = await _dataSource.getChildSubscription(id);
+      return (logistics, null);
     } on ApiException catch (e) {
       return (null, e.message);
     } catch (_) {

@@ -44,6 +44,7 @@ class SharedOtpForm extends StatefulWidget {
 
 class _SharedOtpFormState extends State<SharedOtpForm> {
   final _otpController = TextEditingController();
+  final FocusNode _otpFocusNode = FocusNode();
   int _timerSeconds = 600; // 10 دقائق
   Timer? _timer;
   bool _canResend = false;
@@ -54,6 +55,11 @@ class _SharedOtpFormState extends State<SharedOtpForm> {
   void initState() {
     super.initState();
     _startTimer();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _otpFocusNode.requestFocus();
+      }
+    });
   }
 
   @override
@@ -124,6 +130,7 @@ class _SharedOtpFormState extends State<SharedOtpForm> {
   void dispose() {
     _timer?.cancel();
     _otpController.dispose();
+    _otpFocusNode.dispose();
     super.dispose();
   }
 
@@ -167,6 +174,7 @@ class _SharedOtpFormState extends State<SharedOtpForm> {
               appContext: context,
               length: 6,
               controller: _otpController,
+              focusNode: _otpFocusNode,
               autoFocus: true,
               autoDisposeControllers: false,
               keyboardType: TextInputType.number,

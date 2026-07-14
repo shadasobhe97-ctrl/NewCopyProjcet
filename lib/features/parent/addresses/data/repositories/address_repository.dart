@@ -2,10 +2,16 @@ import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/features/parent/addresses/data/datasources/address_remote_data_source.dart';
 import 'package:kids_transport/features/parent/addresses/data/models/address_model.dart';
 
+import '../../../../../data/local/address_local_data_source.dart';
+
 class AddressRepository {
   final AddressRemoteDataSource _dataSource;
+  final AddressLocalDataSource _localDataSource;
 
-  AddressRepository(this._dataSource);
+  AddressRepository(
+    this._dataSource, [
+    AddressLocalDataSource? localDataSource,
+  ]) : _localDataSource = localDataSource ?? AddressLocalDataSourceImpl();
 
   Future<(List<AddressModel>?, String?)> getAddresses() async {
     try {

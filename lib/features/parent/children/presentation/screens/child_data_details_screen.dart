@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:kids_transport/core/network/api_exception.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/theme/text_styles.dart';
@@ -182,14 +181,26 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                             border: Border.all(color: Colors.white, width: 3),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
+                                color: Colors.black.withValues(alpha: 0.2),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
                             ],
                           ),
                           child: activeChild.photoUrl != null
-                              ? ClipOval(child: Image.network(activeChild.photoUrl!, fit: BoxFit.cover))
+                              ? ClipOval(
+                                  child: Image.network(
+                                    activeChild.photoUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Icon(
+                                      Icons.person_rounded,
+                                      size: 44,
+                                      color: activeChild.gender == 'male'
+                                          ? context.genderMaleColor
+                                          : context.genderFemaleColor,
+                                    ),
+                                  ),
+                                )
                               : Icon(
                                   Icons.person_rounded,
                                   size: 44,

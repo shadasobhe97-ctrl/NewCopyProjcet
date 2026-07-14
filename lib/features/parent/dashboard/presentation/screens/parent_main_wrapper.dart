@@ -8,9 +8,13 @@ import 'package:kids_transport/features/parent/children/presentation/screens/my_
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscriptions_screen.dart';
 
 class ParentMainWrapper extends StatefulWidget {
   const ParentMainWrapper({super.key});
+
+  // دالة ستاتيكية للتحكم في تغيير التبويبات من الشاشات الداخلية
+  static late Function(int) changeTab;
 
   @override
   State<ParentMainWrapper> createState() => _ParentMainWrapperState();
@@ -37,9 +41,6 @@ class _KeepAliveWrapperState extends State<_KeepAliveWrapper>
 class _ParentMainWrapperState extends State<ParentMainWrapper> {
   int _selectedIndex = 0;
 
-  // دالة ستاتيكية للتحكم في تغيير التبويبات من الشاشات الداخلية
-  static late Function(int) changeTab;
-
   // محاكاة بيانات المستخدم (تُستبدل بالـ Repository لاحقاً)
   final String userName = "أسماء الفرجاني";
   final String? userAvatarurl = null;
@@ -48,31 +49,32 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
 
   String _getAppBarTitle() {
     switch (_selectedIndex) {
-      case 0: return 'الرئيسية';
-      case 1: return 'أطفالي';
-      case 2: return 'البحث عن سائق';
-      case 3: return 'العقود والاشتراكات';
-      case 4: return 'المدفوعات والفواتير';
-      default: return 'داربي';
+      case 0:
+        return 'الرئيسية';
+      case 1:
+        return 'أطفالي';
+      case 2:
+        return 'البحث عن سائق';
+      case 3:
+        return 'اشتراكاتي';
+      case 4:
+        return 'المدفوعات والفواتير';
+      default:
+        return 'داربي';
     }
   }
 
   @override
   void initState() {
     super.initState();
-    changeTab = (index) {
+    ParentMainWrapper.changeTab = (index) {
       setState(() => _selectedIndex = index);
     };
     _screens = [
       const ParentHomeScreen(),
       const MyChildrenScreen(),
       const ParentSearchScreen(),
-      Center(
-        child: Text(
-          "📄 العقود والاشتراكات",
-          style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      ),
+      const SubscriptionsScreen(),
       Center(
         child: Text(
           "💳 المدفوعات والفواتير",
@@ -106,19 +108,27 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
             boxShadow: [
               BoxShadow(
                 blurRadius: 15,
-                color: Colors.black.withValues(alpha: context.isDarkMode ? 0.3 : 0.05),
+                color: Colors.black.withValues(
+                  alpha: context.isDarkMode ? 0.3 : 0.05,
+                ),
                 offset: const Offset(0, -2),
-              )
+              ),
             ],
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12.0,
+                vertical: 12.0,
+              ),
               child: GNav(
                 gap: 6,
                 activeColor: context.primaryColor,
                 iconSize: 22,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 10,
+                ),
                 duration: const Duration(milliseconds: 300),
                 tabBackgroundColor: context.primaryColor.withValues(alpha: 0.1),
                 color: AppColors.grey400,
@@ -135,7 +145,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                   GButton(icon: Icons.home_rounded, text: 'الرئيسية'),
                   GButton(icon: Icons.people_alt_rounded, text: 'أطفالي'),
                   GButton(icon: Icons.search_rounded, text: 'البحث'),
-                  GButton(icon: Icons.description_rounded, text: 'العقود'),
+                  GButton(icon: Icons.description_rounded, text: 'اشتراكاتي'),
                   GButton(icon: Icons.credit_card_rounded, text: 'المدفوعات'),
                 ],
               ),

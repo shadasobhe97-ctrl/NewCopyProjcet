@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:kids_transport/features/parent/children/presentation/widgets/add_child_shared_widgets.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
@@ -10,7 +11,8 @@ import '../../logic/children_cubit/children_cubit.dart';
 import '../../data/models/transport_pref_model.dart';
 
 class AddChildStep2Screen extends StatefulWidget {
-  const AddChildStep2Screen({super.key});
+  final bool isDirectEdit;
+  const AddChildStep2Screen({super.key, this.isDirectEdit = false});
 
   @override
   State<AddChildStep2Screen> createState() => _AddChildStep2ScreenState();
@@ -20,6 +22,7 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
   String _subType = 'monthly';
   String _period = 'morning';
   String _serviceType = 'both';
+  DateTime _startDate = DateTime.now();
 
   TimeOfDay _schoolStartTime = const TimeOfDay(hour: 8, minute: 0);
   TimeOfDay _schoolEndTime = const TimeOfDay(hour: 13, minute: 30);
@@ -33,6 +36,7 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
       _subType = pref.subscriptionType;
       _period = pref.period;
       _serviceType = pref.serviceType;
+      _startDate = pref.startDate;
       _schoolStartTime = _parseTimeOfDay(pref.schoolStartTime);
       _schoolEndTime = _parseTimeOfDay(pref.schoolEndTime);
     }
@@ -62,7 +66,7 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
       subscriptionType: _subType,
       period: _period,
       serviceType: _serviceType,
-      startDate: DateTime.now(),
+      startDate: _startDate,
       schoolStartTime: _schoolStartTime.format(context),
       schoolEndTime: _schoolEndTime.format(context),
     );
@@ -112,7 +116,11 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
       child: Scaffold(
         backgroundColor: context.backgroundSurface,
         appBar: AppBar(
-          title: Text(context.read<AddChildCubit>().editingChild != null ? 'تعديل بيانات الطفل' : 'إضافة طفل'),
+          title: Text(widget.isDirectEdit
+              ? 'تعديل تفضيلات النقل'
+              : (context.read<AddChildCubit>().editingChild != null
+                  ? 'تعديل بيانات الطفل'
+                  : 'إضافة طفل')),
           flexibleSpace: Container(
             decoration: BoxDecoration(
               gradient: AppTheme.linearGradient(
@@ -131,7 +139,9 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
               final isEdit = context.read<AddChildCubit>().editingChild != null;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(isEdit ? 'تم تحديث بيانات الطفل بنجاح' : 'تمت إضافة الطفل بنجاح'),
+                  content: Text(widget.isDirectEdit
+                      ? 'تم تحديث تفضيلات النقل بنجاح'
+                      : (isEdit ? 'تم تحديث بيانات الطفل بنجاح' : 'تمت إضافة الطفل بنجاح')),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -146,8 +156,8 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
             return SafeArea(
               child: Column(
                 children: [
-                  // ── مؤشر التقدم ──
-                  AddChildStepIndicator(currentStep: 2),
+                  // ── مؤشر التقدم (يخفى في التعديل المباشر) ──
+                  if (!widget.isDirectEdit) const AddChildStepIndicator(currentStep: 2),
 
                   // ── المحتوى ──
                   Expanded(
@@ -221,6 +231,38 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                           ),
                           const SizedBox(height: 16),
 
+                          // ── تاريخ بدء الخدمة ──
+                          AddChildSectionCard(
+                            title: 'تاريخ بدء الخدمة',
+                            icon: Icons.date_range_outlined,
+                            children: [
+                              InkWell(
+                                borderRadius: AppTheme.radius(10),
+                                onTap: () async {
+                                  final date = await showDatePicker(
+                                    context: context,
+                                    initialDate: _startDate,
+                                    firstDate: DateTime(2000),
+                                    lastDate: DateTime(2100),
+                                  );
+                                  if (date != null) setState(() => _startDate = date);
+                                },
+                                child: InputDecorator(
+                                  decoration: InputDecoration(
+                                    labelText: 'تاريخ البداية',
+                                    prefixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
+                                    border: OutlineInputBorder(borderRadius: AppTheme.radius(10)),
+                                  ),
+                                  child: Text(
+                                    intl.DateFormat('yyyy/MM/dd').format(_startDate),
+                                    style: AppTextStyles.style(fontSize: 14),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
                           // ── مواعيد الدوام ──
                           AddChildSectionCard(
                             title: 'مواعيد الدوام المدرسي',
@@ -289,9 +331,11 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                               style: AppTheme.elevatedButtonStyle(backgroundColor: context.primaryColor),
                               child: state is AddChildSubmitting
                                   ? const CircularProgressIndicator(color: Colors.white)
-                                  : const Text(
-                                      'حفظ وإضافة الطفل',
-                                      style: TextStyle(
+                                  : Text(
+                                      context.read<AddChildCubit>().editingChild != null
+                                          ? 'حفظ التعديلات'
+                                          : 'حفظ وإضافة الطفل',
+                                      style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
