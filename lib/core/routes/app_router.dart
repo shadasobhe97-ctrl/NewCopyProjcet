@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:kids_transport/features/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:kids_transport/features/admin/presentation/screens/admin_login_screen.dart';
@@ -9,6 +11,8 @@ import 'package:kids_transport/features/auth/login/presentation/screens/forgot_p
 import 'package:kids_transport/features/auth/login/presentation/screens/login_screen.dart';
 import 'package:kids_transport/features/auth/login/presentation/screens/reset_password_screen.dart';
 import 'package:kids_transport/features/auth/login/presentation/screens/verify_otp_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/select_role_screen.dart';
+
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_alternative_phone_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_avatar_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_basic_info_screen.dart';
@@ -18,18 +22,27 @@ import 'package:kids_transport/features/auth/registration/presentation/screens/d
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_otp_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_vehicle_stage_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_waiting_screen.dart';
+
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_alternative_phone.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_avatar_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_basic_info_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_email_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_location_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_otp_screen.dart';
-import 'package:kids_transport/features/auth/registration/presentation/screens/select_role_screen.dart';
+
 import 'package:kids_transport/features/driver/dashboard/presentation/screens/driver_main_wrapper.dart';
 import 'package:kids_transport/features/driver/home/presentation/screens/driver_home_screen.dart';
 import 'package:kids_transport/features/driver/profile/presentation/screens/driver_profile_screen.dart';
 import 'package:kids_transport/features/driver/vehicles/presentation/screens/driver_backup_vehicle_screen.dart';
 import 'package:kids_transport/features/driver/vehicles/presentation/screens/driver_primary_vehicle_screen.dart';
+
+import 'package:kids_transport/features/driver/profile/logic/cubit/driver_profile_cubit.dart';
+import 'package:kids_transport/features/driver/profile/data/repositories/driver_profile_repository.dart';
+import 'package:kids_transport/features/driver/profile/data/data_sources/driver_profile_remote_data_source.dart';
+import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
+import 'package:kids_transport/features/driver/driver_preferences/logic/driver_preferences_cubit.dart';
+import 'package:kids_transport/features/driver/driver_preferences/presentation/screens/driver_preferences_screen.dart';
+
 import 'package:kids_transport/features/parent/addresses/presentation/screens/saved_addresses_screen.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step1_screen.dart';
@@ -84,6 +97,7 @@ class AppRoutes {
   static const String driverBackupVehicle = '/driverBackupVehicle';
   static const String driverProfile = '/driverProfile';
   static const String driverPrimaryVehicle = '/driverPrimaryVehicle';
+  static const String driverPreferences = '/driverPreferences';
 
   static const String driverBasicInfo = '/driverBasicInfo';
   static const String driverAvatar = '/driverAvatar';
@@ -216,12 +230,22 @@ class AppRoutes {
         return _route(settings, const DriverHomeScreen());
       case driverMainWrapper:
         return _route(settings, const DriverMainWrapper());
-      case driverBackupVehicle:
-        return _route(settings, const DriverBackupVehicleScreen());
-      case driverProfile:
-        return _route(settings, const DriverProfileScreen());
+      /*case driverBackupVehicle:
+        return _route(settings, const DriverBackupVehicleScreen());*/
       case driverPrimaryVehicle:
         return _route(settings, const DriverPrimaryVehicleScreen());
+      case driverProfile:
+        return _route(
+          settings,
+          BlocProvider(
+            create: (context) => DriverProfileCubit(
+              DriverProfileRepository(
+                remoteDataSource: DriverProfileRemoteDataSource(dio: Dio()),
+              ),
+            ),
+            child: const DriverProfileScreen(),
+          ),
+        );
       case driverBasicInfo:
         return _route(settings, const DriverBasicInfoScreen());
       case driverAvatar:
@@ -242,6 +266,15 @@ class AppRoutes {
         return _route(settings, const DriverLocationScreen());
       case driverWaiting:
         return _route(settings, const DriverWaitingScreen());
+      case driverPreferences:
+        final isMandatory = settings.arguments as bool? ?? false;
+        return _route(
+          settings,
+          BlocProvider(
+            create: (context) => driverSl<DriverPreferencesCubit>(),
+            child: DriverPreferencesScreen(isMandatory: isMandatory),
+          ),
+        );
       default:
         return null;
     }

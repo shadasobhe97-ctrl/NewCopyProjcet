@@ -22,12 +22,14 @@ import 'package:kids_transport/features/parent/subscriptions/logic/subscriptions
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
 import 'package:kids_transport/core/services/hive_helper.dart';
+import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await StorageService.init();
   await HiveHelper.init(); // تهيئة قاعدة بيانات Hive
   setupDependencyInjection();
+  initDriverInjection();
   runApp(const TransportApp());
 }
 

@@ -21,6 +21,8 @@ class ApiEndpoints {
   static const String driverResendOtp = 'v1/driver/resend-otp';
   static const String driverVerifyOtp = 'v1/driver/verify-otp';
   static const String driverCompleteProfile = 'v1/driver/complete-profile';
+  static const String driverPreferences = 'v1/driver/preferences';
+  static const String driverZones = 'v1/driver/zones';
 
   //=========================================
   // Parent Registration endpoints (أولياء الأمور)

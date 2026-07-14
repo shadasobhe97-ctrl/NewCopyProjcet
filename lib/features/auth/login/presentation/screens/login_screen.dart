@@ -51,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ? AppRoutes.parentHome
                   : state.roleId == 4
                   ? (StorageService.getIsActive() == true
-                        ? AppRoutes.driverMainWrapper
+                        ? AppRoutes.splash
                         : '/driverWaiting')
                   : AppRoutes.adminDashboard;
 

@@ -20,3 +20,6 @@ class NavigateToAdminHome extends AppEntryState {}
 
 // حالة التوجيه لشاشة انتظار السائق
 class NavigateToDriverWaiting extends AppEntryState {}
+
+// حالة التوجيه لشاشة تفضيلات السائق الإجبارية
+class NavigateToDriverPreferencesRequired extends AppEntryState {}

@@ -31,6 +31,12 @@ class _SplashScreenState extends State<SplashScreen> {
           Navigator.pushReplacementNamed(context, AppRoutes.parentMainWrapper);
         } else if (state is NavigateToDriverHome) {
           Navigator.pushReplacementNamed(context, AppRoutes.driverMainWrapper);
+        } else if (state is NavigateToDriverPreferencesRequired) {
+          Navigator.pushReplacementNamed(
+            context,
+            AppRoutes.driverPreferences,
+            arguments: true,
+          );
         } else if (state is NavigateToParentHome) {
           Navigator.pushReplacementNamed(context, AppRoutes.parentMainWrapper);
         } else if (state is NavigateToAdminHome) {

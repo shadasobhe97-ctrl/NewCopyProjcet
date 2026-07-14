@@ -15,9 +15,10 @@ class DriverHomeLoaded extends DriverHomeState {
   final bool isOnline;
   final int todayTripsCount;
   final int todayStudentsCount;
-  final List<SubscriptionRequest> newRequests;
-  final bool hasActiveTrip; 
-  
+  // تم التغيير إلى dynamic مؤقتاً لتجنب خطأ الكلاس غير الموجود
+  final List<dynamic> newRequests;
+  final bool hasActiveTrip;
+
   DriverHomeLoaded({
     required this.driver,
     required this.isOnline,
@@ -33,7 +34,7 @@ class DriverHomeLoaded extends DriverHomeState {
     bool? isOnline,
     int? todayTripsCount,
     int? todayStudentsCount,
-    List<SubscriptionRequest>? newRequests,
+    List<dynamic>? newRequests, // تم التغيير هنا أيضاً
     bool? hasActiveTrip,
   }) {
     return DriverHomeLoaded(

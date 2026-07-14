@@ -239,7 +239,10 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 ),
                 Text(
                   'بيانات العمل والتغطية',
-                  style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -311,7 +314,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 keyboardType: keyboardType,
                 validator: validator,
                 readOnly: readOnly,
-                decoration: AppTheme.inputDecoration(context, 
+                decoration: AppTheme.inputDecoration(
+                  context,
                   labelText: label,
                   prefixIcon: Icon(icon, color: context.primaryColor),
                 ),
@@ -378,7 +382,10 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
               children: [
                 Text(
                   label,
-                  style: AppTextStyles.style(fontSize: 12, color: AppColors.grey500),
+                  style: AppTextStyles.style(
+                    fontSize: 12,
+                    color: AppColors.grey500,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
