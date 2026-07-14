@@ -14,6 +14,7 @@ class StorageService {
   static const String _fullNameKey = 'full_name';
   static const String _phoneNumberKey = 'phone_number';
   static const String _isActiveKey = 'is_active';
+  static const String _isPreferencesSetKey = 'is_preferences_set';
 
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
@@ -97,6 +98,7 @@ class StorageService {
       _prefs.remove(_fullNameKey),
       _prefs.remove(_phoneNumberKey),
       _prefs.remove(_isActiveKey),
+      _prefs.remove(_isPreferencesSetKey),
     ]);
   }
 
@@ -105,4 +107,10 @@ class StorageService {
   }
 
   static bool isFirstTime() => _prefs.getBool(_isFirstTimeKey) ?? true;
+
+  static Future<bool> setIsPreferencesSet(bool value) {
+    return _prefs.setBool(_isPreferencesSetKey, value);
+  }
+
+  static bool getIsPreferencesSet() => _prefs.getBool(_isPreferencesSetKey) ?? false;
 }

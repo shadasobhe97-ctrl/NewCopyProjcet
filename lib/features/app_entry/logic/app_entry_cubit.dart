@@ -1,5 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
+import 'package:kids_transport/features/driver/driver_preferences/data/repositories/driver_preferences_repository.dart';
 
 import 'app_entry_state.dart';
 
@@ -23,7 +25,22 @@ class AppEntryCubit extends Cubit<AppEntryState> {
     if (roleId == 4) {
       final isActive = StorageService.getIsActive() ?? false;
       if (isActive) {
-        emit(NavigateToDriverHome());
+        if (StorageService.getIsPreferencesSet()) {
+          emit(NavigateToDriverHome());
+          return;
+        }
+        try {
+          final hasPrefs = await driverSl<DriverPreferencesRepository>().getPreferences();
+          if (hasPrefs != null) {
+            await StorageService.setIsPreferencesSet(true);
+            emit(NavigateToDriverHome());
+          } else {
+            emit(NavigateToDriverPreferencesRequired());
+          }
+        } catch (_) {
+          // Graceful fallback to avoid bricking if offline or API is down
+          emit(NavigateToDriverHome());
+        }
       } else {
         emit(NavigateToDriverWaiting());
       }

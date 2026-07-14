@@ -16,10 +16,12 @@ import 'package:kids_transport/features/parent/children/data/datasources/childre
 import 'package:kids_transport/features/parent/children/data/repositories/children_repository.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/add_child_cubit.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
+import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await StorageService.init();
+  initDriverInjection();
   runApp(const TransportApp());
 }
 

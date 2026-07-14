@@ -39,6 +39,9 @@ import 'package:kids_transport/features/driver/vehicles/presentation/screens/dri
 import 'package:kids_transport/features/driver/profile/logic/cubit/driver_profile_cubit.dart';
 import 'package:kids_transport/features/driver/profile/data/repositories/driver_profile_repository.dart';
 import 'package:kids_transport/features/driver/profile/data/data_sources/driver_profile_remote_data_source.dart';
+import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
+import 'package:kids_transport/features/driver/driver_preferences/logic/driver_preferences_cubit.dart';
+import 'package:kids_transport/features/driver/driver_preferences/presentation/screens/driver_preferences_screen.dart';
 
 import 'package:kids_transport/features/parent/addresses/presentation/screens/saved_addresses_screen.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
@@ -91,6 +94,7 @@ class AppRoutes {
   static const String driverBackupVehicle = '/driverBackupVehicle';
   static const String driverProfile = '/driverProfile';
   static const String driverPrimaryVehicle = '/driverPrimaryVehicle';
+  static const String driverPreferences = '/driverPreferences';
 
   static const String driverBasicInfo = '/driverBasicInfo';
   static const String driverAvatar = '/driverAvatar';
@@ -253,6 +257,15 @@ class AppRoutes {
         return _route(settings, const DriverLocationScreen());
       case driverWaiting:
         return _route(settings, const DriverWaitingScreen());
+      case driverPreferences:
+        final isMandatory = settings.arguments as bool? ?? false;
+        return _route(
+          settings,
+          BlocProvider(
+            create: (context) => driverSl<DriverPreferencesCubit>(),
+            child: DriverPreferencesScreen(isMandatory: isMandatory),
+          ),
+        );
       default:
         return null;
     }

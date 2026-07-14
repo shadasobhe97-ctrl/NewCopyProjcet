@@ -105,6 +105,21 @@ class DriverDrawer extends StatelessWidget {
                     },
                   ),
 
+                  // ── تفضيلات العمل ──
+                  AppDrawerItem(
+                    icon: Icons.settings_suggest_rounded,
+                    iconColor: context.primaryColor,
+                    label: 'تفضيلات العمل',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.driverPreferences,
+                        arguments: false,
+                      );
+                    },
+                  ),
+
                   // ── المركبة الاحتياطية ──
                   /*BackupVehicleDrawerItem(
                     driver: driver,
