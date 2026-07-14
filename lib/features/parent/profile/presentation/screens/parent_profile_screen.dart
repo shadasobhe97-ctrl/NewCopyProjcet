@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -9,6 +10,9 @@ import 'package:kids_transport/core/widgets/app_bars.dart';
 import 'package:kids_transport/core/widgets/primary_button.dart';
 import 'package:kids_transport/features/parent/profile/presentation/widgets/profile_avatar_editor.dart';
 import 'package:kids_transport/features/parent/profile/presentation/widgets/profile_email_field.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
+import '../../logic/cubit/parent_profile_cubit.dart';
+import '../../logic/cubit/parent_profile_state.dart';
 
 class ParentProfileScreen extends StatefulWidget {
   const ParentProfileScreen({super.key});
@@ -28,16 +32,17 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   File? _avatarImage;
   final ImagePicker _picker = ImagePicker();
 
-  String _originalEmail = 'asmaa.farjani@gmail.com';
+  String _originalEmail = 'parent.email@example.com';
   bool _isEmailVerified = true;
   bool _showVerificationOption = false;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: 'أسماء الفرجاني');
-    _phoneController = TextEditingController(text: '+218 92 318 1690');
-    _backupPhoneController = TextEditingController(text: '+218 91 456 7890');
+    // 1. قراءة الكاش الفوري وعرضه (Cache-First)
+    _nameController = TextEditingController(text: StorageService.getFullName() ?? '');
+    _phoneController = TextEditingController(text: StorageService.getPhoneNumber() ?? '');
+    _backupPhoneController = TextEditingController(text: '');
     _emailController = TextEditingController(text: _originalEmail);
 
     _emailController.addListener(() {
@@ -47,6 +52,13 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
         _isEmailVerified =
             _emailController.text.trim() == _originalEmail;
       });
+    });
+
+    // 2. تحديث البيانات بالخلفية من السيرفر
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        context.read<ParentProfileCubit>().fetchProfile();
+      } catch (_) {}
     });
   }
 
@@ -73,118 +85,170 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
 
   void _saveProfile() {
     if (_formKey.currentState!.validate()) {
-      if (!_isEmailVerified &&
-          _emailController.text.trim() != _originalEmail) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('يرجى التحقق من البريد الإلكتروني أولاً قبل الحفظ'),
-            backgroundColor: AppColors.pending,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تم حفظ التعديلات بنجاح'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      Navigator.pop(context);
+      // إطلاق التحديث على السيرفر بالخلفية أولاً (API-First Strategy)
+      context.read<ParentProfileCubit>().updateProfile(
+            fullName: _nameController.text.trim(),
+            phoneNumber: _phoneController.text.trim(),
+            alternativePhone: _backupPhoneController.text.trim().isNotEmpty
+                ? _backupPhoneController.text.trim()
+                : null,
+            email: _emailController.text.trim().isNotEmpty
+                ? _emailController.text.trim()
+                : null,
+          );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: context.scaffoldBackgroundColor,
-        appBar: const AppPrimaryAppBar(title: 'تعديل الملف الشخصي'),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // الصورة الشخصية
-                ProfileAvatarEditor(
-                  avatarImage: _avatarImage,
-                  onTap: _pickImage,
-                ),
-                const SizedBox(height: 32),
+    final profileState = context.watch<ParentProfileCubit>().state;
+    final isSaving = profileState is ParentProfileUpdateLoading;
+    final isLoading = profileState is ParentProfileLoading;
 
-                _FieldLabel('الاسم بالكامل'),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: AppTheme.inputDecoration(
-                    context,
-                    hintText: 'أدخل اسمك الكامل',
-                    prefixIcon: Icon(
-                      Icons.person_outline_rounded,
-                      color: context.primaryColor,
-                    ),
-                  ),
-                  validator: (val) =>
-                      val == null || val.isEmpty ? 'يرجى إدخال الاسم' : null,
-                ),
-                const SizedBox(height: 20),
-
-                _FieldLabel('رقم الهاتف الأساسي'),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: AppTheme.inputDecoration(
-                    context,
-                    hintText: 'أدخل رقم الهاتف الأساسي',
-                    prefixIcon: Icon(
-                      Icons.phone_rounded,
-                      color: context.primaryColor,
-                    ),
-                  ),
-                  validator: (val) => val == null || val.isEmpty
-                      ? 'يرجى إدخال رقم الهاتف'
-                      : null,
-                ),
-                const SizedBox(height: 20),
-
-                _FieldLabel('رقم هاتف الاحتياط'),
-                TextFormField(
-                  controller: _backupPhoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: AppTheme.inputDecoration(
-                    context,
-                    hintText: 'أدخل رقم هاتف الاحتياط',
-                    prefixIcon: Icon(
-                      Icons.phone_android_rounded,
-                      color: context.primaryColor,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                _FieldLabel('البريد الإلكتروني'),
-                ProfileEmailField(
-                  controller: _emailController,
-                  isVerified: _isEmailVerified,
-                  showVerifyButton: _showVerificationOption,
-                  onVerified: (email) => setState(() {
-                    _isEmailVerified = true;
-                    _originalEmail = email;
-                    _showVerificationOption = false;
-                  }),
-                ),
-                const SizedBox(height: 40),
-
-                PrimaryButton(
-                  label: 'حفظ التغييرات',
-                  onPressed: _saveProfile,
-                  borderRadius: 30,
-                ),
-              ],
+    return BlocListener<ParentProfileCubit, ParentProfileState>(
+      listener: (context, state) {
+        if (state is ParentProfileLoaded) {
+          setState(() {
+            _nameController.text = state.parent.fullName;
+            _phoneController.text = state.parent.phoneNumber;
+            _backupPhoneController.text = state.parent.alternativePhone ?? '';
+            _originalEmail = state.parent.email;
+            _emailController.text = state.parent.email;
+            _isEmailVerified = !state.parent.emailChangePending;
+            _showVerificationOption = state.parent.emailChangePending;
+          });
+        } else if (state is ParentProfileSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: context.successColor,
             ),
+          );
+          if (state.parent.emailChangePending) {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('تفعيل البريد الإلكتروني'),
+                content: const Text(
+                  'تم إرسال رسالة إلى بريدك الإلكتروني الجديد، يرجى فتح البريد والضغط على رابط التفعيل خلال 30 دقيقة.',
+                  style: TextStyle(height: 1.5),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('حسناً'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            Navigator.pop(context);
+          }
+        } else if (state is ParentProfileError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: context.errorColor,
+            ),
+          );
+        }
+      },
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: context.scaffoldBackgroundColor,
+          appBar: const AppPrimaryAppBar(title: 'تعديل الملف الشخصي'),
+          body: Column(
+            children: [
+              if (isLoading) const LinearProgressIndicator(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // الصورة الشخصية
+                        ProfileAvatarEditor(
+                          avatarImage: _avatarImage,
+                          onTap: _pickImage,
+                        ),
+                        const SizedBox(height: 32),
+
+                        _FieldLabel('الاسم بالكامل'),
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: AppTheme.inputDecoration(
+                            context,
+                            hintText: 'أدخل اسمك الكامل',
+                            prefixIcon: Icon(
+                              Icons.person_outline_rounded,
+                              color: context.primaryColor,
+                            ),
+                          ),
+                          validator: (val) =>
+                              val == null || val.isEmpty ? 'يرجى إدخال الاسم' : null,
+                        ),
+                        const SizedBox(height: 20),
+
+                        _FieldLabel('رقم الهاتف الأساسي'),
+                        TextFormField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: AppTheme.inputDecoration(
+                            context,
+                            hintText: 'أدخل رقم الهاتف الأساسي',
+                            prefixIcon: Icon(
+                              Icons.phone_rounded,
+                              color: context.primaryColor,
+                            ),
+                          ),
+                          validator: (val) => val == null || val.isEmpty
+                              ? 'يرجى إدخال رقم الهاتف'
+                              : null,
+                        ),
+                        const SizedBox(height: 20),
+
+                        _FieldLabel('رقم هاتف الاحتياط'),
+                        TextFormField(
+                          controller: _backupPhoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: AppTheme.inputDecoration(
+                            context,
+                            hintText: 'أدخل رقم هاتف الاحتياط',
+                            prefixIcon: Icon(
+                              Icons.phone_android_rounded,
+                              color: context.primaryColor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        _FieldLabel('البريد الإلكتروني'),
+                        ProfileEmailField(
+                          controller: _emailController,
+                          isVerified: _isEmailVerified,
+                          showVerifyButton: _showVerificationOption,
+                          onVerified: (email) => setState(() {
+                            _isEmailVerified = true;
+                            _originalEmail = email;
+                            _showVerificationOption = false;
+                          }),
+                        ),
+                        const SizedBox(height: 40),
+
+                        PrimaryButton(
+                          label: isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات',
+                          onPressed: isSaving ? null : _saveProfile,
+                          borderRadius: 30,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

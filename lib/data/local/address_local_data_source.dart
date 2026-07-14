@@ -5,7 +5,8 @@ abstract class AddressLocalDataSource {
   Future<List<AddressModel>> getCachedAddresses();
   Future<void> cacheAddresses(List<AddressModel> addresses);
   Future<void> cacheAddress(AddressModel address);
-  Future<void> removeCachedAddress(int addressId);
+  Future<void> updateCachedAddress(AddressModel address);
+  Future<void> removeCachedAddress(String addressId);
   Future<void> clearCache();
 }
 
@@ -17,7 +18,11 @@ class AddressLocalDataSourceImpl implements AddressLocalDataSource {
     for (var key in box.keys) {
       final value = box.get(key);
       if (value is Map) {
+        // إرفاق الحقل id في الـ JSON المُخزّن مؤقتاً بالاعتماد على المفتاح
         final Map<String, dynamic> jsonMap = Map<String, dynamic>.from(value);
+        if (!jsonMap.containsKey('id') && key is String) {
+          jsonMap['id'] = key;
+        }
         list.add(AddressModel.fromJson(jsonMap));
       }
     }
@@ -44,7 +49,12 @@ class AddressLocalDataSourceImpl implements AddressLocalDataSource {
   }
 
   @override
-  Future<void> removeCachedAddress(int addressId) async {
+  Future<void> updateCachedAddress(AddressModel address) async {
+    await cacheAddress(address);
+  }
+
+  @override
+  Future<void> removeCachedAddress(String addressId) async {
     final box = HiveHelper.addressesBox;
     await box.delete(addressId);
   }

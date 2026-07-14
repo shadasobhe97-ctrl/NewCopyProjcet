@@ -45,4 +45,13 @@ class ApiEndpoints {
   // مسار البحث عن السائقين وإرسال طلبات الاشتراك
   static const String parentDriversSearch = 'parent/drivers/search';
   static const String parentSubscriptions = 'parent';
+
+  //=========================================
+  // Profile Endpoints (الملف الشخصي)
+  //=========================================
+  static const String parentProfile = 'parent/profile';
+  static const String parentProfileUpdate = 'parent/profile/update';
+
+  static const String driverProfile = 'v1/driver/profile';
+  static const String driverProfileUpdate = 'v1/driver/profile/update';
 }

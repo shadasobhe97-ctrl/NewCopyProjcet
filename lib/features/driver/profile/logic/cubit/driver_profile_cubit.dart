@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/repositories/driver_profile_repository.dart';
 import 'driver_profile_state.dart';
@@ -25,6 +26,7 @@ class DriverProfileCubit extends Cubit<DriverProfileState> {
     required String phoneNumber,
     String? alternativePhone,
     String? email,
+    File? avatarFile,
   }) async {
     // إذا كنا في حالة العرض السابقة، نمرر البيانات الحالية للـ Loading حتى لا تظهر شاشة بيضاء فارغة
     if (state is DriverProfileLoaded) {
@@ -38,6 +40,7 @@ class DriverProfileCubit extends Cubit<DriverProfileState> {
         phoneNumber: phoneNumber,
         alternativePhone: alternativePhone,
         email: email,
+        avatarFile: avatarFile,
       );
 
       // إطلاق حالة النجاح لإظهار الـ SnackBar وقفل وضع التعديل في الواجهة

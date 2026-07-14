@@ -1,8 +1,7 @@
 import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/features/parent/addresses/data/datasources/address_remote_data_source.dart';
 import 'package:kids_transport/features/parent/addresses/data/models/address_model.dart';
-
-import '../../../../../data/local/address_local_data_source.dart';
+import 'package:kids_transport/data/local/address_local_data_source.dart';
 
 class AddressRepository {
   final AddressRemoteDataSource _dataSource;
@@ -13,9 +12,22 @@ class AddressRepository {
     AddressLocalDataSource? localDataSource,
   ]) : _localDataSource = localDataSource ?? AddressLocalDataSourceImpl();
 
+  /// جلب العناوين المخزنة محلياً من كاش Hive
+  Future<(List<AddressModel>?, String?)> getCachedAddresses() async {
+    try {
+      final cached = await _localDataSource.getCachedAddresses();
+      return (cached, null);
+    } catch (_) {
+      return (null, 'تعذر تحميل العناوين المخزنة محلياً');
+    }
+  }
+
+  /// جلب العناوين من السيرفر وتحديث الكاش المحلي
   Future<(List<AddressModel>?, String?)> getAddresses() async {
     try {
       final addresses = await _dataSource.getAddresses();
+      // تحديث كاش Hive بالكامل بعد النجاح
+      await _localDataSource.cacheAddresses(addresses);
       return (addresses, null);
     } on ApiException catch (e) {
       return (null, e.message);
@@ -24,9 +36,19 @@ class AddressRepository {
     }
   }
 
+  /// إضافة عنوان جديد (API أولاً ثم التحديث في الكاش)
   Future<(bool, String)> addAddress(AddressModel address) async {
     try {
       final message = await _dataSource.addAddress(address);
+      
+      // جلب العناوين المحدثة من السيرفر للحصول على العنوان الجديد مع معرفه (ID) المُولد وتحديث الكاش
+      try {
+        final latestAddresses = await _dataSource.getAddresses();
+        await _localDataSource.cacheAddresses(latestAddresses);
+      } catch (_) {
+        // في حال فشل تحديث الكاش الفرعي، لا نوقف عملية نجاح الإضافة الأساسية
+      }
+
       return (true, message);
     } on ApiException catch (e) {
       return (false, e.message);
@@ -35,9 +57,14 @@ class AddressRepository {
     }
   }
 
+  /// تعديل عنوان (API أولاً ثم الكاش)
   Future<(bool, String)> updateAddress(AddressModel address) async {
     try {
       final message = await _dataSource.updateAddress(address);
+      
+      // تحديث العنصر في الكاش المحلي بالـ ID
+      await _localDataSource.updateCachedAddress(address);
+      
       return (true, message);
     } on ApiException catch (e) {
       return (false, e.message);
@@ -46,9 +73,14 @@ class AddressRepository {
     }
   }
 
+  /// حذف عنوان (API أولاً ثم الكاش)
   Future<(bool, String)> deleteAddress(String id) async {
     try {
       final message = await _dataSource.deleteAddress(id);
+      
+      // حذف العنصر من الكاش المحلي بالـ ID
+      await _localDataSource.removeCachedAddress(id);
+      
       return (true, message);
     } on ApiException catch (e) {
       return (false, e.message);

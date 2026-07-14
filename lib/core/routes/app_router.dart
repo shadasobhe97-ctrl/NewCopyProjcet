@@ -55,6 +55,8 @@ import 'package:kids_transport/features/parent/dashboard/presentation/screens/pa
 import 'package:kids_transport/features/parent/home/presentation/screens/parent_home_screen.dart';
 import 'package:kids_transport/features/parent/profile/presentation/screens/parent_profile_screen.dart';
 import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscription_details_screen.dart';
+import 'package:kids_transport/core/di/dependency_injection.dart';
+import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profile_cubit.dart';
 
 
 class AppRoutes {
@@ -177,7 +179,13 @@ class AppRoutes {
       case parentHomeLegacy:
         return _route(settings, const ParentHomeScreen());
       case parentProfile:
-        return _route(settings, const ParentProfileScreen());
+        return _route(
+          settings,
+          BlocProvider(
+            create: (context) => getIt<ParentProfileCubit>(),
+            child: const ParentProfileScreen(),
+          ),
+        );
       case savedAddresses:
         return _route(settings, const SavedAddressesScreen());
       case myChildren:

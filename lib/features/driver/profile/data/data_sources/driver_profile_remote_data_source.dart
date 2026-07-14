@@ -1,10 +1,11 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
-// عدلي المسار حسب مجلد الـ core عندكِ
 import 'package:kids_transport/core/network/api_endpoints.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import '../models/driver_model.dart';
 
 class DriverProfileRemoteDataSource {
-  final Dio dio; // تغيير النوع من http.Client إلى Dio
+  final Dio dio;
 
   DriverProfileRemoteDataSource({required this.dio});
 
@@ -12,17 +13,17 @@ class DriverProfileRemoteDataSource {
   Future<DriverModel> getDriverProfile() async {
     try {
       final response = await dio.get(
-        '${ApiEndpoints.baseUrl}driver/profile',
+        '${ApiEndpoints.baseUrl}${ApiEndpoints.driverProfile}',
         options: Options(
           headers: {
             'Accept': 'application/json',
-            // 'Authorization': 'Bearer YOUR_TOKEN_HERE', // مرري التوكن هنا لو المسار محمي
+            if (StorageService.getToken() != null)
+              'Authorization': StorageService.getAuthorizationHeader(),
           },
         ),
       );
 
       if (response.statusCode == 200) {
-        // Dio يقوم بعمل الـ decode تلقائياً، نستخدم response.data مباشرة
         return DriverModel.fromJson(response.data['data']);
       } else {
         throw Exception('فشل في جلب بيانات الحساب من السيرفر');
@@ -34,35 +35,47 @@ class DriverProfileRemoteDataSource {
     }
   }
 
-  // 2. تحديث البيانات الشخصية والمظهر (POST)
+  // 2. تحديث البيانات الشخصية والمظهر (POST) باستخدام Multipart/FormData
   Future<DriverModel> updateDriverProfile({
     required String fullName,
     required String phoneNumber,
     String? alternativePhone,
     String? email,
+    File? avatarFile,
   }) async {
     try {
+      final Map<String, dynamic> dataMap = {
+        'full_name': fullName,
+        'phone_number': phoneNumber,
+        if (alternativePhone != null) 'alternative_phone': alternativePhone,
+        if (email != null) 'email': email,
+      };
+
+      if (avatarFile != null) {
+        final fileName = avatarFile.path.split('/').last;
+        dataMap['avatar'] = await MultipartFile.fromFile(
+          avatarFile.path,
+          filename: fileName,
+        );
+      }
+
+      final formData = FormData.fromMap(dataMap);
+
       final response = await dio.post(
-        '${ApiEndpoints.baseUrl}profile/update',
+        '${ApiEndpoints.baseUrl}${ApiEndpoints.driverProfileUpdate}',
         options: Options(
           headers: {
             'Accept': 'application/json',
-            // 'Authorization': 'Bearer YOUR_TOKEN_HERE',
+            if (StorageService.getToken() != null)
+              'Authorization': StorageService.getAuthorizationHeader(),
           },
         ),
-        // في Dio نمرر الخريطة (Map) مباشرة إلى data بدون jsonEncode
-        data: {
-          'full_name': fullName,
-          'phone_number': phoneNumber,
-          'alternative_phone': alternativePhone,
-          'email': email,
-        },
+        data: formData,
       );
 
       if (response.statusCode == 200) {
         return DriverModel.fromJson(response.data['data']);
-      }
-      {
+      } else {
         final errorMsg = response.data['message'] ?? 'فشل في تحديث البيانات';
         throw Exception(errorMsg);
       }

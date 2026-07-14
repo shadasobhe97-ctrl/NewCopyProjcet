@@ -10,19 +10,34 @@ class AddressCubit extends Cubit<AddressState> {
 
   AddressCubit(this._repository) : super(AddressInitial());
 
-  /// تحميل جميع العناوين
+  /// تحميل جميع العناوين (استراتيجية Cache-First)
   Future<void> loadAddresses() async {
-    emit(AddressLoading());
-    final (addresses, error) = await _repository.getAddresses();
+    // 1. قراءة البيانات من Hive أولاً وعرضها مباشرة
+    final (cachedAddresses, _) = await _repository.getCachedAddresses();
+    if (cachedAddresses != null && cachedAddresses.isNotEmpty) {
+      _addresses = cachedAddresses;
+      emit(AddressLoaded(List.from(_addresses)));
+    } else {
+      // إذا لم يكن هناك كاش محلي، نظهر مؤشر التحميل الكامل للشاشة
+      emit(AddressLoading());
+    }
+
+    // 2. طلب أحدث البيانات من Laravel API
+    final (remoteAddresses, error) = await _repository.getAddresses();
     if (error != null) {
-      emit(AddressError(error));
+      // إذا فشل الطلب وكان هناك كاش معروض، نبقى على حالة الاستقرار ولا نعرض شاشة خطأ كاملة
+      if (_addresses.isEmpty) {
+        emit(AddressError(error));
+      }
       return;
     }
-    _addresses = addresses ?? [];
+
+    // 3. تحديث البيانات والحالة عند نجاح الطلب
+    _addresses = remoteAddresses ?? [];
     if (_addresses.isEmpty) {
       emit(AddressEmpty());
     } else {
-      emit(AddressLoaded(_addresses));
+      emit(AddressLoaded(List.from(_addresses)));
     }
   }
 
@@ -34,7 +49,7 @@ class AddressCubit extends Cubit<AddressState> {
       emit(AddressActionError(List.from(_addresses), message));
       return;
     }
-    // إعادة تحميل القائمة من السيرفر بعد الإضافة
+    // تحديث القائمة من السيرفر بعد الإضافة
     await _refreshSilently(message);
   }
 
@@ -60,7 +75,7 @@ class AddressCubit extends Cubit<AddressState> {
     await _refreshSilently(message);
   }
 
-  /// إعادة تحميل القائمة بصمت وإرسال Success state
+  /// إعادة تحميل القائمة بصمت وإرسال Success state ثم الاستقرار
   Future<void> _refreshSilently(String successMessage) async {
     final (addresses, error) = await _repository.getAddresses();
     if (error != null) {
@@ -68,7 +83,10 @@ class AddressCubit extends Cubit<AddressState> {
       return;
     }
     _addresses = addresses ?? [];
+    // 1. إرسال حالة النجاح المؤقتة لعرض الـ SnackBar
     emit(AddressActionSuccess(List.from(_addresses), successMessage));
+    
+    // 2. التحقق من القائمة والانتقال فوراً لحالة الاستقرار المناسبة
     if (_addresses.isEmpty) {
       emit(AddressEmpty());
     } else {

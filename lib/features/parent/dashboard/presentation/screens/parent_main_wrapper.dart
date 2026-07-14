@@ -9,6 +9,7 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscriptions_screen.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 
 class ParentMainWrapper extends StatefulWidget {
   const ParentMainWrapper({super.key});
@@ -41,8 +42,8 @@ class _KeepAliveWrapperState extends State<_KeepAliveWrapper>
 class _ParentMainWrapperState extends State<ParentMainWrapper> {
   int _selectedIndex = 0;
 
-  // محاكاة بيانات المستخدم (تُستبدل بالـ Repository لاحقاً)
-  final String userName = "أسماء الفرجاني";
+  // قراءة الاسم ديناميكياً من التخزين المحلي
+  String get userName => StorageService.getFullName() ?? "ولي أمر";
   final String? userAvatarurl = null;
 
   late final List<Widget> _screens;
