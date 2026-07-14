@@ -18,11 +18,20 @@ class ChildrenRepository {
   Future<(List<ChildModel>?, String?)> getMyChildren() async {
     try {
       final children = await _dataSource.getChildren();
+      await _localDataSource.cacheChildren(children);
       return (children, null);
     } on ApiException catch (e) {
       return (null, e.message);
     } catch (_) {
       return (null, 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
+    }
+  }
+
+  Future<List<ChildModel>> getCachedChildren() async {
+    try {
+      return await _localDataSource.getCachedChildren();
+    } catch (_) {
+      return [];
     }
   }
 
@@ -42,6 +51,7 @@ class ChildrenRepository {
   Future<(ChildModel?, String)> addChild(ChildModel child, String? localImagePath) async {
     try {
       final (newChild, message) = await _dataSource.addChild(child, localImagePath);
+      await _localDataSource.cacheChild(newChild);
       return (newChild, message);
     } on ApiException catch (e) {
       return (null, e.message);
@@ -53,6 +63,7 @@ class ChildrenRepository {
   Future<(ChildModel?, String)> updateChild(ChildModel child, String? localImagePath) async {
     try {
       final (updatedChild, message) = await _dataSource.updateChild(child, localImagePath);
+      await _localDataSource.cacheChild(updatedChild);
       return (updatedChild, message);
     } on ApiException catch (e) {
       return (null, e.message);
@@ -64,6 +75,10 @@ class ChildrenRepository {
   Future<(bool, String)> deleteChild(String id) async {
     try {
       final message = await _dataSource.deleteChild(id);
+      final parsedId = int.tryParse(id);
+      if (parsedId != null) {
+        await _localDataSource.removeCachedChild(parsedId);
+      }
       return (true, message);
     } on ApiException catch (e) {
       return (false, e.message);

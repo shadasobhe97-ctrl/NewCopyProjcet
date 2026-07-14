@@ -12,9 +12,21 @@ class ChildrenCubit extends Cubit<ChildrenState> {
 
   Future<void> fetchChildren() async {
     emit(ChildrenLoading());
+
+    // 1. القراءة من كاش Hive المحلي أولاً
+    final cached = await _repository.getCachedChildren();
+    if (cached.isNotEmpty) {
+      emit(ChildrenLoaded(cached));
+    }
+
+    // 2. جلب أحدث البيانات من Laravel API
     final (children, error) = await _repository.getMyChildren();
     if (error != null) {
-      emit(ChildrenError(error));
+      if (state is ChildrenLoaded && (state as ChildrenLoaded).children.isNotEmpty) {
+        emit(ChildrenActionError((state as ChildrenLoaded).children, error));
+      } else {
+        emit(ChildrenError(error));
+      }
     } else {
       emit(ChildrenLoaded(children ?? []));
     }
