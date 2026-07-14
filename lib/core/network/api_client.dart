@@ -6,6 +6,8 @@ import 'api_exception.dart';
 class ApiClient {
   final Dio _dio;
 
+  Dio get dio => _dio;
+
   ApiClient()
     : _dio = Dio(
         BaseOptions(

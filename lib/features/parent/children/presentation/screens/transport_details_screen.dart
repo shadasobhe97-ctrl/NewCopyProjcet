@@ -4,6 +4,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/theme/text_styles.dart';
 import '../../../../../core/utils/theme_context.dart';
+import '../../../../../core/di/dependency_injection.dart';
 import '../../data/models/child_model.dart';
 import 'package:intl/intl.dart' as intl;
 import '../../logic/children_cubit/add_child_cubit.dart';
@@ -32,7 +33,7 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
 
   Future<void> _fetchSubscription() async {
     try {
-      final repo = context.read<ChildrenRepository>();
+      final repo = getIt<ChildrenRepository>();
       final (logistics, _) = await repo.getChildSubscription(widget.child.id.toString());
       if (mounted) {
         setState(() {

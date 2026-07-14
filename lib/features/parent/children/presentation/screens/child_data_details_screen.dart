@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/theme/text_styles.dart';
 import '../../../../../core/utils/theme_context.dart';
+import '../../../../../core/di/dependency_injection.dart';
 import '../../data/models/child_model.dart';
 import '../../data/repositories/children_repository.dart';
 import 'add_child_step1_screen.dart';
@@ -35,7 +35,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
       errorMessage = null;
     });
     try {
-      final repository = context.read<ChildrenRepository>();
+      final repository = getIt<ChildrenRepository>();
       final (result, error) = await repository.getChildDetails(widget.child.id.toString());
       if (mounted) {
         if (error != null) {

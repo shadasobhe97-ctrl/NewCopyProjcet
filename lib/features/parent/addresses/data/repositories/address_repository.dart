@@ -8,9 +8,9 @@ class AddressRepository {
   final AddressLocalDataSource _localDataSource;
 
   AddressRepository(
-    this._dataSource, [
-    AddressLocalDataSource? localDataSource,
-  ]) : _localDataSource = localDataSource ?? AddressLocalDataSourceImpl();
+    this._dataSource,
+    this._localDataSource,
+  );
 
   /// جلب العناوين المخزنة محلياً من كاش Hive
   Future<(List<AddressModel>?, String?)> getCachedAddresses() async {

@@ -8,8 +8,8 @@ import '../models/reset_password_request_model.dart';
 class AuthRemoteDataSource {
   final ApiClient _apiClient;
 
-  AuthRemoteDataSource({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+  AuthRemoteDataSource({required ApiClient apiClient})
+      : _apiClient = apiClient;
 
   Future<Map<String, dynamic>> login(LoginRequestModel request) async {
     final response = await _apiClient.post(

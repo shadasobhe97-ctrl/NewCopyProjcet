@@ -10,8 +10,7 @@ import '../models/reset_password_request_model.dart';
 class AuthRepository {
   final AuthRemoteDataSource _dataSource;
 
-  AuthRepository({AuthRemoteDataSource? dataSource})
-      : _dataSource = dataSource ?? AuthRemoteDataSource();
+  AuthRepository(this._dataSource);
 
   Future<LoginResponseModel> login(LoginRequestModel request) async {
     final responseData = await _dataSource.login(request);

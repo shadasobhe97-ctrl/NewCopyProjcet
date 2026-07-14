@@ -11,9 +11,9 @@ class ChildrenRepository {
   final ChildrenLocalDataSource _localDataSource;
 
   ChildrenRepository(
-    this._dataSource, [
-    ChildrenLocalDataSource? localDataSource,
-  ]) : _localDataSource = localDataSource ?? ChildrenLocalDataSourceImpl();
+    this._dataSource,
+    this._localDataSource,
+  );
 
   Future<(List<ChildModel>?, String?)> getMyChildren() async {
     try {

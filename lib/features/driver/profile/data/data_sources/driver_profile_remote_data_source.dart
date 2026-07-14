@@ -1,26 +1,25 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
 import '../models/driver_model.dart';
 
 class DriverProfileRemoteDataSource {
-  final Dio dio;
+  final ApiClient apiClient;
 
-  DriverProfileRemoteDataSource({required this.dio});
+  DriverProfileRemoteDataSource({required this.apiClient});
 
   // 1. جلب بيانات الملف الشخصي للسائق
   Future<DriverModel> getDriverProfile() async {
     try {
-      final response = await dio.get(
-        '${ApiEndpoints.baseUrl}${ApiEndpoints.driverProfile}',
-        options: Options(
-          headers: {
-            'Accept': 'application/json',
-            if (StorageService.getToken() != null)
-              'Authorization': StorageService.getAuthorizationHeader(),
-          },
-        ),
+      final response = await apiClient.get(
+        ApiEndpoints.driverProfile,
+        headers: {
+          'Accept': 'application/json',
+          if (StorageService.getToken() != null)
+            'Authorization': StorageService.getAuthorizationHeader(),
+        },
       );
 
       if (response.statusCode == 200) {
@@ -61,16 +60,14 @@ class DriverProfileRemoteDataSource {
 
       final formData = FormData.fromMap(dataMap);
 
-      final response = await dio.post(
-        '${ApiEndpoints.baseUrl}${ApiEndpoints.driverProfileUpdate}',
-        options: Options(
-          headers: {
-            'Accept': 'application/json',
-            if (StorageService.getToken() != null)
-              'Authorization': StorageService.getAuthorizationHeader(),
-          },
-        ),
+      final response = await apiClient.post(
+        ApiEndpoints.driverProfileUpdate,
         data: formData,
+        headers: {
+          'Accept': 'application/json',
+          if (StorageService.getToken() != null)
+            'Authorization': StorageService.getAuthorizationHeader(),
+        },
       );
 
       if (response.statusCode == 200) {

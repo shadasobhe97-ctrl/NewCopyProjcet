@@ -8,8 +8,8 @@ import '../models/driver_register_request.dart';
 class DriverRemoteDataSource {
   final ApiClient _apiClient;
 
-  DriverRemoteDataSource({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+  DriverRemoteDataSource({required ApiClient apiClient})
+      : _apiClient = apiClient;
 
   Future<Map<String, dynamic>> register(DriverRegisterRequest request) async {
     final Map<String, dynamic> dataMap = request.toJson();

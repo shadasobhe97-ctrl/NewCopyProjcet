@@ -10,14 +10,10 @@ import 'package:kids_transport/features/admin/logic/admin_auth_cubit.dart';
 import 'package:kids_transport/features/admin/logic/admin_dashboard_cubit.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
+import 'package:kids_transport/features/auth/login/data/repositories/auth_repository.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
-import 'package:kids_transport/core/network/api_client.dart';
-import 'package:kids_transport/features/parent/children/data/datasources/children_remote_data_source.dart';
-import 'package:kids_transport/features/parent/children/data/repositories/children_repository.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/add_child_cubit.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
-import 'package:kids_transport/features/parent/subscriptions/data/datasources/subscriptions_data_source.dart';
-import 'package:kids_transport/features/parent/subscriptions/data/repositories/subscriptions_repository.dart';
 import 'package:kids_transport/features/parent/subscriptions/logic/subscriptions_cubit/subscriptions_cubit.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
@@ -38,83 +34,68 @@ class TransportApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiRepositoryProvider(
+    return MultiBlocProvider(
       providers: [
-        RepositoryProvider<ChildrenRepository>(
-          create: (_) => ChildrenRepository(
-            ChildrenRemoteDataSource(ApiClient()),
-          ),
+        BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
+        BlocProvider<AuthCubit>(create: (_) => getIt<AuthCubit>()),
+        BlocProvider<AdminAuthCubit>(
+          create: (_) => AdminAuthCubit(getIt<AuthRepository>()),
         ),
-        RepositoryProvider<SubscriptionsRepository>(
-          create: (_) => SubscriptionsRepository(
-            SubscriptionsMockDataSourceImpl(),
-          ),
+        BlocProvider<AdminDashboardCubit>(
+          create: (_) => AdminDashboardCubit(),
+        ),
+        BlocProvider<AppEntryCubit>(
+          create: (_) => AppEntryCubit()..checkSession(),
+        ),
+        BlocProvider<RegisterCubit>(create: (_) => getIt<RegisterCubit>()),
+        BlocProvider<ChildrenCubit>(
+          create: (_) => getIt<ChildrenCubit>(),
+        ),
+        BlocProvider<AddChildCubit>(
+          create: (_) => getIt<AddChildCubit>(),
+        ),
+        BlocProvider<SubscriptionsCubit>(
+          create: (_) => getIt<SubscriptionsCubit>(),
+        ),
+        BlocProvider<SearchCubit>(
+          create: (_) => getIt<SearchCubit>(),
         ),
       ],
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
-          BlocProvider<AuthCubit>(create: (_) => AuthCubit()),
-          BlocProvider<AdminAuthCubit>(create: (_) => AdminAuthCubit()),
-          BlocProvider<AdminDashboardCubit>(
-            create: (_) => AdminDashboardCubit(),
-          ),
-          BlocProvider<AppEntryCubit>(
-            create: (_) => AppEntryCubit()..checkSession(),
-          ),
-          BlocProvider<RegisterCubit>(create: (_) => RegisterCubit()),
-          BlocProvider<ChildrenCubit>(
-            create: (context) =>
-                ChildrenCubit(context.read<ChildrenRepository>()),
-          ),
-          BlocProvider<AddChildCubit>(
-            create: (context) =>
-                AddChildCubit(context.read<ChildrenRepository>()),
-          ),
-          BlocProvider<SubscriptionsCubit>(
-            create: (context) =>
-                SubscriptionsCubit(context.read<SubscriptionsRepository>()),
-          ),
-          BlocProvider<SearchCubit>(
-            create: (_) => getIt<SearchCubit>(),
-          ),
-        ],
-        child: BlocBuilder<ThemeCubit, ThemeState>(
-          builder: (context, themeState) {
-            return ScreenUtilInit(
-              designSize: const Size(375, 812),
-              minTextAdapt: true,
-              splitScreenMode: true,
-              builder: (context, child) {
-                return MaterialApp(
-                  title: 'تطبيق دربي المدارس',
-                  debugShowCheckedModeBanner: false,
-                  locale: const Locale('ar', 'LY'),
-                  supportedLocales: const [Locale('ar', 'LY')],
-                  localizationsDelegates: const [
-                    GlobalMaterialLocalizations.delegate,
-                    GlobalWidgetsLocalizations.delegate,
-                    GlobalCupertinoLocalizations.delegate,
-                  ],
-                  // هذا السطر هو السر، هو الذي يجعل كل التطبيق RTL
-                  builder: (context, child) {
-                    return Directionality(
-                      textDirection: TextDirection.rtl,
-                      child: child!,
-                    );
-                  },
-                  theme: AppTheme.lightTheme,
-                  darkTheme: AppTheme.darkTheme,
-                  themeMode: themeState.isDarkMode
-                      ? ThemeMode.dark
-                      : ThemeMode.light,
-                  initialRoute: AppRoutes.getInitialRoute(),
-                  onGenerateRoute: AppRoutes.generateRoute,
-                );
-              },
-            );
-          },
-        ),
+      child: BlocBuilder<ThemeCubit, ThemeState>(
+        builder: (context, themeState) {
+          return ScreenUtilInit(
+            designSize: const Size(375, 812),
+            minTextAdapt: true,
+            splitScreenMode: true,
+            builder: (context, child) {
+              return MaterialApp(
+                title: 'تطبيق دربي المدارس',
+                debugShowCheckedModeBanner: false,
+                locale: const Locale('ar', 'LY'),
+                supportedLocales: const [Locale('ar', 'LY')],
+                localizationsDelegates: const [
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                // هذا السطر هو السر، هو الذي يجعل كل التطبيق RTL
+                builder: (context, child) {
+                  return Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: child!,
+                  );
+                },
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: themeState.isDarkMode
+                    ? ThemeMode.dark
+                    : ThemeMode.light,
+                initialRoute: AppRoutes.getInitialRoute(),
+                onGenerateRoute: AppRoutes.generateRoute,
+              );
+            },
+          );
+        },
       ),
     );
   }

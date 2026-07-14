@@ -6,8 +6,8 @@ import '../models/parent_register_request.dart';
 class ParentRemoteDataSource {
   final ApiClient _apiClient;
 
-  ParentRemoteDataSource({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+  ParentRemoteDataSource({required ApiClient apiClient})
+      : _apiClient = apiClient;
 
   /// POST /api/parent/send-otp
   /// يُستخدم لإرسال الـ OTP وأيضاً لإعادة إرسال الـ OTP (نفس الـ endpoint)

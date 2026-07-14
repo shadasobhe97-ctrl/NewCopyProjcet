@@ -12,9 +12,7 @@ export 'admin_auth_state.dart';
 class AdminAuthCubit extends Cubit<AdminAuthState> {
   final AuthRepository _repository;
 
-  AdminAuthCubit({AuthRepository? repository})
-      : _repository = repository ?? AuthRepository(),
-        super(_initialState());
+  AdminAuthCubit(this._repository) : super(_initialState());
 
   bool get isLoading => state.isLoading;
   String? get errorMessage => state.errorMessage;

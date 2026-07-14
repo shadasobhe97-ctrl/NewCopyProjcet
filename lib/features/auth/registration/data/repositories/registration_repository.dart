@@ -33,11 +33,10 @@ class RegistrationRepository {
   final DriverRemoteDataSource _driverDataSource;
   final ParentRemoteDataSource _parentDataSource;
 
-  RegistrationRepository({
-    DriverRemoteDataSource? driverDataSource,
-    ParentRemoteDataSource? parentDataSource,
-  })  : _driverDataSource = driverDataSource ?? DriverRemoteDataSource(),
-        _parentDataSource = parentDataSource ?? ParentRemoteDataSource();
+  RegistrationRepository(
+    this._driverDataSource,
+    this._parentDataSource,
+  );
 
   // ==================== Driver ====================
 

@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:kids_transport/features/admin/presentation/screens/admin_dashboard_screen.dart';
@@ -33,12 +32,10 @@ import 'package:kids_transport/features/auth/registration/presentation/screens/p
 import 'package:kids_transport/features/driver/dashboard/presentation/screens/driver_main_wrapper.dart';
 import 'package:kids_transport/features/driver/home/presentation/screens/driver_home_screen.dart';
 import 'package:kids_transport/features/driver/profile/presentation/screens/driver_profile_screen.dart';
-import 'package:kids_transport/features/driver/vehicles/presentation/screens/driver_backup_vehicle_screen.dart';
 import 'package:kids_transport/features/driver/vehicles/presentation/screens/driver_primary_vehicle_screen.dart';
+import 'package:kids_transport/features/driver/vehicles/logic/vehicle_cubit.dart';
 
 import 'package:kids_transport/features/driver/profile/logic/cubit/driver_profile_cubit.dart';
-import 'package:kids_transport/features/driver/profile/data/repositories/driver_profile_repository.dart';
-import 'package:kids_transport/features/driver/profile/data/data_sources/driver_profile_remote_data_source.dart';
 import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 import 'package:kids_transport/features/driver/driver_preferences/logic/driver_preferences_cubit.dart';
 import 'package:kids_transport/features/driver/driver_preferences/presentation/screens/driver_preferences_screen.dart';
@@ -241,16 +238,18 @@ class AppRoutes {
       /*case driverBackupVehicle:
         return _route(settings, const DriverBackupVehicleScreen());*/
       case driverPrimaryVehicle:
-        return _route(settings, const DriverPrimaryVehicleScreen());
+        return _route(
+          settings,
+          BlocProvider(
+            create: (_) => driverSl<VehicleCubit>(),
+            child: const DriverPrimaryVehicleScreen(),
+          ),
+        );
       case driverProfile:
         return _route(
           settings,
           BlocProvider(
-            create: (context) => DriverProfileCubit(
-              DriverProfileRepository(
-                remoteDataSource: DriverProfileRemoteDataSource(dio: Dio()),
-              ),
-            ),
+            create: (_) => driverSl<DriverProfileCubit>(),
             child: const DriverProfileScreen(),
           ),
         );

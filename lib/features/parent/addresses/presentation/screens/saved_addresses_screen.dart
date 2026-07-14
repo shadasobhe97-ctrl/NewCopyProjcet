@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:kids_transport/core/network/api_client.dart';
+import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/app_bars.dart';
 import 'package:kids_transport/core/widgets/empty_state_placeholder.dart';
-import 'package:kids_transport/features/parent/addresses/data/datasources/address_remote_data_source.dart';
 import 'package:kids_transport/features/parent/addresses/data/models/address_model.dart';
-import 'package:kids_transport/features/parent/addresses/data/repositories/address_repository.dart';
 import 'package:kids_transport/features/parent/addresses/logic/address_cubit/address_cubit.dart';
 import 'package:kids_transport/features/parent/addresses/logic/address_cubit/address_state.dart';
 import 'package:kids_transport/features/parent/addresses/presentation/widgets/add_address_sheet.dart';
@@ -20,11 +18,7 @@ class SavedAddressesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AddressCubit(
-        AddressRepository(
-          AddressRemoteDataSource(ApiClient()),
-        ),
-      )..loadAddresses(),
+      create: (_) => getIt<AddressCubit>()..loadAddresses(),
       child: const _SavedAddressesView(),
     );
   }

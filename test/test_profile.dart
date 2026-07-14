@@ -7,6 +7,7 @@ import 'package:kids_transport/features/parent/children/data/models/child_model.
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
 import 'package:kids_transport/features/parent/children/data/repositories/children_repository.dart';
 import 'package:kids_transport/features/parent/children/data/datasources/children_remote_data_source.dart';
+import 'package:kids_transport/data/local/children_local_data_source.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 
 void main() {
@@ -51,7 +52,7 @@ void main() {
     final kids = <ChildModel>[];
     final client = ApiClient();
     final dataSource = ChildrenRemoteDataSource(client);
-    final repo = ChildrenRepository(dataSource);
+    final repo = ChildrenRepository(dataSource, ChildrenLocalDataSourceImpl());
     final cubit = ChildrenCubit(repo);
 
     await tester.pumpWidget(MaterialApp(

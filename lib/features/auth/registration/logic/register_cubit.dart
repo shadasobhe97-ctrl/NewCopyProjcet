@@ -10,9 +10,7 @@ import 'register_state.dart';
 class RegisterCubit extends Cubit<RegisterState> {
   final RegistrationRepository _repository;
 
-  RegisterCubit({RegistrationRepository? repository})
-    : _repository = repository ?? RegistrationRepository(),
-      super(RegisterInitial());
+  RegisterCubit(this._repository) : super(RegisterInitial());
 
   // --- [المخزن المؤقت لتجميع بيانات الشاشات محلياً] ---
   String? selectedRole; // 'parent' أو 'driver'

@@ -10,9 +10,7 @@ import 'auth_state.dart';
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _repository;
 
-  AuthCubit({AuthRepository? repository})
-      : _repository = repository ?? AuthRepository(),
-        super(AuthInitial());
+  AuthCubit(this._repository) : super(AuthInitial());
 
   bool isPasswordObscured = true;
 

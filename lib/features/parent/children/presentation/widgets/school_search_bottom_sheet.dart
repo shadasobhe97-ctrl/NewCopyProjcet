@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/text_styles.dart';
 import '../../../../../core/utils/theme_context.dart';
+import '../../../../../core/di/dependency_injection.dart';
 import '../../data/models/school_model.dart';
 import '../../data/repositories/children_repository.dart';
 
@@ -37,7 +37,7 @@ class _SchoolSearchBottomSheetState extends State<SchoolSearchBottomSheet> {
   Future<void> _fetchSchools(String query) async {
     setState(() => _isLoading = true);
     try {
-      final repository = context.read<ChildrenRepository>();
+      final repository = getIt<ChildrenRepository>();
       final (results, error) = await repository.searchSchools(query);
       setState(() {
         _schools = results ?? [];
