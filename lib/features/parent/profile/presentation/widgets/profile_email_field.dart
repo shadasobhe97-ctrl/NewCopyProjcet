@@ -47,13 +47,14 @@ class _ProfileEmailFieldState extends State<ProfileEmailField> {
           backgroundColor: Theme.of(dialogContext).cardTheme.color,
           title: Row(
             children: [
-              Icon(Icons.email_outlined,
-                  color: context.primaryColor, size: 22),
+              Icon(Icons.email_outlined, color: context.primaryColor, size: 22),
               const SizedBox(width: 8),
               Text(
                 'تغيير البريد الإلكتروني',
                 style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold, fontSize: 16),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ],
           ),
@@ -107,8 +108,9 @@ class _ProfileEmailFieldState extends State<ProfileEmailField> {
                     if (val == null || val.trim().isEmpty) {
                       return 'يرجى إدخال البريد الإلكتروني';
                     }
-                    if (!RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$')
-                        .hasMatch(val.trim())) {
+                    if (!RegExp(
+                      r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$',
+                    ).hasMatch(val.trim())) {
                       return 'يرجى إدخال بريد إلكتروني صالح';
                     }
                     if (val.trim() == widget.currentEmail) {
@@ -129,8 +131,11 @@ class _ProfileEmailFieldState extends State<ProfileEmailField> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline_rounded,
-                          color: context.primaryColor, size: 16),
+                      Icon(
+                        Icons.info_outline_rounded,
+                        color: context.primaryColor,
+                        size: 16,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -296,11 +301,7 @@ class _ProfileEmailFieldState extends State<ProfileEmailField> {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.email_outlined,
-            color: context.primaryColor,
-            size: 20,
-          ),
+          Icon(Icons.email_outlined, color: context.primaryColor, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

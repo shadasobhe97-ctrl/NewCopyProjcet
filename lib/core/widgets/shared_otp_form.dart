@@ -56,9 +56,11 @@ class _SharedOtpFormState extends State<SharedOtpForm> {
     super.initState();
     _startTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _otpFocusNode.requestFocus();
-      }
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _otpFocusNode.requestFocus();
+        }
+      });
     });
   }
 

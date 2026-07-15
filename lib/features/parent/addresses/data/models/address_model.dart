@@ -19,12 +19,35 @@ class AddressModel {
   double get longitude => lng;
 
   factory AddressModel.fromJson(Map<String, dynamic> json) {
+    final rawLat = json['lat'] ?? json['latitude'];
+    final rawLng = json['lng'] ?? json['longitude'];
+    
+    double parsedLat = 0.0;
+    if (rawLat != null) {
+      if (rawLat is num) {
+        parsedLat = rawLat.toDouble();
+      } else {
+        parsedLat = double.tryParse(rawLat.toString()) ?? 0.0;
+      }
+    }
+
+    double parsedLng = 0.0;
+    if (rawLng != null) {
+      if (rawLng is num) {
+        parsedLng = rawLng.toDouble();
+      } else {
+        parsedLng = double.tryParse(rawLng.toString()) ?? 0.0;
+      }
+    }
+
     return AddressModel(
       id: json['id']?.toString(),
-      label: json['label'] as String? ?? '',
-      lat: (json['lat'] as num).toDouble(),
-      lng: (json['lng'] as num).toDouble(),
-      isDefault: (json['is_default'] as bool?) ?? false,
+      label: json['label'] as String? ?? json['title'] as String? ?? '',
+      lat: parsedLat,
+      lng: parsedLng,
+      isDefault: json['is_default'] == true ||
+          json['is_default'] == 1 ||
+          json['is_default'] == '1',
     );
   }
 

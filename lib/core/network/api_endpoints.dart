@@ -54,5 +54,4 @@ class ApiEndpoints {
   static const String parentRequests = 'parent/requests';
   static String parentRequestDetail(int id) => 'parent/requests/$id';
   static String parentRequestDelete(int id) => 'parent/$id';
-  static const String parentSubscriptionCreate = 'parent/requests';
 }

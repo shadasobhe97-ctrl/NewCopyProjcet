@@ -13,10 +13,10 @@ class SchoolModel {
 
   factory SchoolModel.fromJson(Map<String, dynamic> json) {
     return SchoolModel(
-      id: json['id'],
-      name: json['name'],
-      region: json['region'],
-      address: json['address'],
+      id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      name: json['name']?.toString() ?? '',
+      region: json['region']?.toString() ?? '',
+      address: json['address']?.toString() ?? '',
     );
   }
 }

@@ -42,13 +42,15 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) return;
       }
-      
+
       if (permission == LocationPermission.deniedForever) return;
 
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
-      
+
       if (mounted) {
         setState(() {
           _currentCenter = LatLng(position.latitude, position.longitude);
@@ -223,7 +225,8 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
                       TextFormField(
                         controller: _labelController,
                         textAlign: TextAlign.right,
-                        decoration: AppTheme.inputDecoration(context, 
+                        decoration: AppTheme.inputDecoration(
+                          context,
                           labelText: "تسمية الموقع (مثال: منزلي، بيت الجدة)",
                           prefixIcon: Icon(Icons.label_outline_rounded),
                         ),
@@ -232,9 +235,7 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
 
                       // خيار الموقع الأساسي
                       CheckboxListTile(
-                        title: Text(
-                          "تعيين هذا الموقع كموقع منزلي الأساسي",
-                        ),
+                        title: Text("تعيين هذا الموقع كموقع منزلي الأساسي"),
                         value: _isDefaultLocation,
                         controlAffinity: ListTileControlAffinity.leading,
                         activeColor: theme.primaryColor,
