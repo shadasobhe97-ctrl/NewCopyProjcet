@@ -112,5 +112,6 @@ class StorageService {
     return _prefs.setBool(_isPreferencesSetKey, value);
   }
 
-  static bool getIsPreferencesSet() => _prefs.getBool(_isPreferencesSetKey) ?? false;
+  static bool getIsPreferencesSet() =>
+      _prefs.getBool(_isPreferencesSetKey) ?? false;
 }

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
@@ -268,13 +269,31 @@ class _DriverDrawerHeader extends StatelessWidget {
                     child: CircleAvatar(
                       radius: 38,
                       backgroundColor: AppColors.white24,
-                      child: driver.avatarUrl == null
-                          ? const Icon(
+                      child: driver.avatarUrl != null &&
+                              driver.avatarUrl!.isNotEmpty
+                          ? ClipOval(
+                              child: CachedNetworkImage(
+                                imageUrl: driver.avatarUrl!,
+                                width: 76,
+                                height: 76,
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) => const Icon(
+                                  Icons.person_rounded,
+                                  color: AppColors.white,
+                                  size: 36,
+                                ),
+                                errorWidget: (_, __, ___) => const Icon(
+                                  Icons.person_rounded,
+                                  color: AppColors.white,
+                                  size: 36,
+                                ),
+                              ),
+                            )
+                          : const Icon(
                               Icons.person_rounded,
                               color: AppColors.white,
                               size: 36,
-                            )
-                          : null,
+                            ),
                     ),
                   ),
 

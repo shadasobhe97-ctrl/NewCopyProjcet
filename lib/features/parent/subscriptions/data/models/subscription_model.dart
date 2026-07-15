@@ -1,3 +1,4 @@
+// نموذج قائمة الاشتراكات - GET /parent/subscriptions
 class SubscriptionModel {
   final int id;
   final SubscriptionDriver driver;
@@ -9,6 +10,7 @@ class SubscriptionModel {
   final String startDate;
   final String endDate;
   final double totalPrice;
+  final double? pricePerChild;
   final String timing;
   final String direction;
   final String? notes;
@@ -25,6 +27,7 @@ class SubscriptionModel {
     required this.startDate,
     required this.endDate,
     required this.totalPrice,
+    this.pricePerChild,
     required this.timing,
     required this.direction,
     this.notes,
@@ -35,8 +38,12 @@ class SubscriptionModel {
     var childrenList = json['children'] as List? ?? [];
     return SubscriptionModel(
       id: json['id'] as int? ?? 0,
-      driver: SubscriptionDriver.fromJson(json['driver'] as Map<String, dynamic>? ?? {}),
-      children: childrenList.map((e) => SubscriptionChild.fromJson(e as Map<String, dynamic>)).toList(),
+      driver: SubscriptionDriver.fromJson(
+        json['driver'] as Map<String, dynamic>? ?? {},
+      ),
+      children: childrenList
+          .map((e) => SubscriptionChild.fromJson(e as Map<String, dynamic>))
+          .toList(),
       childrenCount: json['children_count'] as int? ?? childrenList.length,
       subscriptionType: json['subscription_type'] as String? ?? 'monthly',
       status: json['status'] as String? ?? 'pending',
@@ -44,6 +51,7 @@ class SubscriptionModel {
       startDate: json['start_date'] as String? ?? '',
       endDate: json['end_date'] as String? ?? '',
       totalPrice: (json['total_price'] as num?)?.toDouble() ?? 0.0,
+      pricePerChild: (json['price_per_child'] as num?)?.toDouble(),
       timing: json['timing'] as String? ?? '',
       direction: json['direction'] as String? ?? '',
       notes: json['notes'] as String?,
@@ -63,10 +71,11 @@ class SubscriptionModel {
       'start_date': startDate,
       'end_date': endDate,
       'total_price': totalPrice,
+      if (pricePerChild != null) 'price_per_child': pricePerChild,
       'timing': timing,
       'direction': direction,
-      'notes': notes,
-      'rejection_reason': rejectionReason,
+      if (notes != null) 'notes': notes,
+      if (rejectionReason != null) 'rejection_reason': rejectionReason,
     };
   }
 }
@@ -75,12 +84,18 @@ class SubscriptionDriver {
   final int id;
   final String? phone;
   final double rating;
+  final int? tripCount;
+  final int? subscriptionCount;
+  final String? gender;
   final SubscriptionUser user;
 
   const SubscriptionDriver({
     required this.id,
     this.phone,
     required this.rating,
+    this.tripCount,
+    this.subscriptionCount,
+    this.gender,
     required this.user,
   });
 
@@ -89,7 +104,14 @@ class SubscriptionDriver {
       id: json['id'] as int? ?? 0,
       phone: json['phone'] as String?,
       rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
-      user: SubscriptionUser.fromJson(json['user'] as Map<String, dynamic>? ?? {}),
+      tripCount: json['trip_count'] as int? ?? json['trips_count'] as int?,
+      subscriptionCount:
+          json['subscription_count'] as int? ??
+          json['subscriptions_count'] as int?,
+      gender: json['gender'] as String?,
+      user: SubscriptionUser.fromJson(
+        json['user'] as Map<String, dynamic>? ?? {},
+      ),
     );
   }
 
@@ -98,6 +120,9 @@ class SubscriptionDriver {
       'id': id,
       if (phone != null) 'phone': phone,
       'rating': rating,
+      if (tripCount != null) 'trip_count': tripCount,
+      if (subscriptionCount != null) 'subscription_count': subscriptionCount,
+      if (gender != null) 'gender': gender,
       'user': user.toJson(),
     };
   }
@@ -107,14 +132,11 @@ class SubscriptionUser {
   final String fullName;
   final String? avatarUrl;
 
-  const SubscriptionUser({
-    required this.fullName,
-    this.avatarUrl,
-  });
+  const SubscriptionUser({required this.fullName, this.avatarUrl});
 
   factory SubscriptionUser.fromJson(Map<String, dynamic> json) {
     return SubscriptionUser(
-      fullName: json['full_name'] as String? ?? '',
+      fullName: json['full_name'] as String? ?? json['name'] as String? ?? '',
       avatarUrl: json['avatar_url'] as String?,
     );
   }
@@ -148,7 +170,9 @@ class SubscriptionChild {
       fullName: json['full_name'] as String? ?? json['name'] as String? ?? '',
       photoUrl: json['photo_url'] as String? ?? json['image'] as String?,
       grade: (json['grade'] ?? json['grade_level'] ?? 'ابتدائي').toString(),
-      school: SubscriptionSchool.fromJson(json['school'] as Map<String, dynamic>? ?? {}),
+      school: SubscriptionSchool.fromJson(
+        json['school'] as Map<String, dynamic>? ?? {},
+      ),
     );
   }
 
@@ -165,20 +189,18 @@ class SubscriptionChild {
 
 class SubscriptionSchool {
   final String name;
+  final String? address;
 
-  const SubscriptionSchool({
-    required this.name,
-  });
+  const SubscriptionSchool({required this.name, this.address});
 
   factory SubscriptionSchool.fromJson(Map<String, dynamic> json) {
     return SubscriptionSchool(
       name: json['name'] as String? ?? '',
+      address: json['address'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-    };
+    return {'name': name, if (address != null) 'address': address};
   }
 }
