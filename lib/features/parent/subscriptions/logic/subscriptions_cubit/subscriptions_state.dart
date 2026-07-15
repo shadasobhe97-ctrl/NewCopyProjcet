@@ -6,6 +6,8 @@ class SubscriptionsInitial extends SubscriptionsState {}
 
 class SubscriptionsLoading extends SubscriptionsState {}
 
+class SubscriptionsEmpty extends SubscriptionsState {}
+
 class SubscriptionsLoaded extends SubscriptionsState {
   final List<SubscriptionModel> subscriptions;
 
@@ -33,4 +35,20 @@ class SubscriptionsError extends SubscriptionsState {
   final String message;
 
   SubscriptionsError(this.message);
+}
+
+// ---- States خاصة بتفاصيل الطلب ----
+
+class SubscriptionDetailLoading extends SubscriptionsState {}
+
+class SubscriptionDetailLoaded extends SubscriptionsState {
+  final SubscriptionModel detail;
+
+  SubscriptionDetailLoaded(this.detail);
+}
+
+class SubscriptionDetailError extends SubscriptionsState {
+  final String message;
+
+  SubscriptionDetailError(this.message);
 }

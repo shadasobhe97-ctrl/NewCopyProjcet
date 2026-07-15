@@ -26,7 +26,8 @@ import 'package:kids_transport/features/parent/children/logic/children_cubit/chi
 import 'package:kids_transport/features/parent/children/logic/children_cubit/add_child_cubit.dart';
 
 // Subscriptions
-import 'package:kids_transport/features/parent/subscriptions/data/datasources/subscriptions_data_source.dart';
+import 'package:kids_transport/features/parent/subscriptions/data/datasources/subscriptions_remote_data_source.dart';
+import 'package:kids_transport/data/local/subscriptions_local_data_source.dart';
 import 'package:kids_transport/features/parent/subscriptions/data/repositories/subscriptions_repository.dart';
 import 'package:kids_transport/features/parent/subscriptions/logic/subscriptions_cubit/subscriptions_cubit.dart';
 
@@ -136,14 +137,22 @@ void initParentInjection() {
   // =========================================
   // 5. Subscriptions Feature
   // =========================================
-  if (!getIt.isRegistered<SubscriptionsDataSource>()) {
-    getIt.registerLazySingleton<SubscriptionsDataSource>(
-      () => SubscriptionsMockDataSourceImpl(),
+  if (!getIt.isRegistered<SubscriptionsRemoteDataSource>()) {
+    getIt.registerLazySingleton<SubscriptionsRemoteDataSource>(
+      () => SubscriptionsRemoteDataSource(getIt<ApiClient>()),
+    );
+  }
+  if (!getIt.isRegistered<SubscriptionsLocalDataSource>()) {
+    getIt.registerLazySingleton<SubscriptionsLocalDataSource>(
+      () => SubscriptionsLocalDataSourceImpl(),
     );
   }
   if (!getIt.isRegistered<SubscriptionsRepository>()) {
     getIt.registerLazySingleton<SubscriptionsRepository>(
-      () => SubscriptionsRepository(getIt<SubscriptionsDataSource>()),
+      () => SubscriptionsRepository(
+        getIt<SubscriptionsRemoteDataSource>(),
+        getIt<SubscriptionsLocalDataSource>(),
+      ),
     );
   }
   if (!getIt.isRegistered<SubscriptionsCubit>()) {

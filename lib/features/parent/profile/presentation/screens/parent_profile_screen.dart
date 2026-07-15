@@ -27,14 +27,14 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _backupPhoneController;
-  late TextEditingController _emailController;
 
   File? _avatarImage;
   final ImagePicker _picker = ImagePicker();
 
-  String _originalEmail = 'parent.email@example.com';
+  String _originalEmail = '';
   bool _isEmailVerified = true;
-  bool _showVerificationOption = false;
+  String? _avatarUrl; // الصورة الحالية من الـ API
+  String? _pendingNewEmail; // الإيميل الجديد في انتظار التأكيد
 
   @override
   void initState() {
@@ -44,16 +44,6 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     _nameController = TextEditingController(text: profileCubit.getCachedFullName());
     _phoneController = TextEditingController(text: profileCubit.getCachedPhoneNumber());
     _backupPhoneController = TextEditingController(text: '');
-    _emailController = TextEditingController(text: _originalEmail);
-
-    _emailController.addListener(() {
-      setState(() {
-        _showVerificationOption =
-            _emailController.text.trim() != _originalEmail;
-        _isEmailVerified =
-            _emailController.text.trim() == _originalEmail;
-      });
-    });
 
     // 2. تحديث البيانات بالخلفية من السيرفر
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -68,7 +58,6 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _backupPhoneController.dispose();
-    _emailController.dispose();
     super.dispose();
   }
 
@@ -86,17 +75,18 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
 
   void _saveProfile() {
     if (_formKey.currentState!.validate()) {
-      // إطلاق التحديث على السيرفر بالخلفية أولاً (API-First Strategy)
+      // الإيميل يُرسَل فقط لو طلب المستخدم تغييره من نافذة التعديل المخصصة
       context.read<ParentProfileCubit>().updateProfile(
             fullName: _nameController.text.trim(),
             phoneNumber: _phoneController.text.trim(),
             alternativePhone: _backupPhoneController.text.trim().isNotEmpty
                 ? _backupPhoneController.text.trim()
                 : null,
-            email: _emailController.text.trim().isNotEmpty
-                ? _emailController.text.trim()
-                : null,
+            // ✅ لا يرسل الإيميل عند حفظ باقي البيانات
+            email: _pendingNewEmail,
           );
+      // بعد الإرسال نمسح المعلق
+      _pendingNewEmail = null;
     }
   }
 
@@ -113,12 +103,14 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
             _nameController.text = state.parent.fullName;
             _phoneController.text = state.parent.phoneNumber;
             _backupPhoneController.text = state.parent.alternativePhone ?? '';
-            _originalEmail = state.parent.email;
-            _emailController.text = state.parent.email;
+            _originalEmail = state.parent.email; // ✅ يُحدّث عرض الإيميل في ProfileEmailField
             _isEmailVerified = !state.parent.emailChangePending;
-            _showVerificationOption = state.parent.emailChangePending;
+            _avatarUrl = state.parent.avatarUrl;
           });
         } else if (state is ParentProfileSuccess) {
+          setState(() {
+            _avatarUrl = state.parent.avatarUrl; // ✅ تحديث الصورة بعد نجاح التحديث
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -173,6 +165,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                         // الصورة الشخصية
                         ProfileAvatarEditor(
                           avatarImage: _avatarImage,
+                          avatarUrl: _avatarUrl, // ✅ تمرير صورة الـ API
                           onTap: _pickImage,
                         ),
                         SizedBox(height: 32.h),
@@ -228,14 +221,13 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
 
                         const _FieldLabel('البريد الإلكتروني'),
                         ProfileEmailField(
-                          controller: _emailController,
+                          currentEmail: _originalEmail,
                           isVerified: _isEmailVerified,
-                          showVerifyButton: _showVerificationOption,
-                          onVerified: (email) => setState(() {
-                            _isEmailVerified = true;
-                            _originalEmail = email;
-                            _showVerificationOption = false;
-                          }),
+                          onEmailChangeRequested: (newEmail) {
+                            // ✅ يحفظ الإيميل الجديد مؤقتاً ويرسله عند حفظ البروفايل
+                            setState(() => _pendingNewEmail = newEmail);
+                            _saveProfile(); // يرسل طلب تغيير الإيميل للباك فوراً
+                          },
                         ),
                         SizedBox(height: 40.h),
 

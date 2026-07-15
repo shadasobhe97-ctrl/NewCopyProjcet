@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import '../../data/models/subscription_model.dart';
@@ -94,10 +95,14 @@ class SubscriptionCard extends StatelessWidget {
               CircleAvatar(
                 radius: 26,
                 backgroundColor: driverAvatarBg,
-                backgroundImage: subscription.driver.user.avatarUrl != null
-                    ? NetworkImage(subscription.driver.user.avatarUrl!)
+                backgroundImage: subscription.driver.user.avatarUrl != null &&
+                        subscription.driver.user.avatarUrl!.isNotEmpty
+                    ? CachedNetworkImageProvider(
+                        subscription.driver.user.avatarUrl!,
+                      )
                     : null,
-                child: subscription.driver.user.avatarUrl == null
+                child: subscription.driver.user.avatarUrl == null ||
+                        subscription.driver.user.avatarUrl!.isEmpty
                     ? Text(
                         _getInitials(subscription.driver.user.fullName),
                         style: AppTextStyles.style(
@@ -375,8 +380,11 @@ class SubscriptionCard extends StatelessWidget {
                 child: CircleAvatar(
                   radius: 14.5,
                   backgroundColor: avatarBg,
-                  backgroundImage: kid.photoUrl != null ? NetworkImage(kid.photoUrl!) : null,
-                  child: kid.photoUrl == null
+                  backgroundImage: kid.photoUrl != null &&
+                          kid.photoUrl!.isNotEmpty
+                      ? CachedNetworkImageProvider(kid.photoUrl!)
+                      : null,
+                  child: kid.photoUrl == null || kid.photoUrl!.isEmpty
                       ? Text(
                           _getInitials(kid.fullName),
                           style: AppTextStyles.style(

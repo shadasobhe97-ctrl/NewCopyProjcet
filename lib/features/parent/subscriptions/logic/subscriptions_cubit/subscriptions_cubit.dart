@@ -10,16 +10,48 @@ class SubscriptionsCubit extends Cubit<SubscriptionsState> {
 
   SubscriptionsCubit(this._repository) : super(SubscriptionsInitial());
 
+  /// جلب القائمة - Cache First مثل Children
   Future<void> fetchSubscriptions() async {
-    emit(SubscriptionsLoading());
+    // 1. اقرأ Hive أولاً وعرض البيانات فوراً
+    final cached = await _repository.getCachedSubscriptions();
+    if (cached.isNotEmpty) {
+      emit(SubscriptionsLoaded(cached));
+    } else {
+      emit(SubscriptionsLoading());
+    }
+
+    // 2. اطلب API في الخلفية
     final (subscriptions, error) = await _repository.getMySubscriptions();
     if (error != null) {
-      emit(SubscriptionsError(error));
+      // إذا فشل الطلب وكان هناك كاش معروض، استمر بعرضه ولا تعرض Error
+      if (state is SubscriptionsLoaded &&
+          (state as SubscriptionsLoaded).subscriptions.isNotEmpty) {
+        emit(SubscriptionsLoaded((state as SubscriptionsLoaded).subscriptions));
+      } else {
+        emit(SubscriptionsError(error));
+      }
     } else {
-      emit(SubscriptionsLoaded(subscriptions ?? []));
+      final list = subscriptions ?? [];
+      if (list.isEmpty) {
+        emit(SubscriptionsEmpty());
+      } else {
+        emit(SubscriptionsLoaded(list));
+      }
     }
   }
 
+  /// جلب تفاصيل طلب واحد - GET /parent/requests/{id}
+  Future<void> fetchSubscriptionDetail(int id) async {
+    emit(SubscriptionDetailLoading());
+    final (detail, error) = await _repository.getRequestDetail(id);
+    if (error != null) {
+      emit(SubscriptionDetailError(error));
+    } else {
+      emit(SubscriptionDetailLoaded(detail!));
+    }
+  }
+
+  /// إلغاء الطلب - DELETE /parent/subscriptions/{id}
   Future<void> cancelSubscription(int id) async {
     final currentList = state is SubscriptionsLoaded
         ? (state as SubscriptionsLoaded).subscriptions
@@ -31,7 +63,11 @@ class SubscriptionsCubit extends Cubit<SubscriptionsState> {
     if (success) {
       final updatedList = List<SubscriptionModel>.from(currentList)
         ..removeWhere((sub) => sub.id == id);
-      emit(SubscriptionsActionSuccess(updatedList, message));
+      if (updatedList.isEmpty) {
+        emit(SubscriptionsActionSuccess([], message));
+      } else {
+        emit(SubscriptionsActionSuccess(updatedList, message));
+      }
     } else {
       emit(SubscriptionsActionError(List.from(currentList), message));
     }

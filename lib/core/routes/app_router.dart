@@ -52,6 +52,7 @@ import 'package:kids_transport/features/parent/dashboard/presentation/screens/pa
 import 'package:kids_transport/features/parent/home/presentation/screens/parent_home_screen.dart';
 import 'package:kids_transport/features/parent/profile/presentation/screens/parent_profile_screen.dart';
 import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscription_details_screen.dart';
+import 'package:kids_transport/features/parent/subscriptions/logic/subscriptions_cubit/subscriptions_cubit.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profile_cubit.dart';
 
@@ -215,7 +216,10 @@ class AppRoutes {
         final subscriptionId = settings.arguments as int;
         return _route(
           settings,
-          SubscriptionDetailsScreen(subscriptionId: subscriptionId),
+          BlocProvider(
+            create: (_) => getIt<SubscriptionsCubit>(),
+            child: SubscriptionDetailsScreen(subscriptionId: subscriptionId),
+          ),
         );
       case parentEmail:
         return _route(settings, const ParentEmailScreen());

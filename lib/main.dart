@@ -69,8 +69,8 @@ class TransportApp extends StatelessWidget {
         builder: (context, themeState) {
           return ScreenUtilInit(
             designSize: const Size(375, 812),
-            minTextAdapt: true,
-            splitScreenMode: true,
+            minTextAdapt: false,
+            splitScreenMode: false,
             builder: (context, child) {
               return MaterialApp(
                 title: 'تطبيق دربي المدارس',

@@ -27,15 +27,21 @@ class SearchRemoteDataSource {
     final data = response.data;
     if (data is Map) {
       final success = data['success'] ?? data['status'];
-      if (success == false || success?.toString() == 'false') {
+      if (success == false) {
         final serverMessage = ApiException.extractMessage(data);
         throw ApiException(serverMessage ?? 'تعذر البحث عن السائقين.');
       }
-      final rawList = data['data'] ?? data['drivers'];
-      final list = rawList is List ? rawList : [];
-      return list.map((e) => DriverSearchModel.fromJson(e as Map<String, dynamic>)).toList();
+      final list =
+          data['data'] as List<dynamic>? ??
+          data['drivers'] as List<dynamic>? ??
+          [];
+      return list
+          .map((e) => DriverSearchModel.fromJson(e as Map<String, dynamic>))
+          .toList();
     } else if (data is List) {
-      return data.map((e) => DriverSearchModel.fromJson(e as Map<String, dynamic>)).toList();
+      return data
+          .map((e) => DriverSearchModel.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
     throw const ApiException('استجابة الخادم غير مقروءة.');
   }
@@ -50,8 +56,9 @@ class SearchRemoteDataSource {
     final data = response.data;
     if (data is Map) {
       final success = data['success'] ?? data['status'];
-      final message = data['message']?.toString() ?? 'تم إرسال طلب الاشتراك بنجاح.';
-      if (success == false || success?.toString() == 'false') {
+      final message =
+          data['message']?.toString() ?? 'تم إرسال طلب الاشتراك بنجاح.';
+      if (success == false) {
         throw ApiException(message);
       }
       return message;

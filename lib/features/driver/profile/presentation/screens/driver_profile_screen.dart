@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -188,6 +189,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         } else if (state is DriverProfileSuccess) {
           setState(() {
             _isEditing = false;
+            _avatarUrl = state.driver.avatarUrl; // ✅ تحديث صورة السائق بعد الحفظ
+            _avatarImage = null; // إزالة الصورة المحلية والاعتماد على URL الجديد
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -264,7 +267,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                           backgroundImage: _avatarImage != null
                               ? FileImage(_avatarImage!)
                               : (_avatarUrl != null && _avatarUrl!.isNotEmpty
-                                  ? NetworkImage(_avatarUrl!) as ImageProvider
+                                  ? CachedNetworkImageProvider(_avatarUrl!)
                                   : null),
                           child: (_avatarImage == null && (_avatarUrl == null || _avatarUrl!.isEmpty))
                               ? const Icon(
