@@ -1,6 +1,6 @@
 import 'package:kids_transport/core/network/api_exception.dart';
-import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/auth/login/data/models/auth_common_response_model.dart';
+import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 
 import '../data_sources/auth_remote_data_source.dart';
 import '../models/login_request_model.dart';
@@ -9,8 +9,9 @@ import '../models/reset_password_request_model.dart';
 
 class AuthRepository {
   final AuthRemoteDataSource _dataSource;
+  final SessionRepository _sessionRepository;
 
-  AuthRepository(this._dataSource);
+  AuthRepository(this._dataSource, this._sessionRepository);
 
   Future<LoginResponseModel> login(LoginRequestModel request) async {
     final responseData = await _dataSource.login(request);
@@ -21,7 +22,7 @@ class AuthRepository {
         throw const ApiException('بيانات الجلسة الراجعة من الخادم غير مكتملة.');
       }
 
-      await StorageService.saveUserSession(
+      await _sessionRepository.saveUserSession(
         token: response.accessToken,
         tokenType: response.tokenType,
         roleId: response.user.roleId,
@@ -37,10 +38,10 @@ class AuthRepository {
   }
 
   Future<AuthCommonResponseModel> logout() async {
-    final authorizationHeader = StorageService.getAuthorizationHeader();
+    final authorizationHeader = _sessionRepository.getAuthorizationHeader();
 
     if (authorizationHeader == null) {
-      await StorageService.clearSession();
+      await _sessionRepository.clearSession();
       return const AuthCommonResponseModel(
         status: true,
         message: 'تم تسجيل الخروج بنجاح.',
@@ -51,7 +52,7 @@ class AuthRepository {
       final responseData = await _dataSource.logout(authorizationHeader);
       return AuthCommonResponseModel.fromJson(responseData);
     } finally {
-      await StorageService.clearSession();
+      await _sessionRepository.clearSession();
     }
   }
 

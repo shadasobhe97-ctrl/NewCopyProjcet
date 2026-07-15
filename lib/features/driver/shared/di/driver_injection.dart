@@ -11,6 +11,7 @@ import 'package:kids_transport/features/driver/driver_preferences/logic/driver_p
 import 'package:kids_transport/features/driver/profile/data/data_sources/driver_profile_remote_data_source.dart';
 import 'package:kids_transport/features/driver/profile/data/repositories/driver_profile_repository.dart';
 import 'package:kids_transport/features/driver/profile/logic/cubit/driver_profile_cubit.dart';
+import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 
 // Vehicles
 import 'package:kids_transport/features/driver/vehicles/data/data_sources/vehicle_remote_data_source.dart';
@@ -49,7 +50,10 @@ void initDriverInjection() {
   }
   if (!driverSl.isRegistered<DriverProfileRepository>()) {
     driverSl.registerLazySingleton<DriverProfileRepository>(
-      () => DriverProfileRepository(remoteDataSource: driverSl<DriverProfileRemoteDataSource>()),
+      () => DriverProfileRepository(
+        remoteDataSource: driverSl<DriverProfileRemoteDataSource>(),
+        sessionRepository: driverSl<SessionRepository>(),
+      ),
     );
   }
   if (!driverSl.isRegistered<DriverProfileCubit>()) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -102,7 +103,7 @@ class _SavedAddressesView extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.all(20.w),
                   child: ElevatedButton.icon(
                     onPressed: isActionLoading || isFullLoading
                         ? null
@@ -114,7 +115,7 @@ class _SavedAddressesView extends StatelessWidget {
                     label: Text(
                       'إضافة عنوان جديد',
                       style: AppTextStyles.style(
-                        fontSize: 16,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.bold,
                         color: AppColors.white,
                       ),
@@ -149,29 +150,29 @@ class _SavedAddressesView extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.refresh_rounded,
-                size: 48,
+                size: 48.r,
                 color: AppColors.errorLight,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12.h),
               Text(
                 'إعادة المحاولة',
                 style: AppTextStyles.style(
-                  fontSize: 16,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
                   color: AppColors.errorLight,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
+                padding: EdgeInsets.symmetric(horizontal: 32.w),
                 child: Text(
                   state.message,
                   textAlign: TextAlign.center,
                   style: AppTextStyles.style(
                     color: AppColors.textMuted,
-                    fontSize: 13,
+                    fontSize: 13.sp,
                   ),
                 ),
               ),
@@ -193,7 +194,7 @@ class _SavedAddressesView extends StatelessWidget {
     return Stack(
       children: [
         ListView.builder(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20.w),
           itemCount: addresses.length,
           itemBuilder: (context, index) {
             final addr = addresses[index];

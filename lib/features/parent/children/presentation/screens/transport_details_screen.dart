@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -106,7 +107,7 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
           ],
         ),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -120,7 +121,7 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
                   _buildDataRow('الخدمة المطلوبة', _translateService(serviceType)),
                 ],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
               _buildSection(
                 context: context,
                 title: 'مواعيد الدوام والمدرسة',
@@ -133,7 +134,7 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
                   _buildDataRow('وقت نهاية الدوام', schoolEndTime),
                 ],
               ),
-              const SizedBox(height: 30),
+              SizedBox(height: 30.h),
             ],
           ),
         ),
@@ -144,10 +145,10 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
   Widget _buildSection({required BuildContext context, required String title, required IconData icon, required List<Widget> content}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16.w),
       decoration: AppTheme.boxDecoration(
         color: context.isDarkMode ? AppColors.darkCard : AppColors.white,
-        borderRadius: AppTheme.radius(16),
+        borderRadius: AppTheme.radius(16.r),
         border: AppTheme.border(color: AppColors.grey200),
       ),
       child: Column(
@@ -155,12 +156,12 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, color: context.primaryColor, size: 22),
-              const SizedBox(width: 8),
-              Text(title, style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold)),
+              Icon(icon, color: context.primaryColor, size: 22.r),
+              SizedBox(width: 8.w),
+              Text(title, style: AppTextStyles.style(fontSize: 16.sp, fontWeight: FontWeight.bold)),
             ],
           ),
-          const Divider(height: 24),
+          Divider(height: 24.h),
           ...content,
         ],
       ),
@@ -169,14 +170,14 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
 
   Widget _buildDataRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 12.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTextStyles.style(color: AppColors.grey500, fontSize: 13)),
-          const SizedBox(height: 4),
-          Text(value, style: AppTextStyles.style(fontWeight: FontWeight.w600, fontSize: 15)),
-          const SizedBox(height: 8),
+          Text(label, style: AppTextStyles.style(color: AppColors.grey500, fontSize: 13.sp)),
+          SizedBox(height: 4.h),
+          Text(value, style: AppTextStyles.style(fontWeight: FontWeight.w600, fontSize: 15.sp)),
+          SizedBox(height: 8.h),
         ],
       ),
     );

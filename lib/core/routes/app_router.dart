@@ -172,7 +172,13 @@ class AppRoutes {
     switch (settings.name) {
       case parentHome:
       case parentMainWrapper:
-        return _route(settings, const ParentMainWrapper());
+        return _route(
+          settings,
+          BlocProvider(
+            create: (context) => getIt<ParentProfileCubit>(),
+            child: const ParentMainWrapper(),
+          ),
+        );
       case parentHomeLegacy:
         return _route(settings, const ParentHomeScreen());
       case parentProfile:

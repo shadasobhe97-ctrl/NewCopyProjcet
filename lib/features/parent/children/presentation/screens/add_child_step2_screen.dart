@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:kids_transport/features/parent/children/presentation/widgets/add_child_shared_widgets.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -86,12 +87,12 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
             onTap: () => onChanged(entry.key),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              margin: EdgeInsets.symmetric(horizontal: 4.w),
+              padding: EdgeInsets.symmetric(vertical: 12.h),
               decoration: BoxDecoration(
                 color: isSelected ? context.primaryColor : Colors.transparent,
                 border: Border.all(color: isSelected ? context.primaryColor : AppColors.grey300),
-                borderRadius: AppTheme.radius(12),
+                borderRadius: AppTheme.radius(12.r),
               ),
               alignment: Alignment.center,
               child: Text(
@@ -99,7 +100,7 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                 style: AppTextStyles.style(
                   color: isSelected ? Colors.white : context.textMuted,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  fontSize: 13,
+                  fontSize: 13.sp,
                 ),
               ),
             ),
@@ -162,32 +163,32 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                   // ── المحتوى ──
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                      padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 32.h),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // نص توضيحي
                           Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: EdgeInsets.all(12.w),
                             decoration: BoxDecoration(
-                              color: context.primaryColor.withOpacity(0.08),
-                              borderRadius: AppTheme.radius(12),
-                              border: Border.all(color: context.primaryColor.withOpacity(0.2)),
+                              color: context.primaryColor.withValues(alpha: 0.08),
+                              borderRadius: AppTheme.radius(12.r),
+                              border: Border.all(color: context.primaryColor.withValues(alpha: 0.2)),
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.info_outline_rounded, color: context.primaryColor, size: 18),
-                                const SizedBox(width: 10),
+                                Icon(Icons.info_outline_rounded, color: context.primaryColor, size: 18.r),
+                                SizedBox(width: 10.w),
                                 Expanded(
                                   child: Text(
                                     'تساعد هذه التفضيلات النظام في إيجاد السائق المناسب.',
-                                    style: AppTextStyles.style(fontSize: 13, color: context.primaryColor),
+                                    style: AppTextStyles.style(fontSize: 13.sp, color: context.primaryColor),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          SizedBox(height: 20.h),
 
                           // ── نوع الاشتراك ──
                           AddChildSectionCard(
@@ -201,7 +202,7 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16.h),
 
                           // ── الفترة ──
                           AddChildSectionCard(
@@ -215,7 +216,7 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16.h),
 
                           // ── نوع الخدمة ──
                           AddChildSectionCard(
@@ -229,7 +230,7 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16.h),
 
                           // ── تاريخ بدء الخدمة ──
                           AddChildSectionCard(
@@ -237,7 +238,7 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                             icon: Icons.date_range_outlined,
                             children: [
                               InkWell(
-                                borderRadius: AppTheme.radius(10),
+                                borderRadius: AppTheme.radius(10.r),
                                 onTap: () async {
                                   final date = await showDatePicker(
                                     context: context,
@@ -250,18 +251,18 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                 child: InputDecorator(
                                   decoration: InputDecoration(
                                     labelText: 'تاريخ البداية',
-                                    prefixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
-                                    border: OutlineInputBorder(borderRadius: AppTheme.radius(10)),
+                                    prefixIcon: Icon(Icons.calendar_today_rounded, size: 18.r),
+                                    border: OutlineInputBorder(borderRadius: AppTheme.radius(10.r)),
                                   ),
                                   child: Text(
                                     intl.DateFormat('yyyy/MM/dd').format(_startDate),
-                                    style: AppTextStyles.style(fontSize: 14),
+                                    style: AppTextStyles.style(fontSize: 14.sp),
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16.h),
 
                           // ── مواعيد الدوام ──
                           AddChildSectionCard(
@@ -272,7 +273,7 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                 children: [
                                   Expanded(
                                     child: InkWell(
-                                      borderRadius: AppTheme.radius(10),
+                                      borderRadius: AppTheme.radius(10.r),
                                       onTap: () async {
                                         final time = await showTimePicker(
                                           context: context,
@@ -283,20 +284,20 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                       child: InputDecorator(
                                         decoration: InputDecoration(
                                           labelText: 'وقت البداية',
-                                          prefixIcon: const Icon(Icons.login_rounded, size: 18),
-                                          border: OutlineInputBorder(borderRadius: AppTheme.radius(10)),
+                                          prefixIcon: Icon(Icons.login_rounded, size: 18.r),
+                                          border: OutlineInputBorder(borderRadius: AppTheme.radius(10.r)),
                                         ),
                                         child: Text(
                                           _schoolStartTime.format(context),
-                                          style: AppTextStyles.style(fontSize: 14),
+                                          style: AppTextStyles.style(fontSize: 14.sp),
                                         ),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  SizedBox(width: 12.w),
                                   Expanded(
                                     child: InkWell(
-                                      borderRadius: AppTheme.radius(10),
+                                      borderRadius: AppTheme.radius(10.r),
                                       onTap: () async {
                                         final time = await showTimePicker(
                                           context: context,
@@ -307,12 +308,12 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                       child: InputDecorator(
                                         decoration: InputDecoration(
                                           labelText: 'وقت الانتهاء',
-                                          prefixIcon: const Icon(Icons.logout_rounded, size: 18),
-                                          border: OutlineInputBorder(borderRadius: AppTheme.radius(10)),
+                                          prefixIcon: Icon(Icons.logout_rounded, size: 18.r),
+                                          border: OutlineInputBorder(borderRadius: AppTheme.radius(10.r)),
                                         ),
                                         child: Text(
                                           _schoolEndTime.format(context),
-                                          style: AppTextStyles.style(fontSize: 14),
+                                          style: AppTextStyles.style(fontSize: 14.sp),
                                         ),
                                       ),
                                     ),
@@ -321,11 +322,11 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 32),
+                          SizedBox(height: 32.h),
 
                           SizedBox(
                             width: double.infinity,
-                            height: 52,
+                            height: 52.h,
                             child: ElevatedButton(
                               onPressed: state is AddChildSubmitting ? null : _submitFinal,
                               style: AppTheme.elevatedButtonStyle(backgroundColor: context.primaryColor),
@@ -335,8 +336,8 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                       context.read<AddChildCubit>().editingChild != null
                                           ? 'حفظ التعديلات'
                                           : 'حفظ وإضافة الطفل',
-                                      style: const TextStyle(
-                                        fontSize: 16,
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
                                       ),

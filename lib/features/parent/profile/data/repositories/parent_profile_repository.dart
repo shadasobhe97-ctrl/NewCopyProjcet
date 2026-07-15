@@ -1,11 +1,15 @@
-import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import '../datasources/parent_profile_remote_data_source.dart';
 import '../models/parent_model.dart';
 
 class ParentProfileRepository {
   final ParentProfileRemoteDataSource remoteDataSource;
+  final SessionRepository sessionRepository;
 
-  ParentProfileRepository({required this.remoteDataSource});
+  ParentProfileRepository({
+    required this.remoteDataSource,
+    required this.sessionRepository,
+  });
 
   /// جلب ملف ولي الأمر من الباك إند وحفظه في الكاش المحلي (Cache-First Support)
   Future<ParentModel> getParentProfile() async {
@@ -32,18 +36,18 @@ class ParentProfileRepository {
   }
 
   Future<void> _cacheParentProfile(ParentModel parent) async {
-    await StorageService.saveUserSession(
-      token: StorageService.getToken() ?? '',
-      tokenType: StorageService.getTokenType(),
-      roleId: StorageService.getRoleId() ?? 3,
-      roleName: StorageService.getRoleName(),
-      userId: StorageService.getUserId(),
+    await sessionRepository.saveUserSession(
+      token: sessionRepository.getToken() ?? '',
+      tokenType: 'Bearer',
+      roleId: sessionRepository.getRoleId() ?? 3,
+      roleName: 'parent',
+      userId: int.tryParse(sessionRepository.getUserId() ?? '') ?? 0,
       fullName: parent.fullName,
       phoneNumber: parent.phoneNumber,
-      isActive: StorageService.getIsActive(),
+      isActive: sessionRepository.getIsActive() ?? true,
     );
   }
 
-  String getCachedFullName() => StorageService.getFullName() ?? '';
-  String getCachedPhoneNumber() => StorageService.getPhoneNumber() ?? '';
+  String getCachedFullName() => sessionRepository.getFullName() ?? '';
+  String getCachedPhoneNumber() => sessionRepository.getPhoneNumber() ?? '';
 }

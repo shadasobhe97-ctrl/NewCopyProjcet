@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:kids_transport/features/parent/children/presentation/widgets/address_selection_bottom_sheet.dart';
@@ -89,18 +91,28 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
       builder: (_) => Directionality(
         textDirection: TextDirection.rtl,
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20.w),
           decoration: BoxDecoration(
             color: context.backgroundSurface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.grey300, borderRadius: BorderRadius.circular(10))),
-              const SizedBox(height: 16),
-              Text('اختر مصدر الصورة', style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: AppColors.grey300,
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'اختر مصدر الصورة',
+                style: AppTextStyles.style(fontSize: 16.sp, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 16.h),
               Row(
                 children: [
                   Expanded(
@@ -113,7 +125,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                       },
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   Expanded(
                     child: _ImageSourceOption(
                       icon: Icons.camera_alt_rounded,
@@ -126,7 +138,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
             ],
           ),
         ),
@@ -200,7 +212,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
               AddChildStepIndicator(currentStep: 1),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                  padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 32.h),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -213,47 +225,51 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                             child: Stack(
                               children: [
                                 Container(
-                                  width: 100,
-                                  height: 100,
+                                  width: 100.w,
+                                  height: 100.h,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: context.primaryColor.withValues(alpha: 0.1),
-                                    border: Border.all(color: context.primaryColor.withValues(alpha: 0.3), width: 2),
+                                    border: Border.all(
+                                      color: context.primaryColor.withValues(alpha: 0.3),
+                                      width: 2.w,
+                                    ),
                                     image: _selectedImage != null
                                         ? DecorationImage(image: FileImage(_selectedImage!), fit: BoxFit.cover)
                                         : (_imagePathWeb != null
                                             ? DecorationImage(image: NetworkImage(_imagePathWeb!), fit: BoxFit.cover)
                                             : (hasRemoteImage
-                                                ? DecorationImage(image: NetworkImage(widget.child!.photoUrl!), fit: BoxFit.cover)
+                                                ? DecorationImage(
+                                                    image: CachedNetworkImageProvider(widget.child!.photoUrl!),
+                                                    fit: BoxFit.cover,
+                                                  )
                                                 : null)),
                                   ),
                                   child: _selectedImage == null && _imagePathWeb == null && !hasRemoteImage
-                                      ? Icon(Icons.person_rounded, size: 50, color: context.primaryColor.withValues(alpha: 0.5))
+                                      ? Icon(Icons.person_rounded, size: 50.r, color: context.primaryColor.withValues(alpha: 0.5))
                                       : null,
                                 ),
                                 Positioned(
                                   bottom: 0,
                                   left: 0,
                                   child: Container(
-                                    width: 32,
-                                    height: 32,
+                                    width: 32.w,
+                                    height: 32.h,
                                     decoration: BoxDecoration(shape: BoxShape.circle, color: context.primaryColor),
-                                    child: const Icon(Icons.camera_alt_rounded, size: 16, color: Colors.white),
+                                    child: Icon(Icons.camera_alt_rounded, size: 16.r, color: Colors.white),
                                   ),
                                 ),
                               ],
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8),
                         Center(
                           child: Text(
                             'اضغط لإضافة صورة',
-                            style: AppTextStyles.style(fontSize: 12, color: AppColors.textMuted),
+                            style: AppTextStyles.style(fontSize: 13.sp, color: context.textMuted),
                           ),
                         ),
-                        const SizedBox(height: 20),
-
+                        SizedBox(height: 20.h),
                         // ── كل البيانات في بوكس واحد ──
                         AddChildSectionCard(
                           title: 'بيانات الطفل',
@@ -265,15 +281,15 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                               decoration: InputDecoration(
                                 labelText: 'الاسم الكامل',
                                 prefixIcon: const Icon(Icons.badge_outlined),
-                                border: OutlineInputBorder(borderRadius: AppTheme.radius(10)),
+                                border: OutlineInputBorder(borderRadius: AppTheme.radius(10.r)),
                               ),
                               validator: (v) => v!.trim().isEmpty ? 'مطلوب' : null,
                             ),
-                            const SizedBox(height: 14),
+                            SizedBox(height: 14.h),
 
                             // تاريخ الميلاد
                             InkWell(
-                              borderRadius: AppTheme.radius(10),
+                              borderRadius: AppTheme.radius(10.r),
                               onTap: () async {
                                 final date = await showDatePicker(
                                   context: context,
@@ -287,19 +303,19 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                 decoration: InputDecoration(
                                   labelText: 'تاريخ الميلاد',
                                   prefixIcon: const Icon(Icons.calendar_today_outlined),
-                                  border: OutlineInputBorder(borderRadius: AppTheme.radius(10)),
+                                  border: OutlineInputBorder(borderRadius: AppTheme.radius(10.r)),
                                 ),
                                 child: Text(
                                   '${_selectedDate.year}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.day.toString().padLeft(2, '0')}',
-                                  style: AppTextStyles.style(fontSize: 14),
+                                  style: AppTextStyles.style(fontSize: 14.sp),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 14),
+                            SizedBox(height: 14.h),
 
                             // الجنس
-                            Text('الجنس', style: AppTextStyles.style(fontSize: 13, color: AppColors.grey500)),
-                            const SizedBox(height: 8),
+                            Text('الجنس', style: AppTextStyles.style(fontSize: 13.sp, color: AppColors.grey500)),
+                            SizedBox(height: 8.h),
                             Row(
                               children: [
                                 Expanded(
@@ -311,7 +327,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                     onTap: () => setState(() => _selectedGender = 'male'),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                SizedBox(width: 12.w),
                                 Expanded(
                                   child: GenderSelectionButton(
                                     label: 'أنثى',
@@ -323,11 +339,11 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 14),
+                            SizedBox(height: 14.h),
 
                             // الصف الدراسي — بنفس أسلوب الـ Row القديم
-                            Text('الصف الدراسي', style: AppTextStyles.style(fontSize: 13, color: AppColors.grey500)),
-                            const SizedBox(height: 8),
+                            Text('الصف الدراسي', style: AppTextStyles.style(fontSize: 13.sp, color: AppColors.grey500)),
+                            SizedBox(height: 8.h),
                             Row(
                               children: [1, 2, 3, 4].map((g) {
                                 final isSelected = _selectedGrade == g;
@@ -336,12 +352,12 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                     onTap: () => setState(() => _selectedGrade = g),
                                     child: AnimatedContainer(
                                       duration: const Duration(milliseconds: 200),
-                                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                                      padding: const EdgeInsets.symmetric(vertical: 11),
+                                      margin: EdgeInsets.symmetric(horizontal: 3.w),
+                                      padding: EdgeInsets.symmetric(vertical: 11.h),
                                       decoration: BoxDecoration(
                                         color: isSelected ? context.primaryColor : Colors.transparent,
                                         border: Border.all(color: isSelected ? context.primaryColor : AppColors.grey300),
-                                        borderRadius: AppTheme.radius(10),
+                                        borderRadius: AppTheme.radius(10.r),
                                       ),
                                       alignment: Alignment.center,
                                       child: Text(
@@ -349,7 +365,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                         style: AppTextStyles.style(
                                           color: isSelected ? Colors.white : context.textMuted,
                                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                          fontSize: 12,
+                                          fontSize: 12.sp,
                                         ),
                                       ),
                                     ),
@@ -357,11 +373,11 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                 );
                               }).toList(),
                             ),
-                            const SizedBox(height: 14),
+                            SizedBox(height: 14.h),
 
                             // المدرسة
                             InkWell(
-                              borderRadius: AppTheme.radius(10),
+                              borderRadius: AppTheme.radius(10.r),
                               onTap: () async {
                                 final school = await SchoolSearchBottomSheet.show(
                                   context,
@@ -379,22 +395,22 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                   labelText: 'المدرسة',
                                   prefixIcon: const Icon(Icons.school_rounded),
                                   suffixIcon: const Icon(Icons.search_rounded),
-                                  border: OutlineInputBorder(borderRadius: AppTheme.radius(10)),
+                                  border: OutlineInputBorder(borderRadius: AppTheme.radius(10.r)),
                                 ),
                                 child: Text(
                                   _selectedSchoolName ?? 'اضغط للبحث عن مدرسة',
                                   style: TextStyle(
                                     color: _selectedSchoolName == null ? AppColors.grey400 : null,
-                                    fontSize: 14,
+                                    fontSize: 14.sp,
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 14),
+                            SizedBox(height: 14.h),
 
                             // العنوان
                             InkWell(
-                              borderRadius: AppTheme.radius(10),
+                              borderRadius: AppTheme.radius(10.r),
                               onTap: () async {
                                 final address = await AddressSelectionBottomSheet.show(context);
                                 if (address != null) {
@@ -409,18 +425,18 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                   labelText: 'عنوان المنزل',
                                   prefixIcon: const Icon(Icons.home_rounded),
                                   suffixIcon: const Icon(Icons.arrow_drop_down_rounded),
-                                  border: OutlineInputBorder(borderRadius: AppTheme.radius(10)),
+                                  border: OutlineInputBorder(borderRadius: AppTheme.radius(10.r)),
                                 ),
                                 child: Text(
                                   _selectedAddressName ?? 'اضغط لاختيار العنوان',
                                   style: TextStyle(
                                     color: _selectedAddressName == null ? AppColors.grey400 : null,
-                                    fontSize: 14,
+                                    fontSize: 14.sp,
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 14),
+                            SizedBox(height: 14.h),
 
                             // الملاحظات الطبية
                             TextFormField(
@@ -430,28 +446,28 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                 labelText: 'الملاحظات الطبية (اختياري)',
                                 prefixIcon: const Icon(Icons.medical_services_outlined),
                                 hintText: 'أي حالات صحية أو تنبيهات مهمة...',
-                                border: OutlineInputBorder(borderRadius: AppTheme.radius(10)),
+                                border: OutlineInputBorder(borderRadius: AppTheme.radius(10.r)),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 28),
+                        SizedBox(height: 28.h),
 
                         SizedBox(
                           width: double.infinity,
-                          height: 52,
+                          height: 52.h,
                           child: ElevatedButton(
                             onPressed: _submitStep1,
                             style: AppTheme.elevatedButtonStyle(backgroundColor: context.primaryColor),
-                            child: const Row(
+                            child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
                                   ' التالي تفضيلات النقل ',
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                  style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white),
                                 ),
-                                SizedBox(width: 8),
-                                Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                                SizedBox(width: 8.w),
+                                const Icon(Icons.arrow_forward_rounded, color: Colors.white),
                               ],
                             ),
                           ),
@@ -480,16 +496,16 @@ class _ImageSourceOption extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: EdgeInsets.symmetric(vertical: 20.h),
         decoration: BoxDecoration(
           color: context.primaryColor.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(14.r),
           border: Border.all(color: context.primaryColor.withValues(alpha: 0.2)),
         ),
         child: Column(
           children: [
-            Icon(icon, size: 32, color: context.primaryColor),
-            const SizedBox(height: 8),
+            Icon(icon, size: 32.r, color: context.primaryColor),
+            SizedBox(height: 8.h),
             Text(label, style: AppTextStyles.style(fontWeight: FontWeight.w600, color: context.primaryColor)),
           ],
         ),

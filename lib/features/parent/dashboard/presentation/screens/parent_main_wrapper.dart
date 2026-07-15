@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/features/parent/dashboard/presentation/widgets/parent_drawer.dart';
@@ -9,7 +10,7 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscriptions_screen.dart';
-import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profile_cubit.dart';
 
 class ParentMainWrapper extends StatefulWidget {
   const ParentMainWrapper({super.key});
@@ -42,8 +43,11 @@ class _KeepAliveWrapperState extends State<_KeepAliveWrapper>
 class _ParentMainWrapperState extends State<ParentMainWrapper> {
   int _selectedIndex = 0;
 
-  // قراءة الاسم ديناميكياً من التخزين المحلي
-  String get userName => StorageService.getFullName() ?? "ولي أمر";
+  // قراءة الاسم ديناميكياً من Cubit
+  String get userName {
+    final name = context.read<ParentProfileCubit>().getCachedFullName();
+    return name.isEmpty ? "ولي أمر" : name;
+  }
   final String? userAvatarurl = null;
 
   late final List<Widget> _screens;

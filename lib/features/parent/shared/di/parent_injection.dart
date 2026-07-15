@@ -10,6 +10,7 @@ import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
 import 'package:kids_transport/features/parent/profile/data/datasources/parent_profile_remote_data_source.dart';
 import 'package:kids_transport/features/parent/profile/data/repositories/parent_profile_repository.dart';
 import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profile_cubit.dart';
+import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 
 // Addresses
 import 'package:kids_transport/features/parent/addresses/data/datasources/address_remote_data_source.dart';
@@ -61,7 +62,10 @@ void initParentInjection() {
   }
   if (!getIt.isRegistered<ParentProfileRepository>()) {
     getIt.registerLazySingleton<ParentProfileRepository>(
-      () => ParentProfileRepository(remoteDataSource: getIt<ParentProfileRemoteDataSource>()),
+      () => ParentProfileRepository(
+        remoteDataSource: getIt<ParentProfileRemoteDataSource>(),
+        sessionRepository: getIt<SessionRepository>(),
+      ),
     );
   }
   if (!getIt.isRegistered<ParentProfileCubit>()) {

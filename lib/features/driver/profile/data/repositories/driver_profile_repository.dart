@@ -1,27 +1,31 @@
 import 'dart:io';
-import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import '../data_sources/driver_profile_remote_data_source.dart';
 import '../models/driver_model.dart';
 
 class DriverProfileRepository {
   final DriverProfileRemoteDataSource remoteDataSource;
+  final SessionRepository sessionRepository;
 
-  DriverProfileRepository({required this.remoteDataSource});
+  DriverProfileRepository({
+    required this.remoteDataSource,
+    required this.sessionRepository,
+  });
 
   /// جلب بيانات السائق من السيرفر وتحديث الكاش المحلي عند النجاح (Cache-First Support)
   Future<DriverModel> getDriverProfile() async {
     final driver = await remoteDataSource.getDriverProfile();
     
     // تحديث البيانات المحلية محلياً فور النجاح
-    await StorageService.saveUserSession(
-      token: StorageService.getToken() ?? '',
-      tokenType: StorageService.getTokenType(),
-      roleId: StorageService.getRoleId() ?? 4,
-      roleName: StorageService.getRoleName(),
-      userId: StorageService.getUserId(),
+    await sessionRepository.saveUserSession(
+      token: sessionRepository.getToken() ?? '',
+      tokenType: 'Bearer',
+      roleId: sessionRepository.getRoleId() ?? 4,
+      roleName: 'driver',
+      userId: int.tryParse(sessionRepository.getUserId() ?? '') ?? 0,
       fullName: driver.fullName,
       phoneNumber: driver.phoneNumber,
-      isActive: StorageService.getIsActive(),
+      isActive: sessionRepository.getIsActive() ?? true,
     );
     
     return driver;
@@ -44,20 +48,20 @@ class DriverProfileRepository {
     );
 
     // تحديث البيانات المحلية فقط عند نجاح الـ API بالكامل
-    await StorageService.saveUserSession(
-      token: StorageService.getToken() ?? '',
-      tokenType: StorageService.getTokenType(),
-      roleId: StorageService.getRoleId() ?? 4,
-      roleName: StorageService.getRoleName(),
-      userId: StorageService.getUserId(),
+    await sessionRepository.saveUserSession(
+      token: sessionRepository.getToken() ?? '',
+      tokenType: 'Bearer',
+      roleId: sessionRepository.getRoleId() ?? 4,
+      roleName: 'driver',
+      userId: int.tryParse(sessionRepository.getUserId() ?? '') ?? 0,
       fullName: driver.fullName,
       phoneNumber: driver.phoneNumber,
-      isActive: StorageService.getIsActive(),
+      isActive: sessionRepository.getIsActive() ?? true,
     );
 
     return driver;
   }
 
-  String getCachedFullName() => StorageService.getFullName() ?? '';
-  String getCachedPhoneNumber() => StorageService.getPhoneNumber() ?? '';
+  String getCachedFullName() => sessionRepository.getFullName() ?? '';
+  String getCachedPhoneNumber() => sessionRepository.getPhoneNumber() ?? '';
 }

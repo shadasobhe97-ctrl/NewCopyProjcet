@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
-import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/cubit/theme_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_state.dart';
+import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profile_cubit.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -16,8 +16,9 @@ class ParentDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fullName = StorageService.getFullName() ?? 'ولي أمر';
-    final phoneNumber = StorageService.getPhoneNumber() ?? '';
+    final cachedName = context.read<ParentProfileCubit>().getCachedFullName();
+    final fullName = cachedName.isEmpty ? 'ولي أمر' : cachedName;
+    final phoneNumber = context.read<ParentProfileCubit>().getCachedPhoneNumber();
 
     return BlocListener<AuthCubit, AuthState>(
       listenWhen: (_, state) =>

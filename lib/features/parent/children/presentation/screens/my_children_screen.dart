@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
@@ -54,7 +55,7 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.error,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
                   ),
                   child: const Text(
                     'حذف',
@@ -62,12 +63,12 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(ctx),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
                   ),
                   child: const Text('إلغاء'),
                 ),
@@ -127,23 +128,23 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                   // البطاقة العلوية الثابتة - تظهر دائماً حتى أثناء التحميل أو حدوث خطأ
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 8.h),
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(20),
+                        padding: EdgeInsets.all(20.w),
                         decoration: BoxDecoration(
                           color: context.isDarkMode
                               ? AppColors.darkCard
                               : AppColors.white,
-                          borderRadius: AppTheme.radius(16),
+                          borderRadius: AppTheme.radius(16.r),
                           border: AppTheme.border(color: AppColors.grey200),
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.black.withValues(
                                 alpha: context.isDarkMode ? 0.3 : 0.05,
                               ),
-                              blurRadius: 10,
-                              offset: const Offset(0, 3),
+                              blurRadius: 10.r,
+                              offset: Offset(0, 3.h),
                             ),
                           ],
                         ),
@@ -153,19 +154,19 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                             Text(
                               'أطفالي',
                               style: AppTextStyles.style(
-                                fontSize: 20,
+                                fontSize: 20.sp,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4.h),
                             Text(
                               subtitle,
                               style: AppTextStyles.style(
                                 color: AppColors.textMuted,
-                                fontSize: 13,
+                                fontSize: 13.sp,
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: 16.h),
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
@@ -177,18 +178,18 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                                   backgroundColor: AppColors.primaryLight,
                                   foregroundColor: AppColors.white,
                                   elevation: 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 14.h,
                                   ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: AppTheme.radius(12),
+                                    borderRadius: AppTheme.radius(12.r),
                                   ),
                                 ),
                                 child: Text(
                                   'إضافة طفل جديد',
                                   style: AppTextStyles.style(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 15,
+                                    fontSize: 15.sp,
                                   ),
                                 ),
                               ),
@@ -201,10 +202,10 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
 
                   // محتوى الشاشة بناءً على الحالة
                   if (isFullLoading)
-                    const SliverToBoxAdapter(
+                    SliverToBoxAdapter(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 64),
-                        child: Center(
+                        padding: EdgeInsets.symmetric(vertical: 64.h),
+                        child: const Center(
                           child: CircularProgressIndicator(
                             color: AppColors.primaryLight,
                           ),
@@ -214,36 +215,36 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                   else if (state is ChildrenError)
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 48,
-                          horizontal: 24,
+                        padding: EdgeInsets.symmetric(
+                          vertical: 48.h,
+                          horizontal: 24.w,
                         ),
                         child: InkWell(
                           onTap: () =>
                               context.read<ChildrenCubit>().fetchChildren(),
                           child: Column(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.refresh_rounded,
-                                size: 48,
+                                size: 48.r,
                                 color: AppColors.errorLight,
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 12.h),
                               Text(
                                 'إعادة المحاولة',
                                 style: AppTextStyles.style(
-                                  fontSize: 16,
+                                  fontSize: 16.sp,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.errorLight,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8.h),
                               Text(
                                 state.message,
                                 textAlign: TextAlign.center,
                                 style: AppTextStyles.style(
                                   color: AppColors.textMuted,
-                                  fontSize: 13,
+                                  fontSize: 13.sp,
                                 ),
                               ),
                             ],
@@ -252,7 +253,7 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                       ),
                     )
                   else if (children.isEmpty)
-                    SliverToBoxAdapter(
+                    const SliverToBoxAdapter(
                       child: EmptyStatePlaceholder(
                         icon: Icons.child_care_rounded,
                         title: 'لا يوجد أطفال مسجلون بعد',
@@ -262,7 +263,7 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                     )
                   else
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 32.h),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate((context, index) {
                           final child = children[index];
@@ -309,12 +310,13 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                 ],
               ),
               if (isActionLoading)
-                const Positioned.fill(
+                Positioned.fill(
                   child: ColoredBox(
-                    color: Color(0x33000000),
+                    color: const Color(0x33000000),
                     child: Center(
                       child: CircularProgressIndicator(
                         color: AppColors.primaryLight,
+                        strokeWidth: 2.w,
                       ),
                     ),
                   ),

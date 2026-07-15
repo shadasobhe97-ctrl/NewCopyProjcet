@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/features/parent/search/data/models/driver_search_model.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -187,8 +188,8 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                 ),
                 backgroundColor: AppColors.success,
                 behavior: SnackBarBehavior.floating,
-                margin: const EdgeInsets.all(16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                margin: EdgeInsets.all(16.w),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                 duration: const Duration(seconds: 4),
               ),
             );
@@ -208,8 +209,8 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                 ),
                 backgroundColor: AppColors.error,
                 behavior: SnackBarBehavior.floating,
-                margin: const EdgeInsets.all(16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                margin: EdgeInsets.all(16.w),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                 duration: const Duration(seconds: 4),
               ),
             );
@@ -225,7 +226,7 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                 'تأكيد الاشتراك والسعر',
                 style: AppTextStyles.style(
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 16.sp,
                   color: isDark ? AppColors.white : AppColors.textDark,
                 ),
               ),
@@ -240,16 +241,16 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                   Expanded(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.all(16.0),
+                      padding: EdgeInsets.all(16.w),
                       child: Column(
                         children: [
                           // 1. بيانات الكابتن
                           _buildDriverCard(theme, isDark),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16.h),
 
                           // 2. تفاصيل التسعير
                           _buildPricingCard(theme, isDark),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16.h),
 
                           // 3. تنبيه إرشادي
                           _buildInfoCard(theme, isDark),
@@ -275,36 +276,36 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.r),
         border: Border.all(color: isDark ? AppColors.grey800 : AppColors.grey200),
         boxShadow: [
           BoxShadow(
             color: AppColors.black.withValues(alpha: isDark ? 0.15 : 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            blurRadius: 12.r,
+            offset: Offset(0, 4.h),
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            width: 56,
-            height: 56,
+            width: 56.w,
+            height: 56.h,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: avatarColor.withValues(alpha: 0.12),
-              border: Border.all(color: avatarColor.withValues(alpha: 0.3), width: 1.5),
+              border: Border.all(color: avatarColor.withValues(alpha: 0.3), width: 1.5.w),
             ),
             child: Icon(
               isFemale ? Icons.face_4_rounded : Icons.person_rounded,
-              size: 32,
+              size: 32.r,
               color: avatarColor,
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,29 +314,29 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                   widget.driver.fullName,
                   style: AppTextStyles.style(
                     fontWeight: FontWeight.bold,
-                    fontSize: 15,
+                    fontSize: 15.sp,
                     color: isDark ? AppColors.white : AppColors.textDark,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4.h),
                 Row(
                   children: [
                     Text(
                       widget.driver.vehicleType,
                       style: AppTextStyles.style(
-                        fontSize: 12,
+                        fontSize: 12.sp,
                         color: isDark ? AppColors.grey400 : AppColors.textMuted,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Container(width: 4, height: 4, decoration: BoxDecoration(shape: BoxShape.circle, color: isDark ? AppColors.grey700 : AppColors.grey300)),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.star_rounded, color: AppColors.amber, size: 14),
-                    const SizedBox(width: 2),
+                    SizedBox(width: 8.w),
+                    Container(width: 4.w, height: 4.h, decoration: BoxDecoration(shape: BoxShape.circle, color: isDark ? AppColors.grey700 : AppColors.grey300)),
+                    SizedBox(width: 8.w),
+                    Icon(Icons.star_rounded, color: AppColors.amber, size: 14.r),
+                    SizedBox(width: 2.w),
                     Text(
                       widget.driver.rating.toStringAsFixed(1),
                       style: AppTextStyles.style(
-                        fontSize: 12,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.bold,
                         color: isDark ? AppColors.grey200 : AppColors.textDark,
                       ),
@@ -355,13 +356,13 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
       width: double.infinity,
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.r),
         border: Border.all(color: isDark ? AppColors.grey800 : AppColors.grey200),
         boxShadow: [
           BoxShadow(
             color: AppColors.black.withValues(alpha: isDark ? 0.15 : 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            blurRadius: 12.r,
+            offset: Offset(0, 4.h),
           ),
         ],
       ),
@@ -369,47 +370,47 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(16.0.w),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: EdgeInsets.all(6.w),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(8.r),
                   ),
-                  child: Icon(Icons.receipt_long_rounded, color: theme.colorScheme.primary, size: 18),
+                  child: Icon(Icons.receipt_long_rounded, color: theme.colorScheme.primary, size: 18.r),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10.w),
                 Text(
                   'تفاصيل التسعير',
                   style: AppTextStyles.style(
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    fontSize: 14.sp,
                     color: isDark ? AppColors.white : AppColors.textDark,
                   ),
                 ),
               ],
             ),
           ),
-          Divider(color: isDark ? AppColors.grey800 : AppColors.grey100, height: 1),
+          Divider(color: isDark ? AppColors.grey800 : AppColors.grey100, height: 1.h),
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(16.0.w),
             child: _isLoading
                 ? Center(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      padding: EdgeInsets.symmetric(vertical: 24.h),
                       child: Column(
                         children: [
                           CircularProgressIndicator(
-                            strokeWidth: 3,
+                            strokeWidth: 3.w,
                             color: theme.colorScheme.primary,
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12.h),
                           Text(
                             'جاري الاتصال بالسيرفر وجلب التسعير الحقيقي...',
                             style: AppTextStyles.style(
-                              fontSize: 12,
+                              fontSize: 12.sp,
                               color: isDark ? AppColors.grey400 : AppColors.textMuted,
                             ),
                           ),
@@ -420,10 +421,10 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                 : _hasError
                     ? Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(12),
+                        padding: EdgeInsets.all(12.w),
                         decoration: BoxDecoration(
                           color: AppColors.error.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(12.r),
                           border: Border.all(color: AppColors.error.withValues(alpha: 0.25)),
                         ),
                         child: Column(
@@ -431,13 +432,13 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 18),
-                                const SizedBox(width: 8),
+                                Icon(Icons.error_outline_rounded, color: AppColors.error, size: 18.r),
+                                SizedBox(width: 8.w),
                                 Expanded(
                                   child: Text(
                                     _errorMessage ?? 'حدث خطأ أثناء جلب التسعير.',
                                     style: AppTextStyles.style(
-                                      fontSize: 13,
+                                      fontSize: 13.sp,
                                       color: AppColors.error,
                                       height: 1.4,
                                     ),
@@ -445,13 +446,13 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 10),
+                            SizedBox(height: 10.h),
                             TextButton.icon(
                               onPressed: _fetchPricing,
-                              icon: const Icon(Icons.refresh_rounded, size: 16),
+                              icon: Icon(Icons.refresh_rounded, size: 16.r),
                               label: Text(
                                 'إعادة المحاولة',
-                                style: AppTextStyles.style(fontSize: 12, fontWeight: FontWeight.bold),
+                                style: AppTextStyles.style(fontSize: 12.sp, fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
@@ -467,7 +468,7 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                                 'السعر الإجمالي',
                                 style: AppTextStyles.style(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                                  fontSize: 14.sp,
                                   color: theme.colorScheme.primary,
                                 ),
                               ),
@@ -475,31 +476,31 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                                 '${_totalPrice.toInt()} د.ل',
                                 style: AppTextStyles.style(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 20,
+                                  fontSize: 20.sp,
                                   color: theme.colorScheme.primary,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          Divider(color: isDark ? AppColors.grey800 : AppColors.grey100, height: 1),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12.h),
+                          Divider(color: isDark ? AppColors.grey800 : AppColors.grey100, height: 1.h),
+                          SizedBox(height: 12.h),
                           Text(
                             'تفصيل السعر لكل طفل:',
                             style: AppTextStyles.style(
-                              fontSize: 12,
+                              fontSize: 12.sp,
                               fontWeight: FontWeight.bold,
                               color: isDark ? AppColors.grey400 : AppColors.grey600,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8.h),
                           ...widget.selectedKids.map((kid) {
                             final price = _priceForKid(kid);
                             final label = _labelForKid(kid);
                             final isMale = kid.gender.toLowerCase() == 'male';
 
                             return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 6.0),
+                              padding: EdgeInsets.symmetric(vertical: 6.0.h),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -507,14 +508,14 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                                     children: [
                                       Icon(
                                         isMale ? Icons.face_rounded : Icons.face_4_rounded,
-                                        size: 16,
+                                        size: 16.r,
                                         color: isMale ? theme.colorScheme.primary : AppColors.femalePink,
                                       ),
-                                      const SizedBox(width: 8),
+                                      SizedBox(width: 8.w),
                                       Text(
                                         '${kid.name} ($label)',
                                         style: AppTextStyles.style(
-                                          fontSize: 13,
+                                          fontSize: 13.sp,
                                           color: isDark ? AppColors.grey200 : AppColors.grey800,
                                         ),
                                       ),
@@ -524,7 +525,7 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                                     '${price.toInt()} د.ل',
                                     style: AppTextStyles.style(
                                       fontWeight: FontWeight.w600,
-                                      fontSize: 13,
+                                      fontSize: 13.sp,
                                       color: isDark ? AppColors.white : AppColors.textDark,
                                     ),
                                   ),
@@ -542,22 +543,22 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
 
   Widget _buildInfoCard(ThemeData theme, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
         color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.1 : 0.04),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.3 : 0.15)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline_rounded, color: theme.colorScheme.primary, size: 20),
-          const SizedBox(width: 10),
+          Icon(Icons.info_outline_rounded, color: theme.colorScheme.primary, size: 20.r),
+          SizedBox(width: 10.w),
           Expanded(
             child: Text(
               'يمكنك إرسال طلب اشتراك لأكثر من سائق في نفس الوقت. بمجرد قبول أحد السائقين لطلبك، سيتم إلغاء بقية الطلبات تلقائيًا تفاديًا للازدواجية.',
               style: AppTextStyles.style(
-                fontSize: 12,
+                fontSize: 12.sp,
                 color: isDark ? AppColors.grey300 : AppColors.grey800,
                 height: 1.5,
               ),
@@ -570,15 +571,15 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
 
   Widget _buildActionsBar(ThemeData theme, bool isDark, bool isSubmitting) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.white,
-        border: Border(top: BorderSide(color: isDark ? AppColors.grey800 : AppColors.grey200, width: 0.5)),
+        border: Border(top: BorderSide(color: isDark ? AppColors.grey800 : AppColors.grey200, width: 0.5.w)),
         boxShadow: [
           BoxShadow(
             color: AppColors.black.withValues(alpha: isDark ? 0.25 : 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
+            blurRadius: 10.r,
+            offset: Offset(0, -4.h),
           ),
         ],
       ),
@@ -586,28 +587,28 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
         children: [
           Expanded(
             child: SizedBox(
-              height: 48,
+              height: 48.h,
               child: OutlinedButton(
                 onPressed: isSubmitting ? null : () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: isDark ? AppColors.grey700 : AppColors.grey300),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                 ),
                 child: Text(
                   'إلغاء',
                   style: AppTextStyles.style(
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    fontSize: 14.sp,
                     color: isDark ? AppColors.grey300 : AppColors.textMuted,
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w),
           Expanded(
             child: SizedBox(
-              height: 48,
+              height: 48.h,
               child: ElevatedButton(
                 onPressed: (isSubmitting || _isLoading || _hasError) ? null : _confirmAndSend,
                 style: ElevatedButton.styleFrom(
@@ -615,14 +616,14 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                   foregroundColor: theme.colorScheme.onPrimary,
                   disabledBackgroundColor: isDark ? AppColors.grey800 : AppColors.grey200,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                 ),
                 child: isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
+                    ? SizedBox(
+                        height: 20.h,
+                        width: 20.w,
                         child: CircularProgressIndicator(
-                          strokeWidth: 2,
+                          strokeWidth: 2.w,
                           color: AppColors.white,
                         ),
                       )
@@ -630,7 +631,7 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                         'تأكيد وإرسال الطلب',
                         style: AppTextStyles.style(
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 14.sp,
                           color: theme.colorScheme.onPrimary,
                         ),
                       ),

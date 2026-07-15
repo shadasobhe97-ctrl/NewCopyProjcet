@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kids_transport/features/parent/search/data/models/driver_search_model.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -506,36 +508,29 @@ class _DriverProfileViewState extends State<DriverProfileView> {
               border: Border.all(
                   color: avatarColor.withValues(alpha: 0.3), width: 2),
             ),
-            child: d.photoUrl != null
+            child: d.photoUrl != null && d.photoUrl!.isNotEmpty
                 ? ClipOval(
-                    child: Image.network(
-                      d.photoUrl!,
+                    child: CachedNetworkImage(
+                      imageUrl: d.photoUrl!,
                       fit: BoxFit.cover,
-                      width: 96,
-                      height: 96,
-                      errorBuilder: (_, __, ___) => Icon(
+                      width: 96.w,
+                      height: 96.h,
+                      placeholder: (context, url) => Center(
+                        child: CircularProgressIndicator(
+                          color: avatarColor,
+                          strokeWidth: 2.w,
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Icon(
                         isFemale ? Icons.face_4_rounded : Icons.person_rounded,
-                        size: 52,
+                        size: 52.r,
                         color: avatarColor,
                       ),
-                      loadingBuilder: (_, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                            color: avatarColor,
-                            strokeWidth: 2,
-                          ),
-                        );
-                      },
                     ),
                   )
                 : Icon(
                     isFemale ? Icons.face_4_rounded : Icons.person_rounded,
-                    size: 52,
+                    size: 52.r,
                     color: avatarColor,
                   ),
           ),

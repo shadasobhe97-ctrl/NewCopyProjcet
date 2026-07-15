@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/theme/text_styles.dart';
@@ -23,33 +25,37 @@ class ChildCardWidget extends StatelessWidget {
 
   String _getGradeLevel(int level) {
     switch (level) {
-      case 1: return 'روضة';
-      case 2: return 'ابتدائي';
-      case 3: return 'إعدادي';
-      case 4: return 'ثانوي';
-      default: return 'غير محدد';
+      case 1:
+        return 'الصف الأول';
+      case 2:
+        return 'الصف الثاني';
+      case 3:
+        return 'الصف الثالث';
+      case 4:
+        return 'الصف الرابع';
+      case 5:
+        return 'الصف الخامس';
+      case 6:
+        return 'الصف السادس';
+      default:
+        return 'غير محدد';
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.isDarkMode;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: 16.h),
       decoration: AppTheme.boxDecoration(
         color: isDark ? AppColors.darkCard : AppColors.white,
-        borderRadius: AppTheme.radius(20),
+        borderRadius: AppTheme.radius(16.r),
         boxShadow: [
           AppTheme.boxShadow(
-            color: AppColors.black.withValues(alpha: isDark ? 0.35 : 0.10),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-          AppTheme.boxShadow(
             color: AppColors.black.withValues(alpha: isDark ? 0.15 : 0.04),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
+            blurRadius: 4.r,
+            offset: Offset(0, 1.h),
           ),
         ],
       ),
@@ -57,54 +63,52 @@ class ChildCardWidget extends StatelessWidget {
         children: [
           // الجزء العلوي: بيانات الطفل
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16.w),
             child: Row(
               children: [
                 // صورة الطفل
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: 60.w,
+                  height: 60.h,
                   decoration: AppTheme.boxDecoration(
                     shape: BoxShape.circle,
                     color: child.gender == 'male' ? context.maleBlueBg : context.femalePinkBg,
                     border: AppTheme.border(
                       color: child.gender == 'male' ? context.genderMaleColor : context.genderFemaleColor,
-                      width: 2,
+                      width: 2.w,
                     ),
                   ),
-                  child: child.image != null
+                  child: child.image != null && child.image!.isNotEmpty
                       ? ClipOval(
-                          child: Image.network(
-                            child.image!,
+                          child: CachedNetworkImage(
+                            imageUrl: child.image!,
                             fit: BoxFit.cover,
-                            width: 60,
-                            height: 60,
-                            errorBuilder: (_, __, ___) => Icon(
+                            width: 60.w,
+                            height: 60.h,
+                            placeholder: (context, url) => Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.w,
+                                color: child.gender == 'male'
+                                    ? context.genderMaleColor
+                                    : context.genderFemaleColor,
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Icon(
                               Icons.person_rounded,
                               color: child.gender == 'male'
                                   ? context.genderMaleColor
                                   : context.genderFemaleColor,
-                              size: 32,
+                              size: 32.r,
                             ),
-                            loadingBuilder: (_, w, p) => p == null
-                                ? w
-                                : Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: child.gender == 'male'
-                                          ? context.genderMaleColor
-                                          : context.genderFemaleColor,
-                                    ),
-                                  ),
                           ),
                         )
                       : Icon(
                           Icons.person_rounded,
                           color: child.gender == 'male' ? context.genderMaleColor : context.genderFemaleColor,
-                          size: 32,
+                          size: 32.r,
                         ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 // تفاصيل الطفل
                 Expanded(
                   child: Column(
@@ -114,20 +118,20 @@ class ChildCardWidget extends StatelessWidget {
                         child.name,
                         style: AppTextStyles.style(
                           fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                          fontSize: 18.sp,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4.h),
                       Row(
                         children: [
-                          Icon(Icons.school_rounded, size: 14, color: context.textMuted),
-                          const SizedBox(width: 4),
+                          Icon(Icons.school_rounded, size: 14.r, color: context.textMuted),
+                          SizedBox(width: 4.w),
                           Expanded(
                             child: Text(
                               '${_getGradeLevel(child.gradeLevel)} - ${child.schoolName}',
                               style: AppTextStyles.style(
                                 color: context.textMuted,
-                                fontSize: 13,
+                                fontSize: 13.sp,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -149,7 +153,7 @@ class ChildCardWidget extends StatelessWidget {
           const Divider(height: 1),
           // الجزء السفلي: الأزرار الثلاثة
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
             child: Row(
               children: [
                 _buildActionButton(
@@ -191,19 +195,19 @@ class ChildCardWidget extends StatelessWidget {
     return Expanded(
       child: InkWell(
         onTap: onTap,
-        borderRadius: AppTheme.radius(12),
+        borderRadius: AppTheme.radius(12.r),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: EdgeInsets.symmetric(vertical: 8.h),
           child: Column(
             children: [
-              Icon(icon, color: color, size: 22),
-              const SizedBox(height: 4),
+              Icon(icon, color: color, size: 22.r),
+              SizedBox(height: 4.h),
               Text(
                 label,
                 style: AppTextStyles.style(
                   color: color,
                   fontWeight: FontWeight.bold,
-                  fontSize: 11,
+                  fontSize: 11.sp,
                 ),
               ),
             ],

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -163,7 +164,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
               if (isLoading) const LinearProgressIndicator(),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.all(24.w),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -174,9 +175,9 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                           avatarImage: _avatarImage,
                           onTap: _pickImage,
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: 32.h),
 
-                        _FieldLabel('الاسم بالكامل'),
+                        const _FieldLabel('الاسم بالكامل'),
                         TextFormField(
                           controller: _nameController,
                           decoration: AppTheme.inputDecoration(
@@ -190,9 +191,9 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                           validator: (val) =>
                               val == null || val.isEmpty ? 'يرجى إدخال الاسم' : null,
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20.h),
 
-                        _FieldLabel('رقم الهاتف الأساسي'),
+                        const _FieldLabel('رقم الهاتف الأساسي'),
                         TextFormField(
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
@@ -208,9 +209,9 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                               ? 'يرجى إدخال رقم الهاتف'
                               : null,
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20.h),
 
-                        _FieldLabel('رقم هاتف الاحتياط'),
+                        const _FieldLabel('رقم هاتف الاحتياط'),
                         TextFormField(
                           controller: _backupPhoneController,
                           keyboardType: TextInputType.phone,
@@ -223,9 +224,9 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20.h),
 
-                        _FieldLabel('البريد الإلكتروني'),
+                        const _FieldLabel('البريد الإلكتروني'),
                         ProfileEmailField(
                           controller: _emailController,
                           isVerified: _isEmailVerified,
@@ -236,12 +237,12 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                             _showVerificationOption = false;
                           }),
                         ),
-                        const SizedBox(height: 40),
+                        SizedBox(height: 40.h),
 
                         PrimaryButton(
                           label: isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات',
                           onPressed: isSaving ? null : _saveProfile,
-                          borderRadius: 30,
+                          borderRadius: 30.r,
                         ),
                       ],
                     ),
@@ -264,12 +265,12 @@ class _FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 12, bottom: 8),
+      padding: EdgeInsets.only(right: 12.w, bottom: 8.h),
       child: Text(
         label,
         style: AppTextStyles.style(
           fontWeight: FontWeight.bold,
-          fontSize: 14,
+          fontSize: 14.sp,
           color: AppColors.textMuted,
         ),
       ),

@@ -4,6 +4,7 @@ import 'package:kids_transport/core/network/api_client.dart';
 // Login
 import 'package:kids_transport/features/auth/login/data/data_sources/auth_remote_data_source.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/auth_repository.dart';
+import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
 
 // Registration
@@ -25,7 +26,10 @@ void initAuthInjection() {
   }
   if (!getIt.isRegistered<AuthRepository>()) {
     getIt.registerLazySingleton<AuthRepository>(
-      () => AuthRepository(getIt<AuthRemoteDataSource>()),
+      () => AuthRepository(
+        getIt<AuthRemoteDataSource>(),
+        getIt<SessionRepository>(),
+      ),
     );
   }
   if (!getIt.isRegistered<AuthCubit>()) {

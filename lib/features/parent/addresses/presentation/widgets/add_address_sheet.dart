@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -43,6 +44,40 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
       _isDefault = addr.isDefault;
     } else {
       _currentCenter = const LatLng(32.8872, 13.1913);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _getUserLocation();
+      });
+    }
+  }
+
+  Future<void> _getUserLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+
+      if (permission == LocationPermission.deniedForever) return;
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+
+      if (mounted && widget.initialAddress == null) {
+        setState(() {
+          _currentCenter = LatLng(position.latitude, position.longitude);
+        });
+        _mapController.move(_currentCenter, 15.5);
+      }
+    } catch (_) {
+      // Keep default coordinates in case of error/timeout
     }
   }
 

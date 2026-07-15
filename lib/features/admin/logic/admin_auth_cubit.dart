@@ -1,35 +1,37 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
-import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/admin/data/models/admin_user_model.dart';
 import 'package:kids_transport/features/auth/login/data/models/login_request_model.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/auth_repository.dart';
+import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import 'admin_auth_state.dart';
 
 export 'admin_auth_state.dart';
 
 class AdminAuthCubit extends Cubit<AdminAuthState> {
-  final AuthRepository _repository;
+  final AuthRepository _authRepository;
+  final SessionRepository _sessionRepository;
 
-  AdminAuthCubit(this._repository) : super(_initialState());
+  AdminAuthCubit(this._authRepository, this._sessionRepository)
+      : super(_getInitialState(_sessionRepository));
 
   bool get isLoading => state.isLoading;
   String? get errorMessage => state.errorMessage;
   AdminUserModel? get currentUser => state.currentUser;
   bool get isAuthenticated => state.isAuthenticated;
 
-  static AdminAuthState _initialState() {
-    final token = StorageService.getToken();
-    final roleId = StorageService.getRoleId();
-    final fullName = StorageService.getFullName();
-    final phone = StorageService.getPhoneNumber();
+  static AdminAuthState _getInitialState(SessionRepository repository) {
+    final token = repository.getToken();
+    final roleId = repository.getRoleId();
+    final fullName = repository.getFullName();
+    final phone = repository.getPhoneNumber();
 
     if (token != null && roleId != null && roleId != 3 && roleId != 4) {
       return AdminAuthState(
         currentUser: AdminUserModel(
-          id: StorageService.getUserId()?.toString() ?? '',
-          name: fullName ?? 'ط§ظ„ظ…ط³ط¤ظˆظ„',
+          id: repository.getUserId() ?? '',
+          name: fullName ?? 'المسؤول',
           email: phone ?? '',
           token: token,
         ),
@@ -43,7 +45,7 @@ class AdminAuthCubit extends Cubit<AdminAuthState> {
     emit(state.copyWith(isLoading: true, clearError: true));
 
     try {
-      final response = await _repository.login(
+      final response = await _authRepository.login(
         LoginRequestModel(
           phoneNumber: phone,
           password: password,
@@ -58,7 +60,7 @@ class AdminAuthCubit extends Cubit<AdminAuthState> {
             isLoading: false,
             errorMessage: _fallbackMessage(
               response.message,
-              'ط¨ظٹط§ظ†ط§طھ ط§ظ„ط¯ط®ظˆظ„ ط؛ظٹط± طµط­ظٹط­ط©',
+              'بيانات الدخول غير صحيحة',
             ),
           ),
         );
@@ -66,11 +68,11 @@ class AdminAuthCubit extends Cubit<AdminAuthState> {
       }
 
       if (!_isAdminRole(response.user.roleId)) {
-        await StorageService.clearSession();
+        await _sessionRepository.clearSession();
         emit(
           state.copyWith(
             isLoading: false,
-            errorMessage: 'ظ‡ط°ط§ ط§ظ„ط­ط³ط§ط¨ ظ„ظٹط³ ط­ط³ط§ط¨ ظ…ط³ط¤ظˆظ„.',
+            errorMessage: 'هذا الحساب ليس حساب مسؤول.',
             clearUser: true,
           ),
         );
@@ -100,7 +102,7 @@ class AdminAuthCubit extends Cubit<AdminAuthState> {
       emit(
         state.copyWith(
           isLoading: false,
-          errorMessage: 'ط­ط¯ط« ط®ط·ط£ ظپظٹ ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ…',
+          errorMessage: 'حدث خطأ في الاتصال بالخادم',
         ),
       );
       return false;
@@ -111,14 +113,14 @@ class AdminAuthCubit extends Cubit<AdminAuthState> {
     emit(state.copyWith(isLoading: true, clearError: true));
 
     try {
-      final response = await _repository.logout();
+      final response = await _authRepository.logout();
       if (!response.status) {
         emit(
           state.copyWith(
             isLoading: false,
             errorMessage: _fallbackMessage(
               response.message,
-              'ظپط´ظ„ طھط³ط¬ظٹظ„ ط§ظ„ط®ط±ظˆط¬.',
+              'فشل تسجيل الخروج.',
             ),
           ),
         );
@@ -135,12 +137,12 @@ class AdminAuthCubit extends Cubit<AdminAuthState> {
         state.copyWith(
           isLoading: false,
           errorMessage:
-              'ظپط´ظ„ طھط³ط¬ظٹظ„ ط§ظ„ط®ط±ظˆط¬طŒ ظٹط±ط¬ظ‰ ط§ظ„ظ…ط­ط§ظˆظ„ط© ظ…ط±ط© ط£ط®ط±ظ‰.',
+              'فشل تسجيل الخروج، يرجى المحاولة مرة أخرى.',
         ),
       );
       return false;
     } finally {
-      await StorageService.clearSession();
+      await _sessionRepository.clearSession();
       emit(state.copyWith(isLoading: false, clearUser: true));
     }
   }

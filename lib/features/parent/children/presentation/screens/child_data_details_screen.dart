@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -108,29 +110,29 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.refresh_rounded,
-                  size: 48,
+                  size: 48.r,
                   color: AppColors.errorLight,
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12.h),
                 Text(
                   'إعادة المحاولة',
                   style: AppTextStyles.style(
-                    fontSize: 16,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.bold,
                     color: AppColors.errorLight,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  padding: EdgeInsets.symmetric(horizontal: 32.w),
                   child: Text(
                     errorMessage!,
                     textAlign: TextAlign.center,
                     style: AppTextStyles.style(
                       color: AppColors.textMuted,
-                      fontSize: 13,
+                      fontSize: 13.sp,
                     ),
                   ),
                 ),
@@ -147,7 +149,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
         slivers: [
           // ── SliverAppBar مع صورة الطفل ──
           SliverAppBar(
-            expandedHeight: 200,
+            expandedHeight: 200.h,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
@@ -165,36 +167,44 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                   ),
                   // صورة الطفل في المنتصف
                   Positioned(
-                    bottom: 16,
+                    bottom: 16.h,
                     left: 0,
                     right: 0,
                     child: Column(
                       children: [
                         Container(
-                          width: 88,
-                          height: 88,
+                          width: 88.w,
+                          height: 88.h,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: activeChild.gender == 'male'
                                 ? context.maleBlueBg
                                 : context.femalePinkBg,
-                            border: Border.all(color: Colors.white, width: 3),
+                            border: Border.all(color: Colors.white, width: 3.w),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
+                                blurRadius: 12.r,
+                                offset: Offset(0, 4.h),
                               ),
                             ],
                           ),
-                          child: activeChild.photoUrl != null
+                          child: activeChild.photoUrl != null && activeChild.photoUrl!.isNotEmpty
                               ? ClipOval(
-                                  child: Image.network(
-                                    activeChild.photoUrl!,
+                                  child: CachedNetworkImage(
+                                    imageUrl: activeChild.photoUrl!,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Icon(
+                                    placeholder: (context, url) => Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.w,
+                                        color: activeChild.gender == 'male'
+                                            ? context.genderMaleColor
+                                            : context.genderFemaleColor,
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) => Icon(
                                       Icons.person_rounded,
-                                      size: 44,
+                                      size: 44.r,
                                       color: activeChild.gender == 'male'
                                           ? context.genderMaleColor
                                           : context.genderFemaleColor,
@@ -203,7 +213,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                                 )
                               : Icon(
                                   Icons.person_rounded,
-                                  size: 44,
+                                  size: 44.r,
                                   color: activeChild.gender == 'male'
                                       ? context.genderMaleColor
                                       : context.genderFemaleColor,
@@ -238,7 +248,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
           // ── المحتوى ──
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16.w),
               child: Column(
                 children: [
                   // ── المعلومات الشخصية ──
@@ -261,7 +271,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
 
                   // ── البيانات الأكاديمية ──
                   _buildSectionCard(
@@ -279,7 +289,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
 
                   // ── العنوان ──
                   _buildSectionCard(
@@ -293,7 +303,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
 
                   // ── الملاحظات الطبية ──
                   if (activeChild.medicalNotes != null && activeChild.medicalNotes!.isNotEmpty)
@@ -304,12 +314,12 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                       children: [
                         Text(
                           activeChild.medicalNotes!,
-                          style: AppTextStyles.style(fontSize: 14, color: context.textMuted),
+                          style: AppTextStyles.style(fontSize: 14.sp, color: context.textMuted),
                         ),
                       ],
                     ),
 
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32.h),
                 ],
               ),
             ),
@@ -327,16 +337,16 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16.w),
       decoration: AppTheme.boxDecoration(
         color: context.isDarkMode ? AppColors.darkCard : AppColors.white,
-        borderRadius: AppTheme.radius(16),
+        borderRadius: AppTheme.radius(16.r),
         border: AppTheme.border(color: AppColors.grey200),
         boxShadow: [
           AppTheme.boxShadow(
             color: AppColors.black.withValues(alpha: context.isDarkMode ? 0.2 : 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            blurRadius: 8.r,
+            offset: Offset(0, 2.h),
           ),
         ],
       ),
@@ -345,13 +355,13 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, color: context.primaryColor, size: 20),
-              const SizedBox(width: 8),
-              Text(title, style: AppTextStyles.style(fontSize: 15, fontWeight: FontWeight.bold)),
+              Icon(icon, color: context.primaryColor, size: 20.r),
+              SizedBox(width: 8.w),
+              Text(title, style: AppTextStyles.style(fontSize: 15.sp, fontWeight: FontWeight.bold)),
             ],
           ),
-          const Divider(height: 20),
-          ...children.map((w) => Padding(padding: const EdgeInsets.only(bottom: 12), child: w)),
+          Divider(height: 20.h),
+          ...children.map((w) => Padding(padding: EdgeInsets.only(bottom: 12.h), child: w)),
         ],
       ),
     );
@@ -361,9 +371,9 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTextStyles.style(color: AppColors.grey500, fontSize: 12)),
-        const SizedBox(height: 4),
-        Text(value, style: AppTextStyles.style(fontWeight: FontWeight.w600, fontSize: 15)),
+        Text(label, style: AppTextStyles.style(color: AppColors.grey500, fontSize: 12.sp)),
+        SizedBox(height: 4.h),
+        Text(value, style: AppTextStyles.style(fontWeight: FontWeight.w600, fontSize: 15.sp)),
       ],
     );
   }

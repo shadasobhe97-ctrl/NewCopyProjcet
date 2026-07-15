@@ -11,6 +11,7 @@ import 'package:kids_transport/features/admin/logic/admin_dashboard_cubit.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/auth_repository.dart';
+import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/add_child_cubit.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
@@ -39,13 +40,16 @@ class TransportApp extends StatelessWidget {
         BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
         BlocProvider<AuthCubit>(create: (_) => getIt<AuthCubit>()),
         BlocProvider<AdminAuthCubit>(
-          create: (_) => AdminAuthCubit(getIt<AuthRepository>()),
+          create: (_) => AdminAuthCubit(
+            getIt<AuthRepository>(),
+            getIt<SessionRepository>(),
+          ),
         ),
         BlocProvider<AdminDashboardCubit>(
           create: (_) => AdminDashboardCubit(),
         ),
         BlocProvider<AppEntryCubit>(
-          create: (_) => AppEntryCubit()..checkSession(),
+          create: (_) => getIt<AppEntryCubit>()..checkSession(),
         ),
         BlocProvider<RegisterCubit>(create: (_) => getIt<RegisterCubit>()),
         BlocProvider<ChildrenCubit>(

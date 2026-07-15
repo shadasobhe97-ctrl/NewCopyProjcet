@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -25,7 +27,7 @@ class ChildPassScreen extends StatelessWidget {
         backgroundColor: context.backgroundSurface,
         appBar: const AppPrimaryAppBar(title: 'بطاقة الطفل'),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24.w),
           child: Column(
             children: [
               // تصميم البطاقة (Wallet Style)
@@ -33,12 +35,12 @@ class ChildPassScreen extends StatelessWidget {
                 width: double.infinity,
                 decoration: AppTheme.boxDecoration(
                   color: context.isDarkMode ? AppColors.darkSurface : AppColors.white,
-                  borderRadius: AppTheme.radius(24),
+                  borderRadius: AppTheme.radius(24.r),
                   boxShadow: [
                     AppTheme.boxShadow(
                       color: context.primaryColor.withValues(alpha: 0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
+                      blurRadius: 20.r,
+                      offset: Offset(0, 10.h),
                     ),
                   ],
                 ),
@@ -46,30 +48,46 @@ class ChildPassScreen extends StatelessWidget {
                   children: [
                     // رأس البطاقة
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                      padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
                       decoration: AppTheme.boxDecoration(
                         gradient: AppTheme.linearGradient(
                           colors: context.primaryGradient,
                           begin: Alignment.topRight,
                           end: Alignment.bottomLeft,
                         ),
-                        borderRadius: AppTheme.verticalRadius(top: AppTheme.cornerRadius(24)),
+                        borderRadius: AppTheme.verticalRadius(top: AppTheme.cornerRadius(24.r)),
                       ),
                       child: Row(
                         children: [
                           Container(
-                            width: 50,
-                            height: 50,
+                            width: 50.w,
+                            height: 50.h,
                             decoration: AppTheme.boxDecoration(
                               shape: BoxShape.circle,
                               color: AppColors.white24,
-                              border: AppTheme.border(color: AppColors.white, width: 2),
+                              border: AppTheme.border(color: AppColors.white, width: 2.w),
                             ),
-                            child: child.image != null
-                                ? ClipOval(child: Image.network(child.image!, fit: BoxFit.cover))
+                            child: child.image != null && child.image!.isNotEmpty
+                                ? ClipOval(
+                                    child: CachedNetworkImage(
+                                      imageUrl: child.image!,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.w,
+                                          color: AppColors.white,
+                                        ),
+                                      ),
+                                      errorWidget: (context, url, error) => const Icon(
+                                        Icons.person,
+                                        color: AppColors.white,
+                                        size: 30,
+                                      ),
+                                    ),
+                                  )
                                 : const Icon(Icons.person, color: AppColors.white, size: 30),
                           ),
-                          const SizedBox(width: 16),
+                          SizedBox(width: 16.w),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,7 +96,7 @@ class ChildPassScreen extends StatelessWidget {
                                   child.name,
                                   style: AppTextStyles.style(
                                     color: AppColors.white,
-                                    fontSize: 20,
+                                    fontSize: 20.sp,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -86,7 +104,7 @@ class ChildPassScreen extends StatelessWidget {
                                   'بطاقة صعود دربي',
                                   style: AppTextStyles.style(
                                     color: AppColors.white70,
-                                    fontSize: 14,
+                                    fontSize: 14.sp,
                                   ),
                                 ),
                               ],
@@ -98,31 +116,31 @@ class ChildPassScreen extends StatelessWidget {
                     
                     // منطقة الـ QR Code
                     Padding(
-                      padding: const EdgeInsets.all(32.0),
+                      padding: EdgeInsets.all(32.w),
                       child: Column(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(16),
+                            padding: EdgeInsets.all(16.w),
                             decoration: AppTheme.boxDecoration(
                               color: AppColors.white,
-                              borderRadius: AppTheme.radius(16),
-                              border: AppTheme.border(color: AppColors.grey200, width: 2),
+                              borderRadius: AppTheme.radius(16.r),
+                              border: AppTheme.border(color: AppColors.grey200, width: 2.w),
                             ),
                             child: QrImageView(
                               data: child.qrToken,
                               version: QrVersions.auto,
-                              size: 220.0,
+                              size: 220.w,
                               backgroundColor: AppColors.white,
                               foregroundColor: AppColors.black,
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24.h),
                           Text(
                             'يُستخدم هذا الرمز من قبل السائق لتوثيق صعود الطفل إلى المركبة ونزوله منها أثناء الرحلات اليومية. يُرجى عدم مشاركة هذا الرمز مع أي شخص غير السائق المعتمد.',
                             textAlign: TextAlign.center,
                             style: AppTextStyles.style(
                               color: context.textMuted,
-                              fontSize: 12,
+                              fontSize: 12.sp,
                               height: 1.5,
                             ),
                           ),
@@ -133,25 +151,24 @@ class ChildPassScreen extends StatelessWidget {
                 ),
               ),
               
-              const SizedBox(height: 30),
+              SizedBox(height: 30.h),
               
               // أزرار التحكم
               Row(
                 children: [
                   Expanded(
-                    child: // في ملف ChildPassScreen
-OutlinedButton.icon(
-  onPressed: _sharePass,
-  icon: const Icon(Icons.share_rounded),
-  label: const Text('مشاركة البطاقة'),
-  style: OutlinedButton.styleFrom( // استخدم styleFrom مباشرة إذا كان الـ Custom Theme يسبب مشكلة
-    foregroundColor: context.primaryColor,
-    side: BorderSide(color: context.primaryColor, width: 2), // هنا الحل المباشر
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-  ),
-),
+                    child: OutlinedButton.icon(
+                      onPressed: _sharePass,
+                      icon: const Icon(Icons.share_rounded),
+                      label: const Text('مشاركة البطاقة'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: context.primaryColor,
+                        side: BorderSide(color: context.primaryColor, width: 2.w),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16.w),
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {

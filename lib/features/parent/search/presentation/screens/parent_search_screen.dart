@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/features/parent/search/data/models/driver_search_model.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
@@ -227,14 +228,14 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                             // إظهار رسالة الخطأ إذا كان الـ state هو SearchError
                             if (state is SearchError)
                               Padding(
-                                padding: const EdgeInsets.all(16.0),
+                                padding: EdgeInsets.all(16.w),
                                 child: Text(
                                   state.errorMessage,
                                   style: AppTextStyles.style(color: AppColors.red, fontWeight: FontWeight.bold),
                                   textAlign: TextAlign.center,
                                 ),
                               ),
-                            const SizedBox(height: 24),
+                            SizedBox(height: 24.h),
                           ],
                         ),
                       ),
@@ -261,13 +262,13 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
       decoration: BoxDecoration(
         color: theme.cardColor,
         border: Border(
           bottom: BorderSide(
             color: isDark ? AppColors.grey800 : AppColors.grey200,
-            width: 0.5,
+            width: 0.5.w,
           ),
         ),
       ),
@@ -276,7 +277,7 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
           if (_searchMethod != SearchMethod.none)
             IconButton(
               icon: Icon(Icons.arrow_back_ios_new_rounded,
-                  size: 18, color: theme.colorScheme.primary),
+                  size: 18.r, color: theme.colorScheme.primary),
               tooltip: 'رجوع',
               onPressed: () => setState(() {
                 if (_searchMethod == SearchMethod.byChildren && _hasSearchedByChildren) {
@@ -289,21 +290,21 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
               }),
             )
           else
-            const SizedBox(width: 48),
+            SizedBox(width: 48.w),
 
           Expanded(
             child: Text(
               title,
               textAlign: TextAlign.center,
               style: AppTextStyles.style(
-                fontSize: 17,
+                fontSize: 17.sp,
                 fontWeight: FontWeight.bold,
                 color: isDark ? AppColors.white : AppColors.textDark,
               ),
             ),
           ),
 
-          const SizedBox(width: 48),
+          SizedBox(width: 48.w),
         ],
       ),
     );

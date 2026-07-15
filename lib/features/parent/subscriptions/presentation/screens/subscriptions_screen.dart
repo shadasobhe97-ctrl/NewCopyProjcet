@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
@@ -44,8 +45,8 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> with SingleTi
         ),
         backgroundColor: bg,
         behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: EdgeInsets.all(16.w),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -89,19 +90,19 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> with SingleTi
                     unselectedLabelColor: isDark ? AppColors.grey500 : AppColors.grey600,
                     labelStyle: AppTextStyles.style(
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: 14.sp,
                     ),
                     unselectedLabelStyle: AppTextStyles.style(
                       fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                      fontSize: 13.sp,
                     ),
                     tabs: [
                       Tab(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text('الطلبات المعلقة'),
-                            const SizedBox(width: 6),
+                            const Text('الطلبات المعلقة'),
+                            SizedBox(width: 6.w),
                             _buildBadge(pendingSubs.length, theme.colorScheme.primary, isDark),
                           ],
                         ),
@@ -110,8 +111,8 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> with SingleTi
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text('الاشتراكات النشطة'),
-                            const SizedBox(width: 6),
+                            const Text('الاشتراكات النشطة'),
+                            SizedBox(width: 6.w),
                             _buildBadge(activeSubs.length, AppColors.success, isDark),
                           ],
                         ),
@@ -155,15 +156,15 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> with SingleTi
 
   Widget _buildBadge(int count, Color color, bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(10.r),
       ),
       child: Text(
         '$count',
         style: AppTextStyles.style(
-          fontSize: 11,
+          fontSize: 11.sp,
           fontWeight: FontWeight.bold,
           color: color,
         ),
@@ -186,7 +187,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> with SingleTi
       onRefresh: () => context.read<SubscriptionsCubit>().fetchSubscriptions(),
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16.w),
         itemCount: subscriptions.length,
         itemBuilder: (context, index) {
           final sub = subscriptions[index];
@@ -217,56 +218,56 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> with SingleTi
           physics: const AlwaysScrollableScrollPhysics(),
           child: Container(
             height: constraints.maxHeight,
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(24.w),
             alignment: Alignment.center,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.all(20.w),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: theme.colorScheme.primary.withValues(alpha: 0.08),
                   ),
                   child: Icon(
                     Icons.description_outlined,
-                    size: 72,
+                    size: 72.r,
                     color: theme.colorScheme.primary,
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24.h),
                 Text(
                   text,
                   style: AppTextStyles.style(
-                    fontSize: 15,
+                    fontSize: 15.sp,
                     fontWeight: FontWeight.bold,
                     color: isDark ? AppColors.grey300 : AppColors.textDark,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
                 Text(
                   'ابحث عن سائق مناسب لأطفالك الآن وابدأ رحلتهم المدرسية الآمنة.',
                   style: AppTextStyles.style(
-                    fontSize: 12,
+                    fontSize: 12.sp,
                     color: isDark ? AppColors.grey500 : AppColors.textMuted,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24.h),
                 SizedBox(
-                  height: 36,
-                  width: 140,
+                  height: 36.h,
+                  width: 140.w,
                   child: ElevatedButton.icon(
                     onPressed: () {
                       ParentMainWrapper.changeTab(2); // الانتقال لتبويب البحث
                     },
-                    icon: const Icon(Icons.search_rounded, size: 14),
+                    icon: Icon(Icons.search_rounded, size: 14.r),
                     label: Text(
                       'البحث عن سائق',
                       style: AppTextStyles.style(
                         fontWeight: FontWeight.bold,
-                        fontSize: 11,
+                        fontSize: 11.sp,
                         color: AppColors.white,
                       ),
                     ),
@@ -274,7 +275,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> with SingleTi
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: AppColors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
                       padding: EdgeInsets.zero,
                     ),
                   ),
@@ -290,38 +291,38 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> with SingleTi
   Widget _buildErrorState(String error, bool isDark) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24.w),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
-            size: 64,
+            size: 64.r,
             color: AppColors.error,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
           Text(
             error,
             style: AppTextStyles.style(
-              fontSize: 14,
+              fontSize: 14.sp,
               fontWeight: FontWeight.bold,
               color: isDark ? AppColors.white : AppColors.textDark,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24.h),
           SizedBox(
-            height: 46,
+            height: 46.h,
             child: ElevatedButton.icon(
               onPressed: () => context.read<SubscriptionsCubit>().fetchSubscriptions(),
               icon: const Icon(Icons.refresh_rounded),
               label: Text(
                 'إعادة المحاولة',
-                style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.white),
+                style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 13.sp, color: AppColors.white),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
               ),
             ),
           ),
@@ -339,15 +340,15 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> with SingleTi
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
           backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
           title: Text(
             'تأكيد إلغاء الطلب',
-            style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? AppColors.white : AppColors.textDark),
+            style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 16.sp, color: isDark ? AppColors.white : AppColors.textDark),
           ),
           content: Text(
             'هل أنت متأكد من رغبتك في إلغاء طلب الاشتراك هذا؟ لن تتمكن من استرجاعه بعد التأكيد.',
-            style: AppTextStyles.style(fontSize: 13, color: isDark ? AppColors.grey300 : AppColors.textMuted, height: 1.4),
+            style: AppTextStyles.style(fontSize: 13.sp, color: isDark ? AppColors.grey300 : AppColors.textMuted, height: 1.4),
           ),
           actions: [
             TextButton(
