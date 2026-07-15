@@ -41,8 +41,8 @@ class SubscriptionRequest {
 
 class SubscriptionChildRequest {
   final int childId;
-  final int pickupAddressId;
-  final int dropoffAddressId;
+  final String pickupAddressId;
+  final String dropoffAddressId;
   final double pricePerChild;
   final String childNotes;
 

@@ -22,7 +22,7 @@ class ParentHomeCubit extends Cubit<ParentHomeState> {
                 ChildModel(
                   id: 1,
                   schoolId: 101,
-                  addressId: 1,
+                  addressId: '1',
                   fullName: 'عبدالله أحمد',
                   gender: 'male',
                   birthDate: DateTime(2015, 5, 12),
@@ -34,7 +34,7 @@ class ParentHomeCubit extends Cubit<ParentHomeState> {
                 ChildModel(
                   id: 2,
                   schoolId: 101,
-                  addressId: 1,
+                  addressId: '1',
                   fullName: 'سارة أحمد',
                   gender: 'female',
                   birthDate: DateTime(2018, 8, 20),

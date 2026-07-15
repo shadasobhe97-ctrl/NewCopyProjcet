@@ -37,7 +37,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
 
   int? _selectedSchoolId;
   String? _selectedSchoolName;
-  int? _selectedAddressId;
+  String? _selectedAddressId;
   String? _selectedAddressName;
 
   @override
@@ -550,9 +550,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                     );
                                 if (address != null) {
                                   setState(() {
-                                    _selectedAddressId = int.tryParse(
-                                      address.id ?? '',
-                                    );
+                                    _selectedAddressId = address.id;
                                     _selectedAddressName = address.title;
                                   });
                                 }

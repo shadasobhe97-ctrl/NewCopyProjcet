@@ -17,7 +17,7 @@ class AddChildCubit extends Cubit<AddChildState> {
   int? gradeLevel;
   int? schoolId;
   String? schoolName;
-  int? addressId;
+  String? addressId;
   String? addressName;
   String? medicalNotes;
 
@@ -63,7 +63,7 @@ class AddChildCubit extends Cubit<AddChildState> {
     required int grade,
     required int sId,
     required String sName,
-    required int aId,
+    required String aId,
     required String aName,
     String? notes,
   }) {

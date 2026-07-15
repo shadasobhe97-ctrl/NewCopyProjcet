@@ -7,7 +7,7 @@ class ChildModel {
   final int? id;
   final int? parentId;
   final int schoolId;
-  final int addressId;
+  final String addressId;
   final String fullName;
   final String gender;
   final DateTime birthDate;
@@ -80,7 +80,7 @@ class ChildModel {
       id: json['id'] as int?,
       parentId: json['parent_id'] as int?,
       schoolId: json['school_id'] as int? ?? 0,
-      addressId: json['address_id'] as int? ?? 0,
+      addressId: json['address_id']?.toString() ?? '',
       fullName: json['full_name'] as String? ?? json['name'] as String? ?? '',
       gender: json['gender'] as String? ?? 'male',
       birthDate: DateTime.tryParse(json['birth_date'] as String? ?? '') ?? DateTime.now(),
