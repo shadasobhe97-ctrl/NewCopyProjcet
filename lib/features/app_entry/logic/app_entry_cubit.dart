@@ -53,4 +53,8 @@ class AppEntryCubit extends Cubit<AppEntryState> {
       emit(NavigateToLogin());
     }
   }
+
+  Future<void> completeOnboarding() async {
+    await StorageService.setFirstTimeComplete();
+  }
 }

@@ -10,7 +10,6 @@ import 'package:kids_transport/core/widgets/app_bars.dart';
 import 'package:kids_transport/core/widgets/primary_button.dart';
 import 'package:kids_transport/features/parent/profile/presentation/widgets/profile_avatar_editor.dart';
 import 'package:kids_transport/features/parent/profile/presentation/widgets/profile_email_field.dart';
-import 'package:kids_transport/core/services/storage_service.dart';
 import '../../logic/cubit/parent_profile_cubit.dart';
 import '../../logic/cubit/parent_profile_state.dart';
 
@@ -40,8 +39,9 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   void initState() {
     super.initState();
     // 1. قراءة الكاش الفوري وعرضه (Cache-First)
-    _nameController = TextEditingController(text: StorageService.getFullName() ?? '');
-    _phoneController = TextEditingController(text: StorageService.getPhoneNumber() ?? '');
+    final profileCubit = context.read<ParentProfileCubit>();
+    _nameController = TextEditingController(text: profileCubit.getCachedFullName());
+    _phoneController = TextEditingController(text: profileCubit.getCachedPhoneNumber());
     _backupPhoneController = TextEditingController(text: '');
     _emailController = TextEditingController(text: _originalEmail);
 

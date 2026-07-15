@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/theme/text_styles.dart';
-import '../../../../../core/utils/theme_context.dart';
-import '../../../../../core/di/dependency_injection.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 import '../../data/models/child_model.dart';
-import '../../data/repositories/children_repository.dart';
+import '../../logic/children_cubit/children_cubit.dart';
 import 'add_child_step1_screen.dart';
 
 class ChildDataDetailsScreen extends StatefulWidget {
@@ -35,8 +35,8 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
       errorMessage = null;
     });
     try {
-      final repository = getIt<ChildrenRepository>();
-      final (result, error) = await repository.getChildDetails(widget.child.id.toString());
+      final cubit = context.read<ChildrenCubit>();
+      final (result, error) = await cubit.getChildDetails(widget.child.id.toString());
       if (mounted) {
         if (error != null) {
           setState(() {

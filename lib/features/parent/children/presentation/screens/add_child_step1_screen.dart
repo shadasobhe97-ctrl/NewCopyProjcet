@@ -363,7 +363,10 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                             InkWell(
                               borderRadius: AppTheme.radius(10),
                               onTap: () async {
-                                final school = await SchoolSearchBottomSheet.show(context);
+                                final school = await SchoolSearchBottomSheet.show(
+                                  context,
+                                  context.read<AddChildCubit>(),
+                                );
                                 if (school != null) {
                                   setState(() {
                                     _selectedSchoolId = school.id;

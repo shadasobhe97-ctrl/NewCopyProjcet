@@ -282,8 +282,10 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                                 : () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) =>
-                                          ChildDataDetailsScreen(child: child),
+                                      builder: (_) => BlocProvider.value(
+                                        value: context.read<ChildrenCubit>(),
+                                        child: ChildDataDetailsScreen(child: child),
+                                      ),
                                     ),
                                   ),
                             onTransportTap: isActionLoading
@@ -291,8 +293,10 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                                 : () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) =>
-                                          TransportDetailsScreen(child: child),
+                                      builder: (_) => BlocProvider.value(
+                                        value: context.read<ChildrenCubit>(),
+                                        child: TransportDetailsScreen(child: child),
+                                      ),
                                     ),
                                   ),
                             onDelete: isActionLoading

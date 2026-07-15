@@ -39,4 +39,7 @@ class ParentProfileCubit extends Cubit<ParentProfileState> {
       emit(ParentProfileError(e.toString().replaceAll('Exception:', '')));
     }
   }
+
+  String getCachedFullName() => repository.getCachedFullName();
+  String getCachedPhoneNumber() => repository.getCachedPhoneNumber();
 }

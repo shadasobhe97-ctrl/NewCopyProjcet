@@ -57,4 +57,7 @@ class DriverProfileRepository {
 
     return driver;
   }
+
+  String getCachedFullName() => StorageService.getFullName() ?? '';
+  String getCachedPhoneNumber() => StorageService.getPhoneNumber() ?? '';
 }

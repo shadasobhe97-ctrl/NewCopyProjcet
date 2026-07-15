@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/theme/text_styles.dart';
-import '../../../../../core/utils/theme_context.dart';
-import '../../../../../core/di/dependency_injection.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
+import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step2_screen.dart';
 import '../../data/models/child_model.dart';
-import 'package:intl/intl.dart' as intl;
-import '../../logic/children_cubit/add_child_cubit.dart';
-import '../../logic/children_cubit/children_cubit.dart';
 import '../../data/models/logistics_model.dart';
-import '../../data/repositories/children_repository.dart';
-import 'add_child_step2_screen.dart';
+import '../../logic/children_cubit/children_cubit.dart';
+import '../../logic/children_cubit/add_child_cubit.dart';
+import 'package:intl/intl.dart' as intl;
 
 class TransportDetailsScreen extends StatefulWidget {
   final ChildModel child;
@@ -33,8 +31,8 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
 
   Future<void> _fetchSubscription() async {
     try {
-      final repo = getIt<ChildrenRepository>();
-      final (logistics, _) = await repo.getChildSubscription(widget.child.id.toString());
+      final cubit = context.read<ChildrenCubit>();
+      final (logistics, _) = await cubit.getChildSubscription(widget.child.id.toString());
       if (mounted) {
         setState(() {
           _logistics = logistics;

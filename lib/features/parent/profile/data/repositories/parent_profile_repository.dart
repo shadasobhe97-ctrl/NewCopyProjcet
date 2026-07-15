@@ -43,4 +43,7 @@ class ParentProfileRepository {
       isActive: StorageService.getIsActive(),
     );
   }
+
+  String getCachedFullName() => StorageService.getFullName() ?? '';
+  String getCachedPhoneNumber() => StorageService.getPhoneNumber() ?? '';
 }

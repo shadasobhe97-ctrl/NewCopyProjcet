@@ -47,6 +47,7 @@ class AuthCubit extends Cubit<AuthState> {
               : _roleNameFromId(response.user.roleId),
           token: response.accessToken,
           roleId: response.user.roleId,
+          isActive: response.user.isActive,
         ),
       );
     } on ApiException catch (error) {

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
-import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/widgets/custom_auth_button.dart';
@@ -50,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
               final targetRoute = state.roleId == 3
                   ? AppRoutes.parentHome
                   : state.roleId == 4
-                  ? (StorageService.getIsActive() == true
+                  ? (state.isActive
                         ? AppRoutes.splash
                         : '/driverWaiting')
                   : AppRoutes.adminDashboard;

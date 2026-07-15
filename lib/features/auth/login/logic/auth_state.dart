@@ -12,11 +12,13 @@ class AuthSuccess extends AuthState {
   final String roleName;
   final String token; // التوكن يمر ديناميكياً هنا
   final int roleId;
+  final bool isActive;
   const AuthSuccess({
     required this.message, 
     required this.roleName, 
     required this.token,
     required this.roleId,
+    required this.isActive,
   });
 }
 

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import '../../../../login/logic/auth_cubit.dart';
 
 class DriverWaitingScreen extends StatelessWidget {
   const DriverWaitingScreen({super.key});
@@ -42,16 +43,13 @@ class DriverWaitingScreen extends StatelessWidget {
               label: Text("اتصل بالدعم الفني والمراجعة"),
             ),
             TextButton(
-              onPressed: () async {
-                // تراجع وإلغاء ومسح الستورج والعودة لشاشة الـ Login
-                await StorageService.clearSession();
-                if (context.mounted) {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/login',
-                    (route) => false,
-                  );
-                }
+              onPressed: () {
+                context.read<AuthCubit>().logout();
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/login',
+                  (route) => false,
+                );
               },
               child: Text(
                 "تسجيل الخروج والتراجع",

@@ -52,4 +52,7 @@ class DriverProfileCubit extends Cubit<DriverProfileState> {
       emit(DriverProfileError(e.toString().replaceAll('Exception:', '')));
     }
   }
+
+  String getCachedFullName() => repository.getCachedFullName();
+  String getCachedPhoneNumber() => repository.getCachedPhoneNumber();
 }

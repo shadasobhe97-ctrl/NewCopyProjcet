@@ -7,7 +7,6 @@ import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/primary_button.dart';
-import 'package:kids_transport/core/services/storage_service.dart';
 import '../../data/models/zone_model.dart';
 import '../../logic/driver_preferences_cubit.dart';
 import '../../logic/driver_preferences_state.dart';
@@ -111,7 +110,6 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
         body: BlocConsumer<DriverPreferencesCubit, DriverPreferencesState>(
           listener: (context, state) {
             if (state is DriverPreferencesSaveSuccess) {
-              StorageService.setIsPreferencesSet(true);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(

@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models/child_model.dart';
+import '../../data/models/school_model.dart';
 import '../../data/models/transport_pref_model.dart';
 import '../../data/repositories/children_repository.dart';
 import 'add_child_state.dart';
@@ -124,5 +125,9 @@ class AddChildCubit extends Cubit<AddChildState> {
     } else {
       emit(AddChildError(message));
     }
+  }
+
+  Future<(List<SchoolModel>?, String?)> searchSchools(String query) async {
+    return await _repository.searchSchools(query);
   }
 }

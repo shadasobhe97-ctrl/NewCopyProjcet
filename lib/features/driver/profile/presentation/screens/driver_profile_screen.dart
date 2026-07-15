@@ -6,7 +6,6 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
-import 'package:kids_transport/core/services/storage_service.dart';
 import '../../logic/cubit/driver_profile_cubit.dart';
 import '../../logic/cubit/driver_profile_state.dart';
 
@@ -50,8 +49,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   void initState() {
     super.initState();
     // 1. تحميل البيانات محلياً من SharedPreferences فوراً (Cache-First)
-    _name = StorageService.getFullName() ?? '';
-    _phone = StorageService.getPhoneNumber() ?? '';
+    final profileCubit = context.read<DriverProfileCubit>();
+    _name = profileCubit.getCachedFullName();
+    _phone = profileCubit.getCachedPhoneNumber();
     _initControllers();
 
     // 2. طلب تحديث البيانات بالخلفية من السيرفر

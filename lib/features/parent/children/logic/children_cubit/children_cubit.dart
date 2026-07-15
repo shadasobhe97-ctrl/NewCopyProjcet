@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/repositories/children_repository.dart';
 import '../../data/models/child_model.dart';
+import '../../data/models/logistics_model.dart';
 import 'children_state.dart';
 
 export 'children_state.dart';
@@ -9,6 +10,14 @@ class ChildrenCubit extends Cubit<ChildrenState> {
   final ChildrenRepository _repository;
 
   ChildrenCubit(this._repository) : super(ChildrenInitial());
+
+  Future<(ChildModel?, String?)> getChildDetails(String id) {
+    return _repository.getChildDetails(id);
+  }
+
+  Future<(LogisticsModel?, String?)> getChildSubscription(String id) {
+    return _repository.getChildSubscription(id);
+  }
 
   Future<void> fetchChildren() async {
     // 1. القراءة من كاش Hive المحلي أولاً وعرضها فوراً

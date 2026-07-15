@@ -1,3 +1,4 @@
+import 'package:kids_transport/core/services/storage_service.dart';
 import '../datasources/driver_preferences_remote_data_source.dart';
 import '../models/driver_preferences_model.dart';
 import '../models/zone_model.dart';
@@ -18,12 +19,16 @@ class DriverPreferencesRepositoryImpl implements DriverPreferencesRepository {
     required int shift,
     required String subscriptionType,
     required List<int> zoneIds,
-  }) {
-    return _remoteDataSource.savePreferences(
+  }) async {
+    final success = await _remoteDataSource.savePreferences(
       shift: shift,
       subscriptionType: subscriptionType,
       zoneIds: zoneIds,
     );
+    if (success) {
+      await StorageService.setIsPreferencesSet(true);
+    }
+    return success;
   }
 
   @override
