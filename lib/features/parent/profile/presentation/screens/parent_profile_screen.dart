@@ -41,8 +41,12 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     super.initState();
     // 1. قراءة الكاش الفوري وعرضه (Cache-First)
     final profileCubit = context.read<ParentProfileCubit>();
-    _nameController = TextEditingController(text: profileCubit.getCachedFullName());
-    _phoneController = TextEditingController(text: profileCubit.getCachedPhoneNumber());
+    _nameController = TextEditingController(
+      text: profileCubit.getCachedFullName(),
+    );
+    _phoneController = TextEditingController(
+      text: profileCubit.getCachedPhoneNumber(),
+    );
     _backupPhoneController = TextEditingController(text: '');
     _emailController = TextEditingController(text: _originalEmail);
 
@@ -50,8 +54,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
       setState(() {
         _showVerificationOption =
             _emailController.text.trim() != _originalEmail;
-        _isEmailVerified =
-            _emailController.text.trim() == _originalEmail;
+        _isEmailVerified = _emailController.text.trim() == _originalEmail;
       });
     });
 
@@ -74,13 +77,12 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
 
   Future<void> _pickImage() async {
     try {
-      final XFile? image =
-          await _picker.pickImage(source: ImageSource.gallery);
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image != null) setState(() => _avatarImage = File(image.path));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('فشل في اختيار الصورة: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('فشل في اختيار الصورة: $e')));
     }
   }
 
@@ -88,15 +90,15 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     if (_formKey.currentState!.validate()) {
       // إطلاق التحديث على السيرفر بالخلفية أولاً (API-First Strategy)
       context.read<ParentProfileCubit>().updateProfile(
-            fullName: _nameController.text.trim(),
-            phoneNumber: _phoneController.text.trim(),
-            alternativePhone: _backupPhoneController.text.trim().isNotEmpty
-                ? _backupPhoneController.text.trim()
-                : null,
-            email: _emailController.text.trim().isNotEmpty
-                ? _emailController.text.trim()
-                : null,
-          );
+        fullName: _nameController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
+        alternativePhone: _backupPhoneController.text.trim().isNotEmpty
+            ? _backupPhoneController.text.trim()
+            : null,
+        email: _emailController.text.trim().isNotEmpty
+            ? _emailController.text.trim()
+            : null,
+      );
     }
   }
 
@@ -125,6 +127,18 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
               backgroundColor: context.successColor,
             ),
           );
+
+          // التعديل: تحديث الحقول مباشرة عند النجاح
+          setState(() {
+            _nameController.text = state.parent.fullName;
+            _phoneController.text = state.parent.phoneNumber;
+            _backupPhoneController.text = state.parent.alternativePhone ?? '';
+            _originalEmail = state.parent.email;
+            _emailController.text = state.parent.email;
+            _isEmailVerified = !state.parent.emailChangePending;
+            _showVerificationOption = state.parent.emailChangePending;
+          });
+
           if (state.parent.emailChangePending) {
             showDialog(
               context: context,
@@ -142,9 +156,8 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                 ],
               ),
             );
-          } else {
-            Navigator.pop(context);
           }
+          // تم إزالة النافيجيتور بوب اللي كان يسكر في الشاشة هنا
         } else if (state is ParentProfileError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -188,8 +201,9 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                               color: context.primaryColor,
                             ),
                           ),
-                          validator: (val) =>
-                              val == null || val.isEmpty ? 'يرجى إدخال الاسم' : null,
+                          validator: (val) => val == null || val.isEmpty
+                              ? 'يرجى إدخال الاسم'
+                              : null,
                         ),
                         SizedBox(height: 20.h),
 
