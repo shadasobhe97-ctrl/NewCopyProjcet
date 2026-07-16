@@ -45,13 +45,17 @@ class ChildModel {
   String? get image => photoUrl;
   int get gradeLevel {
     switch (grade) {
-      case 'روضة': return 1;
-      case 'ابتدائي': return 2;
-      case 'إعدادي': return 3;
-      case 'ثانوي': return 4;
+      case 'روضة':
+        return 1;
+      case 'ابتدائي':
+        return 2;
+      case 'إعدادي':
+        return 3;
+      case 'ثانوي':
+        return 4;
       default:
         final parsed = int.tryParse(grade);
-        if (parsed != null && parsed >= 1 && parsed <= 4) return parsed;
+        if (parsed != null && parsed >= 1) return parsed;
         return 1;
     }
   }
@@ -60,6 +64,29 @@ class ChildModel {
   String get addressName => address?.label ?? '';
   String get qrToken => qrCodeToken ?? '';
   bool get hasActiveSubscription => logistics != null;
+
+  String get gradeDisplay {
+    final parsed = int.tryParse(grade);
+    if (parsed != null) {
+      switch (parsed) {
+        case 1:
+          return 'الصف الأول';
+        case 2:
+          return 'الصف الثاني';
+        case 3:
+          return 'الصف الثالث';
+        case 4:
+          return 'الصف الرابع';
+        case 5:
+          return 'الصف الخامس';
+        case 6:
+          return 'الصف السادس';
+        default:
+          return 'الصف $parsed';
+      }
+    }
+    return grade;
+  }
 
   TransportPrefModel get transportPref {
     if (logistics != null) {
@@ -76,23 +103,60 @@ class ChildModel {
   }
 
   factory ChildModel.fromJson(Map<String, dynamic> json) {
+    // حل مشكلة الرابط النسبي لـ photo_url
+    String? resolvedPhotoUrl;
+    final rawPhoto =
+        json['photo_url']?.toString() ?? json['image']?.toString();
+    if (rawPhoto != null && rawPhoto.isNotEmpty) {
+      if (rawPhoto.startsWith('http://') || rawPhoto.startsWith('https://')) {
+        // رابط كامل — استخدمه كما هو
+        resolvedPhotoUrl = rawPhoto;
+      } else {
+        // رابط نسبي — أضف Base URL للسيرفر (بدون /api/)
+        // مثال: /storage/photos/xxx.jpg → https://slimy-bear-74.loca.lt/storage/photos/xxx.jpg
+        const serverRoot = 'https://slimy-bear-74.loca.lt';
+        final path = rawPhoto.startsWith('/') ? rawPhoto : '/$rawPhoto';
+        resolvedPhotoUrl = '$serverRoot$path';
+      }
+    }
+
+    final rawParentId = json['parent_id'];
+    final parsedParentId = rawParentId is int
+        ? rawParentId
+        : int.tryParse(rawParentId?.toString() ?? '');
+
+    final rawSchoolId = json['school_id'];
+    final parsedSchoolId = rawSchoolId is int
+        ? rawSchoolId
+        : int.tryParse(rawSchoolId?.toString() ?? '') ?? 0;
+
     return ChildModel(
-      id: json['id'] as int?,
-      parentId: json['parent_id'] as int?,
-      schoolId: json['school_id'] as int? ?? 0,
+      id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? ''),
+      parentId: parsedParentId,
+      schoolId: parsedSchoolId,
       addressId: json['address_id']?.toString() ?? '',
-      fullName: json['full_name'] as String? ?? json['name'] as String? ?? '',
-      gender: json['gender'] as String? ?? 'male',
-      birthDate: DateTime.tryParse(json['birth_date'] as String? ?? '') ?? DateTime.now(),
-      age: json['age'] as int?,
+      fullName: json['full_name']?.toString() ?? json['name']?.toString() ?? '',
+      gender: json['gender']?.toString() ?? 'male',
+      birthDate:
+          DateTime.tryParse(json['birth_date']?.toString() ?? '') ??
+          DateTime.now(),
+      age: json['age'] is int ? json['age'] as int : int.tryParse(json['age']?.toString() ?? ''),
       grade: (json['grade'] ?? json['grade_level'] ?? 'روضة').toString(),
-      photoUrl: json['photo_url'] as String? ?? json['image'] as String?,
-      medicalNotes: json['medical_notes'] as String?,
+      photoUrl: resolvedPhotoUrl,
+
+      medicalNotes: json['medical_notes']?.toString(),
       notificationRadius: (json['notification_radius'] as num?)?.toDouble(),
-      qrCodeToken: json['qr_code_token'] as String? ?? json['qr_token'] as String?,
-      school: json['school'] != null ? SchoolModel.fromJson(json['school'] as Map<String, dynamic>) : null,
-      address: json['address'] != null ? AddressModel.fromJson(json['address'] as Map<String, dynamic>) : null,
-      logistics: json['logistics'] != null ? LogisticsModel.fromJson(json['logistics'] as Map<String, dynamic>) : null,
+      qrCodeToken:
+          json['qr_code_token']?.toString() ?? json['qr_token']?.toString(),
+      school: json['school'] is Map
+          ? SchoolModel.fromJson(Map<String, dynamic>.from(json['school'] as Map))
+          : null,
+      address: json['address'] is Map
+          ? AddressModel.fromJson(Map<String, dynamic>.from(json['address'] as Map))
+          : null,
+      logistics: json['logistics'] is Map
+          ? LogisticsModel.fromJson(Map<String, dynamic>.from(json['logistics'] as Map))
+          : null,
     );
   }
 
@@ -110,7 +174,7 @@ class ChildModel {
       if (medicalNotes != null) 'medical_notes': medicalNotes,
       if (notificationRadius != null) 'notification_radius': notificationRadius,
       if (qrCodeToken != null) 'qr_code_token': qrCodeToken,
-      if (school != null) 'school': school,
+      if (school != null) 'school': school!.toJson(),
       if (address != null) 'address': address?.toJson(),
       if (logistics != null) 'logistics': logistics?.toJson(),
     };

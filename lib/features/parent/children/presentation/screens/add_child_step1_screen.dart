@@ -37,7 +37,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
 
   int? _selectedSchoolId;
   String? _selectedSchoolName;
-  String? _selectedAddressId;
+  int? _selectedAddressId;
   String? _selectedAddressName;
 
   @override
@@ -53,19 +53,15 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
       _selectedDate = widget.child!.birthDate;
       _selectedSchoolId = widget.child!.schoolId;
       _selectedSchoolName = widget.child!.schoolName;
-      _selectedAddressId = widget.child!.addressId;
+
+      // 👈 الحل هنا: التحويل الآمن للمعرّف لتجنب مشكلة الـ String و int
+      _selectedAddressId = int.tryParse(widget.child!.addressId.toString());
+
       _selectedAddressName = widget.child!.addressName;
     } else {
       cubit.clear();
       _selectedDate = DateTime(2015);
     }
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _medicalNotesController.dispose();
-    super.dispose();
   }
 
   /// اختيار الصورة من المعرض أو الكاميرا
@@ -115,7 +111,9 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 16.h),
+              Theme.of(context).brightness == Brightness.dark
+                  ? SizedBox(height: 16.h)
+                  : SizedBox(height: 16.h),
               Row(
                 children: [
                   Expanded(
@@ -166,7 +164,8 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
         grade: _selectedGrade,
         sId: _selectedSchoolId!,
         sName: _selectedSchoolName!,
-        aId: _selectedAddressId!,
+        // 👈 التعديل الآمن هنا
+        aId: _selectedAddressId?.toString() ?? '',
         aName: _selectedAddressName!,
         notes: _medicalNotesController.text.trim().isNotEmpty
             ? _medicalNotesController.text.trim()
@@ -232,16 +231,17 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── صورة الطفل ──
+                        // ── صورة الطفل (تم التعديل لتكون دائرية تماماً) ──
                         Center(
                           child: GestureDetector(
                             onTap: _showImageSourceDialog,
                             child: Stack(
+                              alignment: Alignment.center,
                               children: [
                                 Container(
-                                  width: 110
-                                      .w, // كبرنا حجم دائرة الحاوية قليلاً ليعطي مدى رؤية ممتاز
-                                  height: 110.h,
+                                  width: 110.w,
+                                  height: 110
+                                      .w, // جعل الطول والعرض متطابقين بالـ .w لضمان الدائرية الكاملة
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: context.primaryColor.withValues(
@@ -254,28 +254,32 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                       width: 2.w,
                                     ),
                                   ),
-                                  // نستخدم ClipRRect لجعل الصورة الممررة تأخذ شكل دائري ناعم من الحواف
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(
-                                      55.r,
-                                    ), // نصف القطر لضمان الدائرية الكاملة
+                                  child: ClipOval(
+                                    // تم استبدال ClipRRect بـ ClipOval لقص حواف الصورة بشكل دائري ممتاز
                                     child: _selectedImage != null
                                         ? Image.file(
                                             _selectedImage!,
+                                            width: 110.w,
+                                            height: 110.w,
                                             fit: BoxFit
-                                                .contain, // يضمن احتواء الصورة بالكامل داخل الدائرة دون قص
+                                                .cover, // تم التغيير لـ BoxFit.cover لملء الدائرة كاملة دون قص مشوه
                                           )
                                         : (_imagePathWeb != null
                                               ? Image.network(
                                                   _imagePathWeb!,
-                                                  fit: BoxFit.contain,
+                                                  width: 110.w,
+                                                  height: 110.w,
+                                                  fit: BoxFit.cover,
                                                 )
                                               : (hasRemoteImage
                                                     ? CachedNetworkImage(
                                                         imageUrl: widget
                                                             .child!
                                                             .photoUrl!,
-                                                        fit: BoxFit.contain,
+                                                        width: 110.w,
+                                                        height: 110.w,
+                                                        fit: BoxFit
+                                                            .cover, // تم التغيير لـ BoxFit.cover
                                                         placeholder:
                                                             (
                                                               context,
@@ -371,8 +375,16 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                   borderRadius: AppTheme.radius(10.r),
                                 ),
                               ),
-                              validator: (v) =>
-                                  v!.trim().isEmpty ? 'مطلوب' : null,
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty) {
+                                  return 'مطلوب';
+                                }
+                                final parts = v.trim().split(RegExp(r'\s+'));
+                                if (parts.length < 3) {
+                                  return 'الرجاء إدخال الاسم ثلاثياً على الأقل';
+                                }
+                                return null;
+                              },
                             ),
                             SizedBox(height: 14.h),
 
@@ -386,8 +398,9 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                   firstDate: DateTime(2000),
                                   lastDate: DateTime.now(),
                                 );
-                                if (date != null)
+                                if (date != null) {
                                   setState(() => _selectedDate = date);
+                                }
                               },
                               child: InputDecorator(
                                 decoration: InputDecoration(
@@ -550,7 +563,9 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                     );
                                 if (address != null) {
                                   setState(() {
-                                    _selectedAddressId = address.id;
+                                    _selectedAddressId = int.tryParse(
+                                      address.id ?? '',
+                                    );
                                     _selectedAddressName = address.title;
                                   });
                                 }

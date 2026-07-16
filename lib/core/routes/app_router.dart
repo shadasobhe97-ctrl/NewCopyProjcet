@@ -56,7 +56,6 @@ import 'package:kids_transport/features/parent/subscriptions/logic/subscriptions
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profile_cubit.dart';
 
-
 class AppRoutes {
   static const String splash = '/';
   static const String onboarding = '/onboarding';
@@ -176,7 +175,7 @@ class AppRoutes {
         return _route(
           settings,
           BlocProvider(
-            create: (context) => getIt<ParentProfileCubit>(),
+            create: (context) => getIt<ParentProfileCubit>()..fetchProfile(),
             child: const ParentMainWrapper(),
           ),
         );

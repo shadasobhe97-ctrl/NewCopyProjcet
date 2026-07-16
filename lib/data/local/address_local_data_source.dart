@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:kids_transport/core/services/hive_helper.dart';
 import 'package:kids_transport/features/parent/addresses/data/models/address_model.dart';
 
@@ -16,14 +17,17 @@ class AddressLocalDataSourceImpl implements AddressLocalDataSource {
     final box = HiveHelper.addressesBox;
     final list = <AddressModel>[];
     for (var key in box.keys) {
-      final value = box.get(key);
-      if (value is Map) {
-        // إرفاق الحقل id في الـ JSON المُخزّن مؤقتاً بالاعتماد على المفتاح
-        final Map<String, dynamic> jsonMap = Map<String, dynamic>.from(value);
-        if (!jsonMap.containsKey('id') && key is String) {
-          jsonMap['id'] = key;
+      try {
+        final value = box.get(key);
+        if (value is Map) {
+          final Map<String, dynamic> jsonMap = Map<String, dynamic>.from(value);
+          // toJson() لا يحفظ id، فنعتمد دائماً على مفتاح التخزين لضمان وجوده
+          jsonMap['id'] = jsonMap['id']?.toString() ?? key.toString();
+          list.add(AddressModel.fromJson(jsonMap));
         }
-        list.add(AddressModel.fromJson(jsonMap));
+      } catch (e) {
+        // نتجاهل العنصر التالف فقط بدل تفشيل القراءة كاملة
+        debugPrint('⚠️ [AddressLocalCache] تخطي عنصر تالف بالمفتاح $key: $e');
       }
     }
     return list;

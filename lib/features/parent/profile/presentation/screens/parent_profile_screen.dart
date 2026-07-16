@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart'; // مستورد لدعم التحقق kIsWeb
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -27,20 +28,19 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _backupPhoneController;
-  // تم حذف _emailController لأنه تم الاستغناء عنه في تعديلات زميلتك
+  late TextEditingController _emailController;
 
-  File? _avatarImage;
+  File? _avatarImage; // للموبايل
+  Uint8List? _webImageBytes; // للويب لتفادي الانهيار واللون الأحمر
   final ImagePicker _picker = ImagePicker();
 
   String _originalEmail = '';
   bool _isEmailVerified = true;
-  String? _avatarUrl; // الصورة الحالية من الـ API
-  String? _pendingNewEmail; // الإيميل الجديد في انتظار التأكيد
+  String? _avatarUrl;
 
   @override
   void initState() {
     super.initState();
-    // 1. قراءة الكاش الفوري وعرضه (Cache-First)
     final profileCubit = context.read<ParentProfileCubit>();
     _nameController = TextEditingController(
       text: profileCubit.getCachedFullName(),
@@ -49,14 +49,11 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
       text: profileCubit.getCachedPhoneNumber(),
     );
     _backupPhoneController = TextEditingController(text: '');
+    _emailController = TextEditingController(text: '');
 
-    // تم حذف الليسنر الخاص بالكنترولر القديم من هنا باش ما يديرش إيرور
-
-    // 2. تحديث البيانات بالخلفية من السيرفر
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      try {
-        context.read<ParentProfileCubit>().fetchProfile();
-      } catch (_) {}
+      if (!mounted) return;
+      context.read<ParentProfileCubit>().fetchProfile();
     });
   }
 
@@ -65,30 +62,60 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _backupPhoneController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
   Future<void> _pickImage() async {
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) setState(() => _avatarImage = File(image.path));
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (image == null) return;
+      if (!mounted) return;
+
+      if (kIsWeb) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _webImageBytes = bytes;
+          _avatarImage = File(image.path); // لتخزين المسار فقط
+        });
+      } else {
+        setState(() {
+          _avatarImage = File(image.path);
+        });
+      }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('فشل في اختيار الصورة: $e')));
     }
   }
 
+  void _fillFieldsFrom(dynamic parent) {
+    _nameController.text = parent.fullName;
+    _phoneController.text = parent.phoneNumber;
+    _backupPhoneController.text = parent.alternativePhone ?? '';
+    _emailController.text = parent.email;
+    _originalEmail = parent.email;
+    _isEmailVerified = !parent.emailChangePending;
+  }
+
   void _saveProfile() {
     if (_formKey.currentState!.validate()) {
+      final newEmail = _emailController.text.trim();
+      final emailChanged = newEmail.isNotEmpty && newEmail != _originalEmail;
+
       context.read<ParentProfileCubit>().updateProfile(
         fullName: _nameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
         alternativePhone: _backupPhoneController.text.trim().isNotEmpty
             ? _backupPhoneController.text.trim()
             : null,
-        // تم الاعتماد على متغير زميلتك الجديد بدلاً من الكنترولر القديم
-        email: _pendingNewEmail,
+        email: emailChanged ? newEmail : null,
+        avatarFile: _avatarImage,
       );
     }
   }
@@ -99,18 +126,22 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
       listener: (context, state) {
         if (state is ParentProfileLoaded) {
           setState(() {
-            _nameController.text = state.parent.fullName;
-            _phoneController.text = state.parent.phoneNumber;
-            _backupPhoneController.text = state.parent.alternativePhone ?? '';
-            _originalEmail = state.parent.email;
-            _isEmailVerified = !state.parent.emailChangePending;
+            _fillFieldsFrom(state.parent);
             _avatarUrl = state.parent.avatarUrl;
-            _pendingNewEmail = null; // تصفير الإيميل المعلق
           });
         } else if (state is ParentProfileSuccess) {
           setState(() {
-            _avatarUrl = state.parent.avatarUrl;
+            _fillFieldsFrom(state.parent);
+            final url = state.parent.avatarUrl;
+            _avatarUrl = url == null || url.isEmpty
+                ? null
+                : '$url?v=${DateTime.now().millisecondsSinceEpoch}';
+
+            // تصفير الصورة المحلية وبايتس الويب للاعتماد الكلي على الصورة الجديدة من السيرفر
+            _avatarImage = null;
+            _webImageBytes = null;
           });
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -118,20 +149,13 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
             ),
           );
 
-          // التعديل بتاعك: تحديث الحقول مباشرة عند النجاح (بدون إغلاق الشاشة)
-          setState(() {
-            _nameController.text = state.parent.fullName;
-            _phoneController.text = state.parent.phoneNumber;
-            _backupPhoneController.text = state.parent.alternativePhone ?? '';
-            _originalEmail = state.parent.email;
-            _isEmailVerified = !state.parent.emailChangePending;
-            _pendingNewEmail = null; // تصفير الإيميل المعلق
-          });
-
           if (state.parent.emailChangePending) {
             showDialog(
               context: context,
               builder: (ctx) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
                 title: const Text('تفعيل البريد الإلكتروني'),
                 content: const Text(
                   'تم إرسال رسالة إلى بريدك الإلكتروني الجديد، يرجى فتح البريد والضغط على رابط التفعيل خلال 30 دقيقة.',
@@ -177,6 +201,8 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                         children: [
                           ProfileAvatarEditor(
                             avatarImage: _avatarImage,
+                            webImageBytes:
+                                _webImageBytes, // تمرير بايتس الويب للوجت المحدث
                             avatarUrl: _avatarUrl,
                             onTap: _pickImage,
                           ),
@@ -230,12 +256,8 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                           SizedBox(height: 20.h),
                           const _FieldLabel('البريد الإلكتروني'),
                           ProfileEmailField(
-                            currentEmail: _originalEmail,
+                            controller: _emailController,
                             isVerified: _isEmailVerified,
-                            onEmailChangeRequested: (newEmail) {
-                              setState(() => _pendingNewEmail = newEmail);
-                              _saveProfile();
-                            },
                           ),
                           SizedBox(height: 40.h),
                           PrimaryButton(

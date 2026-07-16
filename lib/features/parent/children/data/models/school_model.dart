@@ -19,4 +19,8 @@ class SchoolModel {
       address: json['address']?.toString() ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'name': name, 'region': region, 'address': address};
+  }
 }

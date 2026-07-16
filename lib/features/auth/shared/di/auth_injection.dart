@@ -8,8 +8,10 @@ import 'package:kids_transport/features/auth/login/data/repositories/session_rep
 import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
 
 // Registration
-import 'package:kids_transport/features/auth/registration/data/data_sources/driver_remote_data_source.dart' as reg;
-import 'package:kids_transport/features/auth/registration/data/data_sources/parent_remote_data_source.dart' as reg_parent;
+import 'package:kids_transport/features/auth/registration/data/data_sources/driver_remote_data_source.dart'
+    as reg;
+import 'package:kids_transport/features/auth/registration/data/data_sources/parent_remote_data_source.dart'
+    as reg_parent;
 import 'package:kids_transport/features/auth/registration/data/repositories/registration_repository.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
 
@@ -33,9 +35,7 @@ void initAuthInjection() {
     );
   }
   if (!getIt.isRegistered<AuthCubit>()) {
-    getIt.registerFactory<AuthCubit>(
-      () => AuthCubit(getIt<AuthRepository>()),
-    );
+    getIt.registerFactory<AuthCubit>(() => AuthCubit(getIt<AuthRepository>()));
   }
 
   // =========================================

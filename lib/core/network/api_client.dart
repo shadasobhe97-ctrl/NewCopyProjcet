@@ -29,7 +29,8 @@ class ApiClient {
   }) async {
     final fullUrl = '${_dio.options.baseUrl}$path';
     print('--> HTTP POST $fullUrl');
-    print('Headers: ${_dio.options.headers..addAll(headers ?? {})}');
+    final mergedHeaders = {..._dio.options.headers, ...?headers};
+    print('Headers: $mergedHeaders');
     print('Body: $data');
     try {
       final response = await _dio.post(
@@ -58,7 +59,8 @@ class ApiClient {
     final fullUrl = '${_dio.options.baseUrl}$path';
     print('--> HTTP GET $fullUrl');
     print('QueryParameters: $queryParameters');
-    print('Headers: ${_dio.options.headers..addAll(headers ?? {})}');
+    final mergedHeaders = {..._dio.options.headers, ...?headers};
+    print('Headers: $mergedHeaders');
     try {
       final response = await _dio.get(
         path,
@@ -84,7 +86,8 @@ class ApiClient {
   }) async {
     final fullUrl = '${_dio.options.baseUrl}$path';
     print('--> HTTP DELETE $fullUrl');
-    print('Headers: ${_dio.options.headers..addAll(headers ?? {})}');
+    final mergedHeaders = {..._dio.options.headers, ...?headers};
+    print('Headers: $mergedHeaders');
     try {
       final response = await _dio.delete(path, options: Options(headers: headers));
       print('<-- STATUS ${response.statusCode} ($path)');

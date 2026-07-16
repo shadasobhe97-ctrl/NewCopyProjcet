@@ -19,25 +19,34 @@ class ParentModel {
     required this.emailChangePending,
   });
 
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
   factory ParentModel.fromJson(Map<String, dynamic> json) {
     return ParentModel(
-      parentId: json['parent_id'] ?? json['id'] ?? 0,
-      userId: json['user_id'] ?? 0,
-      fullName: json['full_name'] ?? json['name'] ?? '',
-      email: json['email'] ?? '',
-      phoneNumber: json['phone_number'] ?? '',
-      alternativePhone: json['alternative_phone'],
-      avatarUrl: json['avatar_url'],
-      emailChangePending: json['email_change_pending'] == true ||
+      // مطابقة المفاتيح مع رد الـ API الفعلي القادم من الباك
+      parentId: _parseInt(json['id'] ?? json['parent_id']),
+      userId: _parseInt(json['account_id'] ?? json['user_id']),
+      fullName: (json['full_name'] ?? json['name'] ?? '').toString(),
+      email: (json['email'] ?? '').toString(),
+      phoneNumber: (json['phone_number'] ?? '').toString(),
+      alternativePhone: json['alternative_phone']?.toString(),
+      avatarUrl: json['avatar_url']?.toString(),
+      emailChangePending:
+          json['email_change_pending'] == true ||
           json['email_change_pending'] == 1 ||
-          json['email_change_pending'] == '1',
+          json['email_change_pending'].toString() == '1',
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'parent_id': parentId,
-      'user_id': userId,
+      'id': parentId,
+      'account_id': userId,
       'full_name': fullName,
       'email': email,
       'phone_number': phoneNumber,

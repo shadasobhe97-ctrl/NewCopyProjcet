@@ -26,17 +26,11 @@ class _SplashScreenState extends State<SplashScreen> {
     return BlocListener<AppEntryCubit, AppEntryState>(
       listener: (context, state) {
         if (state is NavigateToOnboarding) {
-          Navigator.pushReplacementNamed(context, AppRoutes.parentMainWrapper);
+          Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
         } else if (state is NavigateToLogin) {
-          Navigator.pushReplacementNamed(context, AppRoutes.parentMainWrapper);
+          Navigator.pushReplacementNamed(context, AppRoutes.login);
         } else if (state is NavigateToDriverHome) {
           Navigator.pushReplacementNamed(context, AppRoutes.driverMainWrapper);
-        } else if (state is NavigateToDriverPreferencesRequired) {
-          Navigator.pushReplacementNamed(
-            context,
-            AppRoutes.driverPreferences,
-            arguments: true,
-          );
         } else if (state is NavigateToParentHome) {
           Navigator.pushReplacementNamed(context, AppRoutes.parentMainWrapper);
         } else if (state is NavigateToAdminHome) {
