@@ -196,9 +196,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
 
   @override
   Widget build(BuildContext context) {
-    final hasRemoteImage =
-        widget.child?.photoUrl != null &&
-        widget.child!.photoUrl!.startsWith('http');
+    final hasRemoteImage = widget.child?.hasRealPhoto == true;
 
     return Directionality(
       textDirection: TextDirection.rtl,

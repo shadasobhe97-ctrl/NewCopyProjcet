@@ -9,11 +9,11 @@ class ApiClient {
   Dio get dio => _dio;
 
   ApiClient()
-    : _dio = Dio(
+    : _dio =         Dio(
         BaseOptions(
           baseUrl: ApiEndpoints.baseUrl,
-          connectTimeout: const Duration(seconds: 15),
-          receiveTimeout: const Duration(seconds: 15),
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
           headers: const {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -26,6 +26,7 @@ class ApiClient {
     String path, {
     dynamic data,
     Map<String, dynamic>? headers,
+    Duration? receiveTimeout,
   }) async {
     final fullUrl = '${_dio.options.baseUrl}$path';
     print('--> HTTP POST $fullUrl');
@@ -36,7 +37,10 @@ class ApiClient {
       final response = await _dio.post(
         path,
         data: data,
-        options: Options(headers: headers),
+        options: Options(
+          headers: headers,
+          receiveTimeout: receiveTimeout,
+        ),
       );
       print('<-- STATUS ${response.statusCode} ($path)');
       print('Response Body: ${response.data}');

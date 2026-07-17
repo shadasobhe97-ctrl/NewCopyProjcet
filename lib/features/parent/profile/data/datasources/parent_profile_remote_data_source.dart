@@ -42,7 +42,11 @@ class ParentProfileRemoteDataSource {
     if (payload is! Map<String, dynamic>) {
       throw ApiException('استجابة غير متوقعة من السيرفر عند جلب الملف الشخصي.');
     }
-    return ParentModel.fromJson(payload);
+    // بعض APIs تحط البيانات داخل مفتاح 'user' (نفس صيغة login/register)
+    final userData = (payload['user'] is Map)
+        ? Map<String, dynamic>.from(payload['user'] as Map)
+        : payload;
+    return ParentModel.fromJson(userData);
   }
 
   /// POST /api/parent/profile/update

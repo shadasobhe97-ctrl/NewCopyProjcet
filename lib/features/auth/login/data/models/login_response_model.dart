@@ -32,27 +32,70 @@ class LoginResponseModel {
 
 class UserModel {
   final int id;
+  final int? parentId;
   final String fullName;
+  final String? email;
   final String phoneNumber;
+  final String? alternativePhone;
   final int roleId;
+  final String role;
   final bool isActive;
+  final bool? isTrusted;
+  final String? avatarUrl;
+  final bool? emailChangePending;
 
   UserModel({
     required this.id,
+    this.parentId,
     required this.fullName,
+    this.email,
     required this.phoneNumber,
+    this.alternativePhone,
     required this.roleId,
+    required this.role,
     required this.isActive,
+    this.isTrusted,
+    this.avatarUrl,
+    this.emailChangePending,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final id = _readInt(json['id_user'] ?? json['id'] ?? json['user_id']);
+    final role = json['role']?.toString() ?? 'parent';
+    final roleId = _roleToId(role);
+
+    final rawParentId = json['parent_id'];
+    final parentId = rawParentId is int
+        ? rawParentId
+        : int.tryParse(rawParentId?.toString() ?? '');
+
     return UserModel(
-      id: _readInt(json['id']),
+      id: id,
+      parentId: parentId,
       fullName: json['full_name']?.toString() ?? '',
+      email: json['email']?.toString(),
       phoneNumber: json['phone_number']?.toString() ?? '',
-      roleId: _readInt(json['role_id']),
+      alternativePhone: json['alternative_phone']?.toString(),
+      roleId: roleId,
+      role: role,
       isActive: _readBool(json['is_active']),
+      isTrusted: json['is_trusted'] == true,
+      avatarUrl: json['avatar_url']?.toString(),
+      emailChangePending: json['email_change_pending'] == true,
     );
+  }
+
+  static int _roleToId(String role) {
+    switch (role.toLowerCase()) {
+      case 'parent':
+        return 3;
+      case 'driver':
+        return 4;
+      case 'admin':
+        return 1;
+      default:
+        return 0;
+    }
   }
 }
 

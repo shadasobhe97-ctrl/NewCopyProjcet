@@ -1,6 +1,7 @@
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import '../models/parent_register_request.dart';
 
 class ParentRemoteDataSource {
@@ -37,9 +38,12 @@ class ParentRemoteDataSource {
     required double lng,
     required bool isDefault,
   }) async {
+    final parentId = StorageService.getParentId();
+
     final response = await _apiClient.post(
       ApiEndpoints.parentAddresses,
       data: {
+        if (parentId != null) 'parent_id': parentId,
         'label': label,
         'lat': lat,
         'lng': lng,

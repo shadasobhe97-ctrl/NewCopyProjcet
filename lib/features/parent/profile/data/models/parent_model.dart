@@ -27,20 +27,29 @@ class ParentModel {
   }
 
   factory ParentModel.fromJson(Map<String, dynamic> json) {
+    // بعض APIs ترجع المستخدم داخل مفتاح 'user' (مثل الـ login/register)
+    final data = (json['user'] is Map) ? Map<String, dynamic>.from(json['user'] as Map) : json;
+
     return ParentModel(
       // مطابقة المفاتيح مع رد الـ API الفعلي القادم من الباك
-      parentId: _parseInt(json['id'] ?? json['parent_id']),
-      userId: _parseInt(json['account_id'] ?? json['user_id']),
-      fullName: (json['full_name'] ?? json['name'] ?? '').toString(),
-      email: (json['email'] ?? '').toString(),
-      phoneNumber: (json['phone_number'] ?? '').toString(),
-      alternativePhone: json['alternative_phone']?.toString(),
-      avatarUrl: json['avatar_url']?.toString(),
+      parentId: _parseInt(data['parent_id'] ?? data['id'] ?? data['id_user']),
+      userId: _parseInt(data['account_id'] ?? data['user_id'] ?? data['id_user']),
+      fullName: (data['full_name'] ?? data['name'] ?? '').toString(),
+      email: (data['email'] ?? '').toString(),
+      phoneNumber: (data['phone_number'] ?? '').toString(),
+      alternativePhone: data['alternative_phone']?.toString(),
+      avatarUrl: _resolvePhotoUrl(data['avatar_url']?.toString()),
       emailChangePending:
-          json['email_change_pending'] == true ||
-          json['email_change_pending'] == 1 ||
-          json['email_change_pending'].toString() == '1',
+          data['email_change_pending'] == true ||
+          data['email_change_pending'] == 1 ||
+          data['email_change_pending'].toString() == '1',
     );
+  }
+
+  static String? _resolvePhotoUrl(String? url) {
+    if (url == null || url.isEmpty) return null;
+    if (url.startsWith('http://')) return 'https://${url.substring(7)}';
+    return url;
   }
 
   Map<String, dynamic> toJson() {

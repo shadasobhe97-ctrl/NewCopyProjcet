@@ -179,7 +179,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                               ),
                             ],
                           ),
-                          child: activeChild.photoUrl != null && activeChild.photoUrl!.isNotEmpty
+                          child: activeChild.hasRealPhoto
                               ? ClipOval(
                                   child: CachedNetworkImage(
                                     imageUrl: activeChild.photoUrl!,

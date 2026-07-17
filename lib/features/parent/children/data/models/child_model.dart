@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'school_model.dart';
 import '../../../addresses/data/models/address_model.dart';
 import 'logistics_model.dart';
@@ -43,6 +45,13 @@ class ChildModel {
   // UI Getters for compatibility
   String get name => fullName;
   String? get image => photoUrl;
+  bool get hasRealPhoto {
+    if (photoUrl == null || photoUrl!.isEmpty) return false;
+    final url = photoUrl!.toLowerCase();
+    return !url.contains('default-child') &&
+           !url.contains('/assets/images/default') &&
+           !url.endsWith('default-child.png');
+  }
   int get gradeLevel {
     switch (grade) {
       case 'روضة':
@@ -103,22 +112,24 @@ class ChildModel {
   }
 
   factory ChildModel.fromJson(Map<String, dynamic> json) {
-    // حل مشكلة الرابط النسبي لـ photo_url
     String? resolvedPhotoUrl;
     final rawPhoto =
         json['photo_url']?.toString() ?? json['image']?.toString();
+    debugPrint('📸 [ChildModel] raw photo_url: $rawPhoto');
     if (rawPhoto != null && rawPhoto.isNotEmpty) {
-      if (rawPhoto.startsWith('http://') || rawPhoto.startsWith('https://')) {
-        // رابط كامل — استخدمه كما هو
+      final serverRoot = ApiEndpoints.baseUrl.replaceAll(RegExp(r'/?api/?$'), '');
+      if (rawPhoto.startsWith('https://')) {
         resolvedPhotoUrl = rawPhoto;
+      } else if (rawPhoto.startsWith('http://')) {
+        resolvedPhotoUrl = 'https://${rawPhoto.substring(7)}';
+      } else if (rawPhoto.startsWith('//')) {
+        resolvedPhotoUrl = 'https:$rawPhoto';
       } else {
-        // رابط نسبي — أضف Base URL للسيرفر (بدون /api/)
-        // مثال: /storage/photos/xxx.jpg → https://slimy-bear-74.loca.lt/storage/photos/xxx.jpg
-        const serverRoot = 'https://slimy-bear-74.loca.lt';
         final path = rawPhoto.startsWith('/') ? rawPhoto : '/$rawPhoto';
         resolvedPhotoUrl = '$serverRoot$path';
       }
     }
+    debugPrint('📸 [ChildModel] resolved photoUrl: $resolvedPhotoUrl');
 
     final rawParentId = json['parent_id'];
     final parsedParentId = rawParentId is int

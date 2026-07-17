@@ -79,9 +79,7 @@ class ChildPassScreen extends StatelessWidget {
                                 width: 2.w,
                               ),
                             ),
-                            child:
-                                child.photoUrl != null &&
-                                    child.photoUrl!.isNotEmpty
+                            child: child.hasRealPhoto
                                 ? ClipOval(
                                     child: CachedNetworkImage(
                                       imageUrl: child.photoUrl!,

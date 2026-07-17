@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/auth/registration/data/models/driver_register_request.dart';
 import 'package:kids_transport/features/auth/registration/data/models/parent_register_request.dart';
 import 'package:kids_transport/features/auth/registration/data/repositories/registration_repository.dart';
@@ -168,6 +169,12 @@ class RegisterCubit extends Cubit<RegisterState> {
       // حفظ التوكن لاستخدامه في إضافة العنوان
       parentAccessToken = response.accessToken;
       registeredUserId = response.id;
+
+      // حفظ parent_id فوراً لاستخدامه في إضافة الأطفال والعناوين
+      final pid = response.parentId;
+      if (pid != null && pid > 0) {
+        await StorageService.saveParentId(pid);
+      }
 
       emit(
         ParentRegisterSuccess(

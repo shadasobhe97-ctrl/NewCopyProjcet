@@ -1,5 +1,6 @@
 class AddressModel {
   final String? id;
+  final int? parentId;
   final String label;
   final double lat;
   final double lng;
@@ -7,6 +8,7 @@ class AddressModel {
 
   AddressModel({
     this.id,
+    this.parentId,
     required this.label,
     required this.lat,
     required this.lng,
@@ -40,8 +42,14 @@ class AddressModel {
     // القيمة برقم أو بنوع غير متوقع
     final rawLabel = json['label'] ?? json['title'];
 
+    final rawParentId = json['parent_id'];
+    final parentId = rawParentId is int
+        ? rawParentId
+        : int.tryParse(rawParentId?.toString() ?? '');
+
     return AddressModel(
       id: json['id']?.toString(),
+      parentId: parentId,
       label: rawLabel?.toString() ?? '',
       lat: parsedLat,
       lng: parsedLng,
@@ -53,13 +61,20 @@ class AddressModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {'label': label, 'lat': lat, 'lng': lng, 'is_default': isDefault};
+    return {
+      if (parentId != null) 'parent_id': parentId,
+      'label': label,
+      'lat': lat,
+      'lng': lng,
+      'is_default': isDefault,
+    };
   }
 
   /// تحويل من Map للتوافق مع AddressCard الحالية
   Map<String, dynamic> toDisplayMap() {
     return {
       'id': id,
+      'parent_id': parentId,
       'title': label,
       'latitude': lat,
       'longitude': lng,

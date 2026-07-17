@@ -32,6 +32,11 @@ class AuthRepository {
         phoneNumber: response.user.phoneNumber,
         isActive: response.user.isActive,
       );
+
+      // حفظ parent_id فوراً لاستخدامه في إضافة الأطفال والعناوين
+      if (response.isParent && response.user.parentId != null) {
+        await _sessionRepository.saveParentId(response.user.parentId!);
+      }
     }
 
     return response;

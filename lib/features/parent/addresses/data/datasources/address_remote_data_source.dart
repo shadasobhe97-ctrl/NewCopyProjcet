@@ -73,9 +73,15 @@ class AddressRemoteDataSource {
 
   /// POST /api/parent/addresses
   Future<String> addAddress(AddressModel address) async {
+    final parentId = StorageService.getParentId();
+    final payload = address.toJson();
+    if (parentId != null && payload['parent_id'] == null) {
+      payload['parent_id'] = parentId;
+    }
+
     final response = await _client.post(
       ApiEndpoints.parentAddresses,
-      data: address.toJson(),
+      data: payload,
       headers: _authHeader,
     );
     final data = response.data;
