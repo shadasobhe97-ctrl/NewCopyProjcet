@@ -33,6 +33,7 @@ class LoginResponseModel {
 class UserModel {
   final int id;
   final int? parentId;
+  final int? driverId;
   final String fullName;
   final String? email;
   final String phoneNumber;
@@ -47,6 +48,7 @@ class UserModel {
   UserModel({
     required this.id,
     this.parentId,
+    this.driverId,
     required this.fullName,
     this.email,
     required this.phoneNumber,
@@ -69,9 +71,15 @@ class UserModel {
         ? rawParentId
         : int.tryParse(rawParentId?.toString() ?? '');
 
+    final rawDriverId = json['driver_id'];
+    final driverId = rawDriverId is int
+        ? rawDriverId
+        : int.tryParse(rawDriverId?.toString() ?? '');
+
     return UserModel(
       id: id,
       parentId: parentId,
+      driverId: driverId,
       fullName: json['full_name']?.toString() ?? '',
       email: json['email']?.toString(),
       phoneNumber: json['phone_number']?.toString() ?? '',

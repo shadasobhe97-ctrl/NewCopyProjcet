@@ -4,6 +4,9 @@ class DriverSearchModel {
   final List<WorkingZoneModelInfo> workingZones;
   final PricingModelInfo pricing;
   final List<BreakdownModelInfo> breakdown;
+  final int driverId;
+  final int userId;
+  final int availableSeats;
 
   DriverSearchModel({
     required this.driver,
@@ -11,6 +14,9 @@ class DriverSearchModel {
     required this.workingZones,
     required this.pricing,
     required this.breakdown,
+    required this.driverId,
+    required this.userId,
+    required this.availableSeats,
   });
 
   // Getters to maintain backward compatibility with existing UI
@@ -19,11 +25,10 @@ class DriverSearchModel {
   String? get photoUrl => driver.avatarUrl;
   String get gender => driver.gender;
   double get rating => driver.rating;
-  int get reviewsCount => driver.completedTrips; // Or completion count
+  int get reviewsCount => driver.completedTrips;
   double get price => pricing.totalPrice;
   String get vehicleType => '${vehicle.brand} ${vehicle.model}';
   int get totalSeats => vehicle.capacityManual;
-  int get availableSeats => vehicle.capacityManual - pricing.childrenCount;
   List<String> get serviceZones => workingZones.map((z) => z.name).toList();
   String get preferredTimeSlot => driver.shift;
 
@@ -39,18 +44,33 @@ class DriverSearchModel {
   String? get status => driver.status;
 
   factory DriverSearchModel.fromJson(Map<String, dynamic> json) {
+    // drivers fields are flat at the top level, not nested under 'driver'
+    final pricingData = json['pricing'] is Map
+        ? Map<String, dynamic>.from(json['pricing'] as Map)
+        : <String, dynamic>{};
+    final breakdownList = pricingData['breakdown'] is List
+        ? (pricingData['breakdown'] as List)
+            .map((e) =>
+                BreakdownModelInfo.fromJson(e as Map<String, dynamic>))
+            .toList()
+        : <BreakdownModelInfo>[];
+
     return DriverSearchModel(
-      driver: DriverModelInfo.fromJson(json['driver'] ?? {}),
-      vehicle: VehicleModelInfo.fromJson(json['vehicle'] ?? {}),
+      driver: DriverModelInfo.fromJson(json),
+      vehicle: VehicleModelInfo.fromJson(
+          json['vehicle'] is Map ? Map<String, dynamic>.from(json['vehicle'] as Map) : {}),
       workingZones: (json['working_zones'] as List<dynamic>?)
-              ?.map((e) => WorkingZoneModelInfo.fromJson(e as Map<String, dynamic>))
+              ?.map((e) =>
+                  WorkingZoneModelInfo.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      pricing: PricingModelInfo.fromJson(json['pricing'] ?? {}),
-      breakdown: (json['breakdown'] as List<dynamic>?)
-              ?.map((e) => BreakdownModelInfo.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+      pricing: PricingModelInfo.fromJson(pricingData),
+      breakdown: breakdownList,
+      driverId: _readInt(json['driver_id']) != 0
+          ? _readInt(json['driver_id'])
+          : _readInt(json['id']),
+      userId: _readInt(json['user_id']),
+      availableSeats: _readInt(json['available_seats']),
     );
   }
 }
@@ -83,6 +103,11 @@ class DriverModelInfo {
   });
 
   factory DriverModelInfo.fromJson(Map<String, dynamic> json) {
+    final rawShift = json['shift'];
+    final shiftStr = rawShift is int
+        ? rawShift.toString()
+        : rawShift?.toString() ?? '0';
+
     return DriverModelInfo(
       id: _readInt(json['id']),
       fullName: json['full_name']?.toString() ?? '',
@@ -91,7 +116,7 @@ class DriverModelInfo {
       avatarUrl: json['avatar_url']?.toString(),
       gender: json['gender']?.toString() ?? 'MALE',
       acceptedGender: json['accepted_gender']?.toString(),
-      shift: json['shift']?.toString() ?? 'BOTH',
+      shift: shiftStr,
       rating: _readDouble(json['rating']),
       completedTrips: _readInt(json['completed_trips']),
       status: json['status']?.toString() ?? 'inactive',
@@ -168,7 +193,7 @@ class PricingModelInfo {
 
   factory PricingModelInfo.fromJson(Map<String, dynamic> json) {
     return PricingModelInfo(
-      totalPrice: _readDouble(json['total_price']),
+      totalPrice: _parsePriceString(json['total_price']),
       totalPriceRaw: _readInt(json['total_price_raw']),
       hasAc: _readBool(json['has_ac']),
       pricePerKm: _readDouble(json['price_per_km']),
@@ -211,11 +236,23 @@ class BreakdownModelInfo {
       pricePerKm: _readDouble(json['price_per_km']),
       subscriptionType: json['subscription_type']?.toString() ?? 'monthly',
       workingDays: _readInt(json['working_days']),
-      childPrice: _readDouble(json['child_price']),
+      childPrice: _parsePriceString(json['child_price']),
       childPriceRaw: _readInt(json['child_price_raw']),
       error: json['error']?.toString(),
     );
   }
+}
+
+double _parsePriceString(dynamic value) {
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  if (value is num) return value.toDouble();
+  if (value is String) {
+    final match = RegExp(r'\d+(\.\d+)?').firstMatch(value.trim());
+    if (match != null) return double.tryParse(match.group(0)!) ?? 0.0;
+    return 0.0;
+  }
+  return 0.0;
 }
 
 int _readInt(dynamic value) {

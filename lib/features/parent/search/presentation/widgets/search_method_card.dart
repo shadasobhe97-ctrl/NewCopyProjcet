@@ -41,10 +41,7 @@ class SearchMethodCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: borderColor,
-            width: isPrimary ? 1.5 : 1,
-          ),
+          border: Border.all(color: borderColor, width: isPrimary ? 1.5 : 1),
           boxShadow: [
             BoxShadow(
               color: shadowColor,
@@ -53,100 +50,94 @@ class SearchMethodCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Stack(
+        child: Column(
           children: [
-            Column(
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: (isPrimary ? AppColors.success : theme.colorScheme.primary)
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color:
+                        (isPrimary
+                                ? AppColors.success
+                                : theme.colorScheme.primary)
                             .withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        emoji,
-                        style: const TextStyle(fontSize: 26),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(emoji, style: const TextStyle(fontSize: 26)),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Text(
-                            title,
-                            style: AppTextStyles.style(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? AppColors.white : AppColors.textDark,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            description,
-                            style: AppTextStyles.style(
-                              fontSize: 13,
-                              color: isDark ? AppColors.grey400 : AppColors.textMuted,
-                              height: 1.4,
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: AppTextStyles.style(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? AppColors.white
+                                    : AppColors.textDark,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: onTap,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isPrimary ? theme.colorScheme.primary : (isDark ? AppColors.grey800 : AppColors.grey100),
-                      foregroundColor: isPrimary ? theme.colorScheme.onPrimary : (isDark ? AppColors.white : theme.colorScheme.primary),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                      const SizedBox(height: 6),
+                      Text(
+                        description,
+                        style: AppTextStyles.style(
+                          fontSize: 13,
+                          color: isDark
+                              ? AppColors.grey400
+                              : AppColors.textMuted,
+                          height: 1.4,
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      buttonText,
-                      style: AppTextStyles.style(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: isPrimary ? theme.colorScheme.onPrimary : (isDark ? AppColors.white : theme.colorScheme.primary),
-                      ),
-                    ),
+                    ],
                   ),
                 ),
               ],
             ),
-            if (isPrimary)
-              Positioned(
-                left: 0,
-                top: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: onTap,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isPrimary
+                      ? theme.colorScheme.primary
+                      : (isDark ? AppColors.grey800 : AppColors.grey100),
+                  foregroundColor: isPrimary
+                      ? theme.colorScheme.onPrimary
+                      : (isDark ? AppColors.white : theme.colorScheme.primary),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Text(
-                    "الأساسية",
-                    style: AppTextStyles.style(
-                      color: theme.colorScheme.primary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
+                ),
+                child: Text(
+                  buttonText,
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: isPrimary
+                        ? theme.colorScheme.onPrimary
+                        : (isDark
+                              ? AppColors.white
+                              : theme.colorScheme.primary),
                   ),
                 ),
               ),
+            ),
           ],
         ),
       ),

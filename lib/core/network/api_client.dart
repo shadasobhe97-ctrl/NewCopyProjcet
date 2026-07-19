@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import 'api_endpoints.dart';
 import 'api_exception.dart';
@@ -29,10 +30,14 @@ class ApiClient {
     Duration? receiveTimeout,
   }) async {
     final fullUrl = '${_dio.options.baseUrl}$path';
-    print('--> HTTP POST $fullUrl');
+    debugPrint('\n================= API CLIENT POST =================');
+    debugPrint('>>> METHOD: HTTP POST');
+    debugPrint('>>> URL: $fullUrl');
+    debugPrint('>>> Effective Headers:');
     final mergedHeaders = {..._dio.options.headers, ...?headers};
-    print('Headers: $mergedHeaders');
-    print('Body: $data');
+    mergedHeaders.forEach((k, v) => debugPrint('  $k: $v'));
+    debugPrint('>>> Body: $data');
+    debugPrint('===================================================\n');
     try {
       final response = await _dio.post(
         path,
@@ -42,16 +47,38 @@ class ApiClient {
           receiveTimeout: receiveTimeout,
         ),
       );
-      print('<-- STATUS ${response.statusCode} ($path)');
-      print('Response Body: ${response.data}');
+      debugPrint('\n<<< RESPONSE:');
+      debugPrint('  Status Code: ${response.statusCode}');
+      debugPrint('  Headers: ${response.headers.map}');
+      debugPrint('  Body: ${response.data}');
+      debugPrint('<<< END RESPONSE\n');
       return response;
     } on DioException catch (error) {
-      print('<!- ERROR ($path): ${error.message}');
+      debugPrint('\n!!!!!!!!!!!!!! DIO EXCEPTION !!!!!!!!!!!!!!');
+      debugPrint('Exception Type: DioException');
+      debugPrint('Exception Message: ${error.message}');
+      debugPrint('requestOptions.path: ${error.requestOptions.path}');
+      debugPrint('requestOptions.baseUrl: ${error.requestOptions.baseUrl}');
+      debugPrint('requestOptions.data: ${error.requestOptions.data}');
+      debugPrint('requestOptions.headers: ${error.requestOptions.headers}');
+      debugPrint('requestOptions.method: ${error.requestOptions.method}');
       if (error.response != null) {
-        print('Error Status: ${error.response?.statusCode}');
-        print('Error Response Body: ${error.response?.data}');
+        debugPrint('response.statusCode: ${error.response?.statusCode}');
+        debugPrint('response.headers: ${error.response?.headers.map}');
+        debugPrint('response.data: ${error.response?.data}');
+      } else {
+        debugPrint('response: null (no response from server)');
       }
+      debugPrint('Stack Trace: ${error.stackTrace}');
+      debugPrint('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n');
       throw ApiException.fromDioException(error);
+    } catch (e, stackTrace) {
+      debugPrint('\n!!!!!!!!!!!!!! UNEXPECTED EXCEPTION !!!!!!!!!!!!!!');
+      debugPrint('Exception Type: ${e.runtimeType}');
+      debugPrint('Exception Message: $e');
+      debugPrint('Stack Trace: $stackTrace');
+      debugPrint('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n');
+      rethrow;
     }
   }
 

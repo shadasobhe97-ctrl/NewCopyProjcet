@@ -41,7 +41,8 @@ class ApiEndpoints {
       'parent/children/$id/subscription';
   static const String parentSchools = 'parent/schools';
   static const String parentDriversSearch = 'parent/drivers/search';
-  static const String parentSubscriptions = 'parent';
+  static const String parentSubscriptions = 'parent/subscriptions';
+  
 
   static const String driverPreferences = 'v1/driver/preferences';
   static const String driverZones = 'v1/driver/zones';
@@ -54,4 +55,12 @@ class ApiEndpoints {
   static const String parentRequests = 'parent/requests';
   static String parentRequestDetail(int id) => 'parent/requests/$id';
   static String parentRequestDelete(int id) => 'parent/$id';
+
+  // Guardian Requests (API الجديد)
+  static const String guardianRequests = 'guardian/requests';
+  static String guardianRequestDetail(int id) => 'guardian/requests/$id';
+  static String guardianRequestCancel(int id) =>
+      'guardian/requests/$id/cancel';
+      //طلب الاشتراك مع سوااق 
+ static const String parentrequestSubscription = 'parent';
 }

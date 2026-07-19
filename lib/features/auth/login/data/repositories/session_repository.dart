@@ -9,6 +9,9 @@ class SessionRepository {
   int? getParentId() => StorageService.getParentId();
   Future<void> saveParentId(int parentId) =>
       StorageService.saveParentId(parentId);
+  int? getDriverId() => StorageService.getDriverId();
+  Future<void> saveDriverId(int driverId) =>
+      StorageService.saveDriverId(driverId);
   Future<void> clearSession() => StorageService.clearSession();
   bool hasValidSession() => StorageService.hasValidSession();
   bool isFirstTime() => StorageService.isFirstTime();

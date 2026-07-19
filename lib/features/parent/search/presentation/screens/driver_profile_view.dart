@@ -10,17 +10,24 @@ import 'package:kids_transport/features/parent/children/logic/children_cubit/chi
 import 'package:kids_transport/features/parent/children/presentation/screens/transport_details_screen.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/child_data_details_screen.dart';
 import 'subscription_confirmation_screen.dart';
+import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
+import 'package:kids_transport/features/parent/search/logic/search_state.dart';
+import 'package:kids_transport/features/parent/search/data/models/subscription_request.dart';
 
 class DriverProfileView extends StatefulWidget {
   final DriverSearchModel driver;
   final List<ChildModel> availableKids;
   final List<int> initialSelectedKidsIds;
+  final bool showPricing;
+  final String searchQuery;
 
   const DriverProfileView({
     super.key,
     required this.driver,
     required this.availableKids,
     this.initialSelectedKidsIds = const [],
+    this.showPricing = true,
+    this.searchQuery = '',
   });
 
   @override
@@ -29,6 +36,7 @@ class DriverProfileView extends StatefulWidget {
 
 class _DriverProfileViewState extends State<DriverProfileView> {
   late List<int> _selectedKidsIds;
+  bool _loadingShowing = false;
     List<ChildModel> get _selectedKids {
     final state = context.read<ChildrenCubit>().state;
     final availableKids = state is ChildrenLoaded ? state.children : widget.availableKids;
@@ -48,22 +56,179 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       _showSnack('يرجى اختيار طفل واحد على الأقل.', AppColors.error);
       return;
     }
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SubscriptionConfirmationScreen(
-          driver: widget.driver,
-          selectedKids: _selectedKids,
+
+    // اعرف السائق → يبعت طلب تسعير للباك
+    if (!widget.showPricing && widget.searchQuery.isNotEmpty) {
+      context.read<SearchCubit>().getPricing(
+            searchQuery: widget.searchQuery,
+            childIds: _selectedKidsIds,
+          );
+      return;
+    }
+
+    // ابحث عن سائق مناسب → تأكيد مباشر
+    if (widget.showPricing) {
+      _showConfirmDialog();
+      return;
+    }
+  }
+
+  void _showConfirmDialog() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
+          title: Text(
+            'تأكيد إرسال الطلب',
+            style: AppTextStyles.style(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: isDark ? AppColors.white : AppColors.textDark,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'السائق: ${widget.driver.fullName}',
+                style: AppTextStyles.style(fontSize: 14, color: isDark ? AppColors.grey300 : AppColors.grey700),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'الأطفال: ${_selectedKids.map((k) => k.name).join('، ')}',
+                style: AppTextStyles.style(fontSize: 14, color: isDark ? AppColors.grey300 : AppColors.grey700),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'السعر الإجمالي: ${widget.driver.pricing.totalPrice.toStringAsFixed(2)} د.ل',
+                style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('إلغاء', style: AppTextStyles.style(color: AppColors.textMuted)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _submitDirectly();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text('تأكيد وإرسال', style: AppTextStyles.style(color: AppColors.white)),
+            ),
+          ],
         ),
       ),
-    ).then((wasConfirmed) {
-      if (!mounted) return;
-      if (wasConfirmed == true) {
-        Navigator.pop(context);
-      } else {
-        _showChildrenPicker();
-      }
-    });
+    );
+  }
+
+  void _submitDirectly() {
+    debugPrint('\n================= SUBMIT SUBSCRIPTION (DriverProfileView) =================');
+    _loadingShowing = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    ).then((_) => _loadingShowing = false);
+
+    final primaryKid = _selectedKids.first;
+
+    debugPrint('>>> Raw values before building JSON:');
+    debugPrint('driver_id          = ${widget.driver.driverId}');
+    debugPrint('school_id          = ${primaryKid.schoolId}');
+    debugPrint('subscription_type  = ${primaryKid.transportPref.subscriptionType}');
+    debugPrint('start_date         = ${primaryKid.transportPref.startDate.toIso8601String().split('T').first}');
+    debugPrint('end_date           = ${primaryKid.transportPref.endDate?.toIso8601String().split('T').first}');
+
+    String timingVal = 'BOTH';
+    final p = primaryKid.transportPref.period.toLowerCase();
+    if (p == 'morning') timingVal = 'MORNING';
+    if (p == 'evening' || p == 'afternoon') timingVal = 'EVENING';
+    debugPrint('timing (raw period) = ${primaryKid.transportPref.period} → $timingVal');
+
+    // Get direction format — serviceType already stores go/return/both
+    String directionVal = primaryKid.transportPref.serviceType.toLowerCase();
+    debugPrint('direction (raw svc) = ${primaryKid.transportPref.serviceType} → $directionVal');
+
+    final List<SubscriptionChildRequest> childrenRequestList = [];
+    debugPrint('\n>>> Children breakdown:');
+    for (final kid in _selectedKids) {
+      final breakdownItem = widget.driver.breakdown.firstWhere(
+        (b) => b.childId == kid.id,
+        orElse: () => BreakdownModelInfo(
+          childId: kid.id ?? 0,
+          childName: kid.name,
+          schoolName: kid.schoolName,
+          distanceKm: 0.0,
+          pricePerKm: 0.0,
+          subscriptionType: kid.transportPref.subscriptionType,
+          workingDays: 22,
+          childPrice: widget.driver.price,
+          childPriceRaw: widget.driver.price.toInt(),
+        ),
+      );
+
+      debugPrint('  child_id            = ${kid.id}');
+      debugPrint('  pickup_address_id   = ${kid.addressId} (type: ${kid.addressId.runtimeType})');
+      debugPrint('  dropoff_address_id  = ${kid.addressId} (type: ${kid.addressId.runtimeType})');
+      debugPrint('  price_per_child     = ${breakdownItem.childPrice} (type: ${breakdownItem.childPrice.runtimeType})');
+      debugPrint('  child_notes         = ${kid.medicalNotes ?? ''}');
+      debugPrint('  ---');
+
+      childrenRequestList.add(
+        SubscriptionChildRequest(
+          childId: kid.id ?? 0,
+          pickupAddressId: kid.addressId,
+          dropoffAddressId: kid.addressId,
+          pricePerChild: breakdownItem.childPrice,
+          childNotes: kid.medicalNotes ?? '',
+        ),
+      );
+    }
+
+    debugPrint('days_count          = 22');
+    debugPrint('notes               = ""');
+
+    // Map subscription_type to backend contract: monthly|daily
+    String mappedSubscriptionType = primaryKid.transportPref.subscriptionType.toLowerCase();
+    if (mappedSubscriptionType == 'days') mappedSubscriptionType = 'daily';
+    if (mappedSubscriptionType == 'weekly') mappedSubscriptionType = 'monthly';
+
+    final request = SubscriptionRequest(
+      driverId: widget.driver.driverId,
+      schoolId: primaryKid.schoolId,
+      subscriptionType: mappedSubscriptionType,
+      direction: directionVal,
+      timing: timingVal,
+      startDate: primaryKid.transportPref.startDate.toIso8601String().split('T').first,
+      endDate: primaryKid.transportPref.endDate?.toIso8601String().split('T').first,
+      daysCount: 22,
+      notes: '',
+      children: childrenRequestList,
+    );
+
+    debugPrint('\n>>> Final JSON being sent:');
+    debugPrint(request.toJson().toString());
+    debugPrint('========================================================\n');
+
+    context.read<SearchCubit>().submitSubscription(request);
   }
 
   void _onMessage() {
@@ -368,7 +533,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                           }
                           Navigator.pop(ctx);
                           setState(() => _selectedKidsIds = temp);
-                          
+
                           final selectedKidsList = availableKids.where((k) => k.id != null && temp.contains(k.id)).toList();
                           Navigator.push(
                             context,
@@ -417,7 +582,34 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return BlocBuilder<ChildrenCubit, ChildrenState>(
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<SearchCubit, SearchState>(
+          listener: (context, state) {
+            if (state is PricingLoaded) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SubscriptionConfirmationScreen(
+                    driver: state.driver,
+                    selectedKids: _selectedKids,
+                  ),
+                ),
+              );
+            } else if (state is PricingError) {
+              _showSnack(state.errorMessage, AppColors.error);
+            } else if (state is SubscriptionSuccess) {
+              if (_loadingShowing) Navigator.of(context).pop();
+              Navigator.pop(context);
+              _showSnack(state.message, AppColors.success);
+            } else if (state is SubscriptionError) {
+              if (_loadingShowing) Navigator.of(context).pop();
+              _showSnack(state.errorMessage, AppColors.error);
+            }
+          },
+        ),
+      ],
+      child: BlocBuilder<ChildrenCubit, ChildrenState>(
       builder: (context, state) {
         final Widget bodyWidget = Column(
           children: [
@@ -435,7 +627,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                           const SizedBox(height: 12),
                           _buildZonesCard(theme, isDark),
                           const SizedBox(height: 12),
-                          _buildBreakdownCard(theme, isDark),
+                          if (widget.showPricing) _buildBreakdownCard(theme, isDark),
                           const SizedBox(height: 16),
                         ],
                       ),
@@ -472,6 +664,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
           ),
         );
       },
+    ),
     );
   }
 
@@ -763,7 +956,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                 ),
               ),
               Text(
-                '${widget.driver.pricing.totalPrice.toInt()} د.ل',
+                '${widget.driver.pricing.totalPrice.toStringAsFixed(2)} د.ل',
                 style: AppTextStyles.style(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -802,7 +995,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                         ),
                         if (!hasError)
                           Text(
-                            '${item.childPrice.toInt()} د.ل',
+                            '${item.childPrice.toStringAsFixed(2)} د.ل',
                             style: AppTextStyles.style(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
@@ -923,9 +1116,71 @@ class _DriverProfileViewState extends State<DriverProfileView> {
           ),
         ],
       ),
-      child: _selectedKidsIds.isEmpty
-          ? _emptyKidsBar(theme, isDark)
-          : _hasSelectedKidsBar(theme, isDark),
+      child: widget.showPricing && _selectedKidsIds.isNotEmpty
+          ? _directSendBar(theme, isDark)
+          : _selectedKidsIds.isEmpty
+              ? _emptyKidsBar(theme, isDark)
+              : _hasSelectedKidsBar(theme, isDark),
+    );
+  }
+
+  Widget _directSendBar(ThemeData theme, bool isDark) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'الأطفال المحددون: ${_selectedKids.length}',
+              style: AppTextStyles.style(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.grey300 : AppColors.grey800,
+              ),
+            ),
+            TextButton(
+              onPressed: _showChildrenPicker,
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, 0),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'تغيير الاختيار',
+                style: AppTextStyles.style(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: _onSendRequest,
+            icon: const Icon(Icons.send_rounded, size: 18),
+            label: Text(
+              'إرسال الطلب',
+              style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: theme.colorScheme.onPrimary),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

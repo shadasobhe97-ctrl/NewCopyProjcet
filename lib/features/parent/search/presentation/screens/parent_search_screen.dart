@@ -60,7 +60,7 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
     context.read<ChildrenCubit>().fetchChildren();
   }
 
-  void _onTapViewProfile(DriverSearchModel driver) {
+  void _onTapViewProfile(DriverSearchModel driver, {bool showPricing = true}) {
     final childrenState = context.read<ChildrenCubit>().state;
     final kidsList = childrenState is ChildrenLoaded ? childrenState.children : _currentKids;
 
@@ -71,6 +71,8 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
           driver: driver,
           availableKids: kidsList,
           initialSelectedKidsIds: _selectedKidsIds,
+          showPricing: showPricing,
+          searchQuery: showPricing ? '' : _searchQuery,
         ),
       ),
     );
@@ -155,7 +157,7 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                     childIds: _selectedKidsIds,
                                   );
                                 },
-                                onDriverTapped: _onTapViewProfile,
+                                onDriverTapped: (d) => _onTapViewProfile(d, showPricing: false),
                                 onBack: () => setState(() {
                                   _searchMethod = SearchMethod.none;
                                   context.read<SearchCubit>().resetState();

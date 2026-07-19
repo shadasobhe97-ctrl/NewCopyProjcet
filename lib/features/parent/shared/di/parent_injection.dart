@@ -1,6 +1,10 @@
 import 'package:get_it/get_it.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 
+// Requests (Guardian Requests)
+import 'package:kids_transport/features/parent/subscriptions/data/datasources/requests_remote_data_source.dart';
+import 'package:kids_transport/features/parent/subscriptions/data/repositories/requests_repository.dart';
+
 // Search
 import 'package:kids_transport/features/parent/search/data/datasources/search_remote_data_source.dart';
 import 'package:kids_transport/features/parent/search/data/repositories/search_repository.dart';
@@ -158,6 +162,20 @@ void initParentInjection() {
   if (!getIt.isRegistered<SubscriptionsCubit>()) {
     getIt.registerFactory<SubscriptionsCubit>(
       () => SubscriptionsCubit(getIt<SubscriptionsRepository>()),
+    );
+  }
+
+  // =========================================
+  // 6. Guardian Requests Feature
+  // =========================================
+  if (!getIt.isRegistered<RequestsRemoteDataSource>()) {
+    getIt.registerLazySingleton<RequestsRemoteDataSource>(
+      () => RequestsRemoteDataSource(getIt<ApiClient>()),
+    );
+  }
+  if (!getIt.isRegistered<RequestsRepository>()) {
+    getIt.registerLazySingleton<RequestsRepository>(
+      () => RequestsRepository(getIt<RequestsRemoteDataSource>()),
     );
   }
 }

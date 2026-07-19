@@ -163,7 +163,7 @@ class ChildPassScreen extends StatelessWidget {
                           ),
                           SizedBox(height: 24.h),
                           Text(
-                            'يُستخدم هذا الرمز من قبل السائق لتوثيق صعود الطفل إلى المركبة ونزوله منها أثناء الرحلات اليومية. يُرجى عدم مشاركة هذا الرمز مع أي شخص غير السائق المعتمد.',
+                            'يُستخدم هذا الرمز من قبل السائق لتوثيق صعود الطفل ونزوله. يمكنك تحميل الصورة وطباعتها ولصقها على حقيبة الطفل أو أحد أغراضه ليتم مسحها من السائق.',
                             textAlign: TextAlign.center,
                             style: AppTextStyles.style(
                               color: context.textMuted,
@@ -228,6 +228,26 @@ class ChildPassScreen extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+              SizedBox(height: 16.h),
+              SizedBox(
+                width: double.infinity,
+                height: 50.h,
+                child: ElevatedButton(
+                  onPressed: () =>
+                      Navigator.of(context).popUntil((route) => route.isFirst),
+                  style: AppTheme.elevatedButtonStyle(
+                    backgroundColor: context.primaryColor,
+                  ),
+                  child: Text(
+                    'حسناً، تم',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

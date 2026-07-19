@@ -33,9 +33,14 @@ class AuthRepository {
         isActive: response.user.isActive,
       );
 
-      // حفظ parent_id فوراً لاستخدامه في إضافة الأطفال والعناوين
+      // حفظ parent_id للسائق من أجل إضافة الأطفال والعناوين
       if (response.isParent && response.user.parentId != null) {
         await _sessionRepository.saveParentId(response.user.parentId!);
+      }
+
+      // حفظ driver_id للسائق لاستخدامه في المهام الخاصة به
+      if (response.isDriver && response.user.driverId != null) {
+        await _sessionRepository.saveDriverId(response.user.driverId!);
       }
     }
 

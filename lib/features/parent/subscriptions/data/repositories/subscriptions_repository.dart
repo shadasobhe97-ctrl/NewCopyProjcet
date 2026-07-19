@@ -22,9 +22,11 @@ class SubscriptionsRepository {
   }
 
   // ---- جلب قائمة الاشتراكات (API + تحديث الكاش) ----
-  Future<(List<SubscriptionModel>?, String?)> getMySubscriptions() async {
+  Future<(List<SubscriptionModel>?, String?)> getMySubscriptions(
+      {String? status}) async {
     try {
-      final subscriptions = await _remoteDataSource.getSubscriptions();
+      final subscriptions =
+          await _remoteDataSource.getSubscriptions();
       await _localDataSource.cacheSubscriptions(subscriptions);
       return (subscriptions, null);
     } on ApiException catch (e) {

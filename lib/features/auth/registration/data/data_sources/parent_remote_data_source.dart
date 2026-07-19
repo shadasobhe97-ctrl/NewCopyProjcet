@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
@@ -21,11 +23,26 @@ class ParentRemoteDataSource {
   }
 
   /// POST /api/parent/register
-  /// التسجيل النهائي - يحتوي على OTP مدمج في الـ body
+  /// التسجيل النهائي - يحتوي على OTP + avatar (multipart إن وجد)
   Future<Map<String, dynamic>> register(ParentRegisterRequest request) async {
+    final dynamic data;
+    final hasAvatar = request.avatar != null;
+
+    if (hasAvatar) {
+      data = FormData.fromMap({
+        ...request.toJson(),
+        'avatar': await MultipartFile.fromFile(
+          request.avatar!.path,
+          filename: request.avatar!.path.split('/').last.split('\\').last,
+        ),
+      });
+    } else {
+      data = request.toJson();
+    }
+
     final response = await _apiClient.post(
       ApiEndpoints.parentRegister,
-      data: request.toJson(),
+      data: data,
     );
     return _mapResponse(response.data);
   }

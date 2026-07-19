@@ -103,10 +103,29 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
   void _confirmAndSend() {
     if (widget.selectedKids.isEmpty) return;
 
+    debugPrint('\n================= SUBMIT SUBSCRIPTION =================');
     final primaryKid = widget.selectedKids.first;
-    
-    // Find the pricing details from the driver's breakdown
+
+    debugPrint('>>> Raw values before building JSON:');
+    debugPrint('driver_id          = ${widget.driver.driverId}');
+    debugPrint('school_id          = ${primaryKid.schoolId}');
+    debugPrint('subscription_type  = ${primaryKid.transportPref.subscriptionType}');
+    debugPrint('start_date         = ${primaryKid.transportPref.startDate.toIso8601String().split('T').first}');
+    debugPrint('end_date           = ${primaryKid.transportPref.endDate?.toIso8601String().split('T').first}');
+
+    // Get timing format
+    String timingVal = 'BOTH';
+    final p = primaryKid.transportPref.period.toLowerCase();
+    if (p == 'morning') timingVal = 'MORNING';
+    if (p == 'evening' || p == 'afternoon') timingVal = 'EVENING';
+    debugPrint('timing (raw period) = ${primaryKid.transportPref.period} → $timingVal');
+
+    // Get direction format — serviceType already stores go/return/both
+    String directionVal = primaryKid.transportPref.serviceType.toLowerCase();
+    debugPrint('direction (raw svc) = ${primaryKid.transportPref.serviceType} → $directionVal');
+
     final List<SubscriptionChildRequest> childrenRequestList = [];
+    debugPrint('\n>>> Children breakdown:');
     for (final kid in widget.selectedKids) {
       final breakdownItem = widget.driver.breakdown.firstWhere(
         (b) => b.childId == kid.id,
@@ -123,6 +142,13 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
         ),
       );
 
+      debugPrint('  child_id            = ${kid.id}');
+      debugPrint('  pickup_address_id   = ${kid.addressId} (type: ${kid.addressId.runtimeType})');
+      debugPrint('  dropoff_address_id  = ${kid.addressId} (type: ${kid.addressId.runtimeType})');
+      debugPrint('  price_per_child     = ${breakdownItem.childPrice} (type: ${breakdownItem.childPrice.runtimeType})');
+      debugPrint('  child_notes         = ${kid.medicalNotes ?? ''}');
+      debugPrint('  ---');
+
       childrenRequestList.add(
         SubscriptionChildRequest(
           childId: kid.id ?? 0,
@@ -134,32 +160,33 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
       );
     }
 
-    // Get timing format
-    String timingVal = 'BOTH';
-    final p = primaryKid.transportPref.period.toLowerCase();
-    if (p == 'morning') timingVal = 'MORNING';
-    if (p == 'evening' || p == 'afternoon') timingVal = 'EVENING';
+    final daysCount = widget.driver.breakdown.isNotEmpty 
+        ? widget.driver.breakdown.first.workingDays 
+        : 22;
+    debugPrint('days_count          = $daysCount');
+    debugPrint('notes               = ""');
 
-    // Get direction format
-    String directionVal = 'both';
-    final d = primaryKid.transportPref.serviceType.toLowerCase();
-    if (d == 'morning' || d == 'pickup') directionVal = 'morning';
-    if (d == 'afternoon' || d == 'dropoff') directionVal = 'evening';
+    // Map subscription_type to backend contract: monthly|daily
+    String mappedSubscriptionType = primaryKid.transportPref.subscriptionType.toLowerCase();
+    if (mappedSubscriptionType == 'days') mappedSubscriptionType = 'daily';
+    if (mappedSubscriptionType == 'weekly') mappedSubscriptionType = 'monthly';
 
     final request = SubscriptionRequest(
-      driverId: int.parse(widget.driver.id),
+      driverId: widget.driver.driverId,
       schoolId: primaryKid.schoolId,
-      subscriptionType: primaryKid.transportPref.subscriptionType,
+      subscriptionType: mappedSubscriptionType,
       direction: directionVal,
       timing: timingVal,
       startDate: primaryKid.transportPref.startDate.toIso8601String().split('T').first,
       endDate: primaryKid.transportPref.endDate?.toIso8601String().split('T').first,
-      daysCount: widget.driver.breakdown.isNotEmpty 
-          ? widget.driver.breakdown.first.workingDays 
-          : 22,
+      daysCount: daysCount,
       notes: '',
       children: childrenRequestList,
     );
+
+    debugPrint('\n>>> Final JSON being sent:');
+    debugPrint(request.toJson().toString());
+    debugPrint('========================================================\n');
 
     context.read<SearchCubit>().submitSubscription(request);
   }
@@ -473,7 +500,7 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                                 ),
                               ),
                               Text(
-                                '${_totalPrice.toInt()} د.ل',
+                                '${_totalPrice.toStringAsFixed(2)} د.ل',
                                 style: AppTextStyles.style(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20.sp,
@@ -522,7 +549,7 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                                     ],
                                   ),
                                   Text(
-                                    '${price.toInt()} د.ل',
+                                    '${price.toStringAsFixed(2)} د.ل',
                                     style: AppTextStyles.style(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 13.sp,

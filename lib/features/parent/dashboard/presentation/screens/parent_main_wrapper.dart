@@ -161,27 +161,12 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
     );
   }
 
-  /// ✅ بناء الـ AppBar الموحد بشكل احترافي مع تدرج لوني
+  /// ✅ بناء الـ AppBar الموحد
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(60),
       child: Container(
-        decoration: AppTheme.boxDecoration(
-          gradient: AppTheme.linearGradient(
-            colors: context.primaryGradient,
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-          ),
-          boxShadow: [
-            AppTheme.boxShadow(
-              color: context.primaryColor.withValues(
-                alpha: context.isDarkMode ? 0.1 : 0.3,
-              ),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+        color: context.isDarkMode ? context.cardSurface : AppColors.white,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -193,9 +178,9 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                 // زر الدروار (يفتح من اليمين في RTL)
                 Builder(
                   builder: (ctx) => IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.menu_rounded,
-                      color: AppColors.white,
+                      color: context.primaryColor,
                       size: 24,
                     ),
                     onPressed: () => Scaffold.of(ctx).openDrawer(),
@@ -209,7 +194,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                     Text(
                       _getAppBarTitle(),
                       style: AppTextStyles.style(
-                        color: AppColors.white,
+                        color: context.primaryColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 19,
                         letterSpacing: 0.5,
@@ -222,9 +207,9 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
 
                 // أيقونة الرسائل
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.chat_bubble_outline_rounded,
-                    color: AppColors.white,
+                    color: context.primaryColor,
                     size: 20,
                   ),
                   onPressed: () {},
@@ -235,9 +220,9 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                   clipBehavior: Clip.none,
                   children: [
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.notifications_none_rounded,
-                        color: AppColors.white,
+                        color: context.primaryColor,
                         size: 22,
                       ),
                       onPressed: () {},

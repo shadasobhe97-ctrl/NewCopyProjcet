@@ -374,13 +374,4 @@ class ChildrenRemoteDataSource {
     }
     return [];
   }
-
-  List<SchoolModel> _parseSchools(dynamic rawList) {
-    if (rawList is List) {
-      return rawList
-          .map((e) => SchoolModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    return [];
-  }
 }

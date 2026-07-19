@@ -10,6 +10,7 @@ import '../../../../../core/utils/theme_context.dart';
 import '../../logic/children_cubit/add_child_cubit.dart';
 import '../../logic/children_cubit/children_cubit.dart';
 import '../../data/models/transport_pref_model.dart';
+import 'child_pass_screen.dart';
 
 class AddChildStep2Screen extends StatefulWidget {
   final bool isDirectEdit;
@@ -155,19 +156,27 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
               context.read<ChildrenCubit>().fetchChildren();
 
               final isEdit = context.read<AddChildCubit>().editingChild != null;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    widget.isDirectEdit
-                        ? 'تم تحديث تفضيلات النقل بنجاح'
-                        : (isEdit
-                              ? 'تم تحديث بيانات الطفل بنجاح'
-                              : 'تمت إضافة الطفل بنجاح'),
+
+              // إذا كانت إضافة جديدة اعرض شاشة QR، أما إذا كان تعديل فتجاوزها
+              if (isEdit || widget.isDirectEdit) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      widget.isDirectEdit
+                          ? 'تم تحديث تفضيلات النقل بنجاح'
+                          : 'تم تحديث بيانات الطفل بنجاح',
+                    ),
+                    backgroundColor: Colors.green,
                   ),
-                  backgroundColor: Colors.green,
-                ),
-              );
-              Navigator.of(context).popUntil((route) => route.isFirst);
+                );
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              } else {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => ChildPassScreen(child: state.child),
+                  ),
+                );
+              }
             } else if (state is AddChildError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

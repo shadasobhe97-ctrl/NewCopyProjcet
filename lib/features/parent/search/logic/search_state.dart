@@ -27,3 +27,15 @@ class SubscriptionError extends SearchState {
   final String errorMessage;
   SubscriptionError(this.errorMessage);
 }
+
+class PricingLoading extends SearchState {}
+
+class PricingLoaded extends SearchState {
+  final DriverSearchModel driver;
+  PricingLoaded(this.driver);
+}
+
+class PricingError extends SearchState {
+  final String errorMessage;
+  PricingError(this.errorMessage);
+}
