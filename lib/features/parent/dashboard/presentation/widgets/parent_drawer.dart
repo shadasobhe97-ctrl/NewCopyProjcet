@@ -137,7 +137,10 @@ class ParentDrawer extends StatelessWidget {
                         icon: Icons.credit_card_rounded,
                         iconColor: context.genderFemaleColor,
                         label: 'المحفظة والفواتير',
-                        onTap: () => Navigator.pop(context),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, AppRoutes.parentWallet);
+                        },
                       ),
                       const Divider(height: 24, indent: 16, endIndent: 16),
                       AppDrawerItem(

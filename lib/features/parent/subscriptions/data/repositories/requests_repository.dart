@@ -8,27 +8,29 @@ class RequestsRepository {
 
   RequestsRepository(this._dataSource);
 
-  Future<(List<RequestModel>?, String?)> getRequests({String? status}) async {
+  /// Returns (list, error, backendMessage)
+  Future<(List<RequestModel>?, String?, String?)> getRequests({String? status}) async {
     debugPrint('RequestsRepository => getRequests(status: $status)');
     try {
-      final requests = await _dataSource.getRequests(status: status);
-      return (requests, null);
+      final (requests, message) = await _dataSource.getRequests(status: status);
+      return (requests, null, message);
     } on ApiException catch (e) {
-      return (null, e.message);
+      return (null, e.message, null);
     } catch (e, st) {
       debugPrint('❌ RequestsRepository.getRequests error: $e\n$st');
-      return (null, 'حدث خطأ غير متوقع: $e');
+      return (null, 'حدث خطأ غير متوقع: $e', null);
     }
   }
 
-  Future<(RequestModel?, String?)> getRequestDetail(int id) async {
+  /// Returns (request, error, backendMessage)
+  Future<(RequestModel?, String?, String?)> getRequestDetail(int id) async {
     try {
-      final request = await _dataSource.getRequestDetail(id);
-      return (request, null);
+      final (request, message) = await _dataSource.getRequestDetail(id);
+      return (request, null, message);
     } on ApiException catch (e) {
-      return (null, e.message);
+      return (null, e.message, null);
     } catch (e) {
-      return (null, 'حدث خطأ غير متوقع: $e');
+      return (null, 'حدث خطأ غير متوقع: $e', null);
     }
   }
 

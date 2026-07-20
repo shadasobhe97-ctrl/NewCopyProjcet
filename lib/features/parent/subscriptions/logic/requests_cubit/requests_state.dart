@@ -10,10 +10,14 @@ class RequestsLoading extends RequestsState {}
 
 class RequestsLoaded extends RequestsState {
   final List<RequestModel> requests;
-  const RequestsLoaded(this.requests);
+  final String? message;
+  const RequestsLoaded(this.requests, {this.message});
 }
 
-class RequestsEmpty extends RequestsState {}
+class RequestsEmpty extends RequestsState {
+  final String? message;
+  const RequestsEmpty({this.message});
+}
 
 class RequestsError extends RequestsState {
   final String message;
@@ -24,7 +28,8 @@ class RequestDetailLoading extends RequestsState {}
 
 class RequestDetailLoaded extends RequestsState {
   final RequestModel request;
-  const RequestDetailLoaded(this.request);
+  final String? message;
+  const RequestDetailLoaded(this.request, {this.message});
 }
 
 class RequestDetailError extends RequestsState {
@@ -49,4 +54,3 @@ class RequestsActionError extends RequestsState {
   final String message;
   const RequestsActionError(this.currentList, this.message);
 }
-

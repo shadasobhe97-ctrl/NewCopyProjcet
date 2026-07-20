@@ -17,18 +17,18 @@ class RequestsCubit extends Cubit<RequestsState> {
 
     emit(RequestsLoading());
 
-    final (requests, error) = await _repository.getRequests(status: status);
+    final (requests, error, message) = await _repository.getRequests(status: status);
 
     if (error != null) {
       debugPrint('RequestsCubit ERROR: $error');
       emit(RequestsError(error));
     } else {
       final list = requests ?? [];
-      debugPrint('RequestsCubit SUCCESS: ${list.length} requests');
+      debugPrint('RequestsCubit SUCCESS: ${list.length} requests, message: $message');
       if (list.isEmpty) {
-        emit(RequestsEmpty());
+        emit(RequestsEmpty(message: message));
       } else {
-        emit(RequestsLoaded(list));
+        emit(RequestsLoaded(list, message: message));
       }
     }
   }
@@ -36,11 +36,11 @@ class RequestsCubit extends Cubit<RequestsState> {
   /// جلب تفاصيل طلب واحد
   Future<void> fetchRequestDetail(int id) async {
     emit(RequestDetailLoading());
-    final (request, error) = await _repository.getRequestDetail(id);
+    final (request, error, message) = await _repository.getRequestDetail(id);
     if (error != null) {
       emit(RequestDetailError(error));
     } else {
-      emit(RequestDetailLoaded(request!));
+      emit(RequestDetailLoaded(request!, message: message));
     }
   }
 

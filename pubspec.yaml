@@ -13,6 +13,7 @@ dependencies:
 
   # 1. إدارة الحالة (State Management)
   flutter_bloc: ^9.1.1
+  equatable: ^2.0.5
 
   # 2. حقن الاعتماديات
   get_it: ^7.6.0

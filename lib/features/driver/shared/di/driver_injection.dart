@@ -18,6 +18,16 @@ import 'package:kids_transport/features/driver/vehicles/data/data_sources/vehicl
 import 'package:kids_transport/features/driver/vehicles/data/repositories/vehicle_repository.dart';
 import 'package:kids_transport/features/driver/vehicles/logic/vehicle_cubit.dart';
 
+// Requests
+import 'package:kids_transport/features/driver/requests/data/datasources/driver_requests_remote_data_source.dart';
+import 'package:kids_transport/features/driver/requests/data/repositories/driver_requests_repository.dart';
+import 'package:kids_transport/features/driver/requests/logic/driver_requests_cubit.dart';
+
+// Subscriptions
+import 'package:kids_transport/features/driver/subscriptions/data/datasources/driver_subscriptions_remote_data_source.dart';
+import 'package:kids_transport/features/driver/subscriptions/data/repositories/driver_subscriptions_repository.dart';
+import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
+
 final GetIt driverSl = GetIt.instance;
 
 void initDriverInjection() {
@@ -78,6 +88,44 @@ void initDriverInjection() {
   if (!driverSl.isRegistered<VehicleCubit>()) {
     driverSl.registerFactory<VehicleCubit>(
       () => VehicleCubit(driverSl<VehicleRepository>()),
+    );
+  }
+
+  // =========================================
+  // 4. Requests Feature
+  // =========================================
+  if (!driverSl.isRegistered<DriverRequestsRemoteDataSource>()) {
+    driverSl.registerLazySingleton<DriverRequestsRemoteDataSource>(
+      () => DriverRequestsRemoteDataSource(driverSl<ApiClient>()),
+    );
+  }
+  if (!driverSl.isRegistered<DriverRequestsRepository>()) {
+    driverSl.registerLazySingleton<DriverRequestsRepository>(
+      () => DriverRequestsRepository(driverSl<DriverRequestsRemoteDataSource>()),
+    );
+  }
+  if (!driverSl.isRegistered<DriverRequestsCubit>()) {
+    driverSl.registerFactory<DriverRequestsCubit>(
+      () => DriverRequestsCubit(driverSl<DriverRequestsRepository>()),
+    );
+  }
+
+  // =========================================
+  // 5. Subscriptions Feature
+  // =========================================
+  if (!driverSl.isRegistered<DriverSubscriptionsRemoteDataSource>()) {
+    driverSl.registerLazySingleton<DriverSubscriptionsRemoteDataSource>(
+      () => DriverSubscriptionsRemoteDataSource(driverSl<ApiClient>()),
+    );
+  }
+  if (!driverSl.isRegistered<DriverSubscriptionsRepository>()) {
+    driverSl.registerLazySingleton<DriverSubscriptionsRepository>(
+      () => DriverSubscriptionsRepository(driverSl<DriverSubscriptionsRemoteDataSource>()),
+    );
+  }
+  if (!driverSl.isRegistered<DriverSubscriptionsCubit>()) {
+    driverSl.registerFactory<DriverSubscriptionsCubit>(
+      () => DriverSubscriptionsCubit(driverSl<DriverSubscriptionsRepository>()),
     );
   }
 }

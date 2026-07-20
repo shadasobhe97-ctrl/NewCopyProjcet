@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
+import 'package:kids_transport/features/driver/requests/data/models/driver_request_model.dart';
+import 'package:kids_transport/features/driver/requests/presentation/screens/driver_request_details_screen.dart';
 
-import 'package:kids_transport/features/driver/home/logic/driver_home_cubit/driver_home_cubit.dart';
-
+/// قسم طلبات الاشتراك الجديدة في الصفحة الرئيسية للسائق
+/// يعرض قائمة الطلبات الجديدة مع التركيز على الأطفال والمدارس لتجنب عرض بيانات ولي الأمر كعنوان رئيسي
 class NewRequestsSection extends StatelessWidget {
-  // 1. تم التعديل هنا إلى dynamic ليتوافق مع الـ State
-  final List<dynamic> requests;
+  final List<DriverRequestModel> requests;
 
   const NewRequestsSection({super.key, required this.requests});
 
@@ -32,7 +33,7 @@ class NewRequestsSection extends StatelessWidget {
             Text(
               'طلبات الاشتراك الجديدة (${requests.length})',
               style: AppTextStyles.style(
-                fontSize: 17,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -42,13 +43,12 @@ class NewRequestsSection extends StatelessWidget {
 
         // عرض الطلبات أو الحالة الفارغة
         if (requests.isEmpty)
-          _EmptyRequestsState()
+          const _EmptyRequestsState()
         else
           ...requests.map(
             (req) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              // 2. تحويل الـ dynamic إلى الموديل لكي تعمل الواجهة
-              child: _RequestCard(request: req as SubscriptionRequest),
+              child: _HomeRequestCard(request: req),
             ),
           ),
       ],
@@ -57,9 +57,11 @@ class NewRequestsSection extends StatelessWidget {
 }
 
 class _EmptyRequestsState extends StatelessWidget {
+  const _EmptyRequestsState();
+
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDarkMode;
 
     return Container(
       width: double.infinity,
@@ -76,8 +78,8 @@ class _EmptyRequestsState extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            width: 60,
-            height: 60,
+            width: 54,
+            height: 54,
             decoration: AppTheme.boxDecoration(
               color: AppColors.grey.withValues(alpha: 0.08),
               shape: BoxShape.circle,
@@ -85,7 +87,7 @@ class _EmptyRequestsState extends StatelessWidget {
             child: const Icon(
               Icons.inbox_rounded,
               color: AppColors.textMuted,
-              size: 30,
+              size: 26,
             ),
           ),
           const SizedBox(height: 12),
@@ -99,7 +101,7 @@ class _EmptyRequestsState extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'ستظهر هنا طلبات اشتراك أولياء الأمور',
+            'ستظهر هنا طلبات اشتراك أولياء الأمور عند وصولها',
             style: AppTextStyles.style(
               fontSize: 12,
               color: AppColors.textMuted,
@@ -112,177 +114,163 @@ class _EmptyRequestsState extends StatelessWidget {
   }
 }
 
-class _RequestCard extends StatelessWidget {
-  final SubscriptionRequest request;
+class _HomeRequestCard extends StatelessWidget {
+  final DriverRequestModel request;
 
-  const _RequestCard({required this.request});
+  const _HomeRequestCard({required this.request});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = context.isDarkMode;
+    final hasMultipleKids = request.children.length > 1;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: AppTheme.boxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: AppTheme.radius(20),
-        border: AppTheme.border(
-          color: isDark
-              ? AppColors.grey800
-              : AppColors.grey.withValues(alpha: 0.15),
-        ),
-        boxShadow: [
-          AppTheme.boxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => DriverRequestDetailsScreen(request: request),
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // ── معلومات الطالب ──
-          Row(
-            children: [
-              // أفاتار الطالب
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: AppColors.primaryLight.withValues(alpha: 0.12),
-                child: request.studentAvatarUrl == null
-                    ? const Icon(
-                        Icons.child_care_rounded,
-                        color: AppColors.primaryLight,
-                        size: 26,
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 12),
-
-              // اسم الطالب والمدرسة
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      request.studentName,
-                      style: AppTextStyles.style(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.school_rounded,
-                          color: AppColors.textMuted,
-                          size: 13,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            request.schoolName,
-                            style: AppTextStyles.style(
-                              fontSize: 12,
-                              color: AppColors.textMuted,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: AppTheme.boxDecoration(
+          color: isDark ? AppColors.surfaceDark : AppColors.white,
+          borderRadius: AppTheme.radius(20),
+          border: AppTheme.border(
+            color: isDark
+                ? AppColors.grey800
+                : AppColors.grey.withValues(alpha: 0.15),
           ),
-          const SizedBox(height: 12),
-
-          // ── تفاصيل الطلب ──
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: AppTheme.boxDecoration(
-              color: isDark ? AppColors.grey900 : AppColors.backgroundLight,
-              borderRadius: AppTheme.radius(12),
+          boxShadow: [
+            AppTheme.boxShadow(
+              color: AppColors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: Column(
+          ],
+        ),
+        child: Column(
+          children: [
+            // ── معلومات الأطفال والمدرسة ──
+            Row(
               children: [
-                // الفترة
-                _InfoRow(
-                  icon: Icons.schedule_rounded,
-                  iconColor: AppColors.pending,
-                  text: request.tripPeriodArabic,
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor:
+                      AppColors.primaryLight.withValues(alpha: 0.12),
+                  child: const Icon(
+                    Icons.child_care_rounded,
+                    color: AppColors.primaryLight,
+                    size: 24,
+                  ),
                 ),
-                const SizedBox(height: 8),
-                // العنوان
-                _InfoRow(
-                  icon: Icons.location_on_rounded,
-                  iconColor: AppColors.error,
-                  text: '${request.district}، ${request.address}',
+                const SizedBox(width: 12),
+
+                // اسم الطفل والمدرسة
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hasMultipleKids
+                            ? 'الطلاب: ${request.children.map((c) => c.name).join('، ')}'
+                            : (request.children.isNotEmpty
+                                ? request.children.first.name
+                                : 'طلب اشتراك جديد'),
+                        style: AppTextStyles.style(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.school_rounded,
+                            color: AppColors.textMuted,
+                            size: 13,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              request.school.name,
+                              style: AppTextStyles.style(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 14),
+            const SizedBox(height: 12),
 
-          // ── أزرار القبول والرفض ──
-          Row(
-            children: [
-              // زر الرفض
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    context.read<DriverHomeCubit>().rejectRequest(request.id);
-                  },
-                  icon: const Icon(
-                    Icons.close_rounded,
-                    color: AppColors.error,
-                    size: 18,
+            // ── تفاصيل الطلب ──
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: AppTheme.boxDecoration(
+                color: isDark ? AppColors.grey900 : AppColors.backgroundLight,
+                borderRadius: AppTheme.radius(12),
+              ),
+              child: Column(
+                children: [
+                  _InfoRow(
+                    icon: Icons.schedule_rounded,
+                    iconColor: AppColors.pending,
+                    text: 'الفترة: ${request.timingDisplayLabel}',
                   ),
-                  label: Text(
-                    'رفض',
-                    style: AppTextStyles.style(color: AppColors.error),
+                  const SizedBox(height: 8),
+                  _InfoRow(
+                    icon: Icons.monetization_on_rounded,
+                    iconColor: AppColors.success,
+                    text: 'التكلفة الإجمالية: ${request.totalPrice} د.ل',
                   ),
-                  style: AppTheme.outlinedButtonStyle(
-                    side: AppTheme.borderSide(
-                      color: AppColors.error,
-                      width: 1.5,
-                    ),
-                    minimumSize: const Size(0, 46),
-                    shape: AppTheme.roundedRectangleBorder(
-                      borderRadius: AppTheme.radius(12),
-                    ),
-                    padding: EdgeInsets.zero,
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // ── عرض التفاصيل والمسار ──
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'طلب #${request.id}',
+                  style: AppTextStyles.style(
+                    fontSize: 11,
+                    color: AppColors.textMuted,
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-
-              // زر الموافقة
-              Expanded(
-                flex: 2,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    context.read<DriverHomeCubit>().acceptRequest(request.id);
-                  },
-                  icon: const Icon(Icons.check_rounded, size: 18),
-                  label: const Text('موافقة'),
-                  style: AppTheme.elevatedButtonStyle(
-                    backgroundColor: AppColors.success,
-                    foregroundColor: AppColors.white,
-                    minimumSize: const Size(0, 46),
-                    elevation: 0,
-                    shape: AppTheme.roundedRectangleBorder(
-                      borderRadius: AppTheme.radius(12),
+                Row(
+                  children: [
+                    Text(
+                      'عرض التفاصيل والمسار',
+                      style: AppTextStyles.style(
+                        fontSize: 11,
+                        color: context.primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    padding: EdgeInsets.zero,
-                  ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 10,
+                      color: context.primaryColor,
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -303,14 +291,15 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: iconColor, size: 15),
+        Icon(icon, color: iconColor, size: 14),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
             style: AppTextStyles.style(
-              fontSize: 13,
+              fontSize: 12,
               color: AppColors.textMuted,
+              fontWeight: FontWeight.w500,
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -318,25 +307,4 @@ class _InfoRow extends StatelessWidget {
       ],
     );
   }
-}
-
-// 3. تمت إضافة هذا الكلاس الوهمي مؤقتاً في الأسفل لإزالة الخطأ الأحمر
-class SubscriptionRequest {
-  final int id;
-  final String? studentAvatarUrl;
-  final String studentName;
-  final String schoolName;
-  final String tripPeriodArabic;
-  final String district;
-  final String address;
-
-  SubscriptionRequest({
-    required this.id,
-    this.studentAvatarUrl,
-    required this.studentName,
-    required this.schoolName,
-    required this.tripPeriodArabic,
-    required this.district,
-    required this.address,
-  });
 }

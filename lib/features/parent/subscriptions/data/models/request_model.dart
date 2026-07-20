@@ -1,44 +1,55 @@
-// نموذج طلب الاشتراك - GET /api/guardian/requests
+// نموذج طلب الاشتراك - GET /api/parent/requests
+// Response fields match SubscriptionModel (نفس الريسبونس)
 class RequestModel {
   final int id;
-  final String studentName;
-  final String requestType;
-  final String status; // pending | accepted | rejected | cancelled
-  final String? statusLabel;
+  final String subscriptionType; // monthly | weekly | daily
+  final String direction;        // both | to_school | from_school
+  final String timing;           // MORNING | AFTERNOON
+  final String startDate;
+  final String? endDate;
+  final double totalPrice;
+  final String status;           // pending | accepted | rejected | cancelled
+  final String? statusAr;
+  final String? pickupTime;
+  final String? dropoffTime;
   final String createdAt;
-  final String updatedAt;
-  // حقول التفاصيل (تُعبأ عند جلب طلب محدد)
-  final String? studentNationalId;
-  final RequestGuardian? guardian;
-  final RequestDetails? details;
+  final RequestDriver driver;
+  final RequestSchool school;
+  final List<RequestChild> children;
+  final RequestContract? contract;
   final String? rejectionReason;
-  final String? cancelReason;
 
   const RequestModel({
     required this.id,
-    required this.studentName,
-    required this.requestType,
+    required this.subscriptionType,
+    required this.direction,
+    required this.timing,
+    required this.startDate,
+    this.endDate,
+    required this.totalPrice,
     required this.status,
-    this.statusLabel,
+    this.statusAr,
+    this.pickupTime,
+    this.dropoffTime,
     required this.createdAt,
-    required this.updatedAt,
-    this.studentNationalId,
-    this.guardian,
-    this.details,
+    required this.driver,
+    required this.school,
+    required this.children,
+    this.contract,
     this.rejectionReason,
-    this.cancelReason,
   });
 
-  /// تحويل الـ status إلى نص عربي
+  int get childrenCount => children.length;
+
   String get statusDisplayLabel {
-    if (statusLabel != null && statusLabel!.isNotEmpty) return statusLabel!;
+    if (statusAr != null && statusAr!.isNotEmpty) return statusAr!;
     switch (status.toLowerCase()) {
-      case 'pending':
-        return 'معلق';
       case 'accepted':
         return 'مقبول';
       case 'rejected':
         return 'مرفوض';
+      case 'pending':
+        return 'قيد الانتظار';
       case 'cancelled':
         return 'ملغي';
       default:
@@ -46,113 +57,163 @@ class RequestModel {
     }
   }
 
+  String get childrenNames {
+    return children.map((c) => c.name).join('، ');
+  }
+
+  String get formattedPrice {
+    return '${totalPrice.toInt()} د.ل';
+  }
+
   factory RequestModel.fromJson(Map<String, dynamic> json) {
     return RequestModel(
       id: _parseInt(json['id']) ?? 0,
-      studentName:
-          json['studentName']?.toString() ??
-          json['student_name']?.toString() ??
-          '',
-      requestType:
-          json['requestType']?.toString() ??
-          json['request_type']?.toString() ??
-          '',
+      subscriptionType: json['subscription_type']?.toString() ?? 'monthly',
+      direction: json['direction']?.toString() ?? '',
+      timing: json['timing']?.toString() ?? '',
+      startDate: json['start_date']?.toString() ?? '',
+      endDate: json['end_date']?.toString(),
+      totalPrice: (json['total_price'] as num?)?.toDouble() ?? 0.0,
       status: json['status']?.toString() ?? 'pending',
-      statusLabel:
-          json['statusLabel']?.toString() ?? json['status_label']?.toString(),
-      createdAt:
-          json['createdAt']?.toString() ?? json['created_at']?.toString() ?? '',
-      updatedAt:
-          json['updatedAt']?.toString() ?? json['updated_at']?.toString() ?? '',
-      studentNationalId:
-          json['studentNationalId']?.toString() ??
-          json['student_national_id']?.toString(),
-      guardian: json['guardian'] is Map
-          ? RequestGuardian.fromJson(
-              Map<String, dynamic>.from(json['guardian'] as Map),
-            )
+      statusAr: json['status_ar']?.toString(),
+      pickupTime: json['pickup_time']?.toString(),
+      dropoffTime: json['dropoff_time']?.toString(),
+      createdAt: json['created_at']?.toString() ?? '',
+      driver: RequestDriver.fromJson(
+        json['driver'] as Map<String, dynamic>? ?? {},
+      ),
+      school: RequestSchool.fromJson(
+        json['school'] as Map<String, dynamic>? ?? {},
+      ),
+      children: (json['children'] as List<dynamic>? ?? [])
+          .map((e) => RequestChild.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      contract: json['contract'] is Map
+          ? RequestContract.fromJson(
+              Map<String, dynamic>.from(json['contract'] as Map))
           : null,
-      details: json['details'] is Map
-          ? RequestDetails.fromJson(
-              Map<String, dynamic>.from(json['details'] as Map),
-            )
-          : null,
-      rejectionReason:
-          json['rejectionReason']?.toString() ??
-          json['rejection_reason']?.toString(),
-      cancelReason:
-          json['cancelReason']?.toString() ??
-          json['cancel_reason']?.toString(),
+      rejectionReason: json['rejection_reason']?.toString(),
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'studentName': studentName,
-      'requestType': requestType,
-      'status': status,
-      if (statusLabel != null) 'statusLabel': statusLabel,
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
-      if (studentNationalId != null) 'studentNationalId': studentNationalId,
-      if (guardian != null) 'guardian': guardian!.toJson(),
-      if (details != null) 'details': details!.toJson(),
-      if (rejectionReason != null) 'rejectionReason': rejectionReason,
-      if (cancelReason != null) 'cancelReason': cancelReason,
-    };
+  static int? _parseInt(dynamic v) {
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return int.tryParse(v?.toString() ?? '');
   }
 
-  static int? _parseInt(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    return int.tryParse(value?.toString() ?? '');
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'subscription_type': subscriptionType,
+        'direction': direction,
+        'timing': timing,
+        'start_date': startDate,
+        if (endDate != null) 'end_date': endDate,
+        'total_price': totalPrice,
+        'status': status,
+        if (statusAr != null) 'status_ar': statusAr,
+        if (pickupTime != null) 'pickup_time': pickupTime,
+        if (dropoffTime != null) 'dropoff_time': dropoffTime,
+        'created_at': createdAt,
+        'driver': driver.toJson(),
+        'school': school.toJson(),
+        'children': children.map((c) => c.toJson()).toList(),
+        if (contract != null) 'contract': contract!.toJson(),
+        if (rejectionReason != null) 'rejection_reason': rejectionReason,
+      };
 }
 
-class RequestGuardian {
+// ── السائق ──
+class RequestDriver {
   final int id;
   final String name;
-  final String phone;
+  final String? phone;
 
-  const RequestGuardian({
+  const RequestDriver({
     required this.id,
     required this.name,
-    required this.phone,
+    this.phone,
   });
 
-  factory RequestGuardian.fromJson(Map<String, dynamic> json) {
-    return RequestGuardian(
-      id: json['id'] as int? ?? 0,
-      name: json['name']?.toString() ?? '',
-      phone: json['phone']?.toString() ?? '',
-    );
-  }
+  factory RequestDriver.fromJson(Map<String, dynamic> json) => RequestDriver(
+        id: json['id'] as int? ?? 0,
+        name: json['name']?.toString() ?? json['full_name']?.toString() ?? '',
+        phone: json['phone']?.toString(),
+      );
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'phone': phone};
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        if (phone != null) 'phone': phone,
+      };
 }
 
-class RequestDetails {
+// ── المدرسة ──
+class RequestSchool {
+  final int id;
+  final String name;
+
+  const RequestSchool({required this.id, required this.name});
+
+  factory RequestSchool.fromJson(Map<String, dynamic> json) => RequestSchool(
+        id: json['id'] as int? ?? 0,
+        name: json['name']?.toString() ?? '',
+      );
+
+  Map<String, dynamic> toJson() => {'id': id, 'name': name};
+}
+
+// ── الطفل ──
+class RequestChild {
+  final int? id;
+  final String name;
   final String? schoolName;
-  final String? grade;
-  final String? notes;
+  final double? pricePerChild;
 
-  const RequestDetails({this.schoolName, this.grade, this.notes});
+  const RequestChild({
+    this.id,
+    required this.name,
+    this.schoolName,
+    this.pricePerChild,
+  });
 
-  factory RequestDetails.fromJson(Map<String, dynamic> json) {
-    return RequestDetails(
-      schoolName:
-          json['schoolName']?.toString() ?? json['school_name']?.toString(),
-      grade: json['grade']?.toString(),
-      notes: json['notes']?.toString(),
-    );
-  }
+  factory RequestChild.fromJson(Map<String, dynamic> json) => RequestChild(
+        id: json['id'] as int?,
+        name: json['name']?.toString() ?? '',
+        schoolName: json['school_name']?.toString(),
+        pricePerChild: (json['price_per_child'] as num?)?.toDouble(),
+      );
 
-  Map<String, dynamic> toJson() {
-    return {
-      if (schoolName != null) 'schoolName': schoolName,
-      if (grade != null) 'grade': grade,
-      if (notes != null) 'notes': notes,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        if (id != null) 'id': id,
+        'name': name,
+        if (schoolName != null) 'school_name': schoolName,
+        if (pricePerChild != null) 'price_per_child': pricePerChild,
+      };
+}
+
+// ── العقد ──
+class RequestContract {
+  final int id;
+  final String contractNumber;
+  final String? pdfUrl;
+
+  const RequestContract({
+    required this.id,
+    required this.contractNumber,
+    this.pdfUrl,
+  });
+
+  factory RequestContract.fromJson(Map<String, dynamic> json) =>
+      RequestContract(
+        id: json['id'] as int? ?? 0,
+        contractNumber: json['contract_number']?.toString() ?? '',
+        pdfUrl: json['pdf_url']?.toString(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'contract_number': contractNumber,
+        if (pdfUrl != null) 'pdf_url': pdfUrl,
+      };
 }

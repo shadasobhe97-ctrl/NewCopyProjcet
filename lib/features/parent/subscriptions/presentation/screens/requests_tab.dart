@@ -6,9 +6,9 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import '../../logic/requests_cubit/requests_cubit.dart';
 import '../../data/models/request_model.dart';
 import '../widgets/request_card.dart';
-import '../widgets/subscription_skeleton.dart';
+import 'request_details_screen.dart';
 
-enum RequestFilter { all, pending, accepted, rejected }
+enum RequestFilter { all, pending, rejected, cancelled }
 
 extension RequestFilterX on RequestFilter {
   String get label {
@@ -17,10 +17,10 @@ extension RequestFilterX on RequestFilter {
         return 'الكل';
       case RequestFilter.pending:
         return 'المعلقة';
-      case RequestFilter.accepted:
-        return 'المقبولة';
       case RequestFilter.rejected:
         return 'المرفوضة';
+      case RequestFilter.cancelled:
+        return 'الملغية';
     }
   }
 
@@ -30,10 +30,10 @@ extension RequestFilterX on RequestFilter {
         return null;
       case RequestFilter.pending:
         return 'pending';
-      case RequestFilter.accepted:
-        return 'accepted';
       case RequestFilter.rejected:
         return 'rejected';
+      case RequestFilter.cancelled:
+        return 'cancelled';
     }
   }
 }
@@ -47,7 +47,6 @@ class RequestsTab extends StatefulWidget {
 
 class _RequestsTabState extends State<RequestsTab>
     with AutomaticKeepAliveClientMixin {
-  // الافتراضي: المعلقة
   RequestFilter _selectedFilter = RequestFilter.pending;
 
   @override
@@ -56,7 +55,6 @@ class _RequestsTabState extends State<RequestsTab>
   @override
   void initState() {
     super.initState();
-    // جلب الطلبات المعلقة عند الفتح
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context
@@ -154,9 +152,12 @@ class _RequestsTabState extends State<RequestsTab>
 
     return BlocConsumer<RequestsCubit, RequestsState>(
       listener: (context, state) {
-        if (state is RequestsActionSuccess) {
+        if (state is RequestsLoaded && state.message != null) {
+          _showSnackBar(state.message!, AppColors.success);
+        } else if (state is RequestsEmpty && state.message != null) {
+          _showSnackBar(state.message!, AppColors.info);
+        } else if (state is RequestsActionSuccess) {
           _showSnackBar(state.message, AppColors.success);
-          // أعد جلب الطلبات بعد الإلغاء
           context
               .read<RequestsCubit>()
               .fetchRequests(status: _selectedFilter.apiValue);
@@ -167,10 +168,7 @@ class _RequestsTabState extends State<RequestsTab>
       builder: (context, state) {
         return Column(
           children: [
-            // ── الدروبداون ──
             _buildFilterDropdown(isDark, theme),
-
-            // ── المحتوى ──
             Expanded(
               child: _buildContent(state, isDark, theme),
             ),
@@ -224,7 +222,9 @@ class _RequestsTabState extends State<RequestsTab>
   Widget _buildContent(
       RequestsState state, bool isDark, ThemeData theme) {
     if (state is RequestsLoading || state is RequestsInitial) {
-      return const SubscriptionSkeleton(itemCount: 3);
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
     }
 
     if (state is RequestsError) {
@@ -235,7 +235,6 @@ class _RequestsTabState extends State<RequestsTab>
       return _buildEmpty(isDark, theme);
     }
 
-    // المحتوى الفعلي — نستخدم الحالتين
     final List<RequestModel> requests;
     if (state is RequestsLoaded) {
       requests = state.requests;
@@ -268,7 +267,15 @@ class _RequestsTabState extends State<RequestsTab>
             isCancelling: state is RequestsActionLoading &&
                 state.actionId == req.id,
             onDetailsPressed: () {
-              // TODO: فتح شاشة التفاصيل لاحقاً
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider.value(
+                    value: context.read<RequestsCubit>(),
+                    child: RequestDetailsScreen(request: req),
+                  ),
+                ),
+              );
             },
             onCancelPressed: req.status.toLowerCase() == 'pending'
                 ? () => _showCancelDialog(req.id)

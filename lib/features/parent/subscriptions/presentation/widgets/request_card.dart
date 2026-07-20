@@ -26,7 +26,7 @@ class RequestCard extends StatelessWidget {
         return AppColors.error;
       case 'cancelled':
         return AppColors.grey500;
-      default: // pending
+      default:
         return Theme.of(context).colorScheme.primary;
     }
   }
@@ -41,6 +41,34 @@ class RequestCard extends StatelessWidget {
         return Icons.block_rounded;
       default:
         return Icons.schedule_rounded;
+    }
+  }
+
+  String _typeLabel() {
+    switch (request.subscriptionType.toLowerCase()) {
+      case 'weekly':
+        return 'أسبوعي';
+      case 'daily':
+        return 'يومي';
+      case 'monthly':
+      default:
+        return 'شهري';
+    }
+  }
+
+  String _directionLabel() {
+    switch (request.direction.toLowerCase()) {
+      case 'go':
+      case 'to_school':
+      case 'morning':
+        return 'ذهاب فقط';
+      case 'return':
+      case 'from_school':
+      case 'evening':
+        return 'عودة فقط';
+      case 'both':
+      default:
+        return 'ذهاب وعودة';
     }
   }
 
@@ -72,14 +100,13 @@ class RequestCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // الصف العلوي: اسم الطالب + حالة الطلب
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    request.studentName.isNotEmpty
-                        ? request.studentName
-                        : 'طالب',
+                    request.driver.name.isNotEmpty
+                        ? request.driver.name
+                        : 'سائق',
                     style: AppTextStyles.style(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.bold,
@@ -90,12 +117,8 @@ class RequestCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 8.w),
-                // Badge الحالة
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 4.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20.r),
@@ -103,11 +126,7 @@ class RequestCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        _statusIcon(),
-                        color: statusColor,
-                        size: 13.r,
-                      ),
+                      Icon(_statusIcon(), color: statusColor, size: 13.r),
                       SizedBox(width: 4.w),
                       Text(
                         request.statusDisplayLabel,
@@ -122,19 +141,30 @@ class RequestCard extends StatelessWidget {
                 ),
               ],
             ),
-
             SizedBox(height: 10.h),
 
-            // نوع الطلب
-            if (request.requestType.isNotEmpty)
+            if (request.childrenNames.isNotEmpty)
               _infoRow(
-                Icons.assignment_outlined,
-                'نوع الطلب',
-                request.requestType,
+                Icons.people_alt_outlined,
+                'الأطفال',
+                request.childrenNames,
                 isDark,
               ),
 
-            // تاريخ الإنشاء
+            _infoRow(
+              Icons.assignment_outlined,
+              'نوع الاشتراك',
+              _typeLabel(),
+              isDark,
+            ),
+
+            _infoRow(
+              Icons.route_outlined,
+              'الاتجاه',
+              _directionLabel(),
+              isDark,
+            ),
+
             if (request.createdAt.isNotEmpty)
               _infoRow(
                 Icons.calendar_today_outlined,
@@ -143,7 +173,13 @@ class RequestCard extends StatelessWidget {
                 isDark,
               ),
 
-            // سبب الرفض
+            _infoRow(
+              Icons.monetization_on_outlined,
+              'القيمة',
+              request.formattedPrice,
+              isDark,
+            ),
+
             if (request.rejectionReason != null &&
                 request.rejectionReason!.isNotEmpty) ...[
               SizedBox(height: 8.h),
@@ -155,11 +191,7 @@ class RequestCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      color: AppColors.error,
-                      size: 14.r,
-                    ),
+                    Icon(Icons.info_outline_rounded, color: AppColors.error, size: 14.r),
                     SizedBox(width: 6.w),
                     Expanded(
                       child: Text(
@@ -178,10 +210,8 @@ class RequestCard extends StatelessWidget {
 
             SizedBox(height: 12.h),
 
-            // أزرار الإجراءات
             Row(
               children: [
-                // زر التفاصيل
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: onDetailsPressed,
@@ -205,8 +235,6 @@ class RequestCard extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                // زر الإلغاء (فقط للطلبات المعلقة)
                 if (isPending && onCancelPressed != null) ...[
                   SizedBox(width: 8.w),
                   Expanded(
@@ -255,11 +283,7 @@ class RequestCard extends StatelessWidget {
       padding: EdgeInsets.only(bottom: 6.h),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 14.r,
-            color: isDark ? AppColors.grey400 : AppColors.grey500,
-          ),
+          Icon(icon, size: 14.r, color: isDark ? AppColors.grey400 : AppColors.grey500),
           SizedBox(width: 6.w),
           Text(
             '$label: ',

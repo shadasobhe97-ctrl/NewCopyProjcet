@@ -5,6 +5,10 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/features/driver/home/logic/driver_home_cubit/driver_home_cubit.dart';
 import 'package:kids_transport/features/driver/dashboard/presentation/widgets/driver_drawer.dart';
 import 'package:kids_transport/features/driver/home/presentation/screens/driver_home_screen.dart';
+import 'package:kids_transport/features/driver/requests/logic/driver_requests_cubit.dart';
+import 'package:kids_transport/features/driver/requests/presentation/screens/driver_requests_screen.dart';
+import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
+import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -63,11 +67,13 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
           style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
-      Center(
-        child: Text(
-          '📋 الطلبات',
-          style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+      // شاشة الطلبات الحقيقية مع Cubits للطلبات والاشتراكات
+      MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => driverSl<DriverRequestsCubit>()),
+          BlocProvider(create: (_) => driverSl<DriverSubscriptionsCubit>()),
+        ],
+        child: const DriverRequestsScreen(),
       ),
     ];
   }

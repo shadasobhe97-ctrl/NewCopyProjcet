@@ -15,9 +15,18 @@ class RequestsRemoteDataSource {
     return {'Authorization': token ?? ''};
   }
 
-  /// GET /api/guardian/requests?status=...
-  Future<List<RequestModel>> getRequests({String? status}) async {
-    debugPrint('Calling GET /guardian/requests${status != null ? '?status=$status' : ''}');
+  String? _extractMessage(dynamic data) {
+    if (data is Map && data['message'] != null) {
+      final msg = data['message'].toString();
+      return msg.isNotEmpty ? msg : null;
+    }
+    return null;
+  }
+
+  /// GET /api/parent/requests?status=...
+  /// Returns (list, backendMessage)
+  Future<(List<RequestModel>, String?)> getRequests({String? status}) async {
+    debugPrint('Calling GET /parent/requests${status != null ? '?status=$status' : ''}');
 
     final queryParams = <String, dynamic>{};
     if (status != null && status.isNotEmpty) {
@@ -25,13 +34,13 @@ class RequestsRemoteDataSource {
     }
 
     final response = await _client.get(
-      ApiEndpoints.guardianRequests,
+      ApiEndpoints.parentRequests,
       headers: _authHeader,
       queryParameters: queryParams.isNotEmpty ? queryParams : null,
     );
     final data = response.data;
 
-    debugPrint('GET /guardian/requests response => $data');
+    debugPrint('GET /parent/requests response => $data');
 
     if (data is Map) {
       final success = data['success'];
@@ -41,23 +50,24 @@ class RequestsRemoteDataSource {
       }
     }
 
+    final backendMessage = _extractMessage(data);
     final list = data['data'];
     if (list is List) {
       final requests = list
           .map((e) => RequestModel.fromJson(e as Map<String, dynamic>))
           .toList();
       debugPrint('Requests Count => ${requests.length}');
-      return requests;
+      return (requests, backendMessage);
     }
-    return [];
+    return (<RequestModel>[], backendMessage);
   }
 
-  /// GET /api/guardian/requests/{id}
-  Future<RequestModel> getRequestDetail(int id) async {
-    debugPrint('Calling GET /guardian/requests/$id');
+  /// GET /api/parent/requests/{id}
+  Future<(RequestModel, String?)> getRequestDetail(int id) async {
+    debugPrint('Calling GET /parent/requests/$id');
 
     final response = await _client.get(
-      ApiEndpoints.guardianRequestDetail(id),
+      ApiEndpoints.parentRequestDetail(id),
       headers: _authHeader,
     );
     final data = response.data;
@@ -69,16 +79,20 @@ class RequestsRemoteDataSource {
         throw ApiException(serverMessage ?? 'تعذر تحميل تفاصيل الطلب.');
       }
     }
+    final backendMessage = _extractMessage(data);
     final detail = data['data'] ?? data;
-    return RequestModel.fromJson(detail as Map<String, dynamic>);
+    return (
+      RequestModel.fromJson(detail as Map<String, dynamic>),
+      backendMessage,
+    );
   }
 
-  /// POST /api/guardian/requests/{id}/cancel
+  /// POST /api/parent/requests/{id}/cancel
   Future<String> cancelRequest(int id, {String? reason}) async {
-    debugPrint('Calling POST /guardian/requests/$id/cancel');
+    debugPrint('Calling POST /parent/requests/$id/cancel');
 
     final response = await _client.post(
-      ApiEndpoints.guardianRequestCancel(id),
+      ApiEndpoints.parentRequestCancel(id),
       data: reason != null && reason.isNotEmpty ? {'reason': reason} : null,
       headers: _authHeader,
     );
