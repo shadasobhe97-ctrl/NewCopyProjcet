@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import '../../data/models/subscription_model.dart';
@@ -56,11 +55,11 @@ class SubscriptionCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isPending = subscription.status.toLowerCase() == 'pending';
-    final isActive = subscription.status.toLowerCase() == 'active';
+    final isActive = subscription.status.toLowerCase() == 'accepted' || subscription.status.toLowerCase() == 'active';
 
-    final isFemale = subscription.driver.user.fullName.contains('ة') || 
-                     subscription.driver.user.fullName.contains('فاطمة') || 
-                     subscription.driver.user.fullName.contains('مريم'); // تخمين بسيط للجنس
+    final isFemale = subscription.driver.name.contains('ة') || 
+                     subscription.driver.name.contains('فاطمة') || 
+                     subscription.driver.name.contains('مريم');
     final driverAvatarBg = isFemale 
         ? AppColors.femalePink.withValues(alpha: 0.1) 
         : theme.colorScheme.primary.withValues(alpha: 0.1);
@@ -95,23 +94,14 @@ class SubscriptionCard extends StatelessWidget {
               CircleAvatar(
                 radius: 26,
                 backgroundColor: driverAvatarBg,
-                backgroundImage: subscription.driver.user.avatarUrl != null &&
-                        subscription.driver.user.avatarUrl!.isNotEmpty
-                    ? CachedNetworkImageProvider(
-                        subscription.driver.user.avatarUrl!,
-                      )
-                    : null,
-                child: subscription.driver.user.avatarUrl == null ||
-                        subscription.driver.user.avatarUrl!.isEmpty
-                    ? Text(
-                        _getInitials(subscription.driver.user.fullName),
-                        style: AppTextStyles.style(
-                          fontWeight: FontWeight.bold,
-                          color: driverAvatarColor,
-                          fontSize: 14,
-                        ),
-                      )
-                    : null,
+                child: Text(
+                  _getInitials(subscription.driver.name),
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    color: driverAvatarColor,
+                    fontSize: 14,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
 
@@ -121,7 +111,7 @@ class SubscriptionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      subscription.driver.user.fullName,
+                      subscription.driver.name,
                       style: AppTextStyles.style(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
@@ -142,7 +132,7 @@ class SubscriptionCard extends StatelessWidget {
                     Text(
                       isPending
                           ? 'تاريخ الطلب: ${subscription.createdAt}'
-                          : 'من ${subscription.startDate} إلى ${subscription.endDate}',
+                          : 'من ${subscription.startDate.split("T").first} إلى ${subscription.endDate.split("T").first}',
                       style: AppTextStyles.style(
                         fontSize: 11,
                         color: isDark ? AppColors.grey500 : AppColors.textMuted,
@@ -180,7 +170,7 @@ class SubscriptionCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    subscription.children.map((c) => c.fullName.split(' ')[0]).join('، '),
+                    subscription.children.map((c) => c.name.split(' ')[0]).join('، '),
                     style: AppTextStyles.style(
                       fontSize: 12,
                       color: isDark ? AppColors.grey400 : AppColors.textMuted,
@@ -274,10 +264,11 @@ class SubscriptionCard extends StatelessWidget {
     IconData icon;
 
     switch (status.toLowerCase()) {
+      case 'accepted':
       case 'active':
         color = AppColors.success;
         bg = AppColors.success.withValues(alpha: 0.08);
-        text = 'نشط';
+        text = 'مقبول';
         icon = Icons.check_circle_outline_rounded;
         break;
       case 'rejected':
@@ -320,7 +311,7 @@ class SubscriptionCard extends StatelessWidget {
     );
   }
 
-  Widget _buildChildrenAvatars(List<SubscriptionChild> children, bool isDark) {
+  Widget _buildChildrenAvatars(List<SubChild> children, bool isDark) {
     final displayedCount = children.length > 3 ? 3 : children.length;
     final remains = children.length - displayedCount;
     const double avatarSize = 32.0;
@@ -356,10 +347,10 @@ class SubscriptionCard extends StatelessWidget {
             ),
           ...List.generate(displayedCount, (index) {
             final kid = children[displayedCount - 1 - index];
-            final isMale = kid.fullName.contains('أحمد') || 
-                           kid.fullName.contains('يوسف') || 
-                           kid.fullName.contains('عمر') ||
-                           kid.fullName.contains('سعيد');
+            final isMale = kid.name.contains('أحمد') || 
+                           kid.name.contains('يوسف') || 
+                           kid.name.contains('عمر') ||
+                           kid.name.contains('سعيد');
             final avatarBg = isMale 
                 ? AppColors.maleBlue.withValues(alpha: 0.1) 
                 : AppColors.femalePink.withValues(alpha: 0.1);
@@ -380,20 +371,14 @@ class SubscriptionCard extends StatelessWidget {
                 child: CircleAvatar(
                   radius: 14.5,
                   backgroundColor: avatarBg,
-                  backgroundImage: kid.photoUrl != null &&
-                          kid.photoUrl!.isNotEmpty
-                      ? CachedNetworkImageProvider(kid.photoUrl!)
-                      : null,
-                  child: kid.photoUrl == null || kid.photoUrl!.isEmpty
-                      ? Text(
-                          _getInitials(kid.fullName),
-                          style: AppTextStyles.style(
-                            fontWeight: FontWeight.bold,
-                            color: avatarColor,
-                            fontSize: 9,
-                          ),
-                        )
-                      : null,
+                  child: Text(
+                    kid.initials,
+                    style: AppTextStyles.style(
+                      fontWeight: FontWeight.bold,
+                      color: avatarColor,
+                      fontSize: 9,
+                    ),
+                  ),
                 ),
               ),
             );

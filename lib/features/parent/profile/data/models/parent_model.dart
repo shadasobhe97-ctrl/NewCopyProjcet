@@ -19,25 +19,43 @@ class ParentModel {
     required this.emailChangePending,
   });
 
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
   factory ParentModel.fromJson(Map<String, dynamic> json) {
+    // بعض APIs ترجع المستخدم داخل مفتاح 'user' (مثل الـ login/register)
+    final data = (json['user'] is Map) ? Map<String, dynamic>.from(json['user'] as Map) : json;
+
     return ParentModel(
-      parentId: json['parent_id'] ?? json['id'] ?? 0,
-      userId: json['user_id'] ?? 0,
-      fullName: json['full_name'] ?? json['name'] ?? '',
-      email: json['email'] ?? '',
-      phoneNumber: json['phone_number'] ?? '',
-      alternativePhone: json['alternative_phone'],
-      avatarUrl: json['avatar_url'],
-      emailChangePending: json['email_change_pending'] == true ||
-          json['email_change_pending'] == 1 ||
-          json['email_change_pending'] == '1',
+      // مطابقة المفاتيح مع رد الـ API الفعلي القادم من الباك
+      parentId: _parseInt(data['parent_id'] ?? data['id'] ?? data['id_user']),
+      userId: _parseInt(data['account_id'] ?? data['user_id'] ?? data['id_user']),
+      fullName: (data['full_name'] ?? data['name'] ?? '').toString(),
+      email: (data['email'] ?? '').toString(),
+      phoneNumber: (data['phone_number'] ?? '').toString(),
+      alternativePhone: data['alternative_phone']?.toString(),
+      avatarUrl: _resolvePhotoUrl(data['avatar_url']?.toString()),
+      emailChangePending:
+          data['email_change_pending'] == true ||
+          data['email_change_pending'] == 1 ||
+          data['email_change_pending'].toString() == '1',
     );
+  }
+
+  static String? _resolvePhotoUrl(String? url) {
+    if (url == null || url.isEmpty) return null;
+    if (url.startsWith('http://')) return 'https://${url.substring(7)}';
+    return url;
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'parent_id': parentId,
-      'user_id': userId,
+      'id': parentId,
+      'account_id': userId,
       'full_name': fullName,
       'email': email,
       'phone_number': phoneNumber,

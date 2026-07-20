@@ -45,25 +45,17 @@ class TransportApp extends StatelessWidget {
             getIt<SessionRepository>(),
           ),
         ),
-        BlocProvider<AdminDashboardCubit>(
-          create: (_) => AdminDashboardCubit(),
-        ),
+        BlocProvider<AdminDashboardCubit>(create: (_) => AdminDashboardCubit()),
         BlocProvider<AppEntryCubit>(
           create: (_) => getIt<AppEntryCubit>()..checkSession(),
         ),
         BlocProvider<RegisterCubit>(create: (_) => getIt<RegisterCubit>()),
-        BlocProvider<ChildrenCubit>(
-          create: (_) => getIt<ChildrenCubit>(),
-        ),
-        BlocProvider<AddChildCubit>(
-          create: (_) => getIt<AddChildCubit>(),
-        ),
+        BlocProvider<ChildrenCubit>(create: (_) => getIt<ChildrenCubit>()),
+        BlocProvider<AddChildCubit>(create: (_) => getIt<AddChildCubit>()),
         BlocProvider<SubscriptionsCubit>(
           create: (_) => getIt<SubscriptionsCubit>(),
         ),
-        BlocProvider<SearchCubit>(
-          create: (_) => getIt<SearchCubit>(),
-        ),
+        BlocProvider<SearchCubit>(create: (_) => getIt<SearchCubit>()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) {

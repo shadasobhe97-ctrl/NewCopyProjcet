@@ -84,7 +84,7 @@ class _SavedAddressesView extends StatelessWidget {
         };
 
         final bool isActionLoading = state is AddressActionLoading;
-        final bool isFullLoading = state is AddressLoading;
+        final bool isFullLoading = state is AddressLoading || state is AddressInitial;
 
         return Directionality(
           textDirection: TextDirection.rtl,

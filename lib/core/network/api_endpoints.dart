@@ -2,7 +2,7 @@ class ApiEndpoints {
   const ApiEndpoints._();
 
   // الرابط الأساسي للسيرفر (يحتوي على /api/)
-  static const String baseUrl = 'https://darby-app-api.loca.lt/api/';
+  static const String baseUrl = 'https://fat-snail-51.loca.lt/api/';
 
   //=========================================
   // Auth Endpoints (مسارات المصادقة العامة)
@@ -41,7 +41,7 @@ class ApiEndpoints {
       'parent/children/$id/subscription';
   static const String parentSchools = 'parent/schools';
   static const String parentDriversSearch = 'parent/drivers/search';
-  static const String parentSubscriptions = 'parent';
+  static const String parentSubscriptions = 'parent/subscriptions';
 
   static const String driverPreferences = 'v1/driver/preferences';
   static const String driverZones = 'v1/driver/zones';
@@ -54,5 +54,20 @@ class ApiEndpoints {
   static const String parentRequests = 'parent/requests';
   static String parentRequestDetail(int id) => 'parent/requests/$id';
   static String parentRequestDelete(int id) => 'parent/$id';
-  static const String parentSubscriptionCreate = 'parent/requests';
+  static String parentRequestCancel(int id) => 'parent/requests/$id/cancel';
+
+  // Guardian Requests (API الجديد)
+  static const String guardianRequests = 'guardian/requests';
+  static String guardianRequestDetail(int id) => 'guardian/requests/$id';
+  static String guardianRequestCancel(int id) => 'guardian/requests/$id/cancel';
+  //طلب الاشتراك مع سوااق
+  static const String parentrequestSubscription = 'parent';
+
+  // Parent Wallet & Finance
+  static const String parentWalletBalance = 'parent/wallet/balance';
+  static const String parentWalletPaymentMethods =
+      'parent/wallet/payment-methods';
+  static const String parentWalletRecharge = 'parent/wallet/recharge';
+  static const String parentInvoices = 'parent/invoices';
+  static String parentInvoiceDetail(int id) => 'parent/invoices/$id';
 }

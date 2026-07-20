@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
@@ -48,21 +49,42 @@ class SearchRemoteDataSource {
 
   /// POST /api/parent
   Future<String> sendSubscription(SubscriptionRequest request) async {
+    debugPrint('\n================= SEARCH REMOTE DATA SOURCE =================');
+    debugPrint('>>> Endpoint: POST ${ApiEndpoints.parentrequestSubscription}');
+    debugPrint('>>> Full URL: ${ApiEndpoints.baseUrl}${ApiEndpoints.parentrequestSubscription}');
+    debugPrint('>>> HTTP Method: POST');
+
+    final authHeader = _authHeader;
+    debugPrint('>>> Headers:');
+    debugPrint('  Authorization: ${authHeader['Authorization']}');
+    debugPrint('  Content-Type: application/json');
+    debugPrint('  Accept: application/json');
+
+    final jsonBody = request.toJson();
+    debugPrint('>>> Request Body: $jsonBody');
+    debugPrint('============================================================\n');
+    debugPrint('\n>>> [ApiClient.post] will now print the request...');
+
     final response = await _client.post(
-      ApiEndpoints.parentSubscriptions,
-      data: request.toJson(),
-      headers: _authHeader,
+      ApiEndpoints.parentrequestSubscription,
+      data: jsonBody,
+      headers: authHeader,
     );
     final data = response.data;
+    debugPrint('\n<<< [DataSource] Raw response data: $data');
     if (data is Map) {
       final success = data['success'] ?? data['status'];
       final message =
           data['message']?.toString() ?? 'تم إرسال طلب الاشتراك بنجاح.';
+      debugPrint('<<< [DataSource] success: $success, message: $message');
       if (success == false) {
+        debugPrint('<<< [DataSource] Throwing ApiException with: $message');
         throw ApiException(message);
       }
+      debugPrint('<<< [DataSource] Returning success message: $message');
       return message;
     }
+    debugPrint('<<< [DataSource] Response data is not a Map, returning default message');
     return 'تم إرسال طلب الاشتراك بنجاح.';
   }
 }

@@ -54,7 +54,9 @@ class _StepCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = (isActive || isDone) ? context.primaryColor : AppColors.grey300;
+    final color = (isActive || isDone)
+        ? context.primaryColor
+        : AppColors.grey300;
     return Column(
       children: [
         Container(
@@ -62,7 +64,9 @@ class _StepCircle extends StatelessWidget {
           height: 36,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: (isActive || isDone) ? context.primaryColor : Colors.transparent,
+            color: (isActive || isDone)
+                ? context.primaryColor
+                : Colors.transparent,
             border: Border.all(color: color, width: 2),
           ),
           child: Center(
@@ -83,7 +87,9 @@ class _StepCircle extends StatelessWidget {
           label,
           style: AppTextStyles.style(
             fontSize: 11,
-            color: (isActive || isDone) ? context.primaryColor : AppColors.grey400,
+            color: (isActive || isDone)
+                ? context.primaryColor
+                : AppColors.grey400,
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -115,7 +121,9 @@ class AddChildSectionCard extends StatelessWidget {
         border: AppTheme.border(color: AppColors.grey200),
         boxShadow: [
           AppTheme.boxShadow(
-            color: AppColors.black.withValues(alpha: context.isDarkMode ? 0.2 : 0.04),
+            color: AppColors.black.withValues(
+              alpha: context.isDarkMode ? 0.2 : 0.04,
+            ),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -128,7 +136,13 @@ class AddChildSectionCard extends StatelessWidget {
             children: [
               Icon(icon, color: context.primaryColor, size: 20),
               const SizedBox(width: 8),
-              Text(title, style: AppTextStyles.style(fontSize: 15, fontWeight: FontWeight.bold)),
+              Text(
+                title,
+                style: AppTextStyles.style(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
           const Divider(height: 20),
@@ -163,7 +177,9 @@ class GenderSelectionButton extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? selectedColor.withOpacity(0.12) : Colors.transparent,
+          color: isSelected
+              ? selectedColor.withOpacity(0.12)
+              : Colors.transparent,
           border: Border.all(
             color: isSelected ? selectedColor : AppColors.grey300,
             width: isSelected ? 2 : 1,
@@ -173,7 +189,11 @@ class GenderSelectionButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: isSelected ? selectedColor : AppColors.grey400, size: 22),
+            Icon(
+              icon,
+              color: isSelected ? selectedColor : AppColors.grey400,
+              size: 22,
+            ),
             const SizedBox(width: 8),
             Text(
               label,

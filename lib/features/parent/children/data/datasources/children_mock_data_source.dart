@@ -7,7 +7,7 @@ class ChildrenMockDataSource {
     ChildModel(
       id: 1,
       schoolId: 101,
-      addressId: 1,
+      addressId: '1',
       fullName: "أحمد محمود",
       gender: "male",
       birthDate: DateTime(2014, 5, 12),

@@ -72,16 +72,6 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
     _fetchChildDetails();
   }
 
-  String _getGradeLabel(int level) {
-    switch (level) {
-      case 1: return 'روضة';
-      case 2: return 'ابتدائي';
-      case 3: return 'إعدادي';
-      case 4: return 'ثانوي';
-      default: return 'غير محدد';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final activeChild = childDetails ?? widget.child;
@@ -189,7 +179,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                               ),
                             ],
                           ),
-                          child: activeChild.photoUrl != null && activeChild.photoUrl!.isNotEmpty
+                          child: activeChild.hasRealPhoto
                               ? ClipOval(
                                   child: CachedNetworkImage(
                                     imageUrl: activeChild.photoUrl!,
@@ -281,7 +271,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                     children: [
                       _buildField(
                         label: 'الصف الدراسي',
-                        value: _getGradeLabel(activeChild.gradeLevel),
+                        value: activeChild.gradeDisplay,
                       ),
                       _buildField(
                         label: 'المدرسة',

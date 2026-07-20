@@ -1,3 +1,5 @@
+import 'dart:io';
+
 class ParentRegisterRequest {
   final String fullName;
   final String email;
@@ -6,9 +8,10 @@ class ParentRegisterRequest {
   final String password;
   final String passwordConfirmation;
   final int otp;
-  final String deviceName;
-  final String platform;
+  final String? deviceName;
+  final String? platform;
   final String? fcmToken;
+  final File? avatar;
 
   ParentRegisterRequest({
     required this.fullName,
@@ -18,9 +21,10 @@ class ParentRegisterRequest {
     required this.password,
     required this.passwordConfirmation,
     required this.otp,
-    required this.deviceName,
-    required this.platform,
+    this.deviceName,
+    this.platform,
     this.fcmToken,
+    this.avatar,
   });
 
   Map<String, dynamic> toJson() {
@@ -33,8 +37,9 @@ class ParentRegisterRequest {
       'password': password,
       'password_confirmation': passwordConfirmation,
       'otp': otp,
-      'device_name': deviceName,
-      'platform': platform,
+      if (deviceName != null && deviceName!.isNotEmpty)
+        'device_name': deviceName,
+      if (platform != null && platform!.isNotEmpty) 'platform': platform,
       if (fcmToken != null && fcmToken!.isNotEmpty) 'fcm_token': fcmToken,
     };
   }

@@ -16,12 +16,14 @@ class DriverCompleteProfileResponse {
 
 class DriverProfileData {
   final int id;
+  final int driverId;
   final int accountId;
   final String fullName;
   final String driverStatus; // حتكون "Pending"
 
   DriverProfileData({
     required this.id,
+    required this.driverId,
     required this.accountId,
     required this.fullName,
     required this.driverStatus,
@@ -30,6 +32,7 @@ class DriverProfileData {
   factory DriverProfileData.fromJson(Map<String, dynamic> json) {
     return DriverProfileData(
       id: _readInt(json['id']),
+      driverId: _readInt(json['driver_id'] ?? json['id']),
       accountId: _readInt(json['account_id']),
       fullName: json['full_name']?.toString() ?? '',
       driverStatus: json['driver_status']?.toString() ?? 'Pending',

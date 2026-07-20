@@ -1,57 +1,74 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/features/driver/profile/data/models/driver_model.dart';
+import 'package:kids_transport/features/driver/profile/data/repositories/driver_profile_repository.dart';
+import 'package:kids_transport/features/driver/requests/data/models/driver_request_model.dart';
+import 'package:kids_transport/features/driver/requests/data/repositories/driver_requests_repository.dart';
+import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 
 part 'driver_home_state.dart';
 
 // ==========================================
 // كوبيت إدارة شاشة الهوم متع السائق
-// TODO: عند الربط بالـ API، استبدل جميع البيانات التجريبية بطلبات حقيقية
 // ==========================================
 
 class DriverHomeCubit extends Cubit<DriverHomeState> {
   DriverHomeCubit() : super(DriverHomeLoading());
 
-  /// تحميل بيانات السائق - TODO: ربط بـ API endpoint الحقيقي
+  /// تحميل بيانات السائق والطلبات الجديدة
   Future<void> loadDriverHomeData() async {
     emit(DriverHomeLoading());
 
     try {
-      // TODO: استبدل هذا بطلب API حقيقي
-      // مثال: final response = await _driverRepository.getDriverHomeData(driverId);
+      // 1. جلب بيانات السائق
+      final profileRepo = driverSl<DriverProfileRepository>();
+      final driver = await profileRepo.getDriverProfile();
 
-      // ────────────────────────────────────────────
-      // بيانات تجريبية - تُحذف عند الربط بالـ API
-      // ────────────────────────────────────────────
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      // تم تعديل البيانات لتطابق DriverModel المربوط بالباك إند
-      final mockDriver = DriverModel(
-        driverId: 1,
-        userId: 1,
-        fullName: 'محمد العربي',
-        email: 'driver@test.com',
-        phoneNumber: '+218 91 234 5678',
-        alternativePhone: null,
-        avatarUrl: null,
-        gender: 'male',
-        accountStatus: 'Approved',
-      );
-
-      // طلبات اشتراك تجريبية - تم تركها كقائمة فارغة عادية لتجنب أخطاء SubscriptionRequest
-      const mockRequests = [];
+      // 2. جلب طلبات الاشتراك الجديدة المعلقة
+      final requestsRepo = driverSl<DriverRequestsRepository>();
+      final newRequests = await requestsRepo.getRequests(filter: 'pending');
 
       emit(
         DriverHomeLoaded(
-          driver: mockDriver,
-          isOnline: false,
+          driver: driver,
+          isOnline: false, // يمكن ربطه لاحقاً بحالة السيرفر
           todayTripsCount: 0,
           todayStudentsCount: 0,
-          newRequests: mockRequests,
+          newRequests: newRequests,
           hasActiveTrip: false,
         ),
       );
     } catch (e) {
-      emit(DriverHomeError('حدث خطأ في تحميل البيانات: ${e.toString()}'));
+      // في حالة وجود خطأ، نحاول استخدام البيانات المحلية المخزنة كـ fallback
+      try {
+        final profileRepo = driverSl<DriverProfileRepository>();
+        final name = profileRepo.getCachedFullName();
+        final phone = profileRepo.getCachedPhoneNumber();
+
+        final cachedDriver = DriverModel(
+          driverId: 0,
+          userId: 0,
+          fullName: name.isNotEmpty ? name : 'السائق',
+          email: '',
+          phoneNumber: phone.isNotEmpty ? phone : '',
+          alternativePhone: null,
+          avatarUrl: null,
+          gender: 'male',
+          accountStatus: 'Approved',
+        );
+
+        emit(
+          DriverHomeLoaded(
+            driver: cachedDriver,
+            isOnline: false,
+            todayTripsCount: 0,
+            todayStudentsCount: 0,
+            newRequests: const [],
+            hasActiveTrip: false,
+          ),
+        );
+      } catch (_) {
+        emit(DriverHomeError('حدث خطأ في تحميل البيانات: ${e.toString()}'));
+      }
     }
   }
 
@@ -59,17 +76,27 @@ class DriverHomeCubit extends Cubit<DriverHomeState> {
     final currentState = state;
     if (currentState is DriverHomeLoaded) {
       final newStatus = !currentState.isOnline;
-
       emit(currentState.copyWith(isOnline: newStatus));
     }
   }
 
-  // تم إيقاف محتوى هذه الدوال مؤقتاً لتجنب الأخطاء حتى تقومي بإنشاء موديل الطلبات
   Future<void> acceptRequest(int requestId) async {
-    // TODO: سيتم برمجتها لاحقاً
+    try {
+      final requestsRepo = driverSl<DriverRequestsRepository>();
+      await requestsRepo.acceptRequest(requestId);
+      await loadDriverHomeData(); // تحديث الصفحة الرئيسية
+    } catch (e) {
+      emit(DriverHomeError('فشل قبول الطلب: ${e.toString()}'));
+    }
   }
 
   Future<void> rejectRequest(int requestId) async {
-    // TODO: سيتم برمجتها لاحقاً
+    try {
+      final requestsRepo = driverSl<DriverRequestsRepository>();
+      await requestsRepo.rejectRequest(requestId);
+      await loadDriverHomeData(); // تحديث الصفحة الرئيسية
+    } catch (e) {
+      emit(DriverHomeError('فشل رفض الطلب: ${e.toString()}'));
+    }
   }
 }

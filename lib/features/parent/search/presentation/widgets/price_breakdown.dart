@@ -55,7 +55,7 @@ class PriceBreakdown extends StatelessWidget {
                 ),
               ),
               Text(
-                '${totalPrice.toInt()} د.ل',
+                '${totalPrice.toStringAsFixed(2)} د.ل',
                 style: AppTextStyles.style(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -97,7 +97,7 @@ class PriceBreakdown extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${price.toInt()} د.ل',
+                    '${price.toStringAsFixed(2)} د.ل',
                     style: AppTextStyles.style(
                       fontWeight: FontWeight.w600,
                       fontSize: 13,

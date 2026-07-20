@@ -5,6 +5,11 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 
 /// بطاقة عنوان واحد في شاشة العناوين المحفوظة.
 class AddressCard extends StatelessWidget {
+  String _formatCoords(dynamic lat, dynamic lng) {
+    final latStr = (lat is num) ? lat.toStringAsFixed(4) : '0.0000';
+    final lngStr = (lng is num) ? lng.toStringAsFixed(4) : '0.0000';
+    return 'إحداثيات: ($latStr, $lngStr)';
+  }
   final Map<String, dynamic> address;
   final bool isPrimary;
   final VoidCallback onSetDefault;
@@ -68,7 +73,7 @@ class AddressCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          address['title'] as String,
+                          address['title']?.toString() ?? 'عنوان بدون اسم',
                           style: AppTextStyles.style(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
@@ -77,7 +82,10 @@ class AddressCard extends StatelessWidget {
 
                         const SizedBox(height: 4),
                         Text(
-                          'إحداثيات: (${(address['latitude'] as double).toStringAsFixed(4)}, ${(address['longitude'] as double).toStringAsFixed(4)})',
+                          _formatCoords(
+                            address['latitude'],
+                            address['longitude'],
+                          ),
                           style: AppTextStyles.style(
                             color: AppColors.textMuted.withValues(alpha: 0.7),
                             fontSize: 11,

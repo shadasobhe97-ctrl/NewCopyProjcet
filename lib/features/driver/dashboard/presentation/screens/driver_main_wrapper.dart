@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:convex_bottom_bar/convex_bottom_bar.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/features/driver/home/logic/driver_home_cubit/driver_home_cubit.dart';
 import 'package:kids_transport/features/driver/dashboard/presentation/widgets/driver_drawer.dart';
 import 'package:kids_transport/features/driver/home/presentation/screens/driver_home_screen.dart';
+import 'package:kids_transport/features/driver/requests/logic/driver_requests_cubit.dart';
+import 'package:kids_transport/features/driver/requests/presentation/screens/driver_requests_screen.dart';
+import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
+import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -63,11 +67,13 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
           style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
-      Center(
-        child: Text(
-          '📋 الطلبات',
-          style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+      // شاشة الطلبات الحقيقية مع Cubits للطلبات والاشتراكات
+      MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => driverSl<DriverRequestsCubit>()),
+          BlocProvider(create: (_) => driverSl<DriverSubscriptionsCubit>()),
+        ],
+        child: const DriverRequestsScreen(),
       ),
     ];
   }
@@ -99,28 +105,62 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
                     .toList(),
               ),
 
-              // شريط التنقل السفلي - نفس مكتبة convex_bottom_bar كالـ parent
-              bottomNavigationBar: ConvexAppBar(
-                style: TabStyle.reactCircle,
-                backgroundColor: context.cardSurface,
-                activeColor: context.primaryColor,
-                color: AppColors.grey400,
-                initialActiveIndex: _selectedIndex,
-                height: 60,
-                curveSize: 80,
-                top: -20,
-                items: const [
-                  TabItem(icon: Icons.home_rounded, title: 'الرئيسية'),
-                  TabItem(icon: Icons.route_rounded, title: 'الرحلات'),
-                  TabItem(
-                    icon: Icons.account_balance_wallet_rounded,
-                    title: 'المحفظة',
+              // شريط التنقل السفلي - GNav أنيق واحترافي
+              bottomNavigationBar: Container(
+                decoration: BoxDecoration(
+                  color: context.cardSurface,
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 15,
+                      color: Colors.black.withValues(
+                        alpha: context.isDarkMode ? 0.3 : 0.05,
+                      ),
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12.0,
+                      vertical: 10.0,
+                    ),
+                    child: GNav(
+                      gap: 6,
+                      activeColor: context.primaryColor,
+                      iconSize: 22,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
+                      duration: const Duration(milliseconds: 300),
+                      tabBackgroundColor:
+                          context.primaryColor.withValues(alpha: 0.1),
+                      color: AppColors.grey400,
+                      textStyle: AppTextStyles.style(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: context.primaryColor,
+                      ),
+                      selectedIndex: _selectedIndex,
+                      onTabChange: (index) {
+                        setState(() => _selectedIndex = index);
+                      },
+                      tabs: const [
+                        GButton(icon: Icons.home_rounded, text: 'الرئيسية'),
+                        GButton(icon: Icons.route_rounded, text: 'الرحلات'),
+                        GButton(
+                          icon: Icons.account_balance_wallet_rounded,
+                          text: 'المحفظة',
+                        ),
+                        GButton(
+                          icon: Icons.assignment_rounded,
+                          text: 'الطلبات',
+                        ),
+                      ],
+                    ),
                   ),
-                  TabItem(icon: Icons.assignment_rounded, title: 'الطلبات'),
-                ],
-                onTap: (int index) {
-                  setState(() => _selectedIndex = index);
-                },
+                ),
               ),
             ),
           );
@@ -283,7 +323,7 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
               color: AppColors.white,
               size: 26,
             ),
-            onPressed: () => Scaffold.of(ctx).openEndDrawer(),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
         const SizedBox(width: 8),

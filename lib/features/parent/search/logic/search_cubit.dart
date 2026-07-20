@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/repositories/search_repository.dart';
 import '../data/models/subscription_request.dart';
@@ -39,10 +40,36 @@ class SearchCubit extends Cubit<SearchState> {
     }
   }
 
+  Future<void> getPricing({
+    required String searchQuery,
+    required List<int> childIds,
+  }) async {
+    emit(PricingLoading());
+
+    final body = <String, dynamic>{
+      'search_query': searchQuery.trim(),
+      'child_ids': childIds,
+    };
+
+    final (list, error) = await _repository.searchDrivers(body);
+
+    if (error != null) {
+      emit(PricingError(error));
+    } else if (list != null && list.isNotEmpty) {
+      emit(PricingLoaded(list.first));
+    } else {
+      emit(PricingError('لم يتم العثور على السائق.'));
+    }
+  }
+
   Future<void> submitSubscription(SubscriptionRequest request) async {
+    debugPrint('\n>>> [SearchCubit] submitSubscription called');
+    debugPrint('>>> Request JSON: ${request.toJson()}');
     emit(SubscriptionLoading());
 
     final (success, message) = await _repository.sendSubscription(request);
+
+    debugPrint('>>> [SearchCubit] Result — success: $success, message: $message');
 
     if (success) {
       emit(SubscriptionSuccess(message));

@@ -18,6 +18,9 @@ extension ThemeContext on BuildContext {
   Color get pendingColor => AppColors.pending;
   Color get warningColor => AppColors.warning;
   Color get infoColor => AppColors.info;
+  
+  Color get textPrimary => isDarkMode ? AppColors.white : AppColors.textDark;
+  Color get dividerColor => theme.dividerColor;
 
   Color get genderMaleColor => AppColors.maleBlue;
   Color get genderFemaleColor => AppColors.femalePink;

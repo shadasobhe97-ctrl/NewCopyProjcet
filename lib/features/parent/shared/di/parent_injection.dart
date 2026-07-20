@@ -1,10 +1,23 @@
 import 'package:get_it/get_it.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 
+// Requests (Guardian Requests)
+import 'package:kids_transport/features/parent/subscriptions/data/datasources/requests_remote_data_source.dart';
+import 'package:kids_transport/features/parent/subscriptions/data/repositories/requests_repository.dart';
+
 // Search
 import 'package:kids_transport/features/parent/search/data/datasources/search_remote_data_source.dart';
 import 'package:kids_transport/features/parent/search/data/repositories/search_repository.dart';
 import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
+
+// Wallet & Finance
+import 'package:kids_transport/features/parent/wallet/data/datasources/wallet_remote_data_source.dart';
+import 'package:kids_transport/features/parent/wallet/data/datasources/invoices_remote_data_source.dart';
+import 'package:kids_transport/features/parent/wallet/data/repositories/wallet_repository.dart';
+import 'package:kids_transport/features/parent/wallet/data/repositories/invoices_repository.dart';
+import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_cubit.dart';
+import 'package:kids_transport/features/parent/wallet/logic/invoices_cubit/invoices_cubit.dart';
+import 'package:kids_transport/features/parent/wallet/logic/invoice_details_cubit/invoice_details_cubit.dart';
 
 // Profile
 import 'package:kids_transport/features/parent/profile/data/datasources/parent_profile_remote_data_source.dart';
@@ -158,6 +171,64 @@ void initParentInjection() {
   if (!getIt.isRegistered<SubscriptionsCubit>()) {
     getIt.registerFactory<SubscriptionsCubit>(
       () => SubscriptionsCubit(getIt<SubscriptionsRepository>()),
+    );
+  }
+
+  // =========================================
+  // 6. Guardian Requests Feature
+  // =========================================
+  if (!getIt.isRegistered<RequestsRemoteDataSource>()) {
+    getIt.registerLazySingleton<RequestsRemoteDataSource>(
+      () => RequestsRemoteDataSource(getIt<ApiClient>()),
+    );
+  }
+  if (!getIt.isRegistered<RequestsRepository>()) {
+    getIt.registerLazySingleton<RequestsRepository>(
+      () => RequestsRepository(getIt<RequestsRemoteDataSource>()),
+    );
+  }
+
+  // =========================================
+  // 7. Wallet & Finance Feature
+  // =========================================
+  // Remote Data Sources
+  if (!getIt.isRegistered<WalletRemoteDataSource>()) {
+    getIt.registerLazySingleton<WalletRemoteDataSource>(
+      () => WalletRemoteDataSource(getIt<ApiClient>()),
+    );
+  }
+  if (!getIt.isRegistered<InvoicesRemoteDataSource>()) {
+    getIt.registerLazySingleton<InvoicesRemoteDataSource>(
+      () => InvoicesRemoteDataSource(getIt<ApiClient>()),
+    );
+  }
+  
+  // Repositories
+  if (!getIt.isRegistered<WalletRepository>()) {
+    getIt.registerLazySingleton<WalletRepository>(
+      () => WalletRepository(getIt<WalletRemoteDataSource>()),
+    );
+  }
+  if (!getIt.isRegistered<InvoicesRepository>()) {
+    getIt.registerLazySingleton<InvoicesRepository>(
+      () => InvoicesRepository(getIt<InvoicesRemoteDataSource>()),
+    );
+  }
+  
+  // Cubits
+  if (!getIt.isRegistered<WalletCubit>()) {
+    getIt.registerFactory<WalletCubit>(
+      () => WalletCubit(getIt<WalletRepository>()),
+    );
+  }
+  if (!getIt.isRegistered<InvoicesCubit>()) {
+    getIt.registerFactory<InvoicesCubit>(
+      () => InvoicesCubit(getIt<InvoicesRepository>()),
+    );
+  }
+  if (!getIt.isRegistered<InvoiceDetailsCubit>()) {
+    getIt.registerFactory<InvoiceDetailsCubit>(
+      () => InvoiceDetailsCubit(getIt<InvoicesRepository>()),
     );
   }
 }

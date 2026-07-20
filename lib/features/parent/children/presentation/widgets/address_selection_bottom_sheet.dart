@@ -82,7 +82,7 @@ class _AddressSelectionBottomSheetState
             _ => const [],
           };
 
-          final bool isFullLoading = state is AddressLoading;
+          final bool isFullLoading = state is AddressLoading || state is AddressInitial;
           final bool isActionLoading = state is AddressActionLoading;
 
           return Container(

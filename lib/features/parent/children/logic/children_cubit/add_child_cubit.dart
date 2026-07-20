@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models/child_model.dart';
 import '../../data/models/school_model.dart';
@@ -17,7 +18,7 @@ class AddChildCubit extends Cubit<AddChildState> {
   int? gradeLevel;
   int? schoolId;
   String? schoolName;
-  int? addressId;
+  String? addressId;
   String? addressName;
   String? medicalNotes;
 
@@ -63,7 +64,7 @@ class AddChildCubit extends Cubit<AddChildState> {
     required int grade,
     required int sId,
     required String sName,
-    required int aId,
+    required String aId,
     required String aName,
     String? notes,
   }) {
@@ -102,6 +103,9 @@ class AddChildCubit extends Cubit<AddChildState> {
     if (gradeLevel == 3) gradeStr = 'إعدادي';
     if (gradeLevel == 4) gradeStr = 'ثانوي';
 
+    debugPrint('📸 [AddChildCubit] imagePath: $imagePath');
+    debugPrint('📸 [AddChildCubit] editingChild?.photoUrl: ${editingChild?.photoUrl}');
+
     final childToSubmit = ChildModel(
       id: editingChild?.id,
       parentId: editingChild?.parentId,
@@ -116,9 +120,13 @@ class AddChildCubit extends Cubit<AddChildState> {
       logistics: transportPref.toLogistics(),
     );
 
+    debugPrint('📸 [AddChildCubit] childToSubmit.photoUrl: ${childToSubmit.photoUrl}');
+
     final (resultChild, message) = editingChild == null
         ? await _repository.addChild(childToSubmit, imagePath)
         : await _repository.updateChild(childToSubmit, imagePath);
+
+    debugPrint('📸 [AddChildCubit] resultChild?.photoUrl: ${resultChild?.photoUrl}');
 
     if (resultChild != null) {
       emit(AddChildSuccess(resultChild, message));

@@ -41,8 +41,8 @@ class SubscriptionRequest {
 
 class SubscriptionChildRequest {
   final int childId;
-  final int pickupAddressId;
-  final int dropoffAddressId;
+  final String pickupAddressId;
+  final String dropoffAddressId;
   final double pricePerChild;
   final String childNotes;
 
@@ -57,9 +57,9 @@ class SubscriptionChildRequest {
   Map<String, dynamic> toJson() {
     return {
       'child_id': childId,
-      'pickup_address_id': pickupAddressId,
-      'dropoff_address_id': dropoffAddressId,
-      'price_per_child': pricePerChild.toInt(),
+      'pickup_address_id': int.tryParse(pickupAddressId) ?? 0,
+      'dropoff_address_id': int.tryParse(dropoffAddressId) ?? 0,
+      'price_per_child': pricePerChild,
       'child_notes': childNotes,
     };
   }

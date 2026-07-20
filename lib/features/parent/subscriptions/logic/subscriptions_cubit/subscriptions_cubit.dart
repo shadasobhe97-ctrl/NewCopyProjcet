@@ -11,20 +11,25 @@ class SubscriptionsCubit extends Cubit<SubscriptionsState> {
   SubscriptionsCubit(this._repository) : super(SubscriptionsInitial());
 
   /// جلب القائمة - Cache First مثل Children
-  Future<void> fetchSubscriptions() async {
-    // 1. اقرأ Hive أولاً وعرض البيانات فوراً
-    final cached = await _repository.getCachedSubscriptions();
-    if (cached.isNotEmpty) {
-      emit(SubscriptionsLoaded(cached));
+  Future<void> fetchSubscriptions({String? status}) async {
+    // 1. اقرأ Hive أولاً وعرض البيانات فوراً (نعرض الكاش فقط اذا مافي فلتر)
+    if (status == null) {
+      final cached = await _repository.getCachedSubscriptions();
+      if (cached.isNotEmpty) {
+        emit(SubscriptionsLoaded(cached));
+      } else {
+        emit(SubscriptionsLoading());
+      }
     } else {
       emit(SubscriptionsLoading());
     }
 
     // 2. اطلب API في الخلفية
-    final (subscriptions, error) = await _repository.getMySubscriptions();
+    final (subscriptions, error) =
+        await _repository.getMySubscriptions(status: status);
     if (error != null) {
-      // إذا فشل الطلب وكان هناك كاش معروض، استمر بعرضه ولا تعرض Error
-      if (state is SubscriptionsLoaded &&
+      if (status == null &&
+          state is SubscriptionsLoaded &&
           (state as SubscriptionsLoaded).subscriptions.isNotEmpty) {
         emit(SubscriptionsLoaded((state as SubscriptionsLoaded).subscriptions));
       } else {

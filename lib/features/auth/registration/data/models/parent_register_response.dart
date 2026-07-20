@@ -1,47 +1,45 @@
+import 'package:kids_transport/features/auth/login/data/models/login_response_model.dart';
+
 class ParentRegisterResponse {
   final bool status;
   final String message;
-  final int id;
-  final int accountId;
-  final String fullName;
-  final String email;
-  final String phoneNumber;
-  final String? alternativePhone;
-  final String role;
-  final bool isActive;
   final String accessToken;
+  final String tokenType;
+  final String roleName;
+  final UserModel user;
 
   ParentRegisterResponse({
     required this.status,
     required this.message,
-    required this.id,
-    required this.accountId,
-    required this.fullName,
-    required this.email,
-    required this.phoneNumber,
-    this.alternativePhone,
-    required this.role,
-    required this.isActive,
     required this.accessToken,
+    required this.tokenType,
+    required this.roleName,
+    required this.user,
   });
 
   factory ParentRegisterResponse.fromJson(Map<String, dynamic> json) {
+    final userMap = (json['user'] is Map)
+        ? Map<String, dynamic>.from(json['user'] as Map)
+        : <String, dynamic>{};
+
     return ParentRegisterResponse(
-      status: json.containsKey('status')
-          ? _readBool(json['status'])
-          : (json.containsKey('access_token') || json.containsKey('token') || json.containsKey('id')),
+      status: _readBool(json['status']),
       message: json['message']?.toString() ?? 'تم إنشاء الحساب بنجاح.',
-      id: _readInt(json['id']),
-      accountId: _readInt(json['account_id']),
-      fullName: json['full_name']?.toString() ?? '',
-      email: json['email']?.toString() ?? '',
-      phoneNumber: json['phone_number']?.toString() ?? '',
-      alternativePhone: json['alternative_phone']?.toString(),
-      role: json['role']?.toString() ?? 'parent',
-      isActive: _readBool(json['is_active']),
       accessToken: json['access_token']?.toString() ?? json['token']?.toString() ?? '',
+      tokenType: json['token_type']?.toString() ?? 'Bearer',
+      roleName: json['role_name']?.toString() ?? 'ولي أمر',
+      user: UserModel.fromJson(userMap),
     );
   }
+
+  int get id => user.id;
+  int? get parentId => user.parentId;
+  String get fullName => user.fullName;
+  String get email => user.email ?? '';
+  String get phoneNumber => user.phoneNumber;
+  String? get alternativePhone => user.alternativePhone;
+  String get role => user.role;
+  bool get isActive => user.isActive;
 }
 
 class ParentAddressResponse {

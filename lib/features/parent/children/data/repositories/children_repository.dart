@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
 import '../datasources/children_remote_data_source.dart';
 import '../models/child_model.dart';
@@ -10,20 +11,19 @@ class ChildrenRepository {
   final ChildrenRemoteDataSource _dataSource;
   final ChildrenLocalDataSource _localDataSource;
 
-  ChildrenRepository(
-    this._dataSource,
-    this._localDataSource,
-  );
+  ChildrenRepository(this._dataSource, this._localDataSource);
 
   Future<(List<ChildModel>?, String?)> getMyChildren() async {
+    debugPrint('Repository => getMyChildren()');
     try {
       final children = await _dataSource.getChildren();
       await _localDataSource.cacheChildren(children);
       return (children, null);
     } on ApiException catch (e) {
       return (null, e.message);
-    } catch (_) {
-      return (null, 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Unexpected error in getMyChildren: $e\n$stackTrace');
+      return (null, 'حدث خطأ غير متوقع: $e');
     }
   }
 
@@ -39,36 +39,53 @@ class ChildrenRepository {
     try {
       final schools = await _dataSource.getSchools();
       if (query.isEmpty) return (schools, null);
-      final filtered = schools.where((s) => s.name.toLowerCase().contains(query.toLowerCase())).toList();
+      final filtered = schools
+          .where((s) => s.name.toLowerCase().contains(query.toLowerCase()))
+          .toList();
       return (filtered, null);
     } on ApiException catch (e) {
       return (null, e.message);
-    } catch (_) {
-      return (null, 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Unexpected error in searchSchools: $e\n$stackTrace');
+      return (null, 'حدث خطأ غير متوقع: $e');
     }
   }
 
-  Future<(ChildModel?, String)> addChild(ChildModel child, String? localImagePath) async {
+  Future<(ChildModel?, String)> addChild(
+    ChildModel child,
+    String? localImagePath,
+  ) async {
     try {
-      final (newChild, message) = await _dataSource.addChild(child, localImagePath);
+      final (newChild, message) = await _dataSource.addChild(
+        child,
+        localImagePath,
+      );
       await _localDataSource.cacheChild(newChild);
       return (newChild, message);
     } on ApiException catch (e) {
       return (null, e.message);
-    } catch (_) {
-      return (null, 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Unexpected error in addChild: $e\n$stackTrace');
+      return (null, 'حدث خطأ غير متوقع: $e');
     }
   }
 
-  Future<(ChildModel?, String)> updateChild(ChildModel child, String? localImagePath) async {
+  Future<(ChildModel?, String)> updateChild(
+    ChildModel child,
+    String? localImagePath,
+  ) async {
     try {
-      final (updatedChild, message) = await _dataSource.updateChild(child, localImagePath);
+      final (updatedChild, message) = await _dataSource.updateChild(
+        child,
+        localImagePath,
+      );
       await _localDataSource.cacheChild(updatedChild);
       return (updatedChild, message);
     } on ApiException catch (e) {
       return (null, e.message);
-    } catch (_) {
-      return (null, 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Unexpected error in updateChild: $e\n$stackTrace');
+      return (null, 'حدث خطأ غير متوقع: $e');
     }
   }
 

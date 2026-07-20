@@ -23,28 +23,13 @@ class ChildCardWidget extends StatelessWidget {
     required this.onDelete,
   });
 
-  String _getGradeLevel(int level) {
-    switch (level) {
-      case 1:
-        return 'الصف الأول';
-      case 2:
-        return 'الصف الثاني';
-      case 3:
-        return 'الصف الثالث';
-      case 4:
-        return 'الصف الرابع';
-      case 5:
-        return 'الصف الخامس';
-      case 6:
-        return 'الصف السادس';
-      default:
-        return 'غير محدد';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    debugPrint(
+      '🖼️ [ChildCard] ${child.fullName} => photoUrl: ${child.photoUrl} | hasRealPhoto: ${child.hasRealPhoto} | gender: ${child.gender}',
+    );
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -72,19 +57,37 @@ class ChildCardWidget extends StatelessWidget {
                   height: 60.h,
                   decoration: AppTheme.boxDecoration(
                     shape: BoxShape.circle,
-                    color: child.gender == 'male' ? context.maleBlueBg : context.femalePinkBg,
+                    color: child.gender == 'male'
+                        ? context.maleBlueBg
+                        : context.femalePinkBg,
                     border: AppTheme.border(
-                      color: child.gender == 'male' ? context.genderMaleColor : context.genderFemaleColor,
+                      color: child.gender == 'male'
+                          ? context.genderMaleColor
+                          : context.genderFemaleColor,
                       width: 2.w,
                     ),
                   ),
-                  child: child.image != null && child.image!.isNotEmpty
+                  child: child.hasRealPhoto
                       ? ClipOval(
                           child: CachedNetworkImage(
-                            imageUrl: child.image!,
+                            imageUrl: child.photoUrl!,
                             fit: BoxFit.cover,
                             width: 60.w,
                             height: 60.h,
+
+                            imageBuilder: (context, imageProvider) {
+                              debugPrint('✅ Image Loaded: ${child.photoUrl}');
+                              return Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                    image: imageProvider,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              );
+                            },
+
                             placeholder: (context, url) => Center(
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.w,
@@ -93,18 +96,27 @@ class ChildCardWidget extends StatelessWidget {
                                     : context.genderFemaleColor,
                               ),
                             ),
-                            errorWidget: (context, url, error) => Icon(
-                              Icons.person_rounded,
-                              color: child.gender == 'male'
-                                  ? context.genderMaleColor
-                                  : context.genderFemaleColor,
-                              size: 32.r,
-                            ),
+
+                            errorWidget: (context, url, error) {
+                              debugPrint('❌ Image Error');
+                              debugPrint('URL: $url');
+                              debugPrint('Error: $error');
+
+                              return Icon(
+                                Icons.person_rounded,
+                                color: child.gender == 'male'
+                                    ? context.genderMaleColor
+                                    : context.genderFemaleColor,
+                                size: 32.r,
+                              );
+                            },
                           ),
                         )
                       : Icon(
                           Icons.person_rounded,
-                          color: child.gender == 'male' ? context.genderMaleColor : context.genderFemaleColor,
+                          color: child.gender == 'male'
+                              ? context.genderMaleColor
+                              : context.genderFemaleColor,
                           size: 32.r,
                         ),
                 ),
@@ -124,11 +136,15 @@ class ChildCardWidget extends StatelessWidget {
                       SizedBox(height: 4.h),
                       Row(
                         children: [
-                          Icon(Icons.school_rounded, size: 14.r, color: context.textMuted),
+                          Icon(
+                            Icons.school_rounded,
+                            size: 14.r,
+                            color: context.textMuted,
+                          ),
                           SizedBox(width: 4.w),
                           Expanded(
                             child: Text(
-                              '${_getGradeLevel(child.gradeLevel)} - ${child.schoolName}',
+                              '${child.gradeDisplay} - ${child.schoolName}',
                               style: AppTextStyles.style(
                                 color: context.textMuted,
                                 fontSize: 13.sp,
@@ -144,7 +160,10 @@ class ChildCardWidget extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: onDelete,
-                  icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Colors.red,
+                  ),
                   tooltip: 'حذف الطفل',
                 ),
               ],

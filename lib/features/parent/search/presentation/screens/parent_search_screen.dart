@@ -39,12 +39,12 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
     ChildModel(
       id: 1, fullName: 'يوسف أحمد', gender: 'male',
       birthDate: DateTime(2015, 5, 20), grade: 'ابتدائي',
-      schoolId: 101, addressId: 1,
+      schoolId: 101, addressId: '1',
     ),
     ChildModel(
       id: 2, fullName: 'ريم أحمد', gender: 'female',
       birthDate: DateTime(2017, 9, 10), grade: 'روضة',
-      schoolId: 102, addressId: 1,
+      schoolId: 102, addressId: '1',
     ),
   ];
 
@@ -60,7 +60,7 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
     context.read<ChildrenCubit>().fetchChildren();
   }
 
-  void _onTapViewProfile(DriverSearchModel driver) {
+  void _onTapViewProfile(DriverSearchModel driver, {bool showPricing = true}) {
     final childrenState = context.read<ChildrenCubit>().state;
     final kidsList = childrenState is ChildrenLoaded ? childrenState.children : _currentKids;
 
@@ -71,6 +71,8 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
           driver: driver,
           availableKids: kidsList,
           initialSelectedKidsIds: _selectedKidsIds,
+          showPricing: showPricing,
+          searchQuery: showPricing ? '' : _searchQuery,
         ),
       ),
     );
@@ -155,7 +157,7 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                     childIds: _selectedKidsIds,
                                   );
                                 },
-                                onDriverTapped: _onTapViewProfile,
+                                onDriverTapped: (d) => _onTapViewProfile(d, showPricing: false),
                                 onBack: () => setState(() {
                                   _searchMethod = SearchMethod.none;
                                   context.read<SearchCubit>().resetState();

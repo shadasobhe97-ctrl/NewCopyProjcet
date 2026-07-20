@@ -56,6 +56,12 @@ import 'package:kids_transport/features/parent/subscriptions/logic/subscriptions
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profile_cubit.dart';
 
+// Wallet & Finance
+import 'package:kids_transport/features/parent/wallet/presentation/screens/wallet_screen.dart';
+import 'package:kids_transport/features/parent/wallet/presentation/screens/recharge_screen.dart';
+import 'package:kids_transport/features/parent/wallet/presentation/screens/invoices_screen.dart';
+import 'package:kids_transport/features/parent/wallet/presentation/screens/invoice_details_screen.dart';
+import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_cubit.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -73,10 +79,18 @@ class AppRoutes {
   static const String parentHomeLegacy = '/home';
   static const String parentMainWrapper = '/parentMainWrapper';
   static const String parentProfile = '/parentProfile';
+  static const String parentSubscriptions = '/parent-subscriptions';
   static const String savedAddresses = '/savedAddresses';
+  static const String myChildren = '/my-children';
+  static const String addChild = '/add-child';
 
-  static const String myChildren = '/myChildren';
-  static const String addChild = '/addChild';
+  // Parent Wallet & Finance Routes
+  static const String parentWallet = '/parent-wallet';
+  static const String parentRecharge = '/parent-recharge';
+  static const String parentInvoices = '/parent-invoices';
+  static const String parentInvoiceDetails = '/parent-invoice-details';
+
+  // ===== Driver Features =====
   static const String addChildStep1 = '/children/add/step1';
   static const String addChildStep2 = '/children/add/step2';
   static const String childDetail = '/childDetail';
@@ -176,7 +190,7 @@ class AppRoutes {
         return _route(
           settings,
           BlocProvider(
-            create: (context) => getIt<ParentProfileCubit>(),
+            create: (context) => getIt<ParentProfileCubit>()..fetchProfile(),
             child: const ParentMainWrapper(),
           ),
         );
@@ -221,6 +235,25 @@ class AppRoutes {
             child: SubscriptionDetailsScreen(subscriptionId: subscriptionId),
           ),
         );
+
+      // --- Wallet & Finance ---
+      case parentWallet:
+        return _route(settings, const WalletScreen());
+      case parentRecharge:
+        final walletCubit = settings.arguments as WalletCubit;
+        return _route(
+          settings,
+          BlocProvider.value(
+            value: walletCubit,
+            child: const RechargeScreen(),
+          ),
+        );
+      case parentInvoices:
+        return _route(settings, const InvoicesScreen());
+      case parentInvoiceDetails:
+        final id = settings.arguments as int;
+        return _route(settings, InvoiceDetailsScreen(invoiceId: id));
+
       case parentEmail:
         return _route(settings, const ParentEmailScreen());
       case parentOtp:

@@ -15,6 +15,8 @@ class StorageService {
   static const String _phoneNumberKey = 'phone_number';
   static const String _isActiveKey = 'is_active';
   static const String _isPreferencesSetKey = 'is_preferences_set';
+  static const String _parentIdKey = 'parent_id';
+  static const String _driverIdKey = 'driver_id';
 
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
@@ -82,6 +84,28 @@ class StorageService {
 
   static bool? getIsActive() => _prefs.getBool(_isActiveKey);
 
+  static Future<bool> saveParentId(int parentId) {
+    return _prefs.setInt(_parentIdKey, parentId);
+  }
+
+  static int? getParentId() {
+    final value = _prefs.get(_parentIdKey);
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  static Future<bool> saveDriverId(int driverId) {
+    return _prefs.setInt(_driverIdKey, driverId);
+  }
+
+  static int? getDriverId() {
+    final value = _prefs.get(_driverIdKey);
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
   static bool hasValidSession() {
     final token = getToken();
     final roleId = getRoleId();
@@ -99,6 +123,8 @@ class StorageService {
       _prefs.remove(_phoneNumberKey),
       _prefs.remove(_isActiveKey),
       _prefs.remove(_isPreferencesSetKey),
+      _prefs.remove(_parentIdKey),
+      _prefs.remove(_driverIdKey),
     ]);
   }
 

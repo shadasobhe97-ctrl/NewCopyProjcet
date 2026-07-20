@@ -47,6 +47,9 @@ void main() {
         childrenCount: 0,
       ),
       breakdown: [],
+      driverId: 1,
+      userId: 9,
+      availableSeats: 12,
     );
 
     final kids = <ChildModel>[];

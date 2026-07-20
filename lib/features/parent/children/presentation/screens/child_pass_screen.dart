@@ -16,7 +16,9 @@ class ChildPassScreen extends StatelessWidget {
   const ChildPassScreen({super.key, required this.child});
 
   void _sharePass() {
-    Share.share('بطاقة الصعود الخاصة بـ ${child.name} لتطبيق دربي.\nالرمز: ${child.qrToken}');
+    Share.share(
+      'بطاقة الصعود الخاصة بـ ${child.name} لتطبيق دربي.\nالرمز: ${child.qrToken}',
+    );
   }
 
   @override
@@ -34,7 +36,9 @@ class ChildPassScreen extends StatelessWidget {
               Container(
                 width: double.infinity,
                 decoration: AppTheme.boxDecoration(
-                  color: context.isDarkMode ? AppColors.darkSurface : AppColors.white,
+                  color: context.isDarkMode
+                      ? AppColors.darkSurface
+                      : AppColors.white,
                   borderRadius: AppTheme.radius(24.r),
                   boxShadow: [
                     AppTheme.boxShadow(
@@ -48,14 +52,19 @@ class ChildPassScreen extends StatelessWidget {
                   children: [
                     // رأس البطاقة
                     Container(
-                      padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
+                      padding: EdgeInsets.symmetric(
+                        vertical: 20.h,
+                        horizontal: 16.w,
+                      ),
                       decoration: AppTheme.boxDecoration(
                         gradient: AppTheme.linearGradient(
                           colors: context.primaryGradient,
                           begin: Alignment.topRight,
                           end: Alignment.bottomLeft,
                         ),
-                        borderRadius: AppTheme.verticalRadius(top: AppTheme.cornerRadius(24.r)),
+                        borderRadius: AppTheme.verticalRadius(
+                          top: AppTheme.cornerRadius(24.r),
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -65,12 +74,15 @@ class ChildPassScreen extends StatelessWidget {
                             decoration: AppTheme.boxDecoration(
                               shape: BoxShape.circle,
                               color: AppColors.white24,
-                              border: AppTheme.border(color: AppColors.white, width: 2.w),
+                              border: AppTheme.border(
+                                color: AppColors.white,
+                                width: 2.w,
+                              ),
                             ),
-                            child: child.image != null && child.image!.isNotEmpty
+                            child: child.hasRealPhoto
                                 ? ClipOval(
                                     child: CachedNetworkImage(
-                                      imageUrl: child.image!,
+                                      imageUrl: child.photoUrl!,
                                       fit: BoxFit.cover,
                                       placeholder: (context, url) => Center(
                                         child: CircularProgressIndicator(
@@ -78,14 +90,19 @@ class ChildPassScreen extends StatelessWidget {
                                           color: AppColors.white,
                                         ),
                                       ),
-                                      errorWidget: (context, url, error) => const Icon(
-                                        Icons.person,
-                                        color: AppColors.white,
-                                        size: 30,
-                                      ),
+                                      errorWidget: (context, url, error) =>
+                                          const Icon(
+                                            Icons.person,
+                                            color: AppColors.white,
+                                            size: 30,
+                                          ),
                                     ),
                                   )
-                                : const Icon(Icons.person, color: AppColors.white, size: 30),
+                                : const Icon(
+                                    Icons.person,
+                                    color: AppColors.white,
+                                    size: 30,
+                                  ),
                           ),
                           SizedBox(width: 16.w),
                           Expanded(
@@ -113,7 +130,7 @@ class ChildPassScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    
+
                     // منطقة الـ QR Code
                     Padding(
                       padding: EdgeInsets.all(32.w),
@@ -124,19 +141,29 @@ class ChildPassScreen extends StatelessWidget {
                             decoration: AppTheme.boxDecoration(
                               color: AppColors.white,
                               borderRadius: AppTheme.radius(16.r),
-                              border: AppTheme.border(color: AppColors.grey200, width: 2.w),
+                              border: AppTheme.border(
+                                color: AppColors.grey200,
+                                width: 2.w,
+                              ),
                             ),
-                            child: QrImageView(
-                              data: child.qrToken,
-                              version: QrVersions.auto,
-                              size: 220.w,
-                              backgroundColor: AppColors.white,
-                              foregroundColor: AppColors.black,
+                            child: Builder(
+                              builder: (context) {
+                                // === DEBUG: QR Token ===
+                                debugPrint('QR Token => ${child.qrCodeToken}');
+                                final qrData = child.qrCodeToken ?? '';
+                                return QrImageView(
+                                  data: qrData,
+                                  version: QrVersions.auto,
+                                  size: 220.w,
+                                  backgroundColor: AppColors.white,
+                                  foregroundColor: AppColors.black,
+                                );
+                              },
                             ),
                           ),
                           SizedBox(height: 24.h),
                           Text(
-                            'يُستخدم هذا الرمز من قبل السائق لتوثيق صعود الطفل إلى المركبة ونزوله منها أثناء الرحلات اليومية. يُرجى عدم مشاركة هذا الرمز مع أي شخص غير السائق المعتمد.',
+                            'يُستخدم هذا الرمز من قبل السائق لتوثيق صعود الطفل ونزوله. يمكنك تحميل الصورة وطباعتها ولصقها على حقيبة الطفل أو أحد أغراضه ليتم مسحها من السائق.',
                             textAlign: TextAlign.center,
                             style: AppTextStyles.style(
                               color: context.textMuted,
@@ -150,9 +177,9 @@ class ChildPassScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               SizedBox(height: 30.h),
-              
+
               // أزرار التحكم
               Row(
                 children: [
@@ -163,8 +190,13 @@ class ChildPassScreen extends StatelessWidget {
                       label: const Text('مشاركة البطاقة'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: context.primaryColor,
-                        side: BorderSide(color: context.primaryColor, width: 2.w),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                        side: BorderSide(
+                          color: context.primaryColor,
+                          width: 2.w,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
                       ),
                     ),
                   ),
@@ -174,18 +206,48 @@ class ChildPassScreen extends StatelessWidget {
                       onPressed: () {
                         // TODO: Implement PDF / Image Save using screenshot package
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('جاري حفظ البطاقة في المعرض...')),
+                          const SnackBar(
+                            content: Text('جاري حفظ البطاقة في المعرض...'),
+                          ),
                         );
                       },
-                      icon: const Icon(Icons.download_rounded, color: AppColors.white),
+                      icon: const Icon(
+                        Icons.download_rounded,
+                        color: AppColors.white,
+                      ),
                       label: Text(
                         'حفظ كصورة',
-                        style: AppTextStyles.style(color: AppColors.white, fontWeight: FontWeight.bold),
+                        style: AppTextStyles.style(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      style: AppTheme.elevatedButtonStyle(backgroundColor: context.primaryColor),
+                      style: AppTheme.elevatedButtonStyle(
+                        backgroundColor: context.primaryColor,
+                      ),
                     ),
                   ),
                 ],
+              ),
+              SizedBox(height: 16.h),
+              SizedBox(
+                width: double.infinity,
+                height: 50.h,
+                child: ElevatedButton(
+                  onPressed: () =>
+                      Navigator.of(context).popUntil((route) => route.isFirst),
+                  style: AppTheme.elevatedButtonStyle(
+                    backgroundColor: context.primaryColor,
+                  ),
+                  child: Text(
+                    'حسناً، تم',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

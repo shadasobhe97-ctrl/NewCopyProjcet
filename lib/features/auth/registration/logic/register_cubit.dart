@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/auth/registration/data/models/driver_register_request.dart';
 import 'package:kids_transport/features/auth/registration/data/models/parent_register_request.dart';
 import 'package:kids_transport/features/auth/registration/data/repositories/registration_repository.dart';
@@ -144,7 +145,8 @@ class RegisterCubit extends Cubit<RegisterState> {
         otp: parsedOtp,
         deviceName: _deviceName,
         platform: _platform,
-        fcmToken: 'derbi_fcm_token_placeholder',
+        fcmToken: null,
+        avatar: avatarFile,
       );
 
       // طباعة الـ payload للتأكد من صحته وعدم قلب الرمز
@@ -165,9 +167,28 @@ class RegisterCubit extends Cubit<RegisterState> {
         return;
       }
 
-      // حفظ التوكن لاستخدامه في إضافة العنوان
+      // حفظ التوكن والجلسة كاملة لاستخدامها فوراً في API calls
       parentAccessToken = response.accessToken;
       registeredUserId = response.id;
+
+      await StorageService.saveUserSession(
+        token: response.accessToken,
+        tokenType: response.tokenType.isNotEmpty
+            ? response.tokenType
+            : 'Bearer',
+        roleId: response.user.roleId,
+        roleName: response.roleName,
+        userId: response.user.id,
+        fullName: response.user.fullName,
+        phoneNumber: response.user.phoneNumber,
+        isActive: response.user.isActive,
+      );
+
+      // حفظ parent_id فوراً لاستخدامه في إضافة الأطفال والعناوين
+      final pid = response.parentId;
+      if (pid != null && pid > 0) {
+        await StorageService.saveParentId(pid);
+      }
 
       emit(
         ParentRegisterSuccess(
@@ -299,6 +320,25 @@ class RegisterCubit extends Cubit<RegisterState> {
           ),
         );
         return;
+      }
+
+      // حفظ جلسة السائق بعد إكمال الملف
+      final driverData = response.data;
+      await StorageService.saveUserSession(
+        token: driverAccessToken ?? '',
+        tokenType: 'Bearer',
+        roleId: 4, // driver
+        roleName: 'driver',
+        userId: driverData?.id ?? registeredUserId,
+        fullName: driverData?.fullName,
+        phoneNumber: null,
+        isActive: true,
+      );
+
+      // حفظ driver_id لاستخدامه في المهام الخاصة بالسائق
+      final rawDriverId = driverData?.driverId ?? driverData?.id ?? 0;
+      if (rawDriverId > 0) {
+        await StorageService.saveDriverId(rawDriverId);
       }
 
       emit(DriverCompleteProfileSuccess(response.message));
