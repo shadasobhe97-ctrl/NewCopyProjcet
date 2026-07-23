@@ -87,6 +87,31 @@ class _InvoiceDetailsScreenState extends State<InvoiceDetailsScreen> {
                 ),
               );
             }
+            if (state is FinanceError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+                      const SizedBox(height: 16),
+                      Text(
+                        state.message,
+                        style: AppTextStyles.style(fontSize: 14, color: AppColors.textMuted),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: () => context.read<FinanceCubit>().loadInvoiceDetails(widget.invoiceId),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('إعادة المحاولة'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
             return const SizedBox.shrink();
           },
         ),

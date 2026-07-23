@@ -68,119 +68,139 @@ class _WithdrawalFormState extends State<WithdrawalForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
+    final screenHeight = MediaQuery.of(context).size.height;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: screenHeight * 0.85),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'طلب سحب',
-              style: AppTextStyles.style(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: context.isDarkMode ? AppColors.white : AppColors.textDark,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'اختر طريقة السحب',
-              style: AppTextStyles.style(fontSize: 14, color: AppColors.textMuted),
-            ),
-            const SizedBox(height: 8),
-            _methodOption('حساب مصرفي', 'bank'),
-            const SizedBox(height: 4),
-            _methodOption('ليبيانا', 'libyana'),
-            const SizedBox(height: 20),
-            TextFormField(
-              controller: _amountController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'المبلغ',
-                hintText: 'أدخل المبلغ',
-              ),
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'المبلغ مطلوب';
-                final amount = double.tryParse(v);
-                if (amount == null || amount <= 0) return 'أدخل مبلغ صحيح';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            if (_method == 'bank') ...[
-              TextFormField(
-                controller: _bankNameController,
-                decoration: const InputDecoration(
-                  labelText: 'اسم المصرف',
-                  hintText: 'أدخل اسم المصرف',
-                ),
-                validator: (v) => (v == null || v.isEmpty) ? 'اسم المصرف مطلوب' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _accountNameController,
-                decoration: const InputDecoration(
-                  labelText: 'اسم صاحب الحساب',
-                  hintText: 'أدخل اسم صاحب الحساب',
-                ),
-                validator: (v) => (v == null || v.isEmpty) ? 'اسم صاحب الحساب مطلوب' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _accountNumberController,
-                decoration: const InputDecoration(
-                  labelText: 'رقم الحساب',
-                  hintText: 'أدخل رقم الحساب',
-                ),
-                validator: (v) => (v == null || v.isEmpty) ? 'رقم الحساب مطلوب' : null,
-              ),
-            ] else ...[
-              TextFormField(
-                controller: _mobileNumberController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'رقم الهاتف',
-                  hintText: 'أدخل رقم الهاتف',
-                ),
-                validator: (v) => (v == null || v.isEmpty) ? 'رقم الهاتف مطلوب' : null,
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                decoration: AppTheme.boxDecoration(
-                  color: context.cardSurface,
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: AppColors.grey200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.check_circle, color: AppColors.success, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'ليبيانا',
-                      style: AppTextStyles.style(
-                        fontSize: 16,
-                        color: context.isDarkMode ? AppColors.white : AppColors.textDark,
+            Expanded(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'طلب سحب',
+                        style: AppTextStyles.style(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: context.isDarkMode ? AppColors.white : AppColors.textDark,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 20),
+                      Text(
+                        'اختر طريقة السحب',
+                        style: AppTextStyles.style(fontSize: 14, color: AppColors.textMuted),
+                      ),
+                      const SizedBox(height: 8),
+                      _methodOption('حساب مصرفي', 'bank'),
+                      const SizedBox(height: 4),
+                      _methodOption('ليبيانا', 'libyana'),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _amountController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'المبلغ',
+                          hintText: 'أدخل المبلغ',
+                        ),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'المبلغ مطلوب';
+                          final amount = double.tryParse(v);
+                          if (amount == null || amount <= 0) return 'أدخل مبلغ صحيح';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      if (_method == 'bank') ...[
+                        TextFormField(
+                          controller: _bankNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'اسم المصرف',
+                            hintText: 'أدخل اسم المصرف',
+                          ),
+                          validator: (v) => (v == null || v.isEmpty) ? 'اسم المصرف مطلوب' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _accountNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'اسم صاحب الحساب',
+                            hintText: 'أدخل اسم صاحب الحساب',
+                          ),
+                          validator: (v) => (v == null || v.isEmpty) ? 'اسم صاحب الحساب مطلوب' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _accountNumberController,
+                          decoration: const InputDecoration(
+                            labelText: 'رقم الحساب',
+                            hintText: 'أدخل رقم الحساب',
+                          ),
+                          validator: (v) => (v == null || v.isEmpty) ? 'رقم الحساب مطلوب' : null,
+                        ),
+                      ] else ...[
+                        TextFormField(
+                          controller: _mobileNumberController,
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(
+                            labelText: 'رقم الهاتف',
+                            hintText: 'أدخل رقم الهاتف',
+                          ),
+                          validator: (v) => (v == null || v.isEmpty) ? 'رقم الهاتف مطلوب' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                          decoration: AppTheme.boxDecoration(
+                            color: context.cardSurface,
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(color: AppColors.grey200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.check_circle, color: AppColors.success, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'ليبيانا',
+                                style: AppTextStyles.style(
+                                  fontSize: 16,
+                                  color: context.isDarkMode ? AppColors.white : AppColors.textDark,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               ),
-            ],
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: widget.isSubmitting ? null : _submit,
-                child: widget.isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
-                      )
-                    : const Text('إرسال الطلب'),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: widget.isSubmitting ? null : _submit,
+                  child: widget.isSubmitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
+                        )
+                      : const Text('إرسال الطلب'),
+                ),
               ),
             ),
           ],

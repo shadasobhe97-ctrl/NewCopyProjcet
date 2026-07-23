@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/core/utils/theme_context.dart';
 
 class WalletBalanceCard extends StatelessWidget {
   final double balance;
@@ -23,14 +22,14 @@ class WalletBalanceCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
       decoration: AppTheme.boxDecoration(
         gradient: AppTheme.linearGradient(
-          colors: context.primaryGradient,
+          colors: [AppColors.maleBlue, AppColors.blue],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           AppTheme.boxShadow(
-            color: context.primaryColor.withValues(alpha: 0.3),
+            color: AppColors.maleBlue.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),

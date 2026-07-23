@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/features/driver/finance/presentation/logic/finance_cubit.dart';
 import 'package:kids_transport/features/driver/finance/presentation/widgets/wallet_balance_card.dart';
 import 'package:kids_transport/features/driver/finance/presentation/widgets/finance_summary_card.dart';
-import 'package:kids_transport/features/driver/finance/presentation/widgets/withdrawal_form.dart';
+import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 import 'withdrawal_requests_screen.dart';
 import 'invoices_screen.dart';
+import 'create_withdrawal_screen.dart';
 
 class FinanceDashboardScreen extends StatefulWidget {
   const FinanceDashboardScreen({super.key});
@@ -23,25 +26,31 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen> {
     context.read<FinanceCubit>().loadDashboard();
   }
 
-  void _showWithdrawalSheet() {
+  Future<void> _openWithdrawalScreen() async {
     final state = context.read<FinanceCubit>().state;
     double balance = 0;
     if (state is FinanceDashboardLoaded) {
       balance = state.wallet.balance;
     }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: context.cardSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => BlocProvider.value(
-        value: context.read<FinanceCubit>(),
-        child: _WithdrawalSheetContent(balance: balance),
+    final success = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider(
+          create: (_) => driverSl<FinanceCubit>(),
+          child: CreateWithdrawalScreen(balance: balance),
+        ),
       ),
     );
+    if (success == true && mounted) {
+      context.read<FinanceCubit>().loadDashboard();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تم إرسال طلب السحب بنجاح'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
   }
 
   @override
@@ -63,23 +72,65 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         if (state is FinanceDashboardLoaded) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
+          return RefreshIndicator(
+            onRefresh: () => context.read<FinanceCubit>().loadDashboard(),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
               children: [
                 WalletBalanceCard(
                   balance: state.wallet.balance,
                   currency: state.wallet.currency,
                 ),
                 const SizedBox(height: 16),
-                SizedBox(
+                Container(
                   width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: state.wallet.balance > 0 ? _showWithdrawalSheet : null,
-                    icon: const Icon(Icons.arrow_upward_rounded),
-                    label: const Text('طلب سحب'),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 52),
+                  decoration: AppTheme.boxDecoration(
+                    color: state.wallet.balance > 0
+                        ? (context.isDarkMode ? AppColors.surfaceDark : AppColors.maleBlueBg)
+                        : AppColors.grey100,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: state.wallet.balance > 0 ? AppColors.maleBlue : AppColors.grey300,
+                      width: 1.5,
+                    ),
+                    boxShadow: state.wallet.balance > 0
+                        ? [
+                            AppTheme.boxShadow(
+                              color: AppColors.maleBlue.withValues(alpha: 0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: state.wallet.balance > 0 ? _openWithdrawalScreen : null,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.arrow_upward_rounded,
+                              color: state.wallet.balance > 0 ? AppColors.maleBlue : AppColors.grey500,
+                              size: 22,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'طلب سحب',
+                              style: AppTextStyles.style(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: state.wallet.balance > 0 ? AppColors.maleBlue : AppColors.grey500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -94,8 +145,8 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => BlocProvider.value(
-                            value: context.read<FinanceCubit>(),
+                          builder: (_) => BlocProvider(
+                            create: (_) => driverSl<FinanceCubit>(),
                             child: const WithdrawalRequestsScreen(),
                           ),
                         ),
@@ -110,8 +161,8 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => BlocProvider.value(
-                            value: context.read<FinanceCubit>(),
+                          builder: (_) => BlocProvider(
+                            create: (_) => driverSl<FinanceCubit>(),
                             child: const InvoicesScreen(),
                           ),
                         ),
@@ -121,6 +172,32 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen> {
                 ),
               ],
             ),
+          ),
+        );
+        }
+        if (state is FinanceError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+                  const SizedBox(height: 16),
+                  Text(
+                    state.message,
+                    style: AppTextStyles.style(fontSize: 14, color: AppColors.textMuted),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => context.read<FinanceCubit>().loadDashboard(),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('إعادة المحاولة'),
+                  ),
+                ],
+              ),
+            ),
           );
         }
         return const SizedBox.shrink();
@@ -129,37 +206,4 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen> {
   }
 }
 
-class _WithdrawalSheetContent extends StatelessWidget {
-  final double balance;
-  const _WithdrawalSheetContent({required this.balance});
 
-  @override
-  Widget build(BuildContext context) {
-    return BlocConsumer<FinanceCubit, FinanceState>(
-      listener: (context, state) {
-        if (state is FinanceSuccess) {
-          Navigator.pop(context);
-          context.read<FinanceCubit>().loadDashboard();
-        }
-      },
-      builder: (context, state) {
-        final isSubmitting = state is FinanceSubmitting;
-        return WithdrawalForm(
-          isSubmitting: isSubmitting,
-          onSubmit: (body) async {
-            final cubit = context.read<FinanceCubit>();
-            final success = await cubit.createWithdrawal(body);
-            if (success && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('تم إرسال طلب السحب بنجاح'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            }
-          },
-        );
-      },
-    );
-  }
-}

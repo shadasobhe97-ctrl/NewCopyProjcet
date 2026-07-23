@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/features/driver/finance/presentation/logic/finance_cubit.dart';
 import 'package:kids_transport/features/driver/finance/presentation/widgets/invoice_card.dart';
 import 'package:kids_transport/features/driver/finance/presentation/widgets/empty_finance_widget.dart';
 import 'package:kids_transport/features/driver/finance/presentation/widgets/loading_finance_widget.dart';
+import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 import 'invoice_details_screen.dart';
 
 class InvoicesScreen extends StatefulWidget {
@@ -16,10 +18,18 @@ class InvoicesScreen extends StatefulWidget {
 }
 
 class _InvoicesScreenState extends State<InvoicesScreen> {
+  final _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     context.read<FinanceCubit>().loadInvoices();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -50,19 +60,50 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
               return RefreshIndicator(
                 onRefresh: () => context.read<FinanceCubit>().loadInvoices(),
                 child: ListView.builder(
+                  controller: _scrollController,
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: invoices.length,
-                  itemBuilder: (context, index) => InvoiceCard(
-                    invoice: invoices[index],
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => BlocProvider.value(
-                          value: context.read<FinanceCubit>(),
-                          child: InvoiceDetailsScreen(invoiceId: invoices[index].id),
+                  itemCount: invoices.length + (state.hasMore || state.isLoadingMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == invoices.length) {
+                      return _buildLoaderOrButton(state);
+                    }
+                    return InvoiceCard(
+                      invoice: invoices[index],
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider(
+                            create: (_) => driverSl<FinanceCubit>(),
+                            child: InvoiceDetailsScreen(invoiceId: invoices[index].id),
+                          ),
                         ),
                       ),
-                    ),
+                    );
+                  },
+                ),
+              );
+            }
+            if (state is FinanceError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+                      const SizedBox(height: 16),
+                      Text(
+                        state.message,
+                        style: AppTextStyles.style(fontSize: 14, color: AppColors.textMuted),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: () => context.read<FinanceCubit>().loadInvoices(),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('إعادة المحاولة'),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -72,5 +113,36 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildLoaderOrButton(FinanceInvoicesLoaded state) {
+    if (state.isLoadingMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (state.hasMore) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => context.read<FinanceCubit>().loadMoreInvoices(),
+            icon: const Icon(Icons.expand_more_rounded),
+            label: const Text('عرض المزيد'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
+              side: BorderSide(color: context.primaryColor),
+              foregroundColor: context.primaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 }

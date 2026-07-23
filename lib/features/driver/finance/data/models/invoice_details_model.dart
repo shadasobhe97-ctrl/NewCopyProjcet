@@ -1,4 +1,5 @@
 import 'contract_model.dart';
+import 'parsers.dart';
 
 class InvoiceDetailsModel {
   final int id;
@@ -32,20 +33,22 @@ class InvoiceDetailsModel {
   });
 
   factory InvoiceDetailsModel.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] is Map ? json['data'] : json;
+    final data = json['data'] is Map ? json['data'] as Map<String, dynamic> : json;
+    final parent = data['parent'] as Map<String, dynamic>?;
+
     return InvoiceDetailsModel(
-      id: data['id'] as int? ?? 0,
+      id: parseInt(data['id']),
       invoiceNumber: data['invoice_number'] as String? ?? '',
-      parentName: data['parent_name'] as String? ?? '',
-      amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
+      parentName: parent?['name'] as String? ?? data['parent_name'] as String? ?? '',
+      amount: parseDouble(data['amount']),
       subscriptionType: data['subscription_type'] as String? ?? '',
       dueDate: data['due_date'] as String? ?? '',
       status: data['status'] as String? ?? '',
-      paidDate: data['paid_date'] as String?,
-      totalTrips: data['total_trips'] as int? ?? 0,
-      completedTrips: data['completed_trips'] as int? ?? 0,
-      driverAbsences: data['driver_absences'] as int? ?? 0,
-      studentAbsences: data['student_absences'] as int? ?? 0,
+      paidDate: data['paid_at'] as String? ?? data['paid_date'] as String?,
+      totalTrips: parseInt(data['total_trips']),
+      completedTrips: parseInt(data['completed_trips']),
+      driverAbsences: parseInt(data['driver_absences']),
+      studentAbsences: parseInt(data['student_absences']),
       contract: data['contract'] != null
           ? ContractModel.fromJson(data['contract'] as Map<String, dynamic>)
           : null,

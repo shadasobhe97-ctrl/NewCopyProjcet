@@ -22,14 +22,34 @@ class FinanceDashboardLoaded extends FinanceState {
 
 class FinanceWithdrawalsLoaded extends FinanceState {
   final List<WithdrawalModel> withdrawals;
+  final int currentPage;
+  final int lastPage;
+  final bool isLoadingMore;
 
-  FinanceWithdrawalsLoaded({required this.withdrawals});
+  FinanceWithdrawalsLoaded({
+    required this.withdrawals,
+    required this.currentPage,
+    required this.lastPage,
+    this.isLoadingMore = false,
+  });
+
+  bool get hasMore => currentPage < lastPage;
 }
 
 class FinanceInvoicesLoaded extends FinanceState {
   final List<InvoiceModel> invoices;
+  final int currentPage;
+  final int lastPage;
+  final bool isLoadingMore;
 
-  FinanceInvoicesLoaded({required this.invoices});
+  FinanceInvoicesLoaded({
+    required this.invoices,
+    required this.currentPage,
+    required this.lastPage,
+    this.isLoadingMore = false,
+  });
+
+  bool get hasMore => currentPage < lastPage;
 }
 
 class FinanceInvoiceDetailsLoaded extends FinanceState {

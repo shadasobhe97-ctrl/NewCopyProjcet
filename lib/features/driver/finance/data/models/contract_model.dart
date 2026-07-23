@@ -1,3 +1,5 @@
+import 'parsers.dart';
+
 class ContractModel {
   final int id;
   final String contractNumber;
@@ -19,13 +21,13 @@ class ContractModel {
 
   factory ContractModel.fromJson(Map<String, dynamic> json) {
     return ContractModel(
-      id: json['id'] as int? ?? 0,
-      contractNumber: json['contract_number'] as String? ?? '',
+      id: parseInt(json['id']),
+      contractNumber: json['number'] as String? ?? json['contract_number'] as String? ?? '',
       status: json['status'] as String? ?? '',
-      totalTrips: json['total_trips'] as int? ?? 0,
-      completedTrips: json['completed_trips'] as int? ?? 0,
-      driverAbsences: json['driver_absences'] as int? ?? 0,
-      studentAbsences: json['student_absences'] as int? ?? 0,
+      totalTrips: parseInt(json['total_trips']),
+      completedTrips: parseInt(json['completed_trips']),
+      driverAbsences: parseInt(json['driver_absences']),
+      studentAbsences: parseInt(json['student_absences']),
     );
   }
 }

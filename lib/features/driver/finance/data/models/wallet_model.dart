@@ -1,3 +1,5 @@
+import 'parsers.dart';
+
 class WalletModel {
   final double balance;
   final String currency;
@@ -6,7 +8,7 @@ class WalletModel {
 
   factory WalletModel.fromJson(Map<String, dynamic> json) {
     return WalletModel(
-      balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
+      balance: parseDouble(json['balance']),
       currency: json['currency'] as String? ?? 'د.ل',
     );
   }
