@@ -147,22 +147,53 @@ class _RequestsTabContentState extends State<_RequestsTabContent> {
         onRefresh: () => context.read<DriverRequestsCubit>().refresh(),
         child: ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: state.requests.length,
-          itemBuilder: (context, index) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _DriverRequestCard(
-              request: state.requests[index],
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => DriverRequestDetailsScreen(
-                      request: state.requests[index],
+          itemCount: state.requests.length + (state.hasMore ? 1 : 0),
+          itemBuilder: (context, index) {
+            if (index == state.requests.length) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Center(
+                  child: state.isLoadingMore
+                      ? const CircularProgressIndicator()
+                      : TextButton(
+                          onPressed: () {
+                            context.read<DriverRequestsCubit>().loadMoreRequests();
+                          },
+                          child: Text(
+                            'عرض المزيد',
+                            style: AppTextStyles.style(
+                              color: context.primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                ),
+              );
+            }
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _DriverRequestCard(
+                request: state.requests[index],
+                onTap: () {
+                  final cubit = context.read<DriverRequestsCubit>();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: cubit,
+                        child: DriverRequestDetailsScreen(
+                          requestId: state.requests[index].id,
+                        ),
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
+                  ).then((_) {
+                    // Refresh if returning from details screen
+                    cubit.refresh();
+                  });
+                },
+              ),
+            );
+          },
         ),
       );
     }
@@ -174,6 +205,8 @@ class _RequestsTabContentState extends State<_RequestsTabContent> {
     switch (filter) {
       case DriverRequestsFilter.pending:
         return 'لا توجد طلبات معلقة';
+      case DriverRequestsFilter.accepted:
+        return 'لا توجد طلبات مقبولة';
       case DriverRequestsFilter.cancelled:
         return 'لا توجد طلبات ملغية';
       case DriverRequestsFilter.rejected:
@@ -299,34 +332,49 @@ class _RequestsFilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final filters = [
-      (DriverRequestsFilter.all, 'الكل', Icons.list_rounded),
-      (DriverRequestsFilter.pending, 'معلق', Icons.hourglass_empty_rounded),
-      (DriverRequestsFilter.cancelled, 'ملغي', Icons.block_rounded),
-      (DriverRequestsFilter.rejected, 'مرفوض', Icons.cancel_rounded),
+      (DriverRequestsFilter.all, 'كل الطلبات'),
+      (DriverRequestsFilter.pending, 'قيد الانتظار'),
+      (DriverRequestsFilter.accepted, 'المقبولة'),
+      (DriverRequestsFilter.rejected, 'المرفوضة'),
+      (DriverRequestsFilter.cancelled, 'الملغية'),
     ];
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       color: isDark ? AppColors.surfaceDark : AppColors.white,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: filters.map((f) {
-            final isActive = activeFilter == f.$1;
-            return Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: _FilterChipWidget(
-                label: f.$2,
-                icon: f.$3,
-                isActive: isActive,
-                onTap: () {
-                  context
-                      .read<DriverRequestsCubit>()
-                      .loadRequests(filter: f.$1);
-                },
-              ),
-            );
-          }).toList(),
+      width: double.infinity,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: AppTheme.boxDecoration(
+          color: isDark ? AppColors.grey900 : AppColors.backgroundLight,
+          borderRadius: AppTheme.radius(10),
+          border: AppTheme.border(
+            color: isDark ? AppColors.grey800 : AppColors.grey.withValues(alpha: 0.2),
+          ),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<DriverRequestsFilter>(
+            value: activeFilter,
+            isExpanded: true,
+            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textMuted),
+            dropdownColor: isDark ? AppColors.surfaceDark : AppColors.white,
+            style: AppTextStyles.style(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.white : AppColors.black,
+            ),
+            onChanged: (DriverRequestsFilter? newValue) {
+              if (newValue != null) {
+                context.read<DriverRequestsCubit>().loadRequests(filter: newValue);
+              }
+            },
+            items: filters.map((f) {
+              return DropdownMenuItem<DriverRequestsFilter>(
+                value: f.$1,
+                child: Text(f.$2),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
@@ -462,7 +510,6 @@ class _DriverRequestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final statusColor = _getStatusColor();
-    final hasMultipleKids = request.children.length > 1;
 
     return GestureDetector(
       onTap: onTap,
@@ -485,60 +532,65 @@ class _DriverRequestCard extends StatelessWidget {
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // الرأس: معلومات الأطفال والمدرسة كأولوية قصوى
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // أفاتار أول طفل أو أيقونة تدل على الأطفال
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor:
-                      AppColors.primaryLight.withValues(alpha: 0.12),
-                  child: const Icon(
-                    Icons.child_care_rounded,
-                    color: AppColors.primaryLight,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // اسم الطفل أو الأطفال
-                      Text(
-                        hasMultipleKids
-                            ? 'الطلاب: ${request.children.map((c) => c.name).join('، ')}'
-                            : (request.children.isNotEmpty
-                                ? request.children.first.name
-                                : 'طلب اشتراك'),
-                        style: AppTextStyles.style(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 3),
-                      // المدرسة
                       Row(
                         children: [
-                          const Icon(
-                            Icons.school_rounded,
-                            size: 13,
-                            color: AppColors.textMuted,
-                          ),
-                          const SizedBox(width: 4),
+                          const Icon(Icons.person_rounded, size: 16, color: AppColors.primaryLight),
+                          const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              request.school.name,
+                              request.parent.name,
                               style: AppTextStyles.style(
-                                fontSize: 12,
-                                color: AppColors.textMuted,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
                               ),
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.child_care_rounded, size: 16, color: AppColors.textMuted),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${request.childrenCount} أطفال',
+                            style: AppTextStyles.style(
+                              fontSize: 13,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          const Icon(Icons.monetization_on_rounded, size: 16, color: AppColors.success),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${request.totalPrice} د.ل',
+                            style: AppTextStyles.style(
+                              fontSize: 13,
+                              color: AppColors.success,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.textMuted),
+                          const SizedBox(width: 6),
+                          Text(
+                            request.subscriptionTypeDisplayLabel,
+                            style: AppTextStyles.style(
+                              fontSize: 13,
+                              color: AppColors.textMuted,
                             ),
                           ),
                         ],
@@ -546,132 +598,28 @@ class _DriverRequestCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // شارة الحالة
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: AppTheme.boxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: AppTheme.radius(20),
-                  ),
-                  child: Text(
-                    request.statusDisplayLabel,
-                    style: AppTextStyles.style(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: statusColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // تفاصيل الرحلة
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: AppTheme.boxDecoration(
-                color: isDark ? AppColors.grey900 : AppColors.backgroundLight,
-                borderRadius: AppTheme.radius(10),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _MiniInfoWidget(
-                    icon: Icons.schedule_rounded,
-                    text: request.timingDisplayLabel,
-                    color: AppColors.pending,
-                  ),
-                  _MiniInfoWidget(
-                    icon: Icons.calendar_today_rounded,
-                    text: request.subscriptionTypeDisplayLabel,
-                    color: AppColors.primaryLight,
-                  ),
-                  _MiniInfoWidget(
-                    icon: Icons.monetization_on_rounded,
-                    text: '${request.totalPrice} د.ل',
-                    color: AppColors.success,
-                  ),
-                ],
-              ),
-            ),
-
-            // أزرار القبول والرفض للطلبات المعلقة فقط
-            if (request.status.toLowerCase() == 'pending') ...[
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => _showRejectDialog(context),
-                      style: AppTheme.outlinedButtonStyle(
-                        side: const BorderSide(color: AppColors.error),
-                        minimumSize: const Size(0, 40),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text(
-                        'رفض',
-                        style: AppTextStyles.style(
-                          color: AppColors.error,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => _acceptRequest(context),
-                      style: AppTheme.elevatedButtonStyle(
-                        backgroundColor: AppColors.success,
-                        foregroundColor: AppColors.white,
-                        minimumSize: const Size(0, 40),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text(
-                        'موافقة',
-                        style: AppTextStyles.style(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 10),
-
-            // الذيل مع رقم الطلب
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'طلب #${request.id}',
-                  style: AppTextStyles.style(
-                    fontSize: 11,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      'التفاصيل والمسار',
-                      style: AppTextStyles.style(
-                        fontSize: 11,
-                        color: context.primaryColor,
-                        fontWeight: FontWeight.w600,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: AppTheme.boxDecoration(
+                        color: statusColor.withValues(alpha: 0.1),
+                        borderRadius: AppTheme.radius(20),
+                      ),
+                      child: Text(
+                        request.statusDisplayLabel,
+                        style: AppTextStyles.style(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: statusColor,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(height: 16),
                     Icon(
                       Icons.arrow_forward_ios_rounded,
-                      size: 10,
+                      size: 16,
                       color: context.primaryColor,
                     ),
                   ],
@@ -680,79 +628,6 @@ class _DriverRequestCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _acceptRequest(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dCtx) => AlertDialog(
-        title: const Text('قبول الطلب', textAlign: TextAlign.right),
-        content: const Text(
-          'هل أنت متأكد من قبول هذا الطلب؟ سيتم إنشاء عقد اشتراك نشط تلقائياً للطفل.',
-          textAlign: TextAlign.right,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dCtx).pop(),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(dCtx).pop();
-              context.read<DriverRequestsCubit>().acceptRequest(request.id);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
-            child: const Text('قبول ونقل'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showRejectDialog(BuildContext context) {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (dCtx) => AlertDialog(
-        title: const Text('رفض طلب الاشتراك', textAlign: TextAlign.right),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            const Text('هل تريد رفض هذا الطلب؟ الرجاء إدخال سبب الرفض:',
-                textAlign: TextAlign.right),
-            const SizedBox(height: 10),
-            TextField(
-              controller: controller,
-              textAlign: TextAlign.right,
-              decoration: const InputDecoration(
-                hintText: 'سبب الرفض (اختياري)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dCtx).pop(),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(dCtx).pop();
-              context.read<DriverRequestsCubit>().rejectRequest(
-                    request.id,
-                    reason: controller.text.trim().isEmpty
-                        ? null
-                        : controller.text.trim(),
-                  );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('رفض الطلب'),
-          ),
-        ],
       ),
     );
   }

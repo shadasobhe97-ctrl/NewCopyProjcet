@@ -14,11 +14,12 @@ class DriverRequestModel {
   final String? dropoffTime;
   final int maxWaitingTime;
   final String createdAt;
-  final String? subscriptionType; // monthly | weekly | etc.
-  final String? direction; // both | go | return
-  final String? startDate;
-  final String? endDate;
-  final double totalPrice;
+  final String subscriptionType; // monthly | weekly | etc.
+  final String direction; // both | go | return
+  final String startDate;
+  final String endDate;
+  final int? daysCount;
+  final String totalPrice;
   final String? rejectionReason;
   final DriverReqParent parent;
   final DriverReqSchool school;
@@ -37,10 +38,11 @@ class DriverRequestModel {
     this.dropoffTime,
     required this.maxWaitingTime,
     required this.createdAt,
-    this.subscriptionType,
-    this.direction,
-    this.startDate,
-    this.endDate,
+    required this.subscriptionType,
+    required this.direction,
+    required this.startDate,
+    required this.endDate,
+    this.daysCount,
     required this.totalPrice,
     this.rejectionReason,
     required this.parent,
@@ -81,7 +83,7 @@ class DriverRequestModel {
 
   // ── نوع الاشتراك بالعربية ──
   String get subscriptionTypeDisplayLabel {
-    switch (subscriptionType?.toLowerCase()) {
+    switch (subscriptionType.toLowerCase()) {
       case 'monthly':
         return 'شهري';
       case 'weekly':
@@ -89,13 +91,13 @@ class DriverRequestModel {
       case 'daily':
         return 'يومي';
       default:
-        return subscriptionType ?? 'غير محدد';
+        return subscriptionType;
     }
   }
 
   // ── اتجاه الرحلة بالعربية ──
   String get directionDisplayLabel {
-    switch (direction?.toLowerCase()) {
+    switch (direction.toLowerCase()) {
       case 'both':
         return 'ذهاب وإياب';
       case 'go':
@@ -103,7 +105,7 @@ class DriverRequestModel {
       case 'return':
         return 'إياب فقط';
       default:
-        return direction ?? 'غير محدد';
+        return direction;
     }
   }
 
@@ -111,12 +113,6 @@ class DriverRequestModel {
     if (v is int) return v;
     if (v is num) return v.toInt();
     return int.tryParse(v?.toString() ?? '');
-  }
-
-  static double? _parseDouble(dynamic v) {
-    if (v is double) return v;
-    if (v is num) return v.toDouble();
-    return double.tryParse(v?.toString() ?? '');
   }
 
   factory DriverRequestModel.fromJson(Map<String, dynamic> json) {
@@ -145,11 +141,12 @@ class DriverRequestModel {
       dropoffTime: json['dropoff_time']?.toString(),
       maxWaitingTime: _parseInt(json['max_waiting_time']) ?? 15,
       createdAt: json['created_at']?.toString() ?? '',
-      subscriptionType: json['subscription_type']?.toString(),
-      direction: json['direction']?.toString(),
-      startDate: json['start_date']?.toString(),
-      endDate: json['end_date']?.toString(),
-      totalPrice: _parseDouble(json['total_price']) ?? 0.0,
+      subscriptionType: json['subscription_type']?.toString() ?? 'monthly',
+      direction: json['direction']?.toString() ?? 'both',
+      startDate: json['start_date']?.toString() ?? '',
+      endDate: json['end_date']?.toString() ?? '',
+      daysCount: _parseInt(json['days_count']),
+      totalPrice: json['total_price']?.toString() ?? '0',
       rejectionReason: json['rejection_reason']?.toString(),
       parent: json['parent'] is Map
           ? DriverReqParent.fromJson(
@@ -167,14 +164,20 @@ class DriverRequestModel {
 // ── ولي الأمر ──
 class DriverReqParent {
   final int id;
+  final int? userId;
+  final bool? isTrusted;
   final String name;
   final String? phone;
+  final String? email;
   final String? avatarUrl;
 
   const DriverReqParent({
     required this.id,
+    this.userId,
+    this.isTrusted,
     required this.name,
     this.phone,
+    this.email,
     this.avatarUrl,
   });
 
@@ -186,9 +189,12 @@ class DriverReqParent {
 
     return DriverReqParent(
       id: json['id'] as int? ?? 0,
+      userId: DriverRequestModel._parseInt(json['user_id']),
+      isTrusted: json['is_trusted'] is bool ? json['is_trusted'] : (json['is_trusted']?.toString() == '1' ? true : null),
       name: userMap?['full_name']?.toString() ?? json['full_name']?.toString() ?? json['name']?.toString() ?? '',
       phone: userMap?['phone_number']?.toString() ?? json['phone_number']?.toString() ?? json['phone']?.toString(),
-      avatarUrl: json['avatar_url']?.toString(),
+      email: userMap?['email']?.toString() ?? json['email']?.toString(),
+      avatarUrl: userMap?['avatar_url']?.toString() ?? json['avatar_url']?.toString(),
     );
   }
 
@@ -199,19 +205,31 @@ class DriverReqParent {
 class DriverReqSchool {
   final int id;
   final String name;
+  final int? zoneId;
+  final String? lat;
+  final String? lng;
   final String? address;
+  final String? status;
 
   const DriverReqSchool({
     required this.id,
     required this.name,
+    this.zoneId,
+    this.lat,
+    this.lng,
     this.address,
+    this.status,
   });
 
   factory DriverReqSchool.fromJson(Map<String, dynamic> json) {
     return DriverReqSchool(
       id: json['id'] as int? ?? 0,
       name: json['name']?.toString() ?? '',
+      zoneId: DriverRequestModel._parseInt(json['zone_id']),
+      lat: json['lat']?.toString(),
+      lng: json['lng']?.toString(),
       address: json['address']?.toString(),
+      status: json['status']?.toString(),
     );
   }
 
@@ -221,25 +239,49 @@ class DriverReqSchool {
 // ── الطفل (مع بيانات الـ pivot) ──
 class DriverReqChild {
   final int id;
+  final int? parentId;
+  final int? schoolId;
+  final int? addressId;
   final String name;
   final String? avatarUrl;
-  final String? grade;
+  final String? birthDate;
+  final int? grade;
+  final String? gender;
+  final String? medicalNotes;
+  final int? notificationRadius;
+  final String? qrCodeToken;
   final DriverReqChildPivot? pivot;
 
   const DriverReqChild({
     required this.id,
+    this.parentId,
+    this.schoolId,
+    this.addressId,
     required this.name,
     this.avatarUrl,
+    this.birthDate,
     this.grade,
+    this.gender,
+    this.medicalNotes,
+    this.notificationRadius,
+    this.qrCodeToken,
     this.pivot,
   });
 
   factory DriverReqChild.fromJson(Map<String, dynamic> json) {
     return DriverReqChild(
-      id: json['id'] as int? ?? 0,
+      id: DriverRequestModel._parseInt(json['id']) ?? 0,
+      parentId: DriverRequestModel._parseInt(json['parent_id']),
+      schoolId: DriverRequestModel._parseInt(json['school_id']),
+      addressId: DriverRequestModel._parseInt(json['address_id']),
       name: json['full_name']?.toString() ?? json['name']?.toString() ?? '',
       avatarUrl: json['photo_url']?.toString() ?? json['avatar_url']?.toString(),
-      grade: json['grade']?.toString(),
+      birthDate: json['birth_date']?.toString(),
+      grade: DriverRequestModel._parseInt(json['grade']),
+      gender: json['gender']?.toString(),
+      medicalNotes: json['medical_notes']?.toString(),
+      notificationRadius: DriverRequestModel._parseInt(json['notification_radius']),
+      qrCodeToken: json['qr_code_token']?.toString(),
       pivot: json['pivot'] is Map
           ? DriverReqChildPivot.fromJson(
               Map<String, dynamic>.from(json['pivot'] as Map))
@@ -250,15 +292,22 @@ class DriverReqChild {
 
 // ── بيانات رحلة الطفل (pivot) ──
 class DriverReqChildPivot {
+  final int requestId;
+  final int childId;
   final int? pickupAddressId;
-  final double? homeLat;
-  final double? homeLng;
+  final String? homeLat;
+  final String? homeLng;
   final String? homeLabel;
   final int? dropoffAddressId;
-  final double? schoolLat;
-  final double? schoolLng;
+  final String? schoolLat;
+  final String? schoolLng;
+  final String? schoolLabel;
+  final String pricePerChild;
+  final String? childNotes;
 
   const DriverReqChildPivot({
+    required this.requestId,
+    required this.childId,
     this.pickupAddressId,
     this.homeLat,
     this.homeLng,
@@ -266,17 +315,44 @@ class DriverReqChildPivot {
     this.dropoffAddressId,
     this.schoolLat,
     this.schoolLng,
+    this.schoolLabel,
+    required this.pricePerChild,
+    this.childNotes,
   });
 
   factory DriverReqChildPivot.fromJson(Map<String, dynamic> json) {
     return DriverReqChildPivot(
-      pickupAddressId: json['pickup_address_id'] as int?,
-      homeLat: (json['home_lat'] as num?)?.toDouble(),
-      homeLng: (json['home_lng'] as num?)?.toDouble(),
+      requestId: DriverRequestModel._parseInt(json['request_id']) ?? 0,
+      childId: DriverRequestModel._parseInt(json['child_id']) ?? 0,
+      pickupAddressId: DriverRequestModel._parseInt(json['pickup_address_id']),
+      homeLat: json['home_lat']?.toString(),
+      homeLng: json['home_lng']?.toString(),
       homeLabel: json['home_label']?.toString(),
-      dropoffAddressId: json['dropoff_address_id'] as int?,
-      schoolLat: (json['school_lat'] as num?)?.toDouble(),
-      schoolLng: (json['school_lng'] as num?)?.toDouble(),
+      dropoffAddressId: DriverRequestModel._parseInt(json['dropoff_address_id']),
+      schoolLat: json['school_lat']?.toString(),
+      schoolLng: json['school_lng']?.toString(),
+      schoolLabel: json['school_label']?.toString(),
+      pricePerChild: json['price_per_child']?.toString() ?? '0',
+      childNotes: json['child_notes']?.toString(),
     );
   }
+}
+
+// ── Wrapper class for Pagination ──
+class PaginatedDriverRequests {
+  final List<DriverRequestModel> data;
+  final int currentPage;
+  final int lastPage;
+  final int perPage;
+  final String? nextPageUrl;
+
+  PaginatedDriverRequests({
+    required this.data,
+    required this.currentPage,
+    required this.lastPage,
+    required this.perPage,
+    this.nextPageUrl,
+  });
+
+  bool get hasMore => currentPage < lastPage;
 }

@@ -56,17 +56,23 @@ class DriverSubscriptionModel {
     return int.tryParse(v?.toString() ?? '');
   }
 
+  static double? _parseDouble(dynamic v) {
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    return double.tryParse(v?.toString() ?? '');
+  }
+
   factory DriverSubscriptionModel.fromJson(Map<String, dynamic> json) {
     return DriverSubscriptionModel(
       id: _parseInt(json['id']) ?? 0,
       status: json['status']?.toString() ?? 'active',
       pickupTime: json['pickup_time']?.toString(),
       dropoffTime: json['dropoff_time']?.toString(),
-      pickupLat: (json['pickup_lat'] as num?)?.toDouble(),
-      pickupLng: (json['pickup_lng'] as num?)?.toDouble(),
+      pickupLat: _parseDouble(json['pickup_lat']),
+      pickupLng: _parseDouble(json['pickup_lng']),
       pickupLabel: json['pickup_label']?.toString(),
-      dropoffLat: (json['dropoff_lat'] as num?)?.toDouble(),
-      dropoffLng: (json['dropoff_lng'] as num?)?.toDouble(),
+      dropoffLat: _parseDouble(json['dropoff_lat']),
+      dropoffLng: _parseDouble(json['dropoff_lng']),
       dropoffLabel: json['dropoff_label']?.toString(),
       child: json['child'] is Map
           ? DriverSubChild.fromJson(
@@ -125,11 +131,14 @@ class DriverSubParent {
   });
 
   factory DriverSubParent.fromJson(Map<String, dynamic> json) {
+    final userMap = json['user'] is Map
+        ? Map<String, dynamic>.from(json['user'] as Map)
+        : null;
     return DriverSubParent(
       id: json['id'] as int? ?? 0,
-      name: json['name']?.toString() ?? '',
-      phone: json['phone']?.toString(),
-      avatarUrl: json['avatar_url']?.toString(),
+      name: userMap?['full_name']?.toString() ?? json['name']?.toString() ?? '',
+      phone: userMap?['phone_number']?.toString() ?? json['phone']?.toString(),
+      avatarUrl: userMap?['avatar_url']?.toString() ?? json['avatar_url']?.toString(),
     );
   }
 
@@ -155,13 +164,19 @@ class DriverSubContract {
     required this.status,
   });
 
+  static double? _parseDouble(dynamic v) {
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    return double.tryParse(v?.toString() ?? '');
+  }
+
   factory DriverSubContract.fromJson(Map<String, dynamic> json) {
     return DriverSubContract(
       id: json['id'] as int? ?? 0,
       contractNumber: json['contract_number']?.toString() ?? '',
       startDate: json['start_date']?.toString() ?? '',
       endDate: json['end_date']?.toString() ?? '',
-      totalPrice: (json['total_price'] as num?)?.toDouble() ?? 0.0,
+      totalPrice: _parseDouble(json['total_price']) ?? 0.0,
       status: json['status']?.toString() ?? '',
     );
   }

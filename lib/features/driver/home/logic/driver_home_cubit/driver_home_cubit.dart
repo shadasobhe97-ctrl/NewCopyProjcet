@@ -33,7 +33,7 @@ class DriverHomeCubit extends Cubit<DriverHomeState> {
           isOnline: false, // يمكن ربطه لاحقاً بحالة السيرفر
           todayTripsCount: 0,
           todayStudentsCount: 0,
-          newRequests: newRequests,
+          newRequests: newRequests.data,
           hasActiveTrip: false,
         ),
       );
@@ -90,10 +90,10 @@ class DriverHomeCubit extends Cubit<DriverHomeState> {
     }
   }
 
-  Future<void> rejectRequest(int requestId) async {
+  Future<void> rejectRequest(int requestId, {required String reason}) async {
     try {
       final requestsRepo = driverSl<DriverRequestsRepository>();
-      await requestsRepo.rejectRequest(requestId);
+      await requestsRepo.rejectRequest(requestId, reason: reason);
       await loadDriverHomeData(); // تحديث الصفحة الرئيسية
     } catch (e) {
       emit(DriverHomeError('فشل رفض الطلب: ${e.toString()}'));

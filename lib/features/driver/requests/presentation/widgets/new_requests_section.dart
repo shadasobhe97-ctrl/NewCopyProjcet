@@ -128,7 +128,7 @@ class _HomeRequestCard extends StatelessWidget {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => DriverRequestDetailsScreen(request: request),
+            builder: (_) => DriverRequestDetailsScreen(requestId: request.id),
           ),
         );
       },

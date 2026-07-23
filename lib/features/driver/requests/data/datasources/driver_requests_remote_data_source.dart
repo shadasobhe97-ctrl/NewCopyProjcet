@@ -13,8 +13,11 @@ class DriverRequestsRemoteDataSource {
     return {'Authorization': token ?? ''};
   }
 
-  Future<List<DriverRequestModel>> fetchRequests({String? filter}) async {
-    final queryParams = filter != null ? {'filter': filter} : <String, dynamic>{};
+  Future<PaginatedDriverRequests> fetchRequests({String? filter, int page = 1}) async {
+    final queryParams = <String, dynamic>{'page': page};
+    if (filter != null) {
+      queryParams['filter'] = filter;
+    }
 
     final response = await _apiClient.get(
       '/api/driver/requests',
@@ -23,7 +26,7 @@ class DriverRequestsRemoteDataSource {
     );
 
     final data = response.data;
-    if (data == null) return [];
+    if (data == null) return PaginatedDriverRequests(data: [], currentPage: 1, lastPage: 1, perPage: 15);
     if (data is Map) {
       final success = data['success'];
       if (success == false) {
@@ -33,16 +36,62 @@ class DriverRequestsRemoteDataSource {
     }
 
     List<dynamic> rawList = [];
-    if (data is Map && data['data'] is List) {
-      rawList = data['data'] as List;
+    int currentPage = 1;
+    int lastPage = 1;
+    int perPage = 15;
+    String? nextPageUrl;
+
+    if (data is Map) {
+      if (data['data'] is List) {
+        rawList = data['data'] as List;
+        currentPage = data['current_page'] is int ? data['current_page'] : 1;
+        lastPage = data['last_page'] is int ? data['last_page'] : 1;
+        perPage = data['per_page'] is int ? data['per_page'] : 15;
+        nextPageUrl = data['next_page_url']?.toString();
+      } else {
+        // Fallback if pagination is not directly at root but under another key, or not paginated
+        rawList = data['data'] ?? [];
+      }
     } else if (data is List) {
       rawList = data;
     }
 
-    return rawList
+    final requests = rawList
         .whereType<Map>()
         .map((e) => DriverRequestModel.fromJson(Map<String, dynamic>.from(e)))
         .toList();
+
+    return PaginatedDriverRequests(
+      data: requests,
+      currentPage: currentPage,
+      lastPage: lastPage,
+      perPage: perPage,
+      nextPageUrl: nextPageUrl,
+    );
+  }
+
+  Future<DriverRequestModel> fetchRequestDetails(int requestId) async {
+    final response = await _apiClient.get(
+      '/api/driver/requests/$requestId',
+      headers: _authHeader,
+    );
+
+    final data = response.data;
+    if (data is Map) {
+      final success = data['success'];
+      if (success == false) {
+        final msg = ApiException.extractMessage(data);
+        throw ApiException(msg ?? 'تعذر تحميل تفاصيل الطلب.');
+      }
+      Map<String, dynamic> requestData;
+      if (data['data'] is Map) {
+        requestData = Map<String, dynamic>.from(data['data'] as Map);
+      } else {
+        requestData = Map<String, dynamic>.from(data);
+      }
+      return DriverRequestModel.fromJson(requestData);
+    }
+    throw ApiException('تعذر تحميل تفاصيل الطلب.');
   }
 
   Future<void> acceptRequest(int requestId) async {
@@ -61,11 +110,11 @@ class DriverRequestsRemoteDataSource {
     }
   }
 
-  Future<void> rejectRequest(int requestId, {String? reason}) async {
+  Future<void> rejectRequest(int requestId, {required String reason}) async {
     final response = await _apiClient.post(
       '/api/driver/requests/$requestId/reject',
       data: {
-        if (reason != null) 'rejection_reason': reason,
+        'rejection_reason': reason,
       },
       headers: _authHeader,
     );

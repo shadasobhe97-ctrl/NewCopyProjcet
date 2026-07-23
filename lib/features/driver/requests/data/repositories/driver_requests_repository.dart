@@ -7,12 +7,15 @@ class DriverRequestsRepository {
 
   DriverRequestsRepository(this._remoteDataSource);
 
-  Future<List<DriverRequestModel>> getRequests({String? filter}) =>
-      _remoteDataSource.fetchRequests(filter: filter);
+  Future<PaginatedDriverRequests> getRequests({String? filter, int page = 1}) =>
+      _remoteDataSource.fetchRequests(filter: filter, page: page);
+
+  Future<DriverRequestModel> getRequestDetails(int requestId) =>
+      _remoteDataSource.fetchRequestDetails(requestId);
 
   Future<void> acceptRequest(int requestId) =>
       _remoteDataSource.acceptRequest(requestId);
 
-  Future<void> rejectRequest(int requestId, {String? reason}) =>
+  Future<void> rejectRequest(int requestId, {required String reason}) =>
       _remoteDataSource.rejectRequest(requestId, reason: reason);
 }
