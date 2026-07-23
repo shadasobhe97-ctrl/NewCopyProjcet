@@ -1,7 +1,7 @@
 import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/data/local/subscriptions_local_data_source.dart';
 import '../datasources/subscriptions_remote_data_source.dart';
-import '../models/subscription_model.dart';
+import '../models/active_subscription_model.dart';
 
 class SubscriptionsRepository {
   final SubscriptionsRemoteDataSource _remoteDataSource;
@@ -13,7 +13,7 @@ class SubscriptionsRepository {
   );
 
   // ---- قراءة الكاش فقط ----
-  Future<List<SubscriptionModel>> getCachedSubscriptions() async {
+  Future<List<ActiveSubscriptionModel>> getCachedSubscriptions() async {
     try {
       return await _localDataSource.getCachedSubscriptions();
     } catch (_) {
@@ -21,23 +21,24 @@ class SubscriptionsRepository {
     }
   }
 
-  // ---- جلب قائمة الاشتراكات (API + تحديث الكاش) ----
-  Future<(List<SubscriptionModel>?, String?)> getMySubscriptions(
-      {String? status}) async {
+  // ---- جلب قائمة الاشتراكات النشطة (API + تحديث الكاش) ----
+  Future<(List<ActiveSubscriptionModel>?, String?, String?)> getMySubscriptions({
+    String? filter,
+  }) async {
     try {
-      final subscriptions =
-          await _remoteDataSource.getSubscriptions();
+      final (subscriptions, message) =
+          await _remoteDataSource.getActiveSubscriptions(filter: filter);
       await _localDataSource.cacheSubscriptions(subscriptions);
-      return (subscriptions, null);
+      return (subscriptions, null, message);
     } on ApiException catch (e) {
-      return (null, e.message);
+      return (null, e.message, null);
     } catch (_) {
-      return (null, 'حدث خطأ أثناء تحميل الاشتراكات، يرجى المحاولة مرة أخرى.');
+      return (null, 'حدث خطأ أثناء تحميل الاشتراكات، يرجى المحاولة مرة أخرى.', null);
     }
   }
 
   // ---- جلب تفاصيل طلب واحد ----
-  Future<(SubscriptionModel?, String?)> getRequestDetail(int id) async {
+  Future<(ActiveSubscriptionModel?, String?)> getRequestDetail(int id) async {
     try {
       final detail = await _remoteDataSource.getSubscriptionDetail(id);
       return (detail, null);

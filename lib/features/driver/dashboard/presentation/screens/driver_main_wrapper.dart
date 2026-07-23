@@ -9,6 +9,8 @@ import 'package:kids_transport/features/driver/requests/logic/driver_requests_cu
 import 'package:kids_transport/features/driver/requests/presentation/screens/driver_requests_screen.dart';
 import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
 import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
+import 'package:kids_transport/features/driver/finance/presentation/screens/finance_dashboard_screen.dart';
+import 'package:kids_transport/features/driver/finance/presentation/logic/finance_cubit.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -61,11 +63,9 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
           style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
-      Center(
-        child: Text(
-          '💰 المحفظة',
-          style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+      BlocProvider(
+        create: (_) => driverSl<FinanceCubit>(),
+        child: const FinanceDashboardScreen(),
       ),
       // شاشة الطلبات الحقيقية مع Cubits للطلبات والاشتراكات
       MultiBlocProvider(
@@ -169,184 +169,82 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
     );
   }
 
-  /// بناء الـ AppBar
+  /// بناء الـ AppBar (بسيط مثل واجهة ولي الأمر)
   PreferredSizeWidget _buildAppBar(
     BuildContext context,
-    DriverHomeState state,
+    DriverHomeState _,
   ) {
-    final isHome = _selectedIndex == 0;
-
-    // اسم السائق للتحية
-    // TODO: استبدل بالاسم الحقيقي من الـ API
-    final driverName = state is DriverHomeLoaded
-        ? state.driver.fullName
-        : 'السائق';
-
     return PreferredSize(
-      preferredSize: Size.fromHeight(isHome ? 100 : 64),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        decoration: AppTheme.boxDecoration(
-          gradient: AppTheme.linearGradient(
-            colors: context.primaryGradient,
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-          ),
-          boxShadow: [
-            AppTheme.boxShadow(
-              color: context.primaryColor.withValues(
-                alpha: context.isDarkMode ? 0.1 : 0.3,
-              ),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-          borderRadius: AppTheme.verticalRadius(
-            bottom: AppTheme.cornerRadius(isHome ? 24 : 0),
-          ),
-        ),
+      preferredSize: const Size.fromHeight(60),
+      child: Container(
+        color: context.isDarkMode ? context.cardSurface : AppColors.white,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 16.0,
               vertical: 8.0,
             ),
-            child: isHome
-                ? _buildHomeHeader(context, driverName)
-                : _buildStandardHeader(context),
+            child: Row(
+              children: [
+                Builder(
+                  builder: (ctx) => IconButton(
+                    icon: Icon(
+                      Icons.menu_rounded,
+                      color: context.primaryColor,
+                      size: 24,
+                    ),
+                    onPressed: () => Scaffold.of(ctx).openDrawer(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _getAppBarTitle(),
+                  style: AppTextStyles.style(
+                    color: context.primaryColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 19,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    color: context.primaryColor,
+                    size: 20,
+                  ),
+                  onPressed: () {},
+                ),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.notifications_none_rounded,
+                        color: context.primaryColor,
+                        size: 22,
+                      ),
+                      onPressed: () {},
+                    ),
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        width: 7,
+                        height: 7,
+                        decoration: AppTheme.boxDecoration(
+                          color: context.errorColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    );
-  }
-
-  /// هيدر الشاشة الرئيسية مع التحية
-  Widget _buildHomeHeader(BuildContext context, String driverName) {
-    return Row(
-      children: [
-        // زر القائمة الجانبية - يفتح الـ drawer العادي ليكون من اليمين
-        Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(
-              Icons.menu_rounded,
-              color: AppColors.white,
-              size: 26,
-            ),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
-        ),
-        const SizedBox(width: 8),
-
-        // نص الترحيب - وسط/متمدد
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // TODO: استبدل النص باسم السائق الحقيقي القادم من الـ API
-              Text(
-                'مرحباً، $driverName 👋',
-                style: AppTextStyles.style(
-                  color: AppColors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'لوحة تحكم السائق',
-                style: AppTextStyles.style(
-                  color: AppColors.white70,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // زر المحادثة - جهة اليسار
-        IconButton(
-          icon: const Icon(
-            Icons.chat_bubble_outline_rounded,
-            color: AppColors.white,
-            size: 22,
-          ),
-          onPressed: () {
-            // TODO: التوجيه لشاشة المحادثات
-          },
-        ),
-
-        // زر الإشعارات مع نقطة تنبيه حمراء
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            IconButton(
-              icon: const Icon(
-                Icons.notifications_none_rounded,
-                color: AppColors.white,
-                size: 24,
-              ),
-              onPressed: () {
-                // TODO: التوجيه لشاشة الإشعارات
-              },
-            ),
-            // نقطة الإشعار الحمراء
-            // TODO: اجعل هذه النقطة مشروطة بوجود إشعارات غير مقروءة
-            Positioned(
-              right: 8,
-              top: 8,
-              child: Container(
-                width: 9,
-                height: 9,
-                decoration: AppTheme.boxDecoration(
-                  color: context.errorColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  /// هيدر كلاسيكي للشاشات الأخرى
-  Widget _buildStandardHeader(BuildContext context) {
-    return Row(
-      children: [
-        Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(
-              Icons.menu_rounded,
-              color: AppColors.white,
-              size: 26,
-            ),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          _getAppBarTitle(),
-          style: AppTextStyles.style(
-            color: AppColors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        const Spacer(),
-        IconButton(
-          icon: const Icon(
-            Icons.notifications_none_rounded,
-            color: AppColors.white,
-            size: 24,
-          ),
-          onPressed: () {
-            // TODO: التوجيه لشاشة الإشعارات
-          },
-        ),
-      ],
     );
   }
 

@@ -25,18 +25,19 @@ class SearchMethodSelectionWidget extends StatelessWidget {
         children: [
           const SizedBox(height: 16),
           Text(
-            "البحث عن سائق",
+            "كيف تريد البحث؟",
             style: AppTextStyles.style(
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
               color: isDark ? AppColors.white : AppColors.textDark,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            "اختر طريقة البحث التي تناسبك.",
+            "اختر طريقة البحث التي تناسب احتياجك للوصول إلى السائق المناسب.",
             style: AppTextStyles.style(
-              fontSize: 14,
+              fontSize: 13,
               color: isDark ? AppColors.grey400 : AppColors.textMuted,
             ),
             textAlign: TextAlign.center,

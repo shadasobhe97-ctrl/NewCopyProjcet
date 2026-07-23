@@ -46,13 +46,31 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               );
 
-              final targetRoute = state.roleId == 3
-                  ? AppRoutes.parentHome
-                  : state.roleId == 4
-                  ? (state.isActive
-                        ? AppRoutes.splash
-                        : '/driverWaiting')
-                  : AppRoutes.adminDashboard;
+              final roleId = state.roleId;
+              final roleName = state.roleName.toLowerCase().trim();
+
+              final isDriver = roleId == 4 ||
+                  roleName.contains('driver') ||
+                  roleName.contains('سائق') ||
+                  roleName.contains('كابتن') ||
+                  roleName == '4';
+
+              final isParent = roleId == 3 ||
+                  roleName.contains('parent') ||
+                  roleName.contains('guardian') ||
+                  roleName.contains('ولي') ||
+                  roleName == '3';
+
+              final String targetRoute;
+              if (isDriver) {
+                targetRoute = state.isActive
+                    ? AppRoutes.driverMainWrapper
+                    : '/driverWaiting';
+              } else if (isParent) {
+                targetRoute = AppRoutes.parentMainWrapper;
+              } else {
+                targetRoute = AppRoutes.adminDashboard;
+              }
 
               Navigator.pushNamedAndRemoveUntil(
                 context,

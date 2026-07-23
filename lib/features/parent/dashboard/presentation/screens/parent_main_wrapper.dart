@@ -11,6 +11,7 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscriptions_screen.dart';
 import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profile_cubit.dart';
+import 'package:kids_transport/features/parent/trips/presentation/screens/trips_home_screen.dart';
 
 class ParentMainWrapper extends StatefulWidget {
   const ParentMainWrapper({super.key});
@@ -63,7 +64,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
       case 3:
         return 'اشتراكاتي';
       case 4:
-        return 'المدفوعات والفواتير';
+        return 'الرحلات والتتبع';
       default:
         return 'داربي';
     }
@@ -80,12 +81,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
       const MyChildrenScreen(),
       const ParentSearchScreen(),
       const SubscriptionsScreen(),
-      Center(
-        child: Text(
-          "💳 المدفوعات والفواتير",
-          style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      ),
+      const TripsHomeScreen(),
     ];
   }
 
@@ -151,7 +147,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                   GButton(icon: Icons.people_alt_rounded, text: 'أطفالي'),
                   GButton(icon: Icons.search_rounded, text: 'البحث'),
                   GButton(icon: Icons.description_rounded, text: 'اشتراكاتي'),
-                  GButton(icon: Icons.credit_card_rounded, text: 'المدفوعات'),
+                  GButton(icon: Icons.map_outlined, text: 'الرحلات'),
                 ],
               ),
             ),

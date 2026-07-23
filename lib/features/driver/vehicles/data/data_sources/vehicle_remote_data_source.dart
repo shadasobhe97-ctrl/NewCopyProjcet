@@ -1,25 +1,33 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 
 class VehicleRemoteDataSource {
   final Dio _dio;
 
-  // الرابط الأساسي للـ API الخاص بمشروعك
   final String baseUrl = 'https://darby-app-api.loca.lt/api/v1/';
 
   VehicleRemoteDataSource(this._dio);
 
-  // 📥 جلب بيانات المركبة الحالية (GET)
+  Map<String, dynamic> get _authHeader {
+    final token = StorageService.getAuthorizationHeader();
+    return {'Authorization': token ?? ''};
+  }
+
   Future<Response> getVehicleData() async {
-    return await _dio.get('${baseUrl}driver/profile/vehicle');
+    return await _dio.get(
+      '${baseUrl}driver/profile/vehicle',
+      options: Options(headers: _authHeader),
+    );
   }
 
-  // 📥 جلب الوثائق القانونية الحالية (GET) - سنحتاجها لدمج البيانات في الواجهة
   Future<Response> getLegalData() async {
-    return await _dio.get('${baseUrl}driver/profile/legal-data');
+    return await _dio.get(
+      '${baseUrl}driver/profile/legal-data',
+      options: Options(headers: _authHeader),
+    );
   }
 
-  // 📤 تحديث بيانات المركبة (POST)
   Future<Response> updateVehicleDetails({
     required int vehicleId,
     required String brand,
@@ -47,10 +55,10 @@ class VehicleRemoteDataSource {
     return await _dio.post(
       '${baseUrl}driver/profile/vehicle/$vehicleId',
       data: FormData.fromMap(data),
+      options: Options(headers: _authHeader),
     );
   }
 
-  // 📤 تحديث الوثائق والمستندات (POST)
   Future<Response> updateLegalData({
     required String nationalId,
     required String licenseNumber,
@@ -63,7 +71,7 @@ class VehicleRemoteDataSource {
     Map<String, dynamic> data = {
       'national_id': nationalId,
       'license_number': licenseNumber,
-      'license_expiry_date': licenseExpiry, // تم التعديل ليطابق الباكيند
+      'license_expiry_date': licenseExpiry,
     };
 
     if (docLicense != null)
@@ -80,6 +88,7 @@ class VehicleRemoteDataSource {
     return await _dio.post(
       '${baseUrl}driver/profile/legal-data',
       data: FormData.fromMap(data),
+      options: Options(headers: _authHeader),
     );
   }
 }

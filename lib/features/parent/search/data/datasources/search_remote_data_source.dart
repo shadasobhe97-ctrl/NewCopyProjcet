@@ -47,7 +47,7 @@ class SearchRemoteDataSource {
     throw const ApiException('استجابة الخادم غير مقروءة.');
   }
 
-  /// POST /api/parent
+  /// POST /api/parent/requests
   Future<String> sendSubscription(SubscriptionRequest request) async {
     debugPrint('\n================= SEARCH REMOTE DATA SOURCE =================');
     debugPrint('>>> Endpoint: POST ${ApiEndpoints.parentrequestSubscription}');

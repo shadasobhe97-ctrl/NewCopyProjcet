@@ -24,7 +24,21 @@ class AppEntryCubit extends Cubit<AppEntryState> {
     }
 
     final roleId = _sessionRepository.getRoleId();
-    if (roleId == 4) {
+    final roleName = _sessionRepository.getRoleName()?.toLowerCase().trim() ?? '';
+
+    final isDriver = roleId == 4 ||
+        roleName.contains('driver') ||
+        roleName.contains('سائق') ||
+        roleName.contains('كابتن') ||
+        roleName == '4';
+
+    final isParent = roleId == 3 ||
+        roleName.contains('parent') ||
+        roleName.contains('guardian') ||
+        roleName.contains('ولي') ||
+        roleName == '3';
+
+    if (isDriver) {
       final isActive = _sessionRepository.getIsActive() ?? false;
       if (isActive) {
         if (_sessionRepository.getIsPreferencesSet()) {
@@ -47,9 +61,9 @@ class AppEntryCubit extends Cubit<AppEntryState> {
       } else {
         emit(NavigateToDriverWaiting());
       }
-    } else if (roleId == 3) {
+    } else if (isParent) {
       emit(NavigateToParentHome());
-    } else if (roleId != null && roleId != 3 && roleId != 4) {
+    } else if (roleId != null && !isDriver && !isParent) {
       emit(NavigateToAdminHome());
     } else {
       await _sessionRepository.clearSession();

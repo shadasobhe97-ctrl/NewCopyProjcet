@@ -144,16 +144,16 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
 
       debugPrint('  child_id            = ${kid.id}');
       debugPrint('  pickup_address_id   = ${kid.addressId} (type: ${kid.addressId.runtimeType})');
-      debugPrint('  dropoff_address_id  = ${kid.addressId} (type: ${kid.addressId.runtimeType})');
+      debugPrint('  dropoff_address_id  = ${kid.schoolId} (نوع: school_id)');
       debugPrint('  price_per_child     = ${breakdownItem.childPrice} (type: ${breakdownItem.childPrice.runtimeType})');
-      debugPrint('  child_notes         = ${kid.medicalNotes ?? ''}');
+      debugPrint('  child_notes         = ${kid.medicalNotes ?? ""}');
       debugPrint('  ---');
 
       childrenRequestList.add(
         SubscriptionChildRequest(
           childId: kid.id ?? 0,
           pickupAddressId: kid.addressId,
-          dropoffAddressId: kid.addressId,
+          dropoffAddressId: kid.schoolId.toString(), // ✅ معرّف المدرسة وليس عنوان المنزل
           pricePerChild: breakdownItem.childPrice,
           childNotes: kid.medicalNotes ?? '',
         ),

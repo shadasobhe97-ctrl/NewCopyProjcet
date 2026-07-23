@@ -107,8 +107,9 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
               body: SafeArea(
                 child: Column(
                   children: [
-                    // رأس الصفحة (Header)
-                    _buildHeader(context),
+                    // رأس الصفحة (Header) - يظهر فقط في الصفحات الفرعية
+                    if (_searchMethod != SearchMethod.none)
+                      _buildHeader(context),
 
                     // المحتوى القابل للتمرير
                     Expanded(

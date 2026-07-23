@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/repositories/subscriptions_repository.dart';
-import '../../data/models/subscription_model.dart';
+import '../../data/models/active_subscription_model.dart';
 import 'subscriptions_state.dart';
 
 export 'subscriptions_state.dart';
@@ -10,10 +10,10 @@ class SubscriptionsCubit extends Cubit<SubscriptionsState> {
 
   SubscriptionsCubit(this._repository) : super(SubscriptionsInitial());
 
-  /// جلب القائمة - Cache First مثل Children
-  Future<void> fetchSubscriptions({String? status}) async {
-    // 1. اقرأ Hive أولاً وعرض البيانات فوراً (نعرض الكاش فقط اذا مافي فلتر)
-    if (status == null) {
+  /// جلب القائمة - Cache First
+  Future<void> fetchSubscriptions({String? filter}) async {
+    // 1. اقرأ الكاش أولاً
+    if (filter == null) {
       final cached = await _repository.getCachedSubscriptions();
       if (cached.isNotEmpty) {
         emit(SubscriptionsLoaded(cached));
@@ -25,27 +25,29 @@ class SubscriptionsCubit extends Cubit<SubscriptionsState> {
     }
 
     // 2. اطلب API في الخلفية
-    final (subscriptions, error) =
-        await _repository.getMySubscriptions(status: status);
+    final (subscriptions, error, message) =
+        await _repository.getMySubscriptions(filter: filter);
     if (error != null) {
-      if (status == null &&
+      if (filter == null &&
           state is SubscriptionsLoaded &&
           (state as SubscriptionsLoaded).subscriptions.isNotEmpty) {
-        emit(SubscriptionsLoaded((state as SubscriptionsLoaded).subscriptions));
+        emit(SubscriptionsLoaded(
+          (state as SubscriptionsLoaded).subscriptions,
+        ));
       } else {
         emit(SubscriptionsError(error));
       }
     } else {
       final list = subscriptions ?? [];
       if (list.isEmpty) {
-        emit(SubscriptionsEmpty());
+        emit(SubscriptionsEmpty(message: message));
       } else {
-        emit(SubscriptionsLoaded(list));
+        emit(SubscriptionsLoaded(list, message: message));
       }
     }
   }
 
-  /// جلب تفاصيل طلب واحد - GET /parent/requests/{id}
+  /// جلب تفاصيل طلب واحد
   Future<void> fetchSubscriptionDetail(int id) async {
     emit(SubscriptionDetailLoading());
     final (detail, error) = await _repository.getRequestDetail(id);
@@ -56,17 +58,17 @@ class SubscriptionsCubit extends Cubit<SubscriptionsState> {
     }
   }
 
-  /// إلغاء الطلب - DELETE /parent/subscriptions/{id}
+  /// إلغاء الطلب
   Future<void> cancelSubscription(int id) async {
     final currentList = state is SubscriptionsLoaded
         ? (state as SubscriptionsLoaded).subscriptions
-        : <SubscriptionModel>[];
+        : <ActiveSubscriptionModel>[];
 
     emit(SubscriptionsActionLoading(List.from(currentList), id));
 
     final (success, message) = await _repository.cancelSubscriptionRequest(id);
     if (success) {
-      final updatedList = List<SubscriptionModel>.from(currentList)
+      final updatedList = List<ActiveSubscriptionModel>.from(currentList)
         ..removeWhere((sub) => sub.id == id);
       if (updatedList.isEmpty) {
         emit(SubscriptionsActionSuccess([], message));

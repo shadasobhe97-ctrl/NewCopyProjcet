@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
-import 'package:kids_transport/features/driver/dashboard/presentation/widgets/driver_drawer.dart';
 
 // Components
 import 'package:kids_transport/features/driver/home/presentation/widgets/online_status_card.dart';
@@ -21,8 +20,6 @@ class DriverHomeScreen extends StatefulWidget {
 }
 
 class _DriverHomeScreenState extends State<DriverHomeScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
   @override
   void initState() {
     super.initState();
@@ -48,46 +45,9 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
         }
       },
       builder: (context, state) {
-        // استخدام بيانات الحالة المحملة، أو قيم افتراضية أثناء التحميل
         final loadedState = state is DriverHomeLoaded ? state : null;
-        final driver = loadedState?.driver;
 
         return Scaffold(
-          key: _scaffoldKey,
-          drawer: driver != null ? DriverDrawer(driver: driver) : null,
-          appBar: AppBar(
-            title: const Text('الرئيسية'),
-            backgroundColor: AppColors.primaryLight,
-            foregroundColor: AppColors.white,
-            elevation: 0,
-            centerTitle: true,
-            leading: IconButton(
-              icon: const Icon(Icons.menu_rounded),
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-            ),
-            actions: [
-              Stack(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications_none_rounded),
-                    onPressed: () {},
-                  ),
-                  Positioned(
-                    right: 10,
-                    top: 10,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.error,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
           body: SafeArea(
             child: state is DriverHomeLoading
                 ? const Center(child: CircularProgressIndicator())

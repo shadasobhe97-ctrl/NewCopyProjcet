@@ -63,6 +63,18 @@ import 'package:kids_transport/features/parent/wallet/presentation/screens/invoi
 import 'package:kids_transport/features/parent/wallet/presentation/screens/invoice_details_screen.dart';
 import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_cubit.dart';
 
+// Trips & Live Tracking
+import 'package:kids_transport/features/parent/trips/data/models/active_trip_model.dart';
+import 'package:kids_transport/features/parent/trips/presentation/screens/trips_home_screen.dart';
+import 'package:kids_transport/features/parent/trips/presentation/screens/trip_tracking_screen.dart';
+import 'package:kids_transport/features/parent/trips/presentation/screens/upcoming_trips_screen.dart';
+import 'package:kids_transport/features/parent/trips/presentation/screens/trip_history_screen.dart';
+
+// Complaints
+import 'package:kids_transport/features/parent/complaints/presentation/screens/complaints_list_screen.dart';
+import 'package:kids_transport/features/parent/complaints/presentation/screens/create_complaint_screen.dart';
+import 'package:kids_transport/features/parent/complaints/presentation/screens/complaint_details_screen.dart';
+
 class AppRoutes {
   static const String splash = '/';
   static const String onboarding = '/onboarding';
@@ -89,6 +101,17 @@ class AppRoutes {
   static const String parentRecharge = '/parent-recharge';
   static const String parentInvoices = '/parent-invoices';
   static const String parentInvoiceDetails = '/parent-invoice-details';
+
+  // Parent Trips & Live Tracking Routes
+  static const String parentTripsHome = '/parent-trips-home';
+  static const String parentTripTracking = '/parent-trip-tracking';
+  static const String parentUpcomingTrips = '/parent-upcoming-trips';
+  static const String parentTripHistory = '/parent-trip-history';
+
+  // Parent Complaints Routes
+  static const String parentComplaints = '/parent-complaints';
+  static const String createComplaint = '/create-complaint';
+  static const String complaintDetails = '/complaint-details';
 
   // ===== Driver Features =====
   static const String addChildStep1 = '/children/add/step1';
@@ -253,6 +276,34 @@ class AppRoutes {
       case parentInvoiceDetails:
         final id = settings.arguments as int;
         return _route(settings, InvoiceDetailsScreen(invoiceId: id));
+
+      // --- Trips & Live Tracking ---
+      case parentTripsHome:
+        return _route(settings, const TripsHomeScreen());
+      case parentTripTracking:
+        final trip = settings.arguments as ActiveTripModel;
+        return _route(settings, TripTrackingScreen(trip: trip));
+      case parentUpcomingTrips:
+        return _route(settings, const UpcomingTripsScreen());
+      case parentTripHistory:
+        return _route(settings, const TripHistoryScreen());
+
+      // --- Complaints ---
+      case parentComplaints:
+        return _route(settings, const ComplaintsListScreen());
+      case createComplaint:
+        final args = settings.arguments as Map<String, dynamic>;
+        return _route(
+          settings,
+          CreateComplaintScreen(
+            driverId: args['driverId'] as int,
+            driverName: args['driverName'] as String,
+            driverAvatar: args['driverAvatar'] as String?,
+          ),
+        );
+      case complaintDetails:
+        final id = settings.arguments as int;
+        return _route(settings, ComplaintDetailsScreen(complaintId: id));
 
       case parentEmail:
         return _route(settings, const ParentEmailScreen());

@@ -1,34 +1,30 @@
 import 'package:kids_transport/core/network/api_client.dart';
+import 'package:kids_transport/core/network/api_exception.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/driver/subscriptions/data/models/driver_subscription_model.dart';
 
-/// مصدر البيانات للاشتراكات النشطة للسائق
-/// GET /api/driver/active-subscriptions
-/// GET /api/driver/active-subscriptions?filter=current_active
-/// GET /api/driver/active-subscriptions?filter=pending_start
-/// GET /api/driver/active-subscriptions?filter=completed
-/// GET /api/driver/active-subscriptions?filter=cancelled
 class DriverSubscriptionsRemoteDataSource {
   final ApiClient _apiClient;
 
   DriverSubscriptionsRemoteDataSource(this._apiClient);
 
-  /// جلب كل الاشتراكات (بدون فلتر)
+  Map<String, dynamic> get _authHeader {
+    final token = StorageService.getAuthorizationHeader();
+    return {'Authorization': token ?? ''};
+  }
+
   Future<List<DriverSubscriptionModel>> fetchAll() =>
       _fetchSubscriptions(filter: null);
 
-  /// الاشتراكات النشطة حالياً
   Future<List<DriverSubscriptionModel>> fetchCurrentActive() =>
       _fetchSubscriptions(filter: 'current_active');
 
-  /// الاشتراكات التي تنتظر البدء
   Future<List<DriverSubscriptionModel>> fetchPendingStart() =>
       _fetchSubscriptions(filter: 'pending_start');
 
-  /// الاشتراكات المكتملة
   Future<List<DriverSubscriptionModel>> fetchCompleted() =>
       _fetchSubscriptions(filter: 'completed');
 
-  /// الاشتراكات الملغية
   Future<List<DriverSubscriptionModel>> fetchCancelled() =>
       _fetchSubscriptions(filter: 'cancelled');
 
@@ -41,10 +37,18 @@ class DriverSubscriptionsRemoteDataSource {
     final response = await _apiClient.get(
       '/api/driver/active-subscriptions',
       queryParameters: queryParams.isEmpty ? null : queryParams,
+      headers: _authHeader,
     );
 
     final data = response.data;
     if (data == null) return [];
+    if (data is Map) {
+      final success = data['success'];
+      if (success == false) {
+        final msg = ApiException.extractMessage(data);
+        throw ApiException(msg ?? 'تعذر تحميل الاشتراكات.');
+      }
+    }
 
     List<dynamic> rawList = [];
     if (data is Map && data['data'] is List) {

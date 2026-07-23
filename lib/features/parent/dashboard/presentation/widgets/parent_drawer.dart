@@ -127,11 +127,20 @@ class ParentDrawer extends StatelessWidget {
                               context, AppRoutes.savedAddresses);
                         },
                       ),
-                      AppDrawerItem(
+                       AppDrawerItem(
                         icon: Icons.description_outlined,
                         iconColor: context.pendingColor,
                         label: 'عقودي واشتراكاتي',
                         onTap: () => Navigator.pop(context),
+                      ),
+                      AppDrawerItem(
+                        icon: Icons.map_outlined,
+                        iconColor: context.primaryColor,
+                        label: 'الرحلات والتتبع اللحظي',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, AppRoutes.parentTripsHome);
+                        },
                       ),
                       AppDrawerItem(
                         icon: Icons.credit_card_rounded,
@@ -140,6 +149,15 @@ class ParentDrawer extends StatelessWidget {
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.pushNamed(context, AppRoutes.parentWallet);
+                        },
+                      ),
+                      AppDrawerItem(
+                        icon: Icons.report_problem_outlined,
+                        iconColor: context.errorColor,
+                        label: 'سجل الشكاوى والمتابعة',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, AppRoutes.parentComplaints);
                         },
                       ),
                       const Divider(height: 24, indent: 16, endIndent: 16),

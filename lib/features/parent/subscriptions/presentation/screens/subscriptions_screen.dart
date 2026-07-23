@@ -7,11 +7,10 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
 import '../../logic/subscriptions_cubit/subscriptions_cubit.dart';
 import '../../logic/requests_cubit/requests_cubit.dart';
-import '../../data/models/subscription_model.dart';
+import '../../data/models/active_subscription_model.dart';
 import '../../data/repositories/requests_repository.dart';
 import '../../data/repositories/subscriptions_repository.dart';
 import '../widgets/subscription_card.dart';
-import '../widgets/subscription_skeleton.dart';
 import 'requests_tab.dart';
 
 class SubscriptionsScreen extends StatefulWidget {
@@ -43,12 +42,10 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen>
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.backgroundDark
-          : const Color(0xFFF8FAFC),
+      backgroundColor:
+          isDark ? AppColors.backgroundDark : const Color(0xFFF8FAFC),
       body: Column(
         children: [
-          // ── شريط التبويبين ──
           Container(
             color: isDark ? AppColors.surfaceDark : AppColors.white,
             child: TabBar(
@@ -73,21 +70,16 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen>
               ],
             ),
           ),
-
-          // ── محتوى التبويبين ──
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: [
-                // تبويب 1: طلبات الاشتراك (كل الطلبات مع فلتر)
                 BlocProvider<RequestsCubit>(
                   create: (context) => RequestsCubit(
                     getIt<RequestsRepository>(),
                   ),
                   child: const RequestsTab(),
                 ),
-
-                // تبويب 2: الاشتراكات (الاشتراكات الفعلية)
                 BlocProvider<SubscriptionsCubit>(
                   create: (context) => SubscriptionsCubit(
                     getIt<SubscriptionsRepository>(),
@@ -103,7 +95,6 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen>
   }
 }
 
-// ── تبويب الاشتراكات الفعلية ──
 class _SubscriptionsTab extends StatefulWidget {
   final bool isDark;
   const _SubscriptionsTab({required this.isDark});
@@ -156,7 +147,11 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
 
     return BlocConsumer<SubscriptionsCubit, SubscriptionsState>(
       listener: (context, state) {
-        if (state is SubscriptionsActionSuccess) {
+        if (state is SubscriptionsLoaded && state.message != null) {
+          _showSnackBar(state.message!, AppColors.success);
+        } else if (state is SubscriptionsEmpty && state.message != null) {
+          _showSnackBar(state.message!, AppColors.info);
+        } else if (state is SubscriptionsActionSuccess) {
           _showSnackBar(state.message, AppColors.success);
           context.read<SubscriptionsCubit>().fetchSubscriptions();
         } else if (state is SubscriptionsActionError) {
@@ -165,7 +160,9 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
       },
       builder: (context, state) {
         if (state is SubscriptionsInitial || state is SubscriptionsLoading) {
-          return const SubscriptionSkeleton(itemCount: 3);
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
         }
         if (state is SubscriptionsError) {
           return _buildError(state.message, isDark, theme, context);
@@ -174,7 +171,7 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
           return _buildEmpty(isDark, theme, context);
         }
 
-        final List<SubscriptionModel> subs;
+        final List<ActiveSubscriptionModel> subs;
         if (state is SubscriptionsLoaded) {
           subs = state.subscriptions;
         } else {
@@ -188,7 +185,7 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
   }
 
   Widget _buildList(
-    List<SubscriptionModel> subs,
+    List<ActiveSubscriptionModel> subs,
     SubscriptionsState state,
     BuildContext context,
   ) {
@@ -205,9 +202,7 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
             subscription: sub,
             isCancelling: state is SubscriptionsActionLoading &&
                 state.actionId == sub.id,
-            onDetailsPressed: () {
-              // التفاصيل
-            },
+            onDetailsPressed: () {},
             onCancelPressed: () {
               context.read<SubscriptionsCubit>().cancelSubscription(sub.id);
             },

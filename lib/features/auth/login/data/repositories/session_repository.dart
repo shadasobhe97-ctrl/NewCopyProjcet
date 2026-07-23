@@ -3,6 +3,7 @@ import 'package:kids_transport/core/services/storage_service.dart';
 class SessionRepository {
   String? getToken() => StorageService.getToken();
   int? getRoleId() => StorageService.getRoleId();
+  String? getRoleName() => StorageService.getRoleName();
   String? getFullName() => StorageService.getFullName();
   String? getPhoneNumber() => StorageService.getPhoneNumber();
   String? getUserId() => StorageService.getUserId()?.toString();

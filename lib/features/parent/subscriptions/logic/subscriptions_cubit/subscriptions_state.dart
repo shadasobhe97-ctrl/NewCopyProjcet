@@ -1,54 +1,55 @@
-import '../../data/models/subscription_model.dart';
+import '../../data/models/active_subscription_model.dart';
 
-abstract class SubscriptionsState {}
+abstract class SubscriptionsState {
+  const SubscriptionsState();
+}
 
 class SubscriptionsInitial extends SubscriptionsState {}
 
 class SubscriptionsLoading extends SubscriptionsState {}
 
-class SubscriptionsEmpty extends SubscriptionsState {}
-
 class SubscriptionsLoaded extends SubscriptionsState {
-  final List<SubscriptionModel> subscriptions;
-
-  SubscriptionsLoaded(this.subscriptions);
+  final List<ActiveSubscriptionModel> subscriptions;
+  final String? message;
+  const SubscriptionsLoaded(this.subscriptions, {this.message});
 }
 
-class SubscriptionsActionLoading extends SubscriptionsLoaded {
-  final int actionId;
-  SubscriptionsActionLoading(super.subscriptions, this.actionId);
-}
-
-class SubscriptionsActionSuccess extends SubscriptionsLoaded {
-  final String message;
-
-  SubscriptionsActionSuccess(super.subscriptions, this.message);
-}
-
-class SubscriptionsActionError extends SubscriptionsLoaded {
-  final String message;
-
-  SubscriptionsActionError(super.subscriptions, this.message);
+class SubscriptionsEmpty extends SubscriptionsState {
+  final String? message;
+  const SubscriptionsEmpty({this.message});
 }
 
 class SubscriptionsError extends SubscriptionsState {
   final String message;
-
-  SubscriptionsError(this.message);
+  const SubscriptionsError(this.message);
 }
-
-// ---- States خاصة بتفاصيل الطلب ----
 
 class SubscriptionDetailLoading extends SubscriptionsState {}
 
 class SubscriptionDetailLoaded extends SubscriptionsState {
-  final SubscriptionModel detail;
-
-  SubscriptionDetailLoaded(this.detail);
+  final ActiveSubscriptionModel detail;
+  const SubscriptionDetailLoaded(this.detail);
 }
 
 class SubscriptionDetailError extends SubscriptionsState {
   final String message;
+  const SubscriptionDetailError(this.message);
+}
 
-  SubscriptionDetailError(this.message);
+class SubscriptionsActionLoading extends SubscriptionsState {
+  final List<ActiveSubscriptionModel> currentList;
+  final int actionId;
+  const SubscriptionsActionLoading(this.currentList, this.actionId);
+}
+
+class SubscriptionsActionSuccess extends SubscriptionsState {
+  final List<ActiveSubscriptionModel> updatedList;
+  final String message;
+  const SubscriptionsActionSuccess(this.updatedList, this.message);
+}
+
+class SubscriptionsActionError extends SubscriptionsState {
+  final List<ActiveSubscriptionModel> currentList;
+  final String message;
+  const SubscriptionsActionError(this.currentList, this.message);
 }

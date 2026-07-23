@@ -18,6 +18,7 @@ class RequestModel {
   final List<RequestChild> children;
   final RequestContract? contract;
   final String? rejectionReason;
+  final String? notes;
 
   const RequestModel({
     required this.id,
@@ -37,6 +38,7 @@ class RequestModel {
     required this.children,
     this.contract,
     this.rejectionReason,
+    this.notes,
   });
 
   int get childrenCount => children.length;
@@ -93,6 +95,7 @@ class RequestModel {
               Map<String, dynamic>.from(json['contract'] as Map))
           : null,
       rejectionReason: json['rejection_reason']?.toString(),
+      notes: json['notes']?.toString(),
     );
   }
 
@@ -163,34 +166,147 @@ class RequestSchool {
   Map<String, dynamic> toJson() => {'id': id, 'name': name};
 }
 
+
+// ── عنوان الانطلاق (pickup_address) ──
+class ChildPickupAddress {
+  final int id;
+  final String label;
+  final double? lat;
+  final double? lng;
+
+  const ChildPickupAddress({
+    required this.id,
+    required this.label,
+    this.lat,
+    this.lng,
+  });
+
+  factory ChildPickupAddress.fromJson(Map<String, dynamic> json) =>
+      ChildPickupAddress(
+        id: json['id'] as int? ?? 0,
+        label: (json['label'] ?? json['name'] ?? 'عنوان #${json['id']}')
+            .toString(),
+        lat: (json['lat'] as num?)?.toDouble(),
+        lng: (json['lng'] as num?)?.toDouble(),
+      );
+}
+
+// ── عنوان الوصول / المدرسة (dropoff_address) ──
+class ChildDropoffAddress {
+  final int id;
+  final String name;
+  final double? lat;
+  final double? lng;
+
+  const ChildDropoffAddress({
+    required this.id,
+    required this.name,
+    this.lat,
+    this.lng,
+  });
+
+  factory ChildDropoffAddress.fromJson(Map<String, dynamic> json) =>
+      ChildDropoffAddress(
+        id: json['id'] as int? ?? 0,
+        name: (json['name'] ?? json['label'] ?? 'مدرسة #${json['id']}')
+            .toString(),
+        lat: (json['lat'] as num?)?.toDouble(),
+        lng: (json['lng'] as num?)?.toDouble(),
+      );
+}
+
+// ── اشتراك الطفل (children[].subscription) ──
+class ChildSubscription {
+  final String subscriptionType;
+  final String direction;
+  final String timing;
+  final String startDate;
+  final String? endDate;
+  final double price;
+  final String? childNotes;
+  final ChildPickupAddress? pickupAddress;
+  final ChildDropoffAddress? dropoffAddress;
+
+  const ChildSubscription({
+    required this.subscriptionType,
+    required this.direction,
+    required this.timing,
+    required this.startDate,
+    this.endDate,
+    required this.price,
+    this.childNotes,
+    this.pickupAddress,
+    this.dropoffAddress,
+  });
+
+  factory ChildSubscription.fromJson(Map<String, dynamic> json) =>
+      ChildSubscription(
+        subscriptionType:
+            json['subscription_type']?.toString() ?? 'monthly',
+        direction: json['direction']?.toString() ?? '',
+        timing: json['timing']?.toString() ?? '',
+        startDate: json['start_date']?.toString() ?? '',
+        endDate: json['end_date']?.toString(),
+        price: (json['price'] as num?)?.toDouble() ?? 0.0,
+        childNotes: json['child_notes']?.toString(),
+        pickupAddress: json['pickup_address'] is Map
+            ? ChildPickupAddress.fromJson(
+                Map<String, dynamic>.from(json['pickup_address'] as Map))
+            : null,
+        dropoffAddress: json['dropoff_address'] is Map
+            ? ChildDropoffAddress.fromJson(
+                Map<String, dynamic>.from(json['dropoff_address'] as Map))
+            : null,
+      );
+}
+
 // ── الطفل ──
 class RequestChild {
   final int? id;
   final String name;
   final String? schoolName;
-  final double? pricePerChild;
+  final ChildSubscription? subscription;
 
   const RequestChild({
     this.id,
     required this.name,
     this.schoolName,
-    this.pricePerChild,
+    this.subscription,
   });
 
-  factory RequestChild.fromJson(Map<String, dynamic> json) => RequestChild(
-        id: json['id'] as int?,
-        name: json['name']?.toString() ?? '',
-        schoolName: json['school_name']?.toString(),
-        pricePerChild: (json['price_per_child'] as num?)?.toDouble(),
+  factory RequestChild.fromJson(Map<String, dynamic> json) {
+    // دعم الهيكل القديم (pivot) والجديد (subscription) في نفس الوقت
+    ChildSubscription? sub;
+    if (json['subscription'] is Map) {
+      sub = ChildSubscription.fromJson(
+          Map<String, dynamic>.from(json['subscription'] as Map));
+    } else if (json['pivot'] is Map) {
+      // fallback للهيكل القديم
+      final pivot = json['pivot'] as Map<String, dynamic>;
+      sub = ChildSubscription(
+        subscriptionType: 'monthly',
+        direction: '',
+        timing: '',
+        startDate: '',
+        price: (pivot['price_per_child'] as num?)?.toDouble() ?? 0.0,
+        childNotes: pivot['child_notes']?.toString(),
       );
+    }
+    return RequestChild(
+      id: json['id'] as int?,
+      name: (json['full_name'] ?? json['name'])?.toString() ?? '',
+      schoolName: json['school_name']?.toString(),
+      subscription: sub,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         if (id != null) 'id': id,
         'name': name,
         if (schoolName != null) 'school_name': schoolName,
-        if (pricePerChild != null) 'price_per_child': pricePerChild,
       };
 }
+
 
 // ── العقد ──
 class RequestContract {

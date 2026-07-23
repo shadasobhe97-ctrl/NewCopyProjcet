@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import 'package:kids_transport/features/parent/search/data/models/driver_search_model.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -13,6 +14,21 @@ import 'subscription_confirmation_screen.dart';
 import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
 import 'package:kids_transport/features/parent/search/logic/search_state.dart';
 import 'package:kids_transport/features/parent/search/data/models/subscription_request.dart';
+
+// Reviews & Ratings imports
+import 'package:kids_transport/core/di/dependency_injection.dart';
+import 'package:kids_transport/features/parent/reviews/logic/reviews_cubit.dart';
+import 'package:kids_transport/features/parent/reviews/logic/reviews_state.dart';
+import 'package:kids_transport/features/parent/reviews/data/models/review_model.dart';
+import 'package:kids_transport/features/parent/reviews/presention/reviews/rating_summary.dart';
+import 'package:kids_transport/features/parent/reviews/presention/reviews/review_card.dart';
+import 'package:kids_transport/features/parent/reviews/presention/reviews/review_form.dart';
+import 'package:kids_transport/features/parent/reviews/presention/reviews/locked_review_card.dart';
+import 'package:kids_transport/features/parent/reviews/presention/reviews/empty_reviews_widget.dart';
+import 'package:kids_transport/features/parent/reviews/presention/reviews/loading_reviews_widget.dart';
+
+// Complaints imports
+import 'package:kids_transport/features/parent/complaints/presentation/screens/create_complaint_screen.dart';
 
 class DriverProfileView extends StatefulWidget {
   final DriverSearchModel driver;
@@ -37,10 +53,14 @@ class DriverProfileView extends StatefulWidget {
 class _DriverProfileViewState extends State<DriverProfileView> {
   late List<int> _selectedKidsIds;
   bool _loadingShowing = false;
-    List<ChildModel> get _selectedKids {
+  List<ChildModel> get _selectedKids {
     final state = context.read<ChildrenCubit>().state;
-    final availableKids = state is ChildrenLoaded ? state.children : widget.availableKids;
-    return availableKids.where((k) => k.id != null && _selectedKidsIds.contains(k.id)).toList();
+    final availableKids = state is ChildrenLoaded
+        ? state.children
+        : widget.availableKids;
+    return availableKids
+        .where((k) => k.id != null && _selectedKidsIds.contains(k.id))
+        .toList();
   }
 
   @override
@@ -60,9 +80,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     // اعرف السائق → يبعت طلب تسعير للباك
     if (!widget.showPricing && widget.searchQuery.isNotEmpty) {
       context.read<SearchCubit>().getPricing(
-            searchQuery: widget.searchQuery,
-            childIds: _selectedKidsIds,
-          );
+        searchQuery: widget.searchQuery,
+        childIds: _selectedKidsIds,
+      );
       return;
     }
 
@@ -82,7 +102,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
           title: Text(
             'تأكيد إرسال الطلب',
@@ -98,12 +120,18 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             children: [
               Text(
                 'السائق: ${widget.driver.fullName}',
-                style: AppTextStyles.style(fontSize: 14, color: isDark ? AppColors.grey300 : AppColors.grey700),
+                style: AppTextStyles.style(
+                  fontSize: 14,
+                  color: isDark ? AppColors.grey300 : AppColors.grey700,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'الأطفال: ${_selectedKids.map((k) => k.name).join('، ')}',
-                style: AppTextStyles.style(fontSize: 14, color: isDark ? AppColors.grey300 : AppColors.grey700),
+                style: AppTextStyles.style(
+                  fontSize: 14,
+                  color: isDark ? AppColors.grey300 : AppColors.grey700,
+                ),
               ),
               const SizedBox(height: 12),
               Text(
@@ -119,7 +147,10 @@ class _DriverProfileViewState extends State<DriverProfileView> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('إلغاء', style: AppTextStyles.style(color: AppColors.textMuted)),
+              child: Text(
+                'إلغاء',
+                style: AppTextStyles.style(color: AppColors.textMuted),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -129,9 +160,14 @@ class _DriverProfileViewState extends State<DriverProfileView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: Text('تأكيد وإرسال', style: AppTextStyles.style(color: AppColors.white)),
+              child: Text(
+                'تأكيد وإرسال',
+                style: AppTextStyles.style(color: AppColors.white),
+              ),
             ),
           ],
         ),
@@ -140,7 +176,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
   }
 
   void _submitDirectly() {
-    debugPrint('\n================= SUBMIT SUBSCRIPTION (DriverProfileView) =================');
+    debugPrint(
+      '\n================= SUBMIT SUBSCRIPTION (DriverProfileView) =================',
+    );
     _loadingShowing = true;
     showDialog(
       context: context,
@@ -153,19 +191,29 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     debugPrint('>>> Raw values before building JSON:');
     debugPrint('driver_id          = ${widget.driver.driverId}');
     debugPrint('school_id          = ${primaryKid.schoolId}');
-    debugPrint('subscription_type  = ${primaryKid.transportPref.subscriptionType}');
-    debugPrint('start_date         = ${primaryKid.transportPref.startDate.toIso8601String().split('T').first}');
-    debugPrint('end_date           = ${primaryKid.transportPref.endDate?.toIso8601String().split('T').first}');
+    debugPrint(
+      'subscription_type  = ${primaryKid.transportPref.subscriptionType}',
+    );
+    debugPrint(
+      'start_date         = ${primaryKid.transportPref.startDate.toIso8601String().split('T').first}',
+    );
+    debugPrint(
+      'end_date           = ${primaryKid.transportPref.endDate?.toIso8601String().split('T').first}',
+    );
 
     String timingVal = 'BOTH';
     final p = primaryKid.transportPref.period.toLowerCase();
     if (p == 'morning') timingVal = 'MORNING';
     if (p == 'evening' || p == 'afternoon') timingVal = 'EVENING';
-    debugPrint('timing (raw period) = ${primaryKid.transportPref.period} → $timingVal');
+    debugPrint(
+      'timing (raw period) = ${primaryKid.transportPref.period} → $timingVal',
+    );
 
     // Get direction format — serviceType already stores go/return/both
     String directionVal = primaryKid.transportPref.serviceType.toLowerCase();
-    debugPrint('direction (raw svc) = ${primaryKid.transportPref.serviceType} → $directionVal');
+    debugPrint(
+      'direction (raw svc) = ${primaryKid.transportPref.serviceType} → $directionVal',
+    );
 
     final List<SubscriptionChildRequest> childrenRequestList = [];
     debugPrint('\n>>> Children breakdown:');
@@ -186,17 +234,22 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       );
 
       debugPrint('  child_id            = ${kid.id}');
-      debugPrint('  pickup_address_id   = ${kid.addressId} (type: ${kid.addressId.runtimeType})');
-      debugPrint('  dropoff_address_id  = ${kid.addressId} (type: ${kid.addressId.runtimeType})');
-      debugPrint('  price_per_child     = ${breakdownItem.childPrice} (type: ${breakdownItem.childPrice.runtimeType})');
-      debugPrint('  child_notes         = ${kid.medicalNotes ?? ''}');
+      debugPrint(
+        '  pickup_address_id   = ${kid.addressId} (type: ${kid.addressId.runtimeType})',
+      );
+      debugPrint('  dropoff_address_id  = ${kid.schoolId} (نوع: school_id)');
+      debugPrint(
+        '  price_per_child     = ${breakdownItem.childPrice} (type: ${breakdownItem.childPrice.runtimeType})',
+      );
+      debugPrint('  child_notes         = ${kid.medicalNotes ?? ""}');
       debugPrint('  ---');
 
       childrenRequestList.add(
         SubscriptionChildRequest(
           childId: kid.id ?? 0,
           pickupAddressId: kid.addressId,
-          dropoffAddressId: kid.addressId,
+          dropoffAddressId: kid.schoolId
+              .toString(), // ✅ معرّف المدرسة وليس عنوان المنزل
           pricePerChild: breakdownItem.childPrice,
           childNotes: kid.medicalNotes ?? '',
         ),
@@ -207,7 +260,8 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     debugPrint('notes               = ""');
 
     // Map subscription_type to backend contract: monthly|daily
-    String mappedSubscriptionType = primaryKid.transportPref.subscriptionType.toLowerCase();
+    String mappedSubscriptionType = primaryKid.transportPref.subscriptionType
+        .toLowerCase();
     if (mappedSubscriptionType == 'days') mappedSubscriptionType = 'daily';
     if (mappedSubscriptionType == 'weekly') mappedSubscriptionType = 'monthly';
 
@@ -217,8 +271,14 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       subscriptionType: mappedSubscriptionType,
       direction: directionVal,
       timing: timingVal,
-      startDate: primaryKid.transportPref.startDate.toIso8601String().split('T').first,
-      endDate: primaryKid.transportPref.endDate?.toIso8601String().split('T').first,
+      startDate: primaryKid.transportPref.startDate
+          .toIso8601String()
+          .split('T')
+          .first,
+      endDate: primaryKid.transportPref.endDate
+          ?.toIso8601String()
+          .split('T')
+          .first,
       daysCount: 22,
       notes: '',
       children: childrenRequestList,
@@ -233,19 +293,29 @@ class _DriverProfileViewState extends State<DriverProfileView> {
 
   void _onMessage() {
     // TODO: navigate to in-app chat screen
-    _showSnack('ميزة المراسلة ستكون متاحة قريباً.', AppColors.grey700,
-        duration: const Duration(seconds: 2));
+    _showSnack(
+      'ميزة المراسلة ستكون متاحة قريباً.',
+      AppColors.grey700,
+      duration: const Duration(seconds: 2),
+    );
   }
 
-  void _showSnack(String msg, Color bg,
-      {Duration duration = const Duration(seconds: 3)}) {
+  void _showSnack(
+    String msg,
+    Color bg, {
+    Duration duration = const Duration(seconds: 3),
+  }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Directionality(
           textDirection: TextDirection.rtl,
-          child: Text(msg,
-              style: AppTextStyles.style(
-                  color: AppColors.white, fontWeight: FontWeight.w600)),
+          child: Text(
+            msg,
+            style: AppTextStyles.style(
+              color: AppColors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
         backgroundColor: bg,
         behavior: SnackBarBehavior.floating,
@@ -256,8 +326,6 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     );
   }
 
-
-
   void _showEditChoiceDialog(BuildContext context, ChildModel kid) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -267,7 +335,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
           title: Text(
             "ماذا تود أن تعدل؟",
@@ -281,8 +351,13 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                leading: Icon(Icons.edit_road_rounded, color: theme.colorScheme.primary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                leading: Icon(
+                  Icons.edit_road_rounded,
+                  color: theme.colorScheme.primary,
+                ),
                 title: Text(
                   "بيانات النقل",
                   style: AppTextStyles.style(
@@ -306,8 +381,13 @@ class _DriverProfileViewState extends State<DriverProfileView> {
               ),
               const SizedBox(height: 8),
               ListTile(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                leading: Icon(Icons.person_outline_rounded, color: theme.colorScheme.primary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                leading: Icon(
+                  Icons.person_outline_rounded,
+                  color: theme.colorScheme.primary,
+                ),
                 title: Text(
                   "بيانات الطفل",
                   style: AppTextStyles.style(
@@ -348,7 +428,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheet) => BlocBuilder<ChildrenCubit, ChildrenState>(
           builder: (blocCtx, state) {
-            final availableKids = state is ChildrenLoaded ? state.children : widget.availableKids;
+            final availableKids = state is ChildrenLoaded
+                ? state.children
+                : widget.availableKids;
 
             return Directionality(
               textDirection: TextDirection.rtl,
@@ -358,10 +440,16 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                 ),
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.surfaceDark : AppColors.white,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(28),
+                  ),
                 ),
                 padding: EdgeInsets.fromLTRB(
-                    20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 24),
+                  20,
+                  20,
+                  20,
+                  MediaQuery.of(ctx).viewInsets.bottom + 24,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,13 +465,16 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    Text('اختر الأطفال لهذا الاشتراك',
-                        style: AppTextStyles.style(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: isDark ? AppColors.white : AppColors.textDark)),
+                    Text(
+                      'اختر الأطفال لهذا الاشتراك',
+                      style: AppTextStyles.style(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isDark ? AppColors.white : AppColors.textDark,
+                      ),
+                    ),
                     const SizedBox(height: 16),
-                    
+
                     Flexible(
                       child: ListView.builder(
                         shrinkWrap: true,
@@ -392,7 +483,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                           final kid = availableKids[index];
                           final isSel = kid.id != null && temp.contains(kid.id);
                           final isMale = kid.gender.toLowerCase() == 'male';
-                          
+
                           return GestureDetector(
                             onTap: () => setSheet(() {
                               if (kid.id != null) {
@@ -403,19 +494,24 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                               duration: const Duration(milliseconds: 150),
                               margin: const EdgeInsets.only(bottom: 10),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 12),
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
                               decoration: BoxDecoration(
                                 color: isSel
-                                    ? theme.colorScheme.primary
-                                        .withValues(alpha: isDark ? 0.1 : 0.04)
-                                    : (isDark ? AppColors.grey900 : AppColors.grey50),
+                                    ? theme.colorScheme.primary.withValues(
+                                        alpha: isDark ? 0.1 : 0.04,
+                                      )
+                                    : (isDark
+                                          ? AppColors.grey900
+                                          : AppColors.grey50),
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
                                   color: isSel
                                       ? theme.colorScheme.primary
                                       : (isDark
-                                          ? AppColors.grey800
-                                          : AppColors.grey200),
+                                            ? AppColors.grey800
+                                            : AppColors.grey200),
                                   width: isSel ? 1.5 : 1,
                                 ),
                               ),
@@ -423,10 +519,11 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                                 children: [
                                   CircleAvatar(
                                     radius: 18,
-                                    backgroundColor: (isMale
-                                            ? theme.colorScheme.primary
-                                            : AppColors.femalePink)
-                                        .withValues(alpha: 0.1),
+                                    backgroundColor:
+                                        (isMale
+                                                ? theme.colorScheme.primary
+                                                : AppColors.femalePink)
+                                            .withValues(alpha: 0.1),
                                     backgroundImage: kid.photoUrl != null
                                         ? NetworkImage(kid.photoUrl!)
                                         : null,
@@ -445,21 +542,28 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(kid.name,
-                                            style: AppTextStyles.style(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 13,
-                                                color: isDark
-                                                    ? AppColors.white
-                                                    : AppColors.textDark)),
-                                        Text(kid.schoolName,
-                                            style: AppTextStyles.style(
-                                                fontSize: 11,
-                                                color: isDark
-                                                    ? AppColors.grey400
-                                                    : AppColors.textMuted)),
+                                        Text(
+                                          kid.name,
+                                          style: AppTextStyles.style(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                            color: isDark
+                                                ? AppColors.white
+                                                : AppColors.textDark,
+                                          ),
+                                        ),
+                                        Text(
+                                          kid.schoolName,
+                                          style: AppTextStyles.style(
+                                            fontSize: 11,
+                                            color: isDark
+                                                ? AppColors.grey400
+                                                : AppColors.textMuted,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -467,7 +571,8 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                                     value: isSel,
                                     activeColor: theme.colorScheme.primary,
                                     shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(4)),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
                                     onChanged: (v) => setSheet(() {
                                       if (kid.id != null) {
                                         (v == true)
@@ -477,8 +582,13 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                                     }),
                                   ),
                                   IconButton(
-                                    icon: Icon(Icons.edit_rounded, size: 20, color: theme.colorScheme.primary),
-                                    onPressed: () => _showEditChoiceDialog(context, kid),
+                                    icon: Icon(
+                                      Icons.edit_rounded,
+                                      size: 20,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                    onPressed: () =>
+                                        _showEditChoiceDialog(context, kid),
                                     tooltip: 'تعديل',
                                   ),
                                 ],
@@ -488,7 +598,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                         },
                       ),
                     ),
-                    
+
                     if (temp.length > 1) ...[
                       const SizedBox(height: 8),
                       Container(
@@ -497,23 +607,28 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                           color: AppColors.orange.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                              color: AppColors.orange.withValues(alpha: 0.25)),
+                            color: AppColors.orange.withValues(alpha: 0.25),
+                          ),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.info_outline_rounded,
-                                color: AppColors.orange, size: 15),
+                            const Icon(
+                              Icons.info_outline_rounded,
+                              color: AppColors.orange,
+                              size: 15,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'إذا تم اختيار أكثر من طفل، سيتم إرسال طلب واحد وسيقوم السائق إما بقبول أو رفض جميع الأطفال معاً.',
                                 style: AppTextStyles.style(
-                                    fontSize: 11,
-                                    color: isDark
-                                        ? AppColors.grey300
-                                        : AppColors.grey700,
-                                    height: 1.4),
+                                  fontSize: 11,
+                                  color: isDark
+                                      ? AppColors.grey300
+                                      : AppColors.grey700,
+                                  height: 1.4,
+                                ),
                               ),
                             ),
                           ],
@@ -528,20 +643,25 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                         onPressed: () {
                           if (temp.isEmpty) {
                             _showSnack(
-                                'يرجى اختيار طفل واحد على الأقل.', AppColors.error);
+                              'يرجى اختيار طفل واحد على الأقل.',
+                              AppColors.error,
+                            );
                             return;
                           }
                           Navigator.pop(ctx);
                           setState(() => _selectedKidsIds = temp);
 
-                          final selectedKidsList = availableKids.where((k) => k.id != null && temp.contains(k.id)).toList();
+                          final selectedKidsList = availableKids
+                              .where((k) => k.id != null && temp.contains(k.id))
+                              .toList();
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => SubscriptionConfirmationScreen(
-                                driver: widget.driver,
-                                selectedKids: selectedKidsList,
-                              ),
+                              builder: (context) =>
+                                  SubscriptionConfirmationScreen(
+                                    driver: widget.driver,
+                                    selectedKids: selectedKidsList,
+                                  ),
                             ),
                           ).then((wasConfirmed) {
                             if (!mounted) return;
@@ -557,20 +677,24 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                           foregroundColor: theme.colorScheme.onPrimary,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
-                        child: Text('متابعة',
-                            style: AppTextStyles.style(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                color: theme.colorScheme.onPrimary)),
+                        child: Text(
+                          'متابعة',
+                          style: AppTextStyles.style(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
             );
-          }
+          },
         ),
       ),
     );
@@ -582,89 +706,525 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return MultiBlocListener(
-      listeners: [
-        BlocListener<SearchCubit, SearchState>(
-          listener: (context, state) {
-            if (state is PricingLoaded) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SubscriptionConfirmationScreen(
-                    driver: state.driver,
-                    selectedKids: _selectedKids,
+    return BlocProvider<ReviewsCubit>(
+      create: (context) =>
+          getIt<ReviewsCubit>()..loadReviews(widget.driver.driverId),
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<SearchCubit, SearchState>(
+            listener: (context, state) {
+              if (state is PricingLoaded) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SubscriptionConfirmationScreen(
+                      driver: state.driver,
+                      selectedKids: _selectedKids,
+                    ),
+                  ),
+                );
+              } else if (state is PricingError) {
+                _showSnack(state.errorMessage, AppColors.error);
+              } else if (state is SubscriptionSuccess) {
+                if (_loadingShowing) Navigator.of(context).pop();
+                Navigator.pop(context);
+                _showSnack(state.message, AppColors.success);
+              } else if (state is SubscriptionError) {
+                if (_loadingShowing) Navigator.of(context).pop();
+                _showSnack(state.errorMessage, AppColors.error);
+              }
+            },
+          ),
+        ],
+        child: BlocBuilder<ChildrenCubit, ChildrenState>(
+          builder: (context, state) {
+            final Widget bodyWidget = Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        _buildHero(theme, isDark),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              _buildVehicleCard(theme, isDark),
+                              const SizedBox(height: 12),
+                              _buildZonesCard(theme, isDark),
+                              const SizedBox(height: 12),
+                              if (widget.showPricing)
+                                _buildBreakdownCard(theme, isDark),
+                              const SizedBox(height: 16),
+                              Builder(
+                                builder: (reviewsCtx) {
+                                  return _buildReviewsSection(
+                                    reviewsCtx,
+                                    theme,
+                                    isDark,
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              );
-            } else if (state is PricingError) {
-              _showSnack(state.errorMessage, AppColors.error);
-            } else if (state is SubscriptionSuccess) {
-              if (_loadingShowing) Navigator.of(context).pop();
-              Navigator.pop(context);
-              _showSnack(state.message, AppColors.success);
-            } else if (state is SubscriptionError) {
-              if (_loadingShowing) Navigator.of(context).pop();
-              _showSnack(state.errorMessage, AppColors.error);
+                _buildBottomBar(theme, isDark),
+              ],
+            );
+
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: Scaffold(
+                backgroundColor: isDark
+                    ? AppColors.backgroundDark
+                    : const Color(0xFFF1F5F9),
+                appBar: AppBar(
+                  title: Text(
+                    'ملف الكابتن',
+                    style: AppTextStyles.style(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: isDark ? AppColors.white : AppColors.textDark,
+                    ),
+                  ),
+                  centerTitle: true,
+                  elevation: 0,
+                  backgroundColor: isDark
+                      ? AppColors.surfaceDark
+                      : AppColors.white,
+                  foregroundColor: isDark
+                      ? AppColors.white
+                      : AppColors.textDark,
+                  surfaceTintColor: Colors.transparent,
+                ),
+                body: SafeArea(child: bodyWidget),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReviewsSection(
+    BuildContext context,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.rate_review_rounded, color: AppColors.amber),
+            const SizedBox(width: 8),
+            Text(
+              'التقييمات والمراجعات',
+              style: AppTextStyles.style(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.white : AppColors.textDark,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        BlocBuilder<ReviewsCubit, ReviewsState>(
+          builder: (context, state) {
+            if (state is ReviewsInitial ||
+                (state is ReviewsLoading && state is! ReviewsLoaded)) {
+              return const LoadingReviewsWidget();
             }
+
+            List<ReviewModel> reviewsList = [];
+            bool hasSub = false;
+            bool hasMore = false;
+            bool isSubmitting = false;
+
+            if (state is ReviewsLoaded) {
+              reviewsList = state.reviews;
+              hasSub = state.hasSubscription;
+              hasMore = state.hasMore;
+            } else if (state is ReviewsSubmitting) {
+              reviewsList = state.reviews;
+              hasSub = state.hasSubscription;
+              isSubmitting = true;
+            }
+
+            final averageRating = widget.driver.rating;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Summary Card
+                RatingSummary(
+                  averageRating: averageRating,
+                  totalReviews: reviewsList.length,
+                ),
+                const SizedBox(height: 16),
+                const Divider(height: 1),
+                const SizedBox(height: 16),
+
+                // Review input section
+                if (hasSub) ...[
+                  if (!_hasOwnReview(reviewsList)) ...[
+                    ReviewForm(
+                      isSubmitting: isSubmitting,
+                      onSubmit: (rating, comment) {
+                        context.read<ReviewsCubit>().addReview(
+                          driverId: widget.driver.driverId,
+                          rating: rating,
+                          comment: comment,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    const Divider(height: 1),
+                    const SizedBox(height: 20),
+                  ],
+                ] else ...[
+                  const LockedReviewCard(),
+                  const SizedBox(height: 20),
+                  const Divider(height: 1),
+                  const SizedBox(height: 20),
+                ],
+
+                // Reviews List
+                if (reviewsList.isEmpty)
+                  const EmptyReviewsWidget()
+                else ...[
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: reviewsList.length,
+                    itemBuilder: (lCtx, index) {
+                      final rev = reviewsList[index];
+                      return ReviewCard(
+                        review: rev,
+                        onEdit: () => _showEditReviewSheet(context, rev),
+                        onDelete: () =>
+                            _showDeleteConfirmDialog(context, rev.id),
+                      );
+                    },
+                  ),
+                  if (hasMore) ...[
+                    const SizedBox(height: 12),
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () {
+                          context.read<ReviewsCubit>().loadMoreReviews(
+                            widget.driver.driverId,
+                          );
+                        },
+                        icon: const Icon(Icons.arrow_drop_down_rounded),
+                        label: Text(
+                          'تحميل المزيد من التقييمات',
+                          style: AppTextStyles.style(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+
+                // Submit Complaint section (visible only if hasSub == true)
+                if (hasSub) _buildComplaintSection(context, theme, isDark),
+              ],
+            );
           },
         ),
       ],
-      child: BlocBuilder<ChildrenCubit, ChildrenState>(
-      builder: (context, state) {
-        final Widget bodyWidget = Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
+    );
+  }
+
+  Widget _buildComplaintSection(
+    BuildContext context,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.grey800 : AppColors.grey200,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.report_problem_outlined, color: AppColors.error),
+              const SizedBox(width: 8),
+              Text(
+                'تقديم شكوى ضد الكابتن',
+                style: AppTextStyles.style(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.white : AppColors.textDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'في حال وجود أي مشكلة مع الكابتن أثناء التوصيل، يمكنك تقديم شكوى فورية لمتابعتها مع الإدارة.',
+            style: AppTextStyles.style(
+              fontSize: 11.5,
+              color: isDark ? AppColors.grey400 : AppColors.textMuted,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: AppColors.error.withValues(alpha: 0.6)),
+                foregroundColor: AppColors.error,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.report_gmailerrorred_rounded, size: 18),
+              label: Text(
+                'تقديم شكوى ضد الكابتن',
+                style: AppTextStyles.style(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.error,
+                ),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CreateComplaintScreen(
+                      driverId: widget.driver.driverId,
+                      driverName: widget.driver.fullName,
+                      driverAvatar: widget.driver.photoUrl,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _hasOwnReview(List<ReviewModel> reviews) {
+    final parentId = getIt<SessionRepository>().getParentId();
+    final userId = getIt<SessionRepository>().getUserId();
+
+    for (final review in reviews) {
+      if (review.parent == null) continue;
+      final isMatchingParent =
+          parentId != null && review.parent!.id == parentId;
+      final isMatchingUser =
+          userId != null && review.parent!.userId.toString() == userId;
+      if (isMatchingParent || isMatchingUser) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void _showEditReviewSheet(BuildContext context, ReviewModel review) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bCtx) => BlocProvider.value(
+        value: context.read<ReviewsCubit>(),
+        child: BlocConsumer<ReviewsCubit, ReviewsState>(
+          listener: (context, state) {
+            if (state is ReviewsSuccess) {
+              Navigator.pop(bCtx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            } else if (state is ReviewsError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          },
+          builder: (context, state) {
+            final isSubmitting = state is ReviewsSubmitting;
+
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.surfaceDark : AppColors.white,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                ),
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  20,
+                  20,
+                  MediaQuery.of(context).viewInsets.bottom + 24,
+                ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHero(theme, isDark),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          _buildVehicleCard(theme, isDark),
-                          const SizedBox(height: 12),
-                          _buildZonesCard(theme, isDark),
-                          const SizedBox(height: 12),
-                          if (widget.showPricing) _buildBreakdownCard(theme, isDark),
-                          const SizedBox(height: 16),
-                        ],
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.grey700 : AppColors.grey300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'تعديل تقييمك للكابتن',
+                      style: AppTextStyles.style(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isDark ? AppColors.white : AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ReviewForm(
+                      initialRating: review.rating,
+                      initialComment: review.comment,
+                      isSubmitting: isSubmitting,
+                      submitButtonText: 'حفظ التعديلات',
+                      onSubmit: (rating, comment) {
+                        context.read<ReviewsCubit>().editReview(
+                          driverId: widget.driver.driverId,
+                          reviewId: review.id,
+                          rating: rating,
+                          comment: comment,
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
-            ),
-            _buildBottomBar(theme, isDark),
-          ],
-        );
+            );
+          },
+        ),
+      ),
+    );
+  }
 
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: Scaffold(
-            backgroundColor:
-                isDark ? AppColors.backgroundDark : const Color(0xFFF1F5F9),
-            appBar: AppBar(
-              title: Text(
-                'ملف الكابتن',
-                style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: isDark ? AppColors.white : AppColors.textDark,
+  void _showDeleteConfirmDialog(BuildContext context, int reviewId) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (dCtx) => BlocProvider.value(
+        value: context.read<ReviewsCubit>(),
+        child: BlocConsumer<ReviewsCubit, ReviewsState>(
+          listener: (context, state) {
+            if (state is ReviewsSuccess) {
+              Navigator.pop(dCtx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.success,
                 ),
+              );
+            } else if (state is ReviewsError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          },
+          builder: (context, state) {
+            final isSubmitting = state is ReviewsSubmitting;
+
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                backgroundColor: isDark
+                    ? AppColors.surfaceDark
+                    : AppColors.white,
+                title: Text(
+                  'حذف التقييم',
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: isDark ? AppColors.white : AppColors.textDark,
+                  ),
+                ),
+                content: Text(
+                  'هل أنت متأكد من رغبتك في حذف هذا التقييم نهائياً؟',
+                  style: AppTextStyles.style(
+                    fontSize: 13,
+                    color: isDark ? AppColors.grey300 : AppColors.grey700,
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: isSubmitting ? null : () => Navigator.pop(dCtx),
+                    child: Text(
+                      'إلغاء',
+                      style: AppTextStyles.style(color: AppColors.textMuted),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: isSubmitting
+                        ? null
+                        : () {
+                            context.read<ReviewsCubit>().deleteReview(
+                              driverId: widget.driver.driverId,
+                              reviewId: reviewId,
+                            );
+                          },
+                    child: Text(
+                      'نعم، حذف',
+                      style: AppTextStyles.style(
+                        color: AppColors.error,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              centerTitle: true,
-              elevation: 0,
-              backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
-              foregroundColor: isDark ? AppColors.white : AppColors.textDark,
-              surfaceTintColor: Colors.transparent,
-            ),
-            body: SafeArea(child: bodyWidget),
-          ),
-        );
-      },
-    ),
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -674,8 +1234,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
   Widget _buildHero(ThemeData theme, bool isDark) {
     final d = widget.driver;
     final isFemale = d.gender == 'FEMALE';
-    final avatarColor =
-        isFemale ? AppColors.femalePink : theme.colorScheme.primary;
+    final avatarColor = isFemale
+        ? AppColors.femalePink
+        : theme.colorScheme.primary;
 
     return Container(
       width: double.infinity,
@@ -699,7 +1260,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
               shape: BoxShape.circle,
               color: avatarColor.withValues(alpha: isDark ? 0.18 : 0.12),
               border: Border.all(
-                  color: avatarColor.withValues(alpha: 0.3), width: 2),
+                color: avatarColor.withValues(alpha: 0.3),
+                width: 2,
+              ),
             ),
             child: d.photoUrl != null && d.photoUrl!.isNotEmpty
                 ? ClipOval(
@@ -787,7 +1350,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                 d.isCriminalRecordVerified
                     ? Icons.shield_rounded
                     : Icons.shield_outlined,
-                d.isCriminalRecordVerified ? AppColors.success : AppColors.error,
+                d.isCriminalRecordVerified
+                    ? AppColors.success
+                    : AppColors.error,
                 isDark,
               ),
             ],
@@ -813,7 +1378,10 @@ class _DriverProfileViewState extends State<DriverProfileView> {
           Text(
             label,
             style: AppTextStyles.style(
-                color: color, fontSize: 11, fontWeight: FontWeight.bold),
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -825,10 +1393,13 @@ class _DriverProfileViewState extends State<DriverProfileView> {
   // ══════════════════════════════════════════════════════════════════
   Widget _buildVehicleCard(ThemeData theme, bool isDark) {
     final d = widget.driver;
-    final isBus = d.vehicleType.toLowerCase().contains('bus') ||
+    final isBus =
+        d.vehicleType.toLowerCase().contains('bus') ||
         d.vehicleType.toLowerCase().contains('باص') ||
         d.vehicleType.toLowerCase().contains('هايس');
-    final vehicleIcon = isBus ? Icons.directions_bus_rounded : Icons.directions_car_filled_rounded;
+    final vehicleIcon = isBus
+        ? Icons.directions_bus_rounded
+        : Icons.directions_car_filled_rounded;
 
     return _card(
       theme: theme,
@@ -845,7 +1416,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             decoration: BoxDecoration(
               color: isDark ? AppColors.grey900 : AppColors.grey50,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: isDark ? AppColors.grey800 : AppColors.grey200),
+              border: Border.all(
+                color: isDark ? AppColors.grey800 : AppColors.grey200,
+              ),
             ),
             child: Center(
               child: Column(
@@ -869,23 +1442,55 @@ class _DriverProfileViewState extends State<DriverProfileView> {
               ),
             ),
           ),
-          _infoRow(Icons.directions_car_filled_outlined, 'نوع المركبة', d.vehicleType, isDark),
+          _infoRow(
+            Icons.directions_car_filled_outlined,
+            'نوع المركبة',
+            d.vehicleType,
+            isDark,
+          ),
           _divider(isDark),
-          _infoRow(Icons.pin_outlined, 'رقم اللوحة', d.plateNumber ?? 'غير متوفر', isDark),
+          _infoRow(
+            Icons.pin_outlined,
+            'رقم اللوحة',
+            d.plateNumber ?? 'غير متوفر',
+            isDark,
+          ),
           _divider(isDark),
-          _infoRow(Icons.calendar_month_outlined, 'سنة الصنع', d.vehicleYear?.toString() ?? 'غير متوفر', isDark),
+          _infoRow(
+            Icons.calendar_month_outlined,
+            'سنة الصنع',
+            d.vehicleYear?.toString() ?? 'غير متوفر',
+            isDark,
+          ),
           _divider(isDark),
-          _infoRow(Icons.color_lens_outlined, 'لون المركبة', d.vehicleColor ?? 'غير متوفر', isDark),
+          _infoRow(
+            Icons.color_lens_outlined,
+            'لون المركبة',
+            d.vehicleColor ?? 'غير متوفر',
+            isDark,
+          ),
           _divider(isDark),
-          _infoRow(Icons.ac_unit_rounded, 'تكييف هواء',
-              d.hasAc ? 'نعم، متوفر' : 'غير متوفر', isDark,
-              valueColor: d.hasAc ? AppColors.success : null),
+          _infoRow(
+            Icons.ac_unit_rounded,
+            'تكييف هواء',
+            d.hasAc ? 'نعم، متوفر' : 'غير متوفر',
+            isDark,
+            valueColor: d.hasAc ? AppColors.success : null,
+          ),
           _divider(isDark),
-          _infoRow(Icons.event_seat_rounded, 'المقاعد الشاغرة',
-              '${d.availableSeats} / ${d.totalSeats}', isDark),
+          _infoRow(
+            Icons.event_seat_rounded,
+            'المقاعد الشاغرة',
+            '${d.availableSeats} / ${d.totalSeats}',
+            isDark,
+          ),
           _divider(isDark),
-          _infoRow(Icons.check_circle_outline_rounded, 'الرحلات المكتملة',
-              '${d.completedTrips} رحلة', isDark),
+          _infoRow(
+            Icons.check_circle_outline_rounded,
+            'الرحلات المكتملة',
+            '${d.completedTrips} رحلة',
+            isDark,
+          ),
         ],
       ),
     );
@@ -913,15 +1518,19 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.place_outlined,
-                    size: 13,
-                    color: isDark ? AppColors.grey400 : AppColors.grey600),
+                Icon(
+                  Icons.place_outlined,
+                  size: 13,
+                  color: isDark ? AppColors.grey400 : AppColors.grey600,
+                ),
                 const SizedBox(width: 4),
-                Text(zone,
-                    style: AppTextStyles.style(
-                        fontSize: 13,
-                        color:
-                            isDark ? AppColors.grey200 : AppColors.grey800)),
+                Text(
+                  zone,
+                  style: AppTextStyles.style(
+                    fontSize: 13,
+                    color: isDark ? AppColors.grey200 : AppColors.grey800,
+                  ),
+                ),
               ],
             ),
           );
@@ -990,7 +1599,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                           style: AppTextStyles.style(
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
-                            color: isDark ? AppColors.white : AppColors.textDark,
+                            color: isDark
+                                ? AppColors.white
+                                : AppColors.textDark,
                           ),
                         ),
                         if (!hasError)
@@ -999,7 +1610,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                             style: AppTextStyles.style(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-                              color: isDark ? AppColors.white : AppColors.textDark,
+                              color: isDark
+                                  ? AppColors.white
+                                  : AppColors.textDark,
                             ),
                           )
                         else
@@ -1014,11 +1627,31 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    _breakdownDetailRow(Icons.school_outlined, 'المدرسة', item.schoolName, isDark),
-                    _breakdownDetailRow(Icons.linear_scale_rounded, 'المسافة', '${item.distanceKm.toStringAsFixed(1)} كم', isDark),
-                    _breakdownDetailRow(Icons.calendar_month_outlined, 'نوع الاشتراك', _getSubscriptionTypeArabic(item.subscriptionType), isDark),
-                    _breakdownDetailRow(Icons.date_range_rounded, 'أيام العمل', '${item.workingDays} يوم', isDark),
-                    
+                    _breakdownDetailRow(
+                      Icons.school_outlined,
+                      'المدرسة',
+                      item.schoolName,
+                      isDark,
+                    ),
+                    _breakdownDetailRow(
+                      Icons.linear_scale_rounded,
+                      'المسافة',
+                      '${item.distanceKm.toStringAsFixed(1)} كم',
+                      isDark,
+                    ),
+                    _breakdownDetailRow(
+                      Icons.calendar_month_outlined,
+                      'نوع الاشتراك',
+                      _getSubscriptionTypeArabic(item.subscriptionType),
+                      isDark,
+                    ),
+                    _breakdownDetailRow(
+                      Icons.date_range_rounded,
+                      'أيام العمل',
+                      '${item.workingDays} يوم',
+                      isDark,
+                    ),
+
                     if (hasError) ...[
                       const SizedBox(height: 8),
                       Container(
@@ -1027,12 +1660,18 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                         decoration: BoxDecoration(
                           color: AppColors.error.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.error.withValues(alpha: 0.25)),
+                          border: Border.all(
+                            color: AppColors.error.withValues(alpha: 0.25),
+                          ),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 16),
+                            const Icon(
+                              Icons.warning_amber_rounded,
+                              color: AppColors.error,
+                              size: 16,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -1059,12 +1698,21 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     );
   }
 
-  Widget _breakdownDetailRow(IconData icon, String label, String value, bool isDark) {
+  Widget _breakdownDetailRow(
+    IconData icon,
+    String label,
+    String value,
+    bool isDark,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0),
       child: Row(
         children: [
-          Icon(icon, size: 14, color: isDark ? AppColors.grey500 : AppColors.grey500),
+          Icon(
+            icon,
+            size: 14,
+            color: isDark ? AppColors.grey500 : AppColors.grey500,
+          ),
           const SizedBox(width: 6),
           Text(
             '$label: ',
@@ -1093,8 +1741,6 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     return 'شهري';
   }
 
-
-
   // ══════════════════════════════════════════════════════════════════
   // Section: Bottom Action Bar
   // ══════════════════════════════════════════════════════════════════
@@ -1105,8 +1751,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         border: Border(
           top: BorderSide(
-              color: isDark ? AppColors.grey800 : AppColors.grey200,
-              width: 0.5),
+            color: isDark ? AppColors.grey800 : AppColors.grey200,
+            width: 0.5,
+          ),
         ),
         boxShadow: [
           BoxShadow(
@@ -1119,8 +1766,8 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       child: widget.showPricing && _selectedKidsIds.isNotEmpty
           ? _directSendBar(theme, isDark)
           : _selectedKidsIds.isEmpty
-              ? _emptyKidsBar(theme, isDark)
-              : _hasSelectedKidsBar(theme, isDark),
+          ? _emptyKidsBar(theme, isDark)
+          : _hasSelectedKidsBar(theme, isDark),
     );
   }
 
@@ -1167,16 +1814,18 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             label: Text(
               'إرسال الطلب',
               style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: theme.colorScheme.onPrimary),
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: theme.colorScheme.onPrimary,
+              ),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
           ),
         ),
@@ -1191,9 +1840,10 @@ class _DriverProfileViewState extends State<DriverProfileView> {
         Text(
           'حدد الأطفال الذين ستشملهم هذا الاشتراك',
           style: AppTextStyles.style(
-              fontSize: 12,
-              color: isDark ? AppColors.grey400 : AppColors.textMuted,
-              height: 1.4),
+            fontSize: 12,
+            color: isDark ? AppColors.grey400 : AppColors.textMuted,
+            height: 1.4,
+          ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 10),
@@ -1211,13 +1861,17 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                     foregroundColor: theme.colorScheme.onPrimary,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
-                  child: Text('اختيار الأطفال',
-                      style: AppTextStyles.style(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: theme.colorScheme.onPrimary)),
+                  child: Text(
+                    'اختيار الأطفال',
+                    style: AppTextStyles.style(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: theme.colorScheme.onPrimary,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1274,16 +1928,18 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                   label: Text(
                     'متابعة وتأكيد الطلب',
                     style: AppTextStyles.style(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: theme.colorScheme.onPrimary),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: theme.colorScheme.onPrimary,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
                     foregroundColor: theme.colorScheme.onPrimary,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                 ),
               ),
@@ -1309,22 +1965,30 @@ class _DriverProfileViewState extends State<DriverProfileView> {
           style: OutlinedButton.styleFrom(
             foregroundColor: theme.colorScheme.primary,
             side: BorderSide(
-                color: theme.colorScheme.primary.withValues(alpha: 0.35)),
+              color: theme.colorScheme.primary.withValues(alpha: 0.35),
+            ),
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14)),
+              borderRadius: BorderRadius.circular(14),
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 16),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.chat_bubble_outline_rounded,
-                  size: 18, color: theme.colorScheme.primary),
+              Icon(
+                Icons.chat_bubble_outline_rounded,
+                size: 18,
+                color: theme.colorScheme.primary,
+              ),
               const SizedBox(width: 6),
-              Text('رسالة',
-                  style: AppTextStyles.style(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: theme.colorScheme.primary)),
+              Text(
+                'رسالة',
+                style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
             ],
           ),
         ),
@@ -1348,7 +2012,8 @@ class _DriverProfileViewState extends State<DriverProfileView> {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: isDark ? AppColors.grey800 : AppColors.grey200),
+          color: isDark ? AppColors.grey800 : AppColors.grey200,
+        ),
         boxShadow: [
           BoxShadow(
             color: AppColors.black.withValues(alpha: isDark ? 0.15 : 0.04),
@@ -1367,60 +2032,80 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                 Container(
                   padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary
-                        .withValues(alpha: isDark ? 0.15 : 0.08),
+                    color: theme.colorScheme.primary.withValues(
+                      alpha: isDark ? 0.15 : 0.08,
+                    ),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, size: 18, color: theme.colorScheme.primary),
                 ),
                 const SizedBox(width: 10),
-                Text(title,
-                    style: AppTextStyles.style(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color:
-                            isDark ? AppColors.white : AppColors.textDark)),
+                Text(
+                  title,
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: isDark ? AppColors.white : AppColors.textDark,
+                  ),
+                ),
               ],
             ),
           ),
           Divider(
-              color: isDark ? AppColors.grey800 : AppColors.grey100,
-              height: 1,
-              thickness: 1),
+            color: isDark ? AppColors.grey800 : AppColors.grey100,
+            height: 1,
+            thickness: 1,
+          ),
           Padding(padding: const EdgeInsets.all(18), child: child),
         ],
       ),
     );
   }
 
-  Widget _infoRow(IconData icon, String label, String value, bool isDark,
-      {Color? valueColor}) {
+  Widget _infoRow(
+    IconData icon,
+    String label,
+    String value,
+    bool isDark, {
+    Color? valueColor,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: isDark ? AppColors.grey500 : AppColors.grey500),
+            Icon(
+              icon,
+              size: 18,
+              color: isDark ? AppColors.grey500 : AppColors.grey500,
+            ),
             const SizedBox(width: 8),
-            Text(label,
-                style: AppTextStyles.style(
-                    fontSize: 13,
-                    color: isDark ? AppColors.grey400 : AppColors.textMuted)),
+            Text(
+              label,
+              style: AppTextStyles.style(
+                fontSize: 13,
+                color: isDark ? AppColors.grey400 : AppColors.textMuted,
+              ),
+            ),
           ],
         ),
-        Text(value,
-            style: AppTextStyles.style(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: valueColor ??
-                    (isDark ? AppColors.white : AppColors.textDark))),
+        Text(
+          value,
+          style: AppTextStyles.style(
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+            color:
+                valueColor ?? (isDark ? AppColors.white : AppColors.textDark),
+          ),
+        ),
       ],
     );
   }
 
   Widget _divider(bool isDark) => Divider(
-      color: isDark ? AppColors.grey800 : AppColors.grey100,
-      height: 20,
-      thickness: 1);
+    color: isDark ? AppColors.grey800 : AppColors.grey100,
+    height: 20,
+    thickness: 1,
+  );
 }

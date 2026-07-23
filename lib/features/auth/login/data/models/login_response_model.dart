@@ -16,18 +16,52 @@ class LoginResponseModel {
   });
 
   factory LoginResponseModel.fromJson(Map<String, dynamic> json) {
+    final userMap = _readMap(json['user']);
+    final user = UserModel.fromJson(userMap.isNotEmpty ? userMap : json);
+
+    final rawRoleName = json['role_name']?.toString() ??
+        json['roleName']?.toString() ??
+        json['role']?.toString() ??
+        user.role;
+
+    int roleId = _readInt(json['role_id'] ?? json['roleId']);
+    if (roleId == 0) {
+      roleId = user.roleId;
+    }
+    if (roleId == 0) {
+      roleId = UserModel._roleToId(rawRoleName);
+    }
+
+    final finalUser = user.roleId != roleId
+        ? UserModel(
+            id: user.id,
+            parentId: user.parentId,
+            driverId: user.driverId,
+            fullName: user.fullName,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            alternativePhone: user.alternativePhone,
+            roleId: roleId,
+            role: user.role,
+            isActive: user.isActive,
+            isTrusted: user.isTrusted,
+            avatarUrl: user.avatarUrl,
+            emailChangePending: user.emailChangePending,
+          )
+        : user;
+
     return LoginResponseModel(
-      status: _readBool(json['status']),
+      status: _readBool(json['status'] ?? json['success']),
       message: json['message']?.toString() ?? '',
-      accessToken: json['access_token']?.toString() ?? '',
+      accessToken: json['access_token']?.toString() ?? json['token']?.toString() ?? '',
       tokenType: json['token_type']?.toString() ?? 'Bearer',
-      roleName: json['role_name']?.toString() ?? '',
-      user: UserModel.fromJson(_readMap(json['user'])),
+      roleName: rawRoleName.isNotEmpty ? rawRoleName : (roleId == 4 ? 'driver' : 'parent'),
+      user: finalUser,
     );
   }
 
-  bool get isParent => user.roleId == 3;
-  bool get isDriver => user.roleId == 4;
+  bool get isParent => user.roleId == 3 || UserModel._roleToId(roleName) == 3 || roleName.toLowerCase().contains('parent') || roleName.contains('ولي');
+  bool get isDriver => user.roleId == 4 || UserModel._roleToId(roleName) == 4 || roleName.toLowerCase().contains('driver') || roleName.contains('سائق');
 }
 
 class UserModel {
@@ -63,15 +97,27 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final id = _readInt(json['id_user'] ?? json['id'] ?? json['user_id']);
-    final role = json['role']?.toString() ?? 'parent';
-    final roleId = _roleToId(role);
+    final rawRole = json['role']?.toString() ??
+        json['role_name']?.toString() ??
+        json['roleName']?.toString() ??
+        json['name_role']?.toString() ??
+        '';
 
-    final rawParentId = json['parent_id'];
+    final rawRoleId = _readInt(json['role_id'] ?? json['roleId'] ?? json['id_role'] ?? 0);
+    int roleId = rawRoleId;
+    if (roleId == 0 || (roleId != 3 && roleId != 4 && roleId != 1)) {
+      roleId = _roleToId(rawRole);
+    }
+    if (roleId == 0 && rawRoleId > 0) {
+      roleId = rawRoleId;
+    }
+
+    final rawParentId = json['parent_id'] ?? json['parentId'];
     final parentId = rawParentId is int
         ? rawParentId
         : int.tryParse(rawParentId?.toString() ?? '');
 
-    final rawDriverId = json['driver_id'];
+    final rawDriverId = json['driver_id'] ?? json['driverId'];
     final driverId = rawDriverId is int
         ? rawDriverId
         : int.tryParse(rawDriverId?.toString() ?? '');
@@ -80,30 +126,31 @@ class UserModel {
       id: id,
       parentId: parentId,
       driverId: driverId,
-      fullName: json['full_name']?.toString() ?? '',
+      fullName: json['full_name']?.toString() ?? json['name']?.toString() ?? '',
       email: json['email']?.toString(),
-      phoneNumber: json['phone_number']?.toString() ?? '',
-      alternativePhone: json['alternative_phone']?.toString(),
+      phoneNumber: json['phone_number']?.toString() ?? json['phone']?.toString() ?? '',
+      alternativePhone: json['alternative_phone']?.toString() ?? json['alternative_phone_number']?.toString(),
       roleId: roleId,
-      role: role,
-      isActive: _readBool(json['is_active']),
+      role: rawRole.isNotEmpty ? rawRole : (roleId == 4 ? 'driver' : 'parent'),
+      isActive: _readBool(json['is_active'] ?? json['isActive'] ?? true),
       isTrusted: json['is_trusted'] == true,
-      avatarUrl: json['avatar_url']?.toString(),
+      avatarUrl: json['avatar_url']?.toString() ?? json['photo_url']?.toString(),
       emailChangePending: json['email_change_pending'] == true,
     );
   }
 
   static int _roleToId(String role) {
-    switch (role.toLowerCase()) {
-      case 'parent':
-        return 3;
-      case 'driver':
-        return 4;
-      case 'admin':
-        return 1;
-      default:
-        return 0;
+    final r = role.toLowerCase().trim();
+    if (r == '4' || r.contains('driver') || r.contains('سائق') || r.contains('كابتن')) {
+      return 4;
     }
+    if (r == '3' || r.contains('parent') || r.contains('guardian') || r.contains('ولي')) {
+      return 3;
+    }
+    if (r == '1' || r.contains('admin') || r.contains('أدمن') || r.contains('مدير')) {
+      return 1;
+    }
+    return int.tryParse(r) ?? 0;
   }
 }
 

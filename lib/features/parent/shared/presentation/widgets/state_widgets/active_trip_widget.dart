@@ -3,6 +3,8 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
+import 'package:kids_transport/features/parent/trips/data/models/active_trip_model.dart';
 
 class ActiveTripWidget extends StatelessWidget {
   final List<Map<String, dynamic>> todayTrips;
@@ -112,7 +114,23 @@ class ActiveTripWidget extends StatelessWidget {
                 // زر التتبع
                 ElevatedButton.icon(
                   onPressed: () {
-                    // TODO: فتح خريطة التتبع
+                    final tripModel = ActiveTripModel(
+                      tripId: activeTrip['trip_id'] as int? ?? 1,
+                      tripType: activeTrip['trip_type']?.toString() ?? 'to_school',
+                      status: activeTrip['status']?.toString() ?? 'started',
+                      driverName: activeTrip['driver_name']?.toString() ?? 'سائق',
+                      driverPhone: activeTrip['driver_phone']?.toString() ?? '0910000000',
+                      vehicleInfo: activeTrip['vehicle_info']?.toString() ?? 'سيارة',
+                      childId: activeTrip['child_id'] as int? ?? 1,
+                      childName: activeTrip['child_name']?.toString() ?? 'الطفل',
+                      childStatus: activeTrip['status']?.toString() ?? 'في الطريق',
+                      startedAt: DateTime.now().toIso8601String(),
+                    );
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.parentTripTracking,
+                      arguments: tripModel,
+                    );
                   },
                   icon: Icon(
                     Icons.map_rounded,

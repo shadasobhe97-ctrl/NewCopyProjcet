@@ -3,7 +3,7 @@ import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
-import '../models/subscription_model.dart';
+import '../models/active_subscription_model.dart';
 
 class SubscriptionsRemoteDataSource {
   final ApiClient _client;
@@ -15,17 +15,33 @@ class SubscriptionsRemoteDataSource {
     return {'Authorization': token ?? ''};
   }
 
-  /// GET /api/parent/subscriptions
-  Future<List<SubscriptionModel>> getSubscriptions() async {
-    debugPrint('📡 [Subscriptions] Calling GET /parent/subscriptions');
+  String? _extractMessage(dynamic data) {
+    if (data is Map && data['message'] != null) {
+      final msg = data['message'].toString();
+      return msg.isNotEmpty ? msg : null;
+    }
+    return null;
+  }
+
+  /// GET /api/parent/active-subscriptions?filter=...
+  Future<(List<ActiveSubscriptionModel>, String?)> getActiveSubscriptions({
+    String? filter,
+  }) async {
+    debugPrint('📡 [ActiveSubscriptions] Calling GET /parent/active-subscriptions${filter != null ? '?filter=$filter' : ''}');
+
+    final queryParams = <String, dynamic>{};
+    if (filter != null && filter.isNotEmpty) {
+      queryParams['filter'] = filter;
+    }
 
     final response = await _client.get(
-      ApiEndpoints.parentSubscriptions,
+      ApiEndpoints.parentActiveSubscriptions,
       headers: _authHeader,
+      queryParameters: queryParams.isNotEmpty ? queryParams : null,
     );
     final data = response.data;
 
-    debugPrint('📥 [Subscriptions] Response => $data');
+    debugPrint('📥 [ActiveSubscriptions] Response => $data');
 
     if (data is Map) {
       final success = data['success'];
@@ -35,19 +51,21 @@ class SubscriptionsRemoteDataSource {
       }
     }
 
+    final backendMessage = _extractMessage(data);
     final list = data['data'];
     if (list is List) {
       final result = list
-          .map((e) => SubscriptionModel.fromJson(e as Map<String, dynamic>))
+          .map((e) =>
+              ActiveSubscriptionModel.fromJson(e as Map<String, dynamic>))
           .toList();
-      debugPrint('✅ [Subscriptions] Count => ${result.length}');
-      return result;
+      debugPrint('✅ [ActiveSubscriptions] Count => ${result.length}');
+      return (result, backendMessage);
     }
-    return [];
+    return (<ActiveSubscriptionModel>[], backendMessage);
   }
 
   /// GET /api/guardian/requests/{id} (لشاشة التفاصيل)
-  Future<SubscriptionModel> getSubscriptionDetail(int id) async {
+  Future<ActiveSubscriptionModel> getSubscriptionDetail(int id) async {
     final response = await _client.get(
       ApiEndpoints.guardianRequestDetail(id),
       headers: _authHeader,
@@ -61,7 +79,7 @@ class SubscriptionsRemoteDataSource {
       }
     }
     final detail = data['data'] ?? data;
-    return SubscriptionModel.fromJson(detail as Map<String, dynamic>);
+    return ActiveSubscriptionModel.fromJson(detail as Map<String, dynamic>);
   }
 
   /// POST /api/guardian/requests/{id}/cancel (لإلغاء الطلب)

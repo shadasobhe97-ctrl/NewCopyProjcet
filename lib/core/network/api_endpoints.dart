@@ -2,7 +2,7 @@ class ApiEndpoints {
   const ApiEndpoints._();
 
   // الرابط الأساسي للسيرفر (يحتوي على /api/)
-  static const String baseUrl = 'https://fat-snail-51.loca.lt/api/';
+  static const String baseUrl = 'http://127.0.0.1:8000/api/';
 
   //=========================================
   // Auth Endpoints (مسارات المصادقة العامة)
@@ -62,6 +62,7 @@ class ApiEndpoints {
   static String guardianRequestCancel(int id) => 'guardian/requests/$id/cancel';
   //طلب الاشتراك مع سوااق
   static const String parentrequestSubscription = 'parent';
+  static const String parentActiveSubscriptions = 'parent/active-subscriptions';
 
   // Parent Wallet & Finance
   static const String parentWalletBalance = 'parent/wallet/balance';
@@ -70,4 +71,27 @@ class ApiEndpoints {
   static const String parentWalletRecharge = 'parent/wallet/recharge';
   static const String parentInvoices = 'parent/invoices';
   static String parentInvoiceDetail(int id) => 'parent/invoices/$id';
+
+  // Parent Trips & Live Tracking
+  static const String parentActiveTrips = 'parent/trips/active';
+  static String parentTripTrack(int id) => 'parent/trips/$id/track';
+  static const String parentUpcomingTrips = 'parent/trips/upcoming';
+  static const String parentTripHistory = 'parent/trips/history';
+
+  // Parent Driver Reviews
+  static String checkSubscription(int driverId) =>
+      'parent/subscriptions/check?driver_id=$driverId';
+  static const String driverReviews = 'parent/driver-reviews';
+  static String getDriverReviews(int driverId) =>
+      'parent/driver-reviews/driver/$driverId';
+  static String driverReviewById(int reviewId) =>
+      'parent/driver-reviews/$reviewId';
+
+  // Parent Complaints
+  static const String parentComplaints = 'parent/complaints';
+  static String parentComplaintsByType(String type) =>
+      'parent/complaints?type=$type';
+  static String parentComplaintDetail(int id) => 'parent/complaints/$id';
+  static String parentDriverTrips(int driverId) =>
+      'parent/driver/$driverId/trips';
 }

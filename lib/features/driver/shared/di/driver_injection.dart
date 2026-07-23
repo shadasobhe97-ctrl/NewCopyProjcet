@@ -28,6 +28,11 @@ import 'package:kids_transport/features/driver/subscriptions/data/datasources/dr
 import 'package:kids_transport/features/driver/subscriptions/data/repositories/driver_subscriptions_repository.dart';
 import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
 
+// Finance
+import 'package:kids_transport/features/driver/finance/data/datasources/finance_remote_data_source.dart';
+import 'package:kids_transport/features/driver/finance/data/repositories/finance_repository.dart';
+import 'package:kids_transport/features/driver/finance/presentation/logic/finance_cubit.dart';
+
 final GetIt driverSl = GetIt.instance;
 
 void initDriverInjection() {
@@ -126,6 +131,25 @@ void initDriverInjection() {
   if (!driverSl.isRegistered<DriverSubscriptionsCubit>()) {
     driverSl.registerFactory<DriverSubscriptionsCubit>(
       () => DriverSubscriptionsCubit(driverSl<DriverSubscriptionsRepository>()),
+    );
+  }
+
+  // =========================================
+  // 6. Finance Feature
+  // =========================================
+  if (!driverSl.isRegistered<FinanceRemoteDataSource>()) {
+    driverSl.registerLazySingleton<FinanceRemoteDataSource>(
+      () => FinanceRemoteDataSource(driverSl<ApiClient>()),
+    );
+  }
+  if (!driverSl.isRegistered<FinanceRepository>()) {
+    driverSl.registerLazySingleton<FinanceRepository>(
+      () => FinanceRepository(driverSl<FinanceRemoteDataSource>()),
+    );
+  }
+  if (!driverSl.isRegistered<FinanceCubit>()) {
+    driverSl.registerFactory<FinanceCubit>(
+      () => FinanceCubit(driverSl<FinanceRepository>()),
     );
   }
 }
