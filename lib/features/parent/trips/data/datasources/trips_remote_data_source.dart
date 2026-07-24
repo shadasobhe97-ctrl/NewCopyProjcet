@@ -38,7 +38,7 @@ class TripsRemoteDataSource {
             .toList();
       }
     } else if (data is List) {
-      return (data as List)
+      return data
           .map((e) => ActiveTripModel.fromJson(e as Map<String, dynamic>))
           .toList();
     }
@@ -86,7 +86,7 @@ class TripsRemoteDataSource {
             .toList();
       }
     } else if (data is List) {
-      return (data as List)
+      return data
           .map((e) => UpcomingTripModel.fromJson(e as Map<String, dynamic>))
           .toList();
     }
@@ -115,7 +115,7 @@ class TripsRemoteDataSource {
             .toList();
       }
     } else if (data is List) {
-      return (data as List)
+      return data
           .map((e) => TripHistoryModel.fromJson(e as Map<String, dynamic>))
           .toList();
     }

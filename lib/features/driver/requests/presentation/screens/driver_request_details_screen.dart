@@ -339,6 +339,7 @@ class _StatusBanner extends StatelessWidget {
     switch (request.status.toLowerCase()) {
       case 'pending':
         return AppColors.pending;
+      case 'accepted':
       case 'approved':
         return AppColors.success;
       case 'rejected':
@@ -354,6 +355,7 @@ class _StatusBanner extends StatelessWidget {
     switch (request.status.toLowerCase()) {
       case 'pending':
         return Icons.hourglass_empty_rounded;
+      case 'accepted':
       case 'approved':
         return Icons.check_circle_rounded;
       case 'rejected':

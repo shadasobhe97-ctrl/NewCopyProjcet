@@ -111,9 +111,7 @@ class _RequestsTabContentState extends State<_RequestsTabContent> {
           children: [
             // فلاتر الطلبات
             _RequestsFilterBar(
-              activeFilter: state is DriverRequestsLoaded
-                  ? state.activeFilter
-                  : DriverRequestsFilter.all,
+              activeFilter: context.read<DriverRequestsCubit>().currentFilter,
             ),
             // القائمة
             Expanded(child: _buildRequestsList(context, state)),

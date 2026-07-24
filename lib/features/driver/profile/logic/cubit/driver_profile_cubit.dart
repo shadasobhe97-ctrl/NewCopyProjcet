@@ -10,13 +10,13 @@ class DriverProfileCubit extends Cubit<DriverProfileState> {
 
   // 1. دالة جلب بيانات البروفايل عند فتح الشاشة
   Future<void> fetchProfile() async {
-    emit(DriverProfileLoading());
+    if (!isClosed) emit(DriverProfileLoading());
     try {
       final driver = await repository.getDriverProfile();
-      emit(DriverProfileLoaded(driver));
+      if (!isClosed) emit(DriverProfileLoaded(driver));
     } catch (e) {
-      // إزالة كلمة "Exception:" لتظهر الرسالة نظيفة للمستخدم
-      emit(DriverProfileError(e.toString().replaceAll('Exception:', '')));
+      if (!isClosed)
+        emit(DriverProfileError(e.toString().replaceAll('Exception:', '')));
     }
   }
 
@@ -28,13 +28,12 @@ class DriverProfileCubit extends Cubit<DriverProfileState> {
     String? email,
     File? avatarFile,
   }) async {
-    // إذا كنا في حالة العرض السابقة، نمرر البيانات الحالية للـ Loading حتى لا تظهر شاشة بيضاء فارغة
     if (state is DriverProfileLoaded) {
-      emit(DriverProfileUpdateLoading((state as DriverProfileLoaded).driver));
+      if (!isClosed)
+        emit(DriverProfileUpdateLoading((state as DriverProfileLoaded).driver));
     }
 
     try {
-      // استدعاء المستودع لإرسال البيانات الجديدة للسيرفر
       final updatedDriver = await repository.updateProfile(
         fullName: fullName,
         phoneNumber: phoneNumber,
@@ -43,13 +42,14 @@ class DriverProfileCubit extends Cubit<DriverProfileState> {
         avatarFile: avatarFile,
       );
 
-      // إطلاق حالة النجاح لإظهار الـ SnackBar وقفل وضع التعديل في الواجهة
-      emit(DriverProfileSuccess(updatedDriver, 'تم تحديث ملفك الشخصي بنجاح'));
+      if (!isClosed)
+        emit(DriverProfileSuccess(updatedDriver, 'تم تحديث ملفك الشخصي بنجاح'));
 
-      // إعادة الواجهة لحالة العرض بالبيانات الجديدة المحدثة
-      emit(DriverProfileLoaded(updatedDriver));
+      // 💡 نجيبوا أحدث بيانات من السيرفر باش نضمنوا تحديث الكاش والواجهة بشكل كامل
+      await fetchProfile();
     } catch (e) {
-      emit(DriverProfileError(e.toString().replaceAll('Exception:', '')));
+      if (!isClosed)
+        emit(DriverProfileError(e.toString().replaceAll('Exception:', '')));
     }
   }
 

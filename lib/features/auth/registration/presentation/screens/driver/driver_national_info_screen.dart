@@ -186,7 +186,6 @@ class _DriverNationalInfoScreenState extends State<DriverNationalInfoScreen> {
                       cubit.driverLicenseNumber = _licenseNumberController.text
                           .trim();
                       cubit.driverLicenseExpiry = _expiryController.text.trim();
-                      String _selectedGender = 'male';
                       // التوجيه لشاشة بيانات المركبة مع تمرير الخريطة المبدئية للـ Arguments
                       Navigator.pushNamed(
                         context,

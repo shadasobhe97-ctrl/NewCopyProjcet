@@ -31,11 +31,12 @@ class DriverSubscriptionsRemoteDataSource {
   Future<List<DriverSubscriptionModel>> _fetchSubscriptions({
     String? filter,
   }) async {
-    final queryParams =
-        filter != null ? {'filter': filter} : <String, dynamic>{};
+    final queryParams = filter != null
+        ? {'filter': filter}
+        : <String, dynamic>{};
 
     final response = await _apiClient.get(
-      '/api/driver/active-subscriptions',
+      'driver/active-subscriptions',
       queryParameters: queryParams.isEmpty ? null : queryParams,
       headers: _authHeader,
     );
@@ -59,8 +60,9 @@ class DriverSubscriptionsRemoteDataSource {
 
     return rawList
         .whereType<Map>()
-        .map((e) =>
-            DriverSubscriptionModel.fromJson(Map<String, dynamic>.from(e)))
+        .map(
+          (e) => DriverSubscriptionModel.fromJson(Map<String, dynamic>.from(e)),
+        )
         .toList();
   }
 }

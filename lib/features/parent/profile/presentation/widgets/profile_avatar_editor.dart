@@ -1,10 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data'; // 👈 استيراد بايتس الصورة لدعم الـ Web
 import 'package:flutter/foundation.dart'; // 👈 استيراد kIsWeb للتحقق من بيئة العمل
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
-import 'package:kids_transport/core/theme/app_theme.dart';
 
 /// أفاتار تعديل الملف الشخصي مع زر الكاميرا.
 /// يدعم العرض الآمن على بيئتي الموبايل والويب بدون انهيار الحواف.

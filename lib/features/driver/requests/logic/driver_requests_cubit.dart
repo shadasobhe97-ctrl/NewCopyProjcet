@@ -43,14 +43,19 @@ class DriverRequestsCubit extends Cubit<DriverRequestsState> {
           break;
       }
 
-      final response = await _repository.getRequests(filter: filterStr, page: 1);
-      emit(DriverRequestsLoaded(
-        requests: response.data,
-        activeFilter: filter,
-        currentPage: response.currentPage,
-        lastPage: response.lastPage,
-        hasMore: response.hasMore,
-      ));
+      final response = await _repository.getRequests(
+        filter: filterStr,
+        page: 1,
+      );
+      emit(
+        DriverRequestsLoaded(
+          requests: response.data,
+          activeFilter: filter,
+          currentPage: response.currentPage,
+          lastPage: response.lastPage,
+          hasMore: response.hasMore,
+        ),
+      );
     } catch (e) {
       emit(DriverRequestsError('فشل تحميل الطلبات: ${e.toString()}'));
     }
@@ -85,15 +90,20 @@ class DriverRequestsCubit extends Cubit<DriverRequestsState> {
         }
 
         final nextPage = currentState.currentPage + 1;
-        final response = await _repository.getRequests(filter: filterStr, page: nextPage);
+        final response = await _repository.getRequests(
+          filter: filterStr,
+          page: nextPage,
+        );
 
-        emit(currentState.copyWith(
-          requests: List.of(currentState.requests)..addAll(response.data),
-          currentPage: response.currentPage,
-          lastPage: response.lastPage,
-          hasMore: response.hasMore,
-          isLoadingMore: false,
-        ));
+        emit(
+          currentState.copyWith(
+            requests: List.of(currentState.requests)..addAll(response.data),
+            currentPage: response.currentPage,
+            lastPage: response.lastPage,
+            hasMore: response.hasMore,
+            isLoadingMore: false,
+          ),
+        );
       } catch (e) {
         emit(currentState.copyWith(isLoadingMore: false));
         // You might want to handle error without completely overriding the loaded state,
@@ -109,7 +119,9 @@ class DriverRequestsCubit extends Cubit<DriverRequestsState> {
       final request = await _repository.getRequestDetails(requestId);
       emit(DriverRequestDetailsLoaded(request));
     } catch (e) {
-      emit(DriverRequestDetailsError('فشل تحميل تفاصيل الطلب: ${e.toString()}'));
+      emit(
+        DriverRequestDetailsError('فشل تحميل تفاصيل الطلب: ${e.toString()}'),
+      );
     }
   }
 
@@ -118,20 +130,29 @@ class DriverRequestsCubit extends Cubit<DriverRequestsState> {
 
   /// قبول طلب اشتراك
   Future<bool> acceptRequest(int requestId) async {
+    print('==== [Cubit] جاري إرسال طلب القبول للطلب رقم: $requestId ====');
     try {
       await _repository.acceptRequest(requestId);
+      print('==== [Cubit] تم القبول بنجاح ====');
       return true;
     } catch (e) {
+      print('==== [Cubit] ❌ خطأ أثناء القبول ====');
+      print(e.toString());
       return false;
     }
   }
 
   /// رفض طلب اشتراك
   Future<bool> rejectRequest(int requestId, {required String reason}) async {
+    print('==== [Cubit] جاري إرسال طلب الرفض للطلب رقم: $requestId ====');
+    print('==== [Cubit] سبب الرفض: $reason ====');
     try {
       await _repository.rejectRequest(requestId, reason: reason);
+      print('==== [Cubit] تم الرفض بنجاح ====');
       return true;
     } catch (e) {
+      print('==== [Cubit] ❌ خطأ أثناء الرفض ====');
+      print(e.toString());
       return false;
     }
   }

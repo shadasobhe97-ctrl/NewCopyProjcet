@@ -9,9 +9,14 @@ class VehicleRemoteDataSource {
 
   VehicleRemoteDataSource(this._dio);
 
+  // التعديل هنا: إضافة الهيدرز الخاصة بتخطي شاشة loca.lt وقبول JSON فقط
   Map<String, dynamic> get _authHeader {
     final token = StorageService.getAuthorizationHeader();
-    return {'Authorization': token ?? ''};
+    return {
+      'Authorization': token ?? '',
+      'Accept': 'application/json',
+      'bypass-tunnel-reminder': 'true', // السطر السحري لتخطي صفحة الـ HTML
+    };
   }
 
   Future<Response> getVehicleData() async {

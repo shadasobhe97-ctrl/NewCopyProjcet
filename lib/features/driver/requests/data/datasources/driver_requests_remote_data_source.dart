@@ -13,20 +13,30 @@ class DriverRequestsRemoteDataSource {
     return {'Authorization': token ?? ''};
   }
 
-  Future<PaginatedDriverRequests> fetchRequests({String? filter, int page = 1}) async {
+  Future<PaginatedDriverRequests> fetchRequests({
+    String? filter,
+    int page = 1,
+  }) async {
     final queryParams = <String, dynamic>{'page': page};
     if (filter != null) {
       queryParams['filter'] = filter;
     }
 
+    // التعديل: مسح /api/ من الرابط
     final response = await _apiClient.get(
-      '/api/driver/requests',
+      'driver/requests',
       queryParameters: queryParams.isEmpty ? null : queryParams,
       headers: _authHeader,
     );
 
     final data = response.data;
-    if (data == null) return PaginatedDriverRequests(data: [], currentPage: 1, lastPage: 1, perPage: 15);
+    if (data == null)
+      return PaginatedDriverRequests(
+        data: [],
+        currentPage: 1,
+        lastPage: 1,
+        perPage: 15,
+      );
     if (data is Map) {
       final success = data['success'];
       if (success == false) {
@@ -71,8 +81,9 @@ class DriverRequestsRemoteDataSource {
   }
 
   Future<DriverRequestModel> fetchRequestDetails(int requestId) async {
+    // التعديل: مسح /api/ من الرابط
     final response = await _apiClient.get(
-      '/api/driver/requests/$requestId',
+      'driver/requests/$requestId',
       headers: _authHeader,
     );
 
@@ -95,36 +106,22 @@ class DriverRequestsRemoteDataSource {
   }
 
   Future<void> acceptRequest(int requestId) async {
-    final response = await _apiClient.post(
-      '/api/driver/requests/$requestId/accept',
-      data: {},
+    // التعديل: مسار ريان الدقيق بدون كلمة requests
+    final response = await _apiClient.put(
+      'driver/$requestId/status',
+      data: {'status': 'accepted'},
       headers: _authHeader,
     );
-    final data = response.data;
-    if (data is Map) {
-      final success = data['success'];
-      if (success == false) {
-        final msg = ApiException.extractMessage(data);
-        throw ApiException(msg ?? 'تعذر قبول الطلب.');
-      }
-    }
+    // ... باقي الكود
   }
 
   Future<void> rejectRequest(int requestId, {required String reason}) async {
-    final response = await _apiClient.post(
-      '/api/driver/requests/$requestId/reject',
-      data: {
-        'rejection_reason': reason,
-      },
+    // التعديل: مسار ريان الدقيق بدون كلمة requests
+    final response = await _apiClient.put(
+      'driver/$requestId/status',
+      data: {'status': 'rejected', 'rejection_reason': reason},
       headers: _authHeader,
     );
-    final data = response.data;
-    if (data is Map) {
-      final success = data['success'];
-      if (success == false) {
-        final msg = ApiException.extractMessage(data);
-        throw ApiException(msg ?? 'تعذر رفض الطلب.');
-      }
-    }
+    // ... باقي الكود
   }
 }

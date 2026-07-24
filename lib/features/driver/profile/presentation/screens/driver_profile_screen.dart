@@ -9,6 +9,7 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import '../../logic/cubit/driver_profile_cubit.dart';
 import '../../logic/cubit/driver_profile_state.dart';
+import '../../data/models/driver_model.dart';
 
 // ==========================================
 // شاشة الملف الشخصي الكاملة للسائق
@@ -35,7 +36,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   String _phone = '';
   String _backupPhone = '';
   String _email = '';
-  String _shift = 'صباحية'; // صباحية / مسائية / كلاهما
+  String _shift = 'صباحية';
   String _coveredAreas = 'حي الأندلس، سوق الجمعة';
   String _currentLocation = 'متوفر (دائم التحديث)';
 
@@ -49,18 +50,57 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // 1. تحميل البيانات محلياً من SharedPreferences فوراً (Cache-First)
     final profileCubit = context.read<DriverProfileCubit>();
     _name = profileCubit.getCachedFullName();
     _phone = profileCubit.getCachedPhoneNumber();
-    _initControllers();
 
-    // 2. طلب تحديث البيانات بالخلفية من السيرفر
+    // إنشاء الكنترولرز مرة واحدة فقط لتفادي تسريب الذاكرة!
+    _nameController = TextEditingController(text: _name);
+    _dobController = TextEditingController(text: _dob);
+    _phoneController = TextEditingController(text: _phone);
+    _backupPhoneController = TextEditingController(text: _backupPhone);
+    _emailController = TextEditingController(text: _email);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      try {
-        context.read<DriverProfileCubit>().fetchProfile();
-      } catch (_) {}
+      if (!mounted) return;
+      context.read<DriverProfileCubit>().fetchProfile();
     });
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _dobController.dispose();
+    _phoneController.dispose();
+    _backupPhoneController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  // دالة ذكية لتعبئة البيانات بدون تدمير الـ Controllers
+  void _fillFieldsFrom(dynamic driver) {
+    _name = (driver.hasPendingChanges && driver.pendingFullName != null)
+        ? driver.pendingFullName
+        : (driver.fullName ?? '');
+    _phone = (driver.hasPendingChanges && driver.pendingPhoneNumber != null)
+        ? driver.pendingPhoneNumber
+        : (driver.phoneNumber ?? '');
+    _backupPhone = driver.alternativePhone ?? '';
+    _email = (driver.hasPendingChanges && driver.pendingEmail != null)
+        ? driver.pendingEmail
+        : (driver.email ?? '');
+
+    // خدعة بسيطة باش المتصفح ما يخزنش الصورة القديمة في الكاش ويجبره يعرض المحدثة
+    if (driver.avatarUrl != null && driver.avatarUrl!.isNotEmpty) {
+      _avatarUrl =
+          '${driver.avatarUrl}?v=${DateTime.now().millisecondsSinceEpoch}';
+    }
+
+    if (_nameController.text != _name) _nameController.text = _name;
+    if (_phoneController.text != _phone) _phoneController.text = _phone;
+    if (_backupPhoneController.text != _backupPhone)
+      _backupPhoneController.text = _backupPhone;
+    if (_emailController.text != _email) _emailController.text = _email;
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -73,9 +113,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('فشل اختيار الصورة: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('فشل اختيار الصورة: $e')));
     }
   }
 
@@ -103,12 +143,18 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 ),
                 const SizedBox(height: 20),
                 ListTile(
-                  leading: Icon(Icons.camera_alt_rounded, color: context.primaryColor),
+                  leading: Icon(
+                    Icons.camera_alt_rounded,
+                    color: context.primaryColor,
+                  ),
                   title: const Text('التقاط صورة بالكاميرا'),
                   onTap: () => _pickImage(ImageSource.camera),
                 ),
                 ListTile(
-                  leading: Icon(Icons.photo_library_rounded, color: context.accentPurple),
+                  leading: Icon(
+                    Icons.photo_library_rounded,
+                    color: context.accentPurple,
+                  ),
                   title: const Text('اختيار من المعرض'),
                   onTap: () => _pickImage(ImageSource.gallery),
                 ),
@@ -120,28 +166,14 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     );
   }
 
-  void _initControllers() {
-    _nameController = TextEditingController(text: _name);
-    _dobController = TextEditingController(text: _dob);
-    _phoneController = TextEditingController(text: _phone);
-    _backupPhoneController = TextEditingController(text: _backupPhone);
-    _emailController = TextEditingController(text: _email);
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _dobController.dispose();
-    _phoneController.dispose();
-    _backupPhoneController.dispose();
-    _emailController.dispose();
-    super.dispose();
-  }
-
   void _toggleEditMode() {
     setState(() {
       if (_isEditing) {
-        _initControllers();
+        // إذا تم إلغاء التعديل، نرجع النصوص للقيم الأصلية
+        _nameController.text = _name;
+        _phoneController.text = _phone;
+        _backupPhoneController.text = _backupPhone;
+        _emailController.text = _email;
       }
       _isEditing = !_isEditing;
     });
@@ -149,19 +181,18 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
 
   void _saveProfile() {
     if (_formKey.currentState?.validate() ?? false) {
-      // إطلاق التحديث على السيرفر بالخلفية أولاً (API-First Strategy)
       try {
         context.read<DriverProfileCubit>().updateProfile(
-              fullName: _nameController.text.trim(),
-              phoneNumber: _phoneController.text.trim(),
-              alternativePhone: _backupPhoneController.text.trim().isNotEmpty
-                  ? _backupPhoneController.text.trim()
-                  : null,
-              email: _emailController.text.trim().isNotEmpty
-                  ? _emailController.text.trim()
-                  : null,
-              avatarFile: _avatarImage,
-            );
+          fullName: _nameController.text.trim(),
+          phoneNumber: _phoneController.text.trim(),
+          alternativePhone: _backupPhoneController.text.trim().isNotEmpty
+              ? _backupPhoneController.text.trim()
+              : null,
+          email: _emailController.text.trim().isNotEmpty
+              ? _emailController.text.trim()
+              : null,
+          avatarFile: _avatarImage,
+        );
       } catch (_) {}
     }
   }
@@ -174,23 +205,36 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     final isSaving = profileState is DriverProfileUpdateLoading;
     final isLoading = profileState is DriverProfileLoading;
 
+    final DriverModel? driver = profileState is DriverProfileLoaded
+        ? profileState.driver
+        : (profileState is DriverProfileSuccess
+            ? profileState.driver
+            : (profileState is DriverProfileUpdateLoading
+                ? profileState.currentDriver
+                : null));
+
+    final isNamePending = driver != null &&
+        driver.hasPendingChanges &&
+        driver.pendingFullName != null;
+    final isPhonePending = driver != null &&
+        driver.hasPendingChanges &&
+        driver.pendingPhoneNumber != null;
+    final isEmailPending = driver != null &&
+        driver.hasPendingChanges &&
+        driver.pendingEmail != null;
+
     return BlocListener<DriverProfileCubit, DriverProfileState>(
       listener: (context, state) {
         if (state is DriverProfileLoaded) {
           setState(() {
-            _name = state.driver.fullName;
-            _phone = state.driver.phoneNumber;
-            _dob = '1985-04-12'; // حقل تاريخ الميلاد غير متوفر في DriverModel
-            _backupPhone = state.driver.alternativePhone ?? '';
-            _email = state.driver.email;
-            _avatarUrl = state.driver.avatarUrl;
-            _initControllers();
+            _fillFieldsFrom(state.driver);
           });
         } else if (state is DriverProfileSuccess) {
           setState(() {
             _isEditing = false;
-            _avatarUrl = state.driver.avatarUrl; // ✅ تحديث صورة السائق بعد الحفظ
-            _avatarImage = null; // إزالة الصورة المحلية والاعتماد على URL الجديد
+            _avatarImage =
+                null; // إزالة الصورة المحلية للاعتماد على الرابط المحدث
+            _fillFieldsFrom(state.driver);
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -228,7 +272,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 IconButton(
                   icon: Icon(
                     _isEditing ? Icons.close_rounded : Icons.edit_rounded,
-                    color: _isEditing ? context.errorColor : context.primaryColor,
+                    color: _isEditing
+                        ? context.errorColor
+                        : context.primaryColor,
                   ),
                   onPressed: isSaving ? null : _toggleEditMode,
                   tooltip: _isEditing ? 'إلغاء التعديل' : 'تعديل البيانات',
@@ -247,173 +293,186 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                // ── الصورة الشخصية ──
-                Center(
-                  child: Stack(
-                    children: [
-                      Container(
-                        decoration: AppTheme.boxDecoration(
-                          shape: BoxShape.circle,
-                          border: AppTheme.border(
-                            color: context.primaryColor.withValues(alpha: 0.3),
-                            width: 4,
-                          ),
-                        ),
-                        child: CircleAvatar(
-                          radius: 50,
-                          backgroundColor: isDark
-                              ? AppColors.grey800
-                              : AppColors.grey200,
-                          backgroundImage: _avatarImage != null
-                              ? FileImage(_avatarImage!)
-                              : (_avatarUrl != null && _avatarUrl!.isNotEmpty
-                                  ? CachedNetworkImageProvider(_avatarUrl!)
-                                  : null),
-                          child: (_avatarImage == null && (_avatarUrl == null || _avatarUrl!.isEmpty))
-                              ? const Icon(
-                                  Icons.person,
-                                  size: 50,
-                                  color: AppColors.grey,
-                                )
-                              : null,
-                        ),
-                      ),
-                      if (_isEditing)
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: Container(
-                            decoration: AppTheme.boxDecoration(
-                              color: context.primaryColor,
-                              shape: BoxShape.circle,
-                            ),
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.camera_alt,
-                                color: AppColors.white,
-                                size: 18,
+                        // ── الصورة الشخصية ──
+                        Center(
+                          child: Stack(
+                            children: [
+                              Container(
+                                decoration: AppTheme.boxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: AppTheme.border(
+                                    color: context.primaryColor.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    width: 4,
+                                  ),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: isDark
+                                      ? AppColors.grey800
+                                      : AppColors.grey200,
+                                  backgroundImage: _avatarImage != null
+                                      ? FileImage(_avatarImage!)
+                                      : (_avatarUrl != null &&
+                                                _avatarUrl!.isNotEmpty
+                                            ? CachedNetworkImageProvider(
+                                                _avatarUrl!,
+                                              )
+                                            : null),
+                                  child:
+                                      (_avatarImage == null &&
+                                          (_avatarUrl == null ||
+                                              _avatarUrl!.isEmpty))
+                                      ? const Icon(
+                                          Icons.person,
+                                          size: 50,
+                                          color: AppColors.grey,
+                                        )
+                                      : null,
+                                ),
                               ),
-                              onPressed: _showImageSourceBottomSheet,
-                            ),
+                              if (_isEditing)
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    decoration: AppTheme.boxDecoration(
+                                      color: context.primaryColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: IconButton(
+                                      icon: const Icon(
+                                        Icons.camera_alt,
+                                        color: AppColors.white,
+                                        size: 18,
+                                      ),
+                                      onPressed: _showImageSourceBottomSheet,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 30),
+                        const SizedBox(height: 30),
 
-                // ── حقول البيانات ──
-                _buildField(
-                  label: 'الاسم بالكامل',
-                  icon: Icons.person_outline,
-                  value: _name,
-                  controller: _nameController,
-                  isDark: isDark,
-                  validator: (val) =>
-                      val == null || val.isEmpty ? 'مطلوب' : null,
-                ),
-                _buildField(
-                  label: 'رقم الهاتف',
-                  icon: Icons.phone_outlined,
-                  value: _phone,
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  isDark: isDark,
-                  validator: (val) =>
-                      val == null || val.isEmpty ? 'مطلوب' : null,
-                ),
-                _buildField(
-                  label: 'رقم هاتف احتياطي',
-                  icon: Icons.phone_android_outlined,
-                  value: _backupPhone,
-                  controller: _backupPhoneController,
-                  keyboardType: TextInputType.phone,
-                  isDark: isDark,
-                ),
-                _buildField(
-                  label: 'البريد الإلكتروني',
-                  icon: Icons.email_outlined,
-                  value: _email,
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  isDark: isDark,
-                ),
-                _buildField(
-                  label: 'تاريخ الميلاد',
-                  icon: Icons.calendar_today_outlined,
-                  value: _dob,
-                  controller: _dobController,
-                  isDark: isDark,
-                  readOnly: true, // يفضل جعله DatePicker مستقبلاً
-                ),
+                        // ── حقول البيانات ──
+                        _buildField(
+                          label: 'الاسم بالكامل',
+                          icon: Icons.person_outline,
+                          value: _name,
+                          controller: _nameController,
+                          isDark: isDark,
+                          isPending: isNamePending,
+                          validator: (val) =>
+                              val == null || val.isEmpty ? 'مطلوب' : null,
+                        ),
+                        _buildField(
+                          label: 'رقم الهاتف',
+                          icon: Icons.phone_outlined,
+                          value: _phone,
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          isDark: isDark,
+                          isPending: isPhonePending,
+                          validator: (val) =>
+                              val == null || val.isEmpty ? 'مطلوب' : null,
+                        ),
+                        _buildField(
+                          label: 'رقم هاتف احتياطي',
+                          icon: Icons.phone_android_outlined,
+                          value: _backupPhone,
+                          controller: _backupPhoneController,
+                          keyboardType: TextInputType.phone,
+                          isDark: isDark,
+                        ),
+                        _buildField(
+                          label: 'البريد الإلكتروني',
+                          icon: Icons.email_outlined,
+                          value: _email,
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          isDark: isDark,
+                          isPending: isEmailPending,
+                        ),
+                        _buildField(
+                          label: 'تاريخ الميلاد',
+                          icon: Icons.calendar_today_outlined,
+                          value: _dob,
+                          controller: _dobController,
+                          isDark: isDark,
+                          readOnly: true, // يفضل جعله DatePicker مستقبلاً
+                        ),
 
-                // ── بيانات غير قابلة للتعديل مباشرة (للعرض فقط) ──
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Divider(),
-                ),
-                Text(
-                  'بيانات العمل والتغطية',
-                  style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                _buildInfoRow(
-                  'فترة العمل',
-                  _shift,
-                  Icons.access_time_rounded,
-                  isDark,
-                ),
-                _buildInfoRow(
-                  'المناطق المغطاة',
-                  _coveredAreas,
-                  Icons.map_outlined,
-                  isDark,
-                ),
-                _buildInfoRow(
-                  'الموقع الجغرافي',
-                  _currentLocation,
-                  Icons.location_on_outlined,
-                  isDark,
-                ),
-
-                const SizedBox(height: 40),
-
-                // زر الحفظ يظهر فقط في وضع التعديل
-                if (_isEditing)
-                  ElevatedButton(
-                    onPressed: isSaving ? null : _saveProfile,
-                    style: AppTheme.elevatedButtonStyle(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: AppTheme.roundedRectangleBorder(
-                        borderRadius: AppTheme.radius(12),
-                      ),
-                    ),
-                    child: isSaving
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : Text(
-                            'حفظ التعديلات',
-                            style: AppTextStyles.style(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        // ── بيانات غير قابلة للتعديل مباشرة (للعرض فقط) ──
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Divider(),
+                        ),
+                        Text(
+                          'بيانات العمل والتغطية',
+                          style: AppTextStyles.style(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        _buildInfoRow(
+                          'فترة العمل',
+                          _shift,
+                          Icons.access_time_rounded,
+                          isDark,
+                        ),
+                        _buildInfoRow(
+                          'المناطق المغطاة',
+                          _coveredAreas,
+                          Icons.map_outlined,
+                          isDark,
+                        ),
+                        _buildInfoRow(
+                          'الموقع الجغرافي',
+                          _currentLocation,
+                          Icons.location_on_outlined,
+                          isDark,
+                        ),
+
+                        const SizedBox(height: 40),
+
+                        // زر الحفظ يظهر فقط في وضع التعديل
+                        if (_isEditing)
+                          ElevatedButton(
+                            onPressed: isSaving ? null : _saveProfile,
+                            style: AppTheme.elevatedButtonStyle(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: AppTheme.roundedRectangleBorder(
+                                borderRadius: AppTheme.radius(12),
+                              ),
+                            ),
+                            child: isSaving
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    'حفظ التعديلات',
+                                    style: AppTextStyles.style(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                      ],
+                    ),
                   ),
-              ],
-            ),
-          ),
-        ),
-      ),
+                ),
+              ),
             ],
           ),
         ),
@@ -431,6 +490,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
     bool readOnly = false,
+    bool isPending = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -446,6 +506,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   context,
                   labelText: label,
                   prefixIcon: Icon(icon, color: context.primaryColor),
+                  helperText: isPending ? 'البيانات الحالية بانتظار موافقة الإدارة' : null,
                 ),
               )
             : Container(
@@ -462,25 +523,52 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   children: [
                     Icon(icon, color: context.primaryColor, size: 22),
                     const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          label,
-                          style: AppTextStyles.style(
-                            fontSize: 12,
-                            color: AppColors.grey500,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                label,
+                                style: AppTextStyles.style(
+                                  fontSize: 12,
+                                  color: AppColors.grey500,
+                                ),
+                              ),
+                              if (isPending) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'قيد المراجعة',
+                                    style: TextStyle(
+                                      color: Colors.orange,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          value,
-                          style: AppTextStyles.style(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                          const SizedBox(height: 4),
+                          Text(
+                            value,
+                            style: AppTextStyles.style(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
