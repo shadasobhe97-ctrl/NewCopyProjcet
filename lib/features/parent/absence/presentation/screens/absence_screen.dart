@@ -215,13 +215,15 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                 children = childrenState.children;
               }
 
-              // اختيار تلقائي إذا طفل واحد فقط
+              // اختيار تلقائي إذا طفل واحد فقط وله اشتراك مفعل
               if (children.length == 1 &&
                   _selectedChildId == null &&
                   children.first.id != null) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _selectChild(children.first);
-                });
+                if (children.first.hasActiveSubscription) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _selectChild(children.first);
+                  });
+                }
               }
 
               return RefreshIndicator(
@@ -233,31 +235,36 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ─── 1. اختيار الطفل ─────────────────────────────
-                      if (children.length > 1) ...[
-                        _buildSectionTitle(
-                          context,
-                          '👶 اختر الطفل',
-                          isDark,
-                        ),
-                        SizedBox(height: 10.h),
-                        _buildChildSelector(context, children, isDark),
-                        SizedBox(height: 20.h),
-                      ],
+                      // ─── إذا الطفل الوحيد غير مشترك ─────────────────
+                      if (children.length == 1 && !children.first.hasActiveSubscription)
+                        _buildInactiveSubscriptionCard(context, children.first, isDark)
+                      else ...[
+                        // ─── 1. اختيار الطفل ─────────────────────────────
+                        if (children.length > 1) ...[
+                          _buildSectionTitle(
+                            context,
+                            '👶 اختر الطفل',
+                            isDark,
+                          ),
+                          SizedBox(height: 10.h),
+                          _buildChildSelector(context, children, isDark),
+                          SizedBox(height: 20.h),
+                        ],
 
-                      // ─── بقية المحتوى بعد اختيار الطفل ──────────────
-                      if (_selectedChildId == null && children.length > 1)
-                        _buildSelectChildPrompt(context, isDark)
-                      else
-                        BlocBuilder<AbsenceCubit, AbsenceState>(
-                          builder: (context, absenceState) {
-                            return _buildAbsenceContent(
-                              context,
-                              absenceState,
-                              isDark,
-                            );
-                          },
-                        ),
+                        // ─── بقية المحتوى بعد اختيار الطفل ──────────────
+                        if (_selectedChildId == null && children.length > 1)
+                          _buildSelectChildPrompt(context, isDark)
+                        else
+                          BlocBuilder<AbsenceCubit, AbsenceState>(
+                            builder: (context, absenceState) {
+                              return _buildAbsenceContent(
+                                context,
+                                absenceState,
+                                isDark,
+                              );
+                            },
+                          ),
+                      ],
                     ],
                   ),
                 ),
@@ -269,6 +276,20 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
     );
   }
 
+  void _selectChild(ChildModel child) {
+    if (child.id == null) return;
+    if (!child.hasActiveSubscription) {
+      _showError('الطفل ${child.fullName} ليس لديه اشتراك نقل مفعل لتسجيل غياب له.');
+      return;
+    }
+    setState(() {
+      _selectedChildId = child.id;
+      _selectedChildName = child.fullName;
+      _selectedChildPhoto = child.photoUrl;
+    });
+    context.read<AbsenceCubit>().loadAbsenceData(child.id!);
+  }
+
   // ─── قسم اختيار الطفل (Chips أفقية) ─────────────────────────────────────
   Widget _buildChildSelector(
     BuildContext context,
@@ -276,7 +297,7 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
     bool isDark,
   ) {
     return SizedBox(
-      height: 82.h,
+      height: 90.h,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: children.length,
@@ -284,12 +305,13 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
         itemBuilder: (context, index) {
           final child = children[index];
           final isSelected = child.id == _selectedChildId;
+          final isActive = child.hasActiveSubscription;
 
           return GestureDetector(
             onTap: () => _selectChild(child),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
               decoration: BoxDecoration(
                 color: isSelected
                     ? context.primaryColor
@@ -298,7 +320,9 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                 border: Border.all(
                   color: isSelected
                       ? context.primaryColor
-                      : (isDark ? AppColors.grey700 : AppColors.grey200),
+                      : (!isActive
+                          ? AppColors.grey400.withValues(alpha: 0.5)
+                          : (isDark ? AppColors.grey700 : AppColors.grey200)),
                   width: isSelected ? 2 : 1,
                 ),
                 boxShadow: isSelected
@@ -311,44 +335,118 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                       ]
                     : [],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircleAvatar(
-                    radius: 22.r,
-                    backgroundColor: isSelected
-                        ? AppColors.white.withValues(alpha: 0.3)
-                        : context.primaryColor.withValues(alpha: 0.1),
-                    backgroundImage: (child.photoUrl != null &&
-                            child.hasRealPhoto)
-                        ? NetworkImage(child.photoUrl!)
-                        : null,
-                    child: (child.photoUrl == null || !child.hasRealPhoto)
-                        ? Icon(
-                            Icons.child_care_rounded,
-                            color: isSelected
-                                ? AppColors.white
-                                : context.primaryColor,
-                            size: 20.r,
-                          )
-                        : null,
-                  ),
-                  SizedBox(height: 6.h),
-                  Text(
-                    child.fullName.split(' ').first,
-                    style: AppTextStyles.style(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected
-                          ? AppColors.white
-                          : (isDark ? AppColors.white : AppColors.textDark),
+              child: Opacity(
+                opacity: isActive ? 1.0 : 0.55,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 20.r,
+                          backgroundColor: isSelected
+                              ? AppColors.white.withValues(alpha: 0.3)
+                              : context.primaryColor.withValues(alpha: 0.1),
+                          backgroundImage: (child.photoUrl != null &&
+                                  child.hasRealPhoto)
+                              ? NetworkImage(child.photoUrl!)
+                              : null,
+                          child: (child.photoUrl == null || !child.hasRealPhoto)
+                              ? Icon(
+                                  Icons.child_care_rounded,
+                                  color: isSelected
+                                      ? AppColors.white
+                                      : context.primaryColor,
+                                  size: 18.r,
+                                )
+                              : null,
+                        ),
+                        if (!isActive)
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: CircleAvatar(
+                              radius: 8.r,
+                              backgroundColor: AppColors.error,
+                              child: Icon(
+                                Icons.block_rounded,
+                                size: 10.r,
+                                color: AppColors.white,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                  ),
-                ],
+                    SizedBox(height: 4.h),
+                    Text(
+                      child.fullName.split(' ').first,
+                      style: AppTextStyles.style(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected
+                            ? AppColors.white
+                            : (isDark ? AppColors.white : AppColors.textDark),
+                      ),
+                    ),
+                    if (!isActive)
+                      Text(
+                        'غير مشترك',
+                        style: AppTextStyles.style(
+                          fontSize: 9.sp,
+                          color: AppColors.error,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildInactiveSubscriptionCard(
+    BuildContext context,
+    ChildModel child,
+    bool isDark,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(28.w),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.warning.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.warning_amber_rounded,
+            size: 48.r,
+            color: AppColors.warning,
+          ),
+          SizedBox(height: 12.h),
+          Text(
+            'لا يوجد اشتراك نقل مفعل',
+            style: AppTextStyles.style(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.white : AppColors.textDark,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            'الطفل ${child.fullName} لا يملك اشتراك نقل نشط حالياً للإبلاغ عن غياب.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.style(
+              fontSize: 13.sp,
+              color: isDark ? AppColors.grey400 : AppColors.textMuted,
+            ),
+          ),
+        ],
       ),
     );
   }
