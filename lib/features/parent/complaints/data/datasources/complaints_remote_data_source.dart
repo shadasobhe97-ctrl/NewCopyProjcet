@@ -15,10 +15,11 @@ class ComplaintsRemoteDataSource {
     return {'Authorization': token ?? ''};
   }
 
-  /// GET /api/admin/complaints?status={status}
+  /// GET /api/parent/complaints or /api/parent/complaints?type={type}
   Future<List<ComplaintModel>> getComplaints({String? type}) async {
-    final status = (type == null || type.isEmpty) ? 'all' : type;
-    final endpoint = ApiEndpoints.parentComplaintsByStatus(status);
+    final endpoint = (type != null && type.isNotEmpty && type != 'all')
+        ? ApiEndpoints.parentComplaintsByType(type)
+        : ApiEndpoints.parentComplaints;
 
     final response = await _client.get(endpoint, headers: _authHeader);
 

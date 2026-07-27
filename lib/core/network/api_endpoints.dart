@@ -96,9 +96,9 @@ class ApiEndpoints {
       'parent/driver-reviews/$reviewId';
 
   // Parent Complaints
-  static const String parentComplaints = 'admin/complaints';
-  static String parentComplaintsByStatus(String status) =>
-      'admin/complaints?status=$status';
+  static const String parentComplaints = 'parent/complaints';
+  static String parentComplaintsByType(String type) =>
+      'parent/complaints?type=$type';
   static String parentComplaintDetail(int id) => 'parent/complaints/$id';
   static String parentDriverTrips(int driverId) =>
       'parent/driver/$driverId/trips';
