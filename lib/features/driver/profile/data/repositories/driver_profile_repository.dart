@@ -33,8 +33,8 @@ class DriverProfileRepository {
 
   /// تحديث بيانات السائق بالسيرفر وتحديث الكاش المحلي عند النجاح فقط (API-First Strategy)
   Future<DriverModel> updateProfile({
-    required String fullName,
-    required String phoneNumber,
+    String? fullName,
+    String? phoneNumber,
     String? alternativePhone,
     String? email,
     File? avatarFile,
@@ -51,12 +51,12 @@ class DriverProfileRepository {
     await sessionRepository.saveUserSession(
       token: sessionRepository.getToken() ?? '',
       tokenType: 'Bearer',
-      roleId: sessionRepository.getRoleId() ?? 4,
+      roleId: sessionRepository.getRoleId() ?? driver.roleId,
       roleName: 'driver',
-      userId: int.tryParse(sessionRepository.getUserId() ?? '') ?? 0,
-      fullName: driver.fullName,
-      phoneNumber: driver.phoneNumber,
-      isActive: sessionRepository.getIsActive() ?? true,
+      userId: driver.userId > 0 ? driver.userId : (int.tryParse(sessionRepository.getUserId() ?? '') ?? 0),
+      fullName: driver.fullName.isNotEmpty ? driver.fullName : (sessionRepository.getFullName() ?? ''),
+      phoneNumber: driver.phoneNumber.isNotEmpty ? driver.phoneNumber : (sessionRepository.getPhoneNumber() ?? ''),
+      isActive: driver.isActive,
     );
 
     return driver;

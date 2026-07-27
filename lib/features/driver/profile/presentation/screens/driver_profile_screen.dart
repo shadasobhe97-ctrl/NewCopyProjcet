@@ -32,13 +32,13 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
 
   // بيانات افتراضية يتم تحميلها من التخزين المحلي لتدعم العمل بدون إنترنت
   String _name = '';
-  String _dob = '1985-04-12';
+  final String _dob = '1985-04-12';
   String _phone = '';
   String _backupPhone = '';
   String _email = '';
-  String _shift = 'صباحية';
-  String _coveredAreas = 'حي الأندلس، سوق الجمعة';
-  String _currentLocation = 'متوفر (دائم التحديث)';
+  final String _shift = 'صباحية';
+  final String _coveredAreas = 'حي الأندلس، سوق الجمعة';
+  final String _currentLocation = 'متوفر (دائم التحديث)';
 
   // Controllers للوضع التعديل
   late TextEditingController _nameController;
@@ -78,29 +78,62 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   }
 
   // دالة ذكية لتعبئة البيانات بدون تدمير الـ Controllers
-  void _fillFieldsFrom(dynamic driver) {
+  void _fillFieldsFrom(DriverModel driver) {
     _name = (driver.hasPendingChanges && driver.pendingFullName != null)
-        ? driver.pendingFullName
-        : (driver.fullName ?? '');
+        ? driver.pendingFullName!
+        : driver.fullName;
     _phone = (driver.hasPendingChanges && driver.pendingPhoneNumber != null)
-        ? driver.pendingPhoneNumber
-        : (driver.phoneNumber ?? '');
+        ? driver.pendingPhoneNumber!
+        : driver.phoneNumber;
     _backupPhone = driver.alternativePhone ?? '';
     _email = (driver.hasPendingChanges && driver.pendingEmail != null)
-        ? driver.pendingEmail
-        : (driver.email ?? '');
+        ? driver.pendingEmail!
+        : driver.email;
 
-    // خدعة بسيطة باش المتصفح ما يخزنش الصورة القديمة في الكاش ويجبره يعرض المحدثة
     if (driver.avatarUrl != null && driver.avatarUrl!.isNotEmpty) {
       _avatarUrl =
           '${driver.avatarUrl}?v=${DateTime.now().millisecondsSinceEpoch}';
+    } else {
+      _avatarUrl = null;
     }
 
     if (_nameController.text != _name) _nameController.text = _name;
     if (_phoneController.text != _phone) _phoneController.text = _phone;
-    if (_backupPhoneController.text != _backupPhone)
+    if (_backupPhoneController.text != _backupPhone) {
       _backupPhoneController.text = _backupPhone;
+    }
     if (_emailController.text != _email) _emailController.text = _email;
+  }
+
+  void _showSensitiveDataNotice() {
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.info_outline, color: context.primaryColor),
+              const SizedBox(width: 8),
+              const Text('تنبيه الإدارة'),
+            ],
+          ),
+          content: const Text(
+            'لقد قمت بتعديل "الاسم بالكامل". هذا التعديل يتطلب موافقة الإدارة ولن يظهر في ملفك حتى يتم اعتماده.',
+            style: TextStyle(fontSize: 14, height: 1.5),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('حسناً'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -113,6 +146,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('فشل اختيار الصورة: $e')));
@@ -208,18 +242,21 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     final DriverModel? driver = profileState is DriverProfileLoaded
         ? profileState.driver
         : (profileState is DriverProfileSuccess
-            ? profileState.driver
-            : (profileState is DriverProfileUpdateLoading
-                ? profileState.currentDriver
-                : null));
+              ? profileState.driver
+              : (profileState is DriverProfileUpdateLoading
+                    ? profileState.currentDriver
+                    : null));
 
-    final isNamePending = driver != null &&
+    final isNamePending =
+        driver != null &&
         driver.hasPendingChanges &&
         driver.pendingFullName != null;
-    final isPhonePending = driver != null &&
+    final isPhonePending =
+        driver != null &&
         driver.hasPendingChanges &&
         driver.pendingPhoneNumber != null;
-    final isEmailPending = driver != null &&
+    final isEmailPending =
+        driver != null &&
         driver.hasPendingChanges &&
         driver.pendingEmail != null;
 
@@ -242,6 +279,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
               backgroundColor: context.successColor,
             ),
           );
+          if (state.isNameChanged) {
+            _showSensitiveDataNotice();
+          }
         } else if (state is DriverProfileError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -385,6 +425,16 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                           controller: _backupPhoneController,
                           keyboardType: TextInputType.phone,
                           isDark: isDark,
+                          validator: (val) {
+                            if (val != null && val.trim().isNotEmpty) {
+                              final cleanVal = val.trim();
+                              if (cleanVal.length != 10 ||
+                                  !RegExp(r'^\d{10}$').hasMatch(cleanVal)) {
+                                return 'رقم الهاتف الاحتياطي يجب أن يتكون من 10 أرقام';
+                              }
+                            }
+                            return null;
+                          },
                         ),
                         _buildField(
                           label: 'البريد الإلكتروني',
@@ -506,7 +556,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   context,
                   labelText: label,
                   prefixIcon: Icon(icon, color: context.primaryColor),
-                  helperText: isPending ? 'البيانات الحالية بانتظار موافقة الإدارة' : null,
+                  helperText: isPending
+                      ? 'البيانات الحالية بانتظار موافقة الإدارة'
+                      : null,
                 ),
               )
             : Container(
@@ -544,7 +596,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.orange.withValues(alpha: 0.15),
+                                    color: Colors.orange.withValues(
+                                      alpha: 0.15,
+                                    ),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: const Text(

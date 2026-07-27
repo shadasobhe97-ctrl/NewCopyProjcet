@@ -36,19 +36,26 @@ class DriverProfileRemoteDataSource {
 
   // 2. تحديث البيانات الشخصية والمظهر (POST) باستخدام Multipart/FormData
   Future<DriverModel> updateDriverProfile({
-    required String fullName,
-    required String phoneNumber,
+    String? fullName,
+    String? phoneNumber,
     String? alternativePhone,
     String? email,
     File? avatarFile,
   }) async {
     try {
-      final Map<String, dynamic> dataMap = {
-        'full_name': fullName,
-        'phone_number': phoneNumber,
-        if (alternativePhone != null) 'alternative_phone': alternativePhone,
-        if (email != null) 'email': email,
-      };
+      final Map<String, dynamic> dataMap = {};
+      if (fullName != null && fullName.trim().isNotEmpty) {
+        dataMap['full_name'] = fullName.trim();
+      }
+      if (phoneNumber != null && phoneNumber.trim().isNotEmpty) {
+        dataMap['phone_number'] = phoneNumber.trim();
+      }
+      if (alternativePhone != null && alternativePhone.trim().isNotEmpty) {
+        dataMap['alternative_phone'] = alternativePhone.trim();
+      }
+      if (email != null && email.trim().isNotEmpty) {
+        dataMap['email'] = email.trim();
+      }
 
       if (avatarFile != null) {
         final fileName = avatarFile.path.split('/').last;

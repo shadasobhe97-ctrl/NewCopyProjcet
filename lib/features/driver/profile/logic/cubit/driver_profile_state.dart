@@ -24,7 +24,8 @@ class DriverProfileUpdateLoading extends DriverProfileState {
 class DriverProfileSuccess extends DriverProfileState {
   final DriverModel driver;
   final String message;
-  DriverProfileSuccess(this.driver, this.message);
+  final bool isNameChanged;
+  DriverProfileSuccess(this.driver, this.message, {this.isNameChanged = false});
 }
 
 // حالة حدوث خطأ في الاتصال أو السيرفر

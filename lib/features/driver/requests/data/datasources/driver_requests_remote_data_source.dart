@@ -106,13 +106,34 @@ class DriverRequestsRemoteDataSource {
   }
 
   Future<void> acceptRequest(int requestId) async {
-    // التعديل: مسار ريان الدقيق بدون كلمة requests
-    final response = await _apiClient.put(
-      'driver/$requestId/status',
-      data: {'status': 'accepted'},
-      headers: _authHeader,
-    );
-    // ... باقي الكود
+    try {
+      print('===> ⏳ جاري إرسال طلب القبول للسيرفر (الطلب رقم: $requestId)');
+
+      final response = await _apiClient.put(
+        'driver/$requestId/status',
+        data: {'status': 'accepted'},
+        headers: _authHeader,
+      );
+
+      print('===> ✅ تم القبول بنجاح! كود الرد: ${response.statusCode}');
+      print('===> 📄 بيانات الرد: ${response.data}');
+
+      // ... باقي الكود الخاص بيك
+    } catch (e) {
+      print('===> ❌ حدث خطأ أثناء إرسال طلب القبول!');
+      print('===> 📝 نوع الخطأ: ${e.toString()}');
+
+      // لو كنتِ تستخدمي في باكدج Dio، السطور هذي حتجيبلك رسالة الخطأ الدقيقة من السيرفر:
+      try {
+        final dioError = e as dynamic;
+        if (dioError.response != null) {
+          print('===> 🔴 كود خطأ السيرفر: ${dioError.response?.statusCode}');
+          print('===> 🔴 تفاصيل خطأ السيرفر: ${dioError.response?.data}');
+        }
+      } catch (_) {}
+
+      rethrow;
+    }
   }
 
   Future<void> rejectRequest(int requestId, {required String reason}) async {

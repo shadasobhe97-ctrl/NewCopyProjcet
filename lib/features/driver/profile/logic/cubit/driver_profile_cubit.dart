@@ -15,22 +15,31 @@ class DriverProfileCubit extends Cubit<DriverProfileState> {
       final driver = await repository.getDriverProfile();
       if (!isClosed) emit(DriverProfileLoaded(driver));
     } catch (e) {
-      if (!isClosed)
+      if (!isClosed) {
         emit(DriverProfileError(e.toString().replaceAll('Exception:', '')));
+      }
     }
   }
 
-  // 2. دالة تحديث البيانات الشخصية والمظهر (POST)
+  // 2. تحديث البيانات الشخصية والمظهر (POST)
   Future<void> updateProfile({
-    required String fullName,
-    required String phoneNumber,
+    String? fullName,
+    String? phoneNumber,
     String? alternativePhone,
     String? email,
     File? avatarFile,
   }) async {
+    bool isNameChanged = false;
     if (state is DriverProfileLoaded) {
-      if (!isClosed)
-        emit(DriverProfileUpdateLoading((state as DriverProfileLoaded).driver));
+      final current = (state as DriverProfileLoaded).driver;
+      if (fullName != null &&
+          fullName.trim().isNotEmpty &&
+          fullName.trim() != current.fullName.trim()) {
+        isNameChanged = true;
+      }
+      if (!isClosed) {
+        emit(DriverProfileUpdateLoading(current));
+      }
     }
 
     try {
@@ -42,14 +51,22 @@ class DriverProfileCubit extends Cubit<DriverProfileState> {
         avatarFile: avatarFile,
       );
 
-      if (!isClosed)
-        emit(DriverProfileSuccess(updatedDriver, 'تم تحديث ملفك الشخصي بنجاح'));
+      if (!isClosed) {
+        emit(
+          DriverProfileSuccess(
+            updatedDriver,
+            'تم تحديث ملفك الشخصي بنجاح',
+            isNameChanged: isNameChanged,
+          ),
+        );
 
-      // 💡 نجيبوا أحدث بيانات من السيرفر باش نضمنوا تحديث الكاش والواجهة بشكل كامل
-      await fetchProfile();
+        // تحديث الواجهة بالبيانات الجديدة مباشرة بدون الحاجة لطلب جديد
+        emit(DriverProfileLoaded(updatedDriver));
+      }
     } catch (e) {
-      if (!isClosed)
+      if (!isClosed) {
         emit(DriverProfileError(e.toString().replaceAll('Exception:', '')));
+      }
     }
   }
 
