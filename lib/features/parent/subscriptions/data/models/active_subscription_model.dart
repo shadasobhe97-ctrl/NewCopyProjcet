@@ -4,6 +4,7 @@
 class ActiveSubscriptionModel {
   final int id;
   final String status; // active | pending_start | completed | cancelled
+  final String? statusLabel;
   final String? pickupTime;
   final String? dropoffTime;
   final Location? pickupLocation;
@@ -16,6 +17,7 @@ class ActiveSubscriptionModel {
   const ActiveSubscriptionModel({
     required this.id,
     required this.status,
+    this.statusLabel,
     this.pickupTime,
     this.dropoffTime,
     this.pickupLocation,
@@ -27,10 +29,14 @@ class ActiveSubscriptionModel {
   });
 
   String get statusDisplayLabel {
+    if (statusLabel != null && statusLabel!.isNotEmpty) {
+      return statusLabel!;
+    }
     switch (status.toLowerCase()) {
       case 'active':
         return 'نشط';
       case 'pending_start':
+      case 'pending':
         return 'بانتظار البدء';
       case 'completed':
         return 'مكتمل';
@@ -42,7 +48,11 @@ class ActiveSubscriptionModel {
   }
 
   String get formattedPrice {
-    return '${contract.totalPrice.toInt()} د.ل';
+    final tp = contract.totalPrice;
+    if (tp == tp.toInt()) {
+      return '${tp.toInt()} دينار';
+    }
+    return '${tp.toStringAsFixed(2)} دينار';
   }
 
   String get childName => child.name ?? child.schoolName;
@@ -51,6 +61,7 @@ class ActiveSubscriptionModel {
     return ActiveSubscriptionModel(
       id: _parseInt(json['id']) ?? 0,
       status: json['status']?.toString() ?? 'active',
+      statusLabel: json['statusLabel']?.toString() ?? json['status_label']?.toString(),
       pickupTime: json['pickup_time']?.toString(),
       dropoffTime: json['dropoff_time']?.toString(),
       pickupLocation: json['pickup_location'] is Map
@@ -65,7 +76,7 @@ class ActiveSubscriptionModel {
         json['child'] as Map<String, dynamic>? ?? {},
       ),
       contract: ActiveContract.fromJson(
-        json['contract'] as Map<String, dynamic>? ?? {},
+        (json['contract'] ?? json['billing']) as Map<String, dynamic>? ?? {},
       ),
       driver: ActiveDriver.fromJson(
         json['driver'] as Map<String, dynamic>? ?? {},
@@ -74,15 +85,10 @@ class ActiveSubscriptionModel {
     );
   }
 
-  static int? _parseInt(dynamic v) {
-    if (v is int) return v;
-    if (v is num) return v.toInt();
-    return int.tryParse(v?.toString() ?? '');
-  }
-
   Map<String, dynamic> toJson() => {
         'id': id,
         'status': status,
+        if (statusLabel != null) 'statusLabel': statusLabel,
         if (pickupTime != null) 'pickup_time': pickupTime,
         if (dropoffTime != null) 'dropoff_time': dropoffTime,
         if (pickupLocation != null) 'pickup_location': pickupLocation!.toJson(),
@@ -108,8 +114,8 @@ class Location {
   });
 
   factory Location.fromJson(Map<String, dynamic> json) => Location(
-        latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
-        longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+        latitude: _parseDouble(json['latitude']) ?? 0.0,
+        longitude: _parseDouble(json['longitude']) ?? 0.0,
         label: json['label']?.toString(),
       );
 
@@ -133,9 +139,9 @@ class ActiveChild {
   });
 
   factory ActiveChild.fromJson(Map<String, dynamic> json) => ActiveChild(
-        id: json['id'] as int? ?? 0,
-        name: json['name']?.toString(),
-        schoolName: json['school_name']?.toString() ?? '',
+        id: _parseInt(json['id']) ?? 0,
+        name: json['name']?.toString() ?? json['child_name']?.toString() ?? json['childName']?.toString(),
+        schoolName: json['school_name']?.toString() ?? json['schoolName']?.toString() ?? '',
       );
 
   Map<String, dynamic> toJson() => {
@@ -164,11 +170,11 @@ class ActiveContract {
   });
 
   factory ActiveContract.fromJson(Map<String, dynamic> json) => ActiveContract(
-        id: json['id'] as int? ?? 0,
-        contractNumber: json['contract_number']?.toString() ?? '',
-        startDate: json['start_date']?.toString() ?? '',
-        endDate: json['end_date']?.toString() ?? '',
-        totalPrice: (json['total_price'] as num?)?.toDouble() ?? 0.0,
+        id: _parseInt(json['id']) ?? 0,
+        contractNumber: json['contract_number']?.toString() ?? json['contractNumber']?.toString() ?? '',
+        startDate: json['start_date']?.toString() ?? json['startDate']?.toString() ?? json['startsAt']?.toString() ?? json['starts_at']?.toString() ?? '',
+        endDate: json['end_date']?.toString() ?? json['endDate']?.toString() ?? json['endsAt']?.toString() ?? json['ends_at']?.toString() ?? '',
+        totalPrice: _parseDouble(json['total_price']) ?? _parseDouble(json['totalPrice']) ?? 0.0,
         status: json['status']?.toString() ?? 'active',
       );
 
@@ -187,19 +193,22 @@ class ActiveDriver {
   final int id;
   final String name;
   final String? phone;
+  final String? avatarUrl;
   final ActiveVehicle? vehicle;
 
   const ActiveDriver({
     required this.id,
     required this.name,
     this.phone,
+    this.avatarUrl,
     this.vehicle,
   });
 
   factory ActiveDriver.fromJson(Map<String, dynamic> json) => ActiveDriver(
-        id: json['id'] as int? ?? 0,
+        id: _parseInt(json['id']) ?? 0,
         name: json['name']?.toString() ?? '',
         phone: json['phone']?.toString(),
+        avatarUrl: json['avatar_url']?.toString() ?? json['avatar']?.toString() ?? json['avatarUrl']?.toString(),
         vehicle: json['vehicle'] is Map
             ? ActiveVehicle.fromJson(
                 Map<String, dynamic>.from(json['vehicle'] as Map))
@@ -210,6 +219,7 @@ class ActiveDriver {
         'id': id,
         'name': name,
         if (phone != null) 'phone': phone,
+        if (avatarUrl != null) 'avatar_url': avatarUrl,
         if (vehicle != null) 'vehicle': vehicle!.toJson(),
       };
 }
@@ -244,4 +254,22 @@ class ActiveVehicle {
 
   String get displayName =>
       [brand, model, color].where((e) => e != null && e.isNotEmpty).join(' ');
+}
+
+// ─────────────────────────────────────────────
+// Private helper functions for safe JSON parsing
+// ─────────────────────────────────────────────
+
+int? _parseInt(dynamic v) {
+  if (v == null) return null;
+  if (v is int) return v;
+  if (v is num) return v.toInt();
+  return int.tryParse(v.toString());
+}
+
+double? _parseDouble(dynamic v) {
+  if (v == null) return null;
+  if (v is double) return v;
+  if (v is num) return v.toDouble();
+  return double.tryParse(v.toString());
 }

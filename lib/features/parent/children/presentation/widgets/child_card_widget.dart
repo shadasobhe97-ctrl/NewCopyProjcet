@@ -23,13 +23,15 @@ class ChildCardWidget extends StatelessWidget {
     required this.onDelete,
   });
 
+
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    debugPrint(
-      '🖼️ [ChildCard] ${child.fullName} => photoUrl: ${child.photoUrl} | hasRealPhoto: ${child.hasRealPhoto} | gender: ${child.gender}',
-    );
+    // === DEBUG: Child Card Build ===
+    debugPrint('===== BUILD CARD =====');
+    debugPrint(child.toJson().toString());
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -74,20 +76,6 @@ class ChildCardWidget extends StatelessWidget {
                             fit: BoxFit.cover,
                             width: 60.w,
                             height: 60.h,
-
-                            imageBuilder: (context, imageProvider) {
-                              debugPrint('✅ Image Loaded: ${child.photoUrl}');
-                              return Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  image: DecorationImage(
-                                    image: imageProvider,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              );
-                            },
-
                             placeholder: (context, url) => Center(
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.w,
@@ -96,20 +84,13 @@ class ChildCardWidget extends StatelessWidget {
                                     : context.genderFemaleColor,
                               ),
                             ),
-
-                            errorWidget: (context, url, error) {
-                              debugPrint('❌ Image Error');
-                              debugPrint('URL: $url');
-                              debugPrint('Error: $error');
-
-                              return Icon(
-                                Icons.person_rounded,
-                                color: child.gender == 'male'
-                                    ? context.genderMaleColor
-                                    : context.genderFemaleColor,
-                                size: 32.r,
-                              );
-                            },
+                            errorWidget: (context, url, error) => Icon(
+                              Icons.person_rounded,
+                              color: child.gender == 'male'
+                                  ? context.genderMaleColor
+                                  : context.genderFemaleColor,
+                              size: 32.r,
+                            ),
                           ),
                         )
                       : Icon(

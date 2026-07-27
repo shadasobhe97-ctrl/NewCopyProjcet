@@ -47,6 +47,12 @@ class ApiEndpoints {
   static const String driverZones = 'v1/driver/zones';
   static const String driverProfile = 'v1/driver/profile';
   static const String driverProfileUpdate = 'v1/driver/profile/update';
+
+  // ================= Driver Subscriptions =================
+  static const String driverActiveSubscriptions = 'driver/active-subscriptions';
+  static String driverSubscriptionDetails(int id) =>
+      'driver/active-subscriptions/$id';
+
   static const String parentProfile = 'parent/profile';
   static const String parentProfileUpdate = 'parent/profile/update';
 
@@ -63,6 +69,8 @@ class ApiEndpoints {
   //طلب الاشتراك مع سوااق
   static const String parentrequestSubscription = 'parent';
   static const String parentActiveSubscriptions = 'parent/active-subscriptions';
+  static String parentSubscriptionDetail(int id) =>
+      'parent/active-subscriptions/$id';
 
   // Parent Wallet & Finance
   static const String parentWalletBalance = 'parent/wallet/balance';

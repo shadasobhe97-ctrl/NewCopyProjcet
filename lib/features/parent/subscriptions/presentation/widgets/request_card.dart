@@ -44,33 +44,7 @@ class RequestCard extends StatelessWidget {
     }
   }
 
-  String _typeLabel() {
-    switch (request.subscriptionType.toLowerCase()) {
-      case 'weekly':
-        return 'أسبوعي';
-      case 'daily':
-        return 'يومي';
-      case 'monthly':
-      default:
-        return 'شهري';
-    }
-  }
 
-  String _directionLabel() {
-    switch (request.direction.toLowerCase()) {
-      case 'go':
-      case 'to_school':
-      case 'morning':
-        return 'ذهاب فقط';
-      case 'return':
-      case 'from_school':
-      case 'evening':
-        return 'عودة فقط';
-      case 'both':
-      default:
-        return 'ذهاب وعودة';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -152,16 +126,9 @@ class RequestCard extends StatelessWidget {
               ),
 
             _infoRow(
-              Icons.assignment_outlined,
-              'نوع الاشتراك',
-              _typeLabel(),
-              isDark,
-            ),
-
-            _infoRow(
-              Icons.route_outlined,
-              'الاتجاه',
-              _directionLabel(),
+              Icons.child_care_rounded,
+              'عدد الأطفال',
+              '${request.childrenCount} أطفال',
               isDark,
             ),
 

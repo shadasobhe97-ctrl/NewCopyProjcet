@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import 'package:kids_transport/features/parent/search/data/models/driver_search_model.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -735,6 +734,15 @@ class _DriverProfileViewState extends State<DriverProfileView> {
               }
             },
           ),
+          BlocListener<ReviewsCubit, ReviewsState>(
+            listener: (context, state) {
+              if (state is ReviewsSuccess) {
+                _showSnack(state.message, AppColors.success);
+              } else if (state is ReviewsError) {
+                _showSnack(state.message, AppColors.error);
+              }
+            },
+          ),
         ],
         child: BlocBuilder<ChildrenCubit, ChildrenState>(
           builder: (context, state) {
@@ -873,21 +881,19 @@ class _DriverProfileViewState extends State<DriverProfileView> {
 
                 // Review input section
                 if (hasSub) ...[
-                  if (!_hasOwnReview(reviewsList)) ...[
-                    ReviewForm(
-                      isSubmitting: isSubmitting,
-                      onSubmit: (rating, comment) {
-                        context.read<ReviewsCubit>().addReview(
-                          driverId: widget.driver.driverId,
-                          rating: rating,
-                          comment: comment,
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    const Divider(height: 1),
-                    const SizedBox(height: 20),
-                  ],
+                  ReviewForm(
+                    isSubmitting: isSubmitting,
+                    onSubmit: (rating, comment) {
+                      context.read<ReviewsCubit>().addReview(
+                        driverId: widget.driver.driverId,
+                        rating: rating,
+                        comment: comment,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  const Divider(height: 1),
+                  const SizedBox(height: 20),
                 ] else ...[
                   const LockedReviewCard(),
                   const SizedBox(height: 20),
@@ -910,6 +916,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                         onEdit: () => _showEditReviewSheet(context, rev),
                         onDelete: () =>
                             _showDeleteConfirmDialog(context, rev.id),
+                        hasSubscription: hasSub,
                       );
                     },
                   ),
@@ -1026,23 +1033,6 @@ class _DriverProfileViewState extends State<DriverProfileView> {
         ],
       ),
     );
-  }
-
-  bool _hasOwnReview(List<ReviewModel> reviews) {
-    final parentId = getIt<SessionRepository>().getParentId();
-    final userId = getIt<SessionRepository>().getUserId();
-
-    for (final review in reviews) {
-      if (review.parent == null) continue;
-      final isMatchingParent =
-          parentId != null && review.parent!.id == parentId;
-      final isMatchingUser =
-          userId != null && review.parent!.userId.toString() == userId;
-      if (isMatchingParent || isMatchingUser) {
-        return true;
-      }
-    }
-    return false;
   }
 
   void _showEditReviewSheet(BuildContext context, ReviewModel review) {

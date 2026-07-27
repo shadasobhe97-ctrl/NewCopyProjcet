@@ -18,5 +18,21 @@ class DriverSubscriptionsLoaded extends DriverSubscriptionsState {
 
 class DriverSubscriptionsError extends DriverSubscriptionsState {
   final String message;
+
   DriverSubscriptionsError(this.message);
+}
+
+// ── شاشة التفاصيل ──
+class DriverSubscriptionDetailLoading extends DriverSubscriptionsState {}
+
+class DriverSubscriptionDetailLoaded extends DriverSubscriptionsState {
+  final DriverSubscriptionModel subscription;
+
+  DriverSubscriptionDetailLoaded(this.subscription);
+}
+
+class DriverSubscriptionDetailError extends DriverSubscriptionsState {
+  final String message;
+
+  DriverSubscriptionDetailError(this.message);
 }

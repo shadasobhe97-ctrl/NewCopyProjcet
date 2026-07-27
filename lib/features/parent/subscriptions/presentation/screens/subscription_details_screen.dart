@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import '../../logic/subscriptions_cubit/subscriptions_cubit.dart';
-import '../../data/models/active_subscription_model.dart';
+import '../../data/models/subscription_detail_model.dart';
 
 class SubscriptionDetailsScreen extends StatefulWidget {
   final int subscriptionId;
@@ -29,27 +31,48 @@ class _SubscriptionDetailsScreenState
         .fetchSubscriptionDetail(widget.subscriptionId);
   }
 
-  String _getInitials(String name) {
-    if (name.isEmpty) return '?';
-    final parts = name.trim().split(' ');
-    if (parts.length > 1) {
-      return '${parts[0][0]}${parts[1][0]}';
+  String _formatDate(String? raw) {
+    if (raw == null || raw.isEmpty) return 'غير محدد';
+    try {
+      final dt = DateTime.parse(raw.split('T').first);
+      return intl.DateFormat('yyyy/MM/dd').format(dt);
+    } catch (_) {
+      return raw.split('T').first;
     }
-    return parts[0][0];
   }
 
-  String _getStatusArabic(String status) {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return 'نشط';
-      case 'pending_start':
-        return 'بانتظار البدء';
-      case 'completed':
-        return 'مكتمل';
-      case 'cancelled':
-        return 'ملغي';
+  String _formatTime(String? raw) {
+    if (raw == null || raw.isEmpty) return 'غير محدد';
+    try {
+      final parts = raw.split(':');
+      if (parts.length >= 2) {
+        final hour = int.parse(parts[0]);
+        final minute = int.parse(parts[1]);
+        final isPm = hour >= 12;
+        final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+        final displayMinute = minute.toString().padLeft(2, '0');
+        final period = isPm ? 'م' : 'ص';
+        return '$displayHour:$displayMinute $period';
+      }
+      return raw;
+    } catch (_) {
+      return raw;
+    }
+  }
+
+  String _shiftLabel(String? shift) {
+    if (shift == null) return 'غير محدد';
+    switch (shift.toLowerCase()) {
+      case 'morning':
+      case 'to_school':
+        return 'ذهاب فقط (الفترة الصباحية)';
+      case 'evening':
+      case 'from_school':
+        return 'عودة فقط (الفترة المسائية)';
+      case 'both':
+        return 'ذهاب وعودة';
       default:
-        return status;
+        return shift;
     }
   }
 
@@ -77,69 +100,23 @@ class _SubscriptionDetailsScreenState
           backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
           foregroundColor: isDark ? AppColors.white : AppColors.textDark,
         ),
-        body: BlocConsumer<SubscriptionsCubit, SubscriptionsState>(
-          listener: (context, state) {
-            if (state is SubscriptionsActionSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Text(
-                      state.message,
-                      style: AppTextStyles.style(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  backgroundColor: AppColors.success,
-                  behavior: SnackBarBehavior.floating,
-                  margin: EdgeInsets.all(16.w),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r)),
-                  duration: const Duration(seconds: 3),
-                ),
-              );
-              Navigator.of(context).pop();
-            } else if (state is SubscriptionsActionError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Text(
-                      state.message,
-                      style: AppTextStyles.style(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  backgroundColor: AppColors.error,
-                  behavior: SnackBarBehavior.floating,
-                  margin: EdgeInsets.all(16.w),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r)),
-                ),
-              );
-            }
-          },
+        body: BlocBuilder<SubscriptionsCubit, SubscriptionsState>(
           builder: (context, state) {
             if (state is SubscriptionDetailLoading) {
               return const Center(child: CircularProgressIndicator());
             }
 
             if (state is SubscriptionDetailError) {
-              return _buildErrorState(
-                  context, state.message, isDark, theme);
+              return _buildErrorState(context, state.message, isDark, theme);
             }
 
             if (state is SubscriptionDetailLoaded) {
-              return _buildContent(
-                  context, state.detail, isDark, theme, false);
-            }
-
-            if (state is SubscriptionsActionLoading ||
-                state is SubscriptionsActionSuccess ||
-                state is SubscriptionsActionError) {
-              return const Center(child: CircularProgressIndicator());
+              return RefreshIndicator(
+                onRefresh: () => context
+                    .read<SubscriptionsCubit>()
+                    .fetchSubscriptionDetail(widget.subscriptionId),
+                child: _buildContent(context, state.detail, isDark, theme),
+              );
             }
 
             return const Center(child: CircularProgressIndicator());
@@ -149,38 +126,481 @@ class _SubscriptionDetailsScreenState
     );
   }
 
-  Widget _buildContent(BuildContext context, ActiveSubscriptionModel sub,
-      bool isDark, ThemeData theme, bool isCancelling) {
-    final isActive = sub.status.toLowerCase() == 'active' ||
-        sub.status.toLowerCase() == 'pending_start';
-
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildDriverCard(sub.driver, theme, isDark),
-                SizedBox(height: 16.h),
-                _buildContractCard(sub, theme, isDark),
-                SizedBox(height: 16.h),
-                _buildChildCard(sub.child, theme, isDark),
-              ],
-            ),
-          ),
-        ),
-        if (isActive)
-          _buildCancelActionBar(
-              context, sub.id, theme, isDark, isCancelling),
-      ],
+  Widget _buildContent(BuildContext context, SubscriptionDetailModel sub,
+      bool isDark, ThemeData theme) {
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.all(16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildChildCard(sub.child, theme, isDark),
+          SizedBox(height: 16.h),
+          _buildDriverCard(sub.driver, theme, isDark),
+          SizedBox(height: 16.h),
+          _buildScheduleCard(sub.schedule, theme, isDark),
+          SizedBox(height: 16.h),
+          _buildBillingCard(sub.billing, theme, isDark),
+          SizedBox(height: 16.h),
+          _buildAdditionalCard(sub, theme, isDark),
+          SizedBox(height: 20.h),
+        ],
+      ),
     );
   }
 
-  Widget _buildErrorState(BuildContext context, String error, bool isDark,
-      ThemeData theme) {
+  Widget _buildChildCard(DetailChild child, ThemeData theme, bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18.w),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(
+            color: isDark ? AppColors.grey800 : AppColors.grey200, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.child_care_outlined,
+                  color: theme.colorScheme.primary, size: 20.r),
+              SizedBox(width: 8.w),
+              Text(
+                'معلومات الطفل',
+                style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14.sp,
+                  color: isDark ? AppColors.white : AppColors.textDark,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          Row(
+            children: [
+              if (child.avatar != null && child.avatar!.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(25.r),
+                  child: CachedNetworkImage(
+                    imageUrl: child.avatar!,
+                    width: 50.r,
+                    height: 50.r,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      width: 50.r,
+                      height: 50.r,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      child: Icon(Icons.person_outline,
+                          color: theme.colorScheme.primary),
+                    ),
+                    errorWidget: (context, url, error) =>
+                        _buildInitialsAvatar(child, theme),
+                  ),
+                )
+              else
+                _buildInitialsAvatar(child, theme),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      child.name ?? 'بدون اسم',
+                      style: AppTextStyles.style(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15.sp,
+                        color: isDark ? AppColors.white : AppColors.textDark,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      child.schoolName.isNotEmpty ? child.schoolName : 'مدرسة غير محددة',
+                      style: AppTextStyles.style(
+                        fontSize: 12.sp,
+                        color: isDark ? AppColors.grey400 : AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInitialsAvatar(DetailChild child, ThemeData theme) {
+    return CircleAvatar(
+      radius: 25.r,
+      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+      child: Text(
+        child.avatarInitials ??
+            (child.name != null && child.name!.isNotEmpty ? child.name![0] : '?'),
+        style: AppTextStyles.style(
+          fontWeight: FontWeight.bold,
+          fontSize: 16.sp,
+          color: theme.colorScheme.primary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDriverCard(DetailDriver driver, ThemeData theme, bool isDark) {
+    final vehicle = driver.vehicle;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18.w),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(
+            color: isDark ? AppColors.grey800 : AppColors.grey200, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.directions_car_outlined,
+                  color: theme.colorScheme.primary, size: 20.r),
+              SizedBox(width: 8.w),
+              Text(
+                'معلومات السائق',
+                style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14.sp,
+                  color: isDark ? AppColors.white : AppColors.textDark,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 24.r,
+                backgroundColor:
+                    theme.colorScheme.primary.withValues(alpha: 0.1),
+                backgroundImage: driver.avatarUrl != null && driver.avatarUrl!.isNotEmpty
+                    ? NetworkImage(driver.avatarUrl!)
+                    : null,
+                child: driver.avatarUrl == null || driver.avatarUrl!.isEmpty
+                    ? Icon(Icons.person_rounded,
+                        color: theme.colorScheme.primary, size: 24.r)
+                    : null,
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      driver.name,
+                      style: AppTextStyles.style(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15.sp,
+                        color: isDark ? AppColors.white : AppColors.textDark,
+                      ),
+                    ),
+                    if (driver.phone != null) ...[
+                      SizedBox(height: 4.h),
+                      Text(
+                        driver.phone!,
+                        style: AppTextStyles.style(
+                          fontSize: 12.sp,
+                          color:
+                              isDark ? AppColors.grey400 : AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              Text(
+                'التقييم:',
+                style: AppTextStyles.style(
+                  fontSize: 12.sp,
+                  color: isDark ? AppColors.grey400 : AppColors.textMuted,
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Row(
+                children: List.generate(5, (index) {
+                  return Icon(
+                    Icons.star_rounded,
+                    color: index < driver.rating
+                        ? Colors.amber
+                        : (isDark ? AppColors.grey700 : AppColors.grey200),
+                    size: 18.r,
+                  );
+                }),
+              ),
+            ],
+          ),
+          if (vehicle != null) ...[
+            SizedBox(height: 14.h),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.backgroundDark
+                    : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16.r),
+                border: Border.all(
+                    color: isDark ? AppColors.grey800 : AppColors.grey200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _detailRow(
+                      'السيارة',
+                      vehicle.displayName.isNotEmpty
+                          ? vehicle.displayName
+                          : 'غير محدد',
+                      isDark),
+                  _divider(isDark),
+                  _detailRow(
+                      'رقم اللوحة',
+                      vehicle.plateNumber?.isNotEmpty == true
+                          ? vehicle.plateNumber!
+                          : 'غير محدد',
+                      isDark),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleCard(
+      DetailSchedule schedule, ThemeData theme, bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18.w),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(
+            color: isDark ? AppColors.grey800 : AppColors.grey200, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.schedule_rounded,
+                  color: theme.colorScheme.primary, size: 20.r),
+              SizedBox(width: 8.w),
+              Text(
+                'جدول الرحلة',
+                style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14.sp,
+                  color: isDark ? AppColors.white : AppColors.textDark,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          _detailRow('الفترة', _shiftLabel(schedule.shiftLabel), isDark),
+          _divider(isDark),
+          _detailRow(
+              'منطقة الالتقاط', schedule.pickupZoneName ?? 'غير محدد', isDark),
+          _divider(isDark),
+          _detailRow(
+              'وقت الالتقاط المتوقع', _formatTime(schedule.pickupTime), isDark),
+          _divider(isDark),
+          _detailRow(
+              'وقت التوصيل المتوقع', _formatTime(schedule.dropoffTime), isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBillingCard(
+      DetailBilling billing, ThemeData theme, bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18.w),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(
+            color: isDark ? AppColors.grey800 : AppColors.grey200, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.monetization_on_outlined,
+                  color: theme.colorScheme.primary, size: 20.r),
+              SizedBox(width: 8.w),
+              Text(
+                'تفاصيل الاشتراك والمالية',
+                style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14.sp,
+                  color: isDark ? AppColors.white : AppColors.textDark,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          _detailRow('سعر اشتراك الطفل', billing.formattedChildPrice, isDark,
+              valueColor: theme.colorScheme.primary, isBoldValue: true),
+          _divider(isDark),
+          _detailRow('السعر الإجمالي للطلب', billing.formattedTotalPrice, isDark,
+              valueColor: theme.colorScheme.primary, isBoldValue: true),
+          _divider(isDark),
+          _detailRow('تاريخ البداية', _formatDate(billing.startsAt), isDark),
+          _divider(isDark),
+          _detailRow('تاريخ النهاية', _formatDate(billing.endsAt), isDark),
+          if (billing.remainingDays != null) ...[
+            _divider(isDark),
+            _detailRow(
+                'الأيام المتبقية', '${billing.remainingDays} يوم', isDark,
+                valueColor:
+                    (billing.remainingDays! <= 3) ? AppColors.error : null),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdditionalCard(
+      SubscriptionDetailModel sub, ThemeData theme, bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18.w),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(
+            color: isDark ? AppColors.grey800 : AppColors.grey200, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline_rounded,
+                  color: theme.colorScheme.primary, size: 20.r),
+              SizedBox(width: 8.w),
+              Text(
+                'معلومات إضافية',
+                style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14.sp,
+                  color: isDark ? AppColors.white : AppColors.textDark,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          _detailRow('رقم الطلب', '#${sub.requestId}', isDark),
+          _divider(isDark),
+          _detailRow(
+              'تاريخ إنشاء الاشتراك', _formatDate(sub.createdAt), isDark),
+          if (sub.cancelReason != null && sub.cancelReason!.isNotEmpty) ...[
+            _divider(isDark),
+            _detailRow('سبب الإلغاء', sub.cancelReason!, isDark,
+                valueColor: AppColors.error),
+          ],
+          if (sub.cancelledAt != null && sub.cancelledAt!.isNotEmpty) ...[
+            _divider(isDark),
+            _detailRow('تاريخ الإلغاء', _formatDate(sub.cancelledAt), isDark,
+                valueColor: AppColors.error),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String value, bool isDark,
+      {Color? valueColor, bool isBoldValue = false}) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4.0.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: AppTextStyles.style(
+              fontSize: 12.sp,
+              color: isDark ? AppColors.grey400 : AppColors.textMuted,
+            ),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: AppTextStyles.style(
+                fontSize: 13.sp,
+                fontWeight: isBoldValue ? FontWeight.bold : FontWeight.w600,
+                color: valueColor ??
+                    (isDark ? AppColors.white : AppColors.textDark),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _divider(bool isDark) {
+    return Divider(
+        color: isDark ? AppColors.grey800 : AppColors.grey100, height: 16);
+  }
+
+  Widget _buildErrorState(
+      BuildContext context, String error, bool isDark, ThemeData theme) {
     return Center(
       child: Padding(
         padding: EdgeInsets.all(24.w),
@@ -216,390 +636,6 @@ class _SubscriptionDetailsScreenState
                 backgroundColor: theme.colorScheme.primary,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.r)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDriverCard(
-      ActiveDriver driver, ThemeData theme, bool isDark) {
-    final isFemale = driver.name.contains('ة') ||
-        driver.name.contains('فاطمة') ||
-        driver.name.contains('مريم');
-    final avatarColor =
-        isFemale ? AppColors.femalePink : theme.colorScheme.primary;
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(
-            color: isDark ? AppColors.grey800 : AppColors.grey200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 28.r,
-                backgroundColor: avatarColor.withValues(alpha: 0.1),
-                child: Text(
-                  _getInitials(driver.name),
-                  style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold,
-                    color: avatarColor,
-                    fontSize: 16.sp,
-                  ),
-                ),
-              ),
-              SizedBox(width: 14.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      driver.name,
-                      style: AppTextStyles.style(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15.sp,
-                        color: isDark ? AppColors.white : AppColors.textDark,
-                      ),
-                    ),
-                    if (driver.vehicle?.displayName != null &&
-                        driver.vehicle!.displayName.isNotEmpty) ...[
-                      SizedBox(height: 4.h),
-                      Text(
-                        driver.vehicle!.displayName,
-                        style: AppTextStyles.style(
-                          fontSize: 12.sp,
-                          color: isDark
-                              ? AppColors.grey400
-                              : AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                    if (driver.vehicle?.plateNumber != null &&
-                        driver.vehicle!.plateNumber.isNotEmpty) ...[
-                      SizedBox(height: 2.h),
-                      Text(
-                        'لوحة: ${driver.vehicle!.plateNumber}',
-                        style: AppTextStyles.style(
-                          fontSize: 11.sp,
-                          color: isDark
-                              ? AppColors.grey500
-                              : AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              if (driver.phone != null)
-                IconButton(
-                  icon: Icon(Icons.phone_in_talk_rounded,
-                      color: theme.colorScheme.primary),
-                  onPressed: () {},
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContractCard(
-      ActiveSubscriptionModel sub, ThemeData theme, bool isDark) {
-    final contract = sub.contract;
-    final isCancelled = sub.status.toLowerCase() == 'cancelled';
-    final isCompleted = sub.status.toLowerCase() == 'completed';
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(18.w),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(
-            color: isDark ? AppColors.grey800 : AppColors.grey200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.assignment_outlined,
-                  color: theme.colorScheme.primary, size: 18.r),
-              SizedBox(width: 8.w),
-              Text(
-                'تفاصيل العقد والاشتراك',
-                style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14.sp,
-                  color: isDark ? AppColors.white : AppColors.textDark,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          _detailRow(
-              'رقم العقد', contract.contractNumber, isDark),
-          _divider(isDark),
-          _detailRow('القيمة الإجمالية', sub.formattedPrice, isDark,
-              valueColor: theme.colorScheme.primary, isBoldValue: true),
-          _divider(isDark),
-          _detailRow('تاريخ البدء',
-              contract.startDate.split('T').first, isDark),
-          _divider(isDark),
-          _detailRow(
-              'تاريخ الانتهاء', contract.endDate.split('T').first, isDark),
-          _divider(isDark),
-          _detailRow('حالة العقد', _getStatusArabic(contract.status), isDark,
-              valueColor: _getStatusColor(contract.status),
-              isBoldValue: true),
-          if (!isCancelled && !isCompleted) ...[
-            _divider(isDark),
-            _detailRow('حالة الاشتراك', sub.statusDisplayLabel, isDark,
-                valueColor: _getStatusColor(sub.status), isBoldValue: true),
-          ],
-          if (sub.pickupTime != null) ...[
-            _divider(isDark),
-            _detailRow('وقت الاستلام', sub.pickupTime!, isDark),
-          ],
-          if (sub.dropoffTime != null) ...[
-            _divider(isDark),
-            _detailRow('وقت التوصيل', sub.dropoffTime!, isDark),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChildCard(ActiveChild child, ThemeData theme, bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(18.w),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(
-            color: isDark ? AppColors.grey800 : AppColors.grey200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.child_care_outlined,
-                  color: theme.colorScheme.primary, size: 18.r),
-              SizedBox(width: 8.w),
-              Text(
-                'الطفل المشمول بالاشتراك',
-                style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14.sp,
-                  color: isDark ? AppColors.white : AppColors.textDark,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 20.r,
-                backgroundColor:
-                    theme.colorScheme.primary.withValues(alpha: 0.1),
-                child: Icon(Icons.person_outline,
-                    color: theme.colorScheme.primary, size: 20.r),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      child.name ?? child.schoolName,
-                      style: AppTextStyles.style(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14.sp,
-                        color: isDark ? AppColors.white : AppColors.textDark,
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      child.schoolName,
-                      style: AppTextStyles.style(
-                        fontSize: 12.sp,
-                        color: isDark
-                            ? AppColors.grey400
-                            : AppColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCancelActionBar(BuildContext context, int id,
-      ThemeData theme, bool isDark, bool isCancelling) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        border: Border(
-            top: BorderSide(
-                color: isDark ? AppColors.grey800 : AppColors.grey200,
-                width: 0.5.w)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: isDark ? 0.25 : 0.05),
-            blurRadius: 10.r,
-            offset: Offset(0, -4.h),
-          ),
-        ],
-      ),
-      child: SizedBox(
-        width: double.infinity,
-        height: 50.h,
-        child: ElevatedButton.icon(
-          onPressed: isCancelling
-              ? null
-              : () => _showCancelDialog(context, id),
-          icon: isCancelling
-              ? SizedBox(
-                  width: 18.w,
-                  height: 18.h,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2.5.w, color: AppColors.white),
-                )
-              : Icon(Icons.delete_outline_rounded,
-                  size: 18.r, color: AppColors.white),
-          label: Text(
-            'إلغاء الاشتراك',
-            style: AppTextStyles.style(
-              fontWeight: FontWeight.bold,
-              fontSize: 14.sp,
-              color: AppColors.white,
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.error,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14.r)),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _detailRow(String label, String value, bool isDark,
-      {Color? valueColor, bool isBoldValue = false}) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.0.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: AppTextStyles.style(
-              fontSize: 12.sp,
-              color: isDark ? AppColors.grey400 : AppColors.textMuted,
-            ),
-          ),
-          Text(
-            value,
-            style: AppTextStyles.style(
-              fontSize: 13.sp,
-              fontWeight:
-                  isBoldValue ? FontWeight.bold : FontWeight.w600,
-              color: valueColor ??
-                  (isDark ? AppColors.white : AppColors.textDark),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _divider(bool isDark) {
-    return Divider(
-        color: isDark ? AppColors.grey800 : AppColors.grey100, height: 16);
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return AppColors.success;
-      case 'pending_start':
-        return AppColors.pending;
-      case 'completed':
-        return AppColors.info;
-      case 'cancelled':
-        return AppColors.grey500;
-      default:
-        return AppColors.grey500;
-    }
-  }
-
-  void _showCancelDialog(BuildContext context, int id) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.r)),
-          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
-          title: Text(
-            'تأكيد إلغاء الاشتراك',
-            style: AppTextStyles.style(
-                fontWeight: FontWeight.bold,
-                fontSize: 16.sp,
-                color: isDark ? AppColors.white : AppColors.textDark),
-          ),
-          content: Text(
-            'هل أنت متأكد من رغبتك في إلغاء هذا الاشتراك؟',
-            style: AppTextStyles.style(
-                fontSize: 13.sp,
-                color: isDark ? AppColors.grey300 : AppColors.textMuted,
-                height: 1.4),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                'تراجع',
-                style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold,
-                    color:
-                        isDark ? AppColors.grey400 : AppColors.textMuted),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                context
-                    .read<SubscriptionsCubit>()
-                    .cancelSubscription(id);
-              },
-              child: Text(
-                'نعم، إلغاء',
-                style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold, color: AppColors.error),
               ),
             ),
           ],

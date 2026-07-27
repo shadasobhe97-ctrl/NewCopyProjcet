@@ -4,40 +4,115 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kids_transport/core/network/api_endpoints.dart';
 import '../../logic/requests_cubit/requests_cubit.dart';
 import '../../data/models/request_model.dart';
 
-class RequestDetailsScreen extends StatelessWidget {
+class RequestDetailsScreen extends StatefulWidget {
   final RequestModel request;
 
   const RequestDetailsScreen({super.key, required this.request});
 
   @override
+  State<RequestDetailsScreen> createState() => _RequestDetailsScreenState();
+}
+
+class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<RequestsCubit>().fetchRequestDetail(widget.request.id);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isPending = request.status.toLowerCase() == 'pending';
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor:
-            isDark ? AppColors.backgroundDark : const Color(0xFFF4F6FA),
+        backgroundColor: isDark
+            ? AppColors.backgroundDark
+            : const Color(0xFFF4F6FA),
         appBar: _buildAppBar(context, isDark),
         body: BlocConsumer<RequestsCubit, RequestsState>(
           listener: (context, state) {
             if (state is RequestsActionSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(_snackBar(
-                  state.message, AppColors.success));
-              Navigator.of(context).pop();
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(_snackBar(state.message, AppColors.success));
+              Navigator.of(context).pop(true);
             } else if (state is RequestsActionError) {
-              ScaffoldMessenger.of(context).showSnackBar(_snackBar(
-                  state.message, AppColors.error));
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(_snackBar(state.message, AppColors.error));
             }
           },
           builder: (context, state) {
-            final isCancelling = state is RequestsActionLoading &&
-                state.actionId == request.id;
+            if (state is RequestDetailLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (state is RequestDetailError) {
+              return Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.w),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: 64.r,
+                        color: AppColors.error,
+                      ),
+                      SizedBox(height: 16.h),
+                      Text(
+                        state.message,
+                        style: AppTextStyles.style(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? AppColors.white : AppColors.textDark,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 24.h),
+                      ElevatedButton.icon(
+                        onPressed: () => context
+                            .read<RequestsCubit>()
+                            .fetchRequestDetail(widget.request.id),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: Text(
+                          'إعادة المحاولة',
+                          style: AppTextStyles.style(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13.sp,
+                            color: AppColors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            // Fallback to widget.request if not loaded
+            final req = state is RequestDetailLoaded
+                ? state.request
+                : widget.request;
+
+            final isPending = req.status.toLowerCase() == 'pending';
+            final isCancelling =
+                state is RequestsActionLoading && state.actionId == req.id;
+
             return Column(
               children: [
                 Expanded(
@@ -50,19 +125,20 @@ class RequestDetailsScreen extends StatelessWidget {
                           child: Column(
                             children: [
                               // ── الحالة ──
-                              _StatusBanner(request: request, isDark: isDark),
+                              _StatusBanner(request: req, isDark: isDark),
                               SizedBox(height: 16.h),
                               // ── معلومات عامة ──
                               _GeneralInfoCard(
-                                  request: request,
-                                  theme: theme,
-                                  isDark: isDark),
+                                request: req,
+                                theme: theme,
+                                isDark: isDark,
+                              ),
                               SizedBox(height: 16.h),
                               // ── ترويسة قسم الأطفال ──
                               _SectionHeader(
                                 icon: Icons.people_alt_outlined,
                                 title: 'اشتراكات الأطفال',
-                                count: request.children.length,
+                                count: req.children.length,
                                 theme: theme,
                                 isDark: isDark,
                               ),
@@ -74,33 +150,29 @@ class RequestDetailsScreen extends StatelessWidget {
 
                       // ── بطاقات الأطفال ──
                       SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (ctx, i) {
-                            final child = request.children[i];
-                            return Padding(
-                              padding: EdgeInsets.fromLTRB(
-                                  16.w, 0, 16.w, 12.h),
-                              child: _ChildSubscriptionCard(
-                                child: child,
-                                theme: theme,
-                                isDark: isDark,
-                              ),
-                            );
-                          },
-                          childCount: request.children.length,
-                        ),
+                        delegate: SliverChildBuilderDelegate((ctx, i) {
+                          final child = req.children[i];
+                          return Padding(
+                            padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
+                            child: _ChildSubscriptionCard(
+                              child: child,
+                              theme: theme,
+                              isDark: isDark,
+                            ),
+                          );
+                        }, childCount: req.children.length),
                       ),
 
                       // ── سبب الرفض ──
-                      if (request.rejectionReason != null &&
-                          request.rejectionReason!.isNotEmpty)
+                      if (req.rejectionReason != null &&
+                          req.rejectionReason!.isNotEmpty)
                         SliverToBoxAdapter(
                           child: Padding(
-                            padding:
-                                EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+                            padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
                             child: _RejectionCard(
-                                reason: request.rejectionReason!,
-                                isDark: isDark),
+                              reason: req.rejectionReason!,
+                              isDark: isDark,
+                            ),
                           ),
                         ),
 
@@ -113,7 +185,7 @@ class RequestDetailsScreen extends StatelessWidget {
                 if (isPending)
                   _CancelButton(
                     isCancelling: isCancelling,
-                    onCancel: () => _showCancelDialog(context),
+                    onCancel: () => _showCancelDialog(context, req),
                     isDark: isDark,
                   ),
               ],
@@ -128,7 +200,7 @@ class RequestDetailsScreen extends StatelessWidget {
   PreferredSizeWidget _buildAppBar(BuildContext context, bool isDark) {
     return AppBar(
       title: Text(
-        'طلب #${request.id}',
+        'طلب #${widget.request.id}',
         style: AppTextStyles.style(
           fontWeight: FontWeight.bold,
           fontSize: 17.sp,
@@ -150,9 +222,13 @@ class RequestDetailsScreen extends StatelessWidget {
     return SnackBar(
       content: Directionality(
         textDirection: TextDirection.rtl,
-        child: Text(msg,
-            style: AppTextStyles.style(
-                color: AppColors.white, fontWeight: FontWeight.bold)),
+        child: Text(
+          msg,
+          style: AppTextStyles.style(
+            color: AppColors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       backgroundColor: color,
       behavior: SnackBarBehavior.floating,
@@ -161,7 +237,7 @@ class RequestDetailsScreen extends StatelessWidget {
     );
   }
 
-  void _showCancelDialog(BuildContext context) {
+  void _showCancelDialog(BuildContext context, RequestModel req) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
@@ -169,35 +245,48 @@ class RequestDetailsScreen extends StatelessWidget {
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.r)),
+            borderRadius: BorderRadius.circular(20.r),
+          ),
           backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
-          title: Text('تأكيد إلغاء الطلب',
-              style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16.sp,
-                  color: isDark ? AppColors.white : AppColors.textDark)),
-          content: Text('هل أنت متأكد من إلغاء طلب الاشتراك هذا؟',
-              style: AppTextStyles.style(
-                  fontSize: 13.sp,
-                  color: isDark ? AppColors.grey300 : AppColors.textMuted,
-                  height: 1.4)),
+          title: Text(
+            'تأكيد إلغاء الطلب',
+            style: AppTextStyles.style(
+              fontWeight: FontWeight.bold,
+              fontSize: 16.sp,
+              color: isDark ? AppColors.white : AppColors.textDark,
+            ),
+          ),
+          content: Text(
+            'هل أنت متأكد من إلغاء طلب الاشتراك هذا؟',
+            style: AppTextStyles.style(
+              fontSize: 13.sp,
+              color: isDark ? AppColors.grey300 : AppColors.textMuted,
+              height: 1.4,
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('تراجع',
-                  style: AppTextStyles.style(
-                      fontWeight: FontWeight.bold,
-                      color:
-                          isDark ? AppColors.grey400 : AppColors.textMuted)),
+              child: Text(
+                'تراجع',
+                style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.grey400 : AppColors.textMuted,
+                ),
+              ),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
-                context.read<RequestsCubit>().cancelRequest(request.id);
+                context.read<RequestsCubit>().cancelRequest(req.id);
               },
-              child: Text('نعم، إلغاء',
-                  style: AppTextStyles.style(
-                      fontWeight: FontWeight.bold, color: AppColors.error)),
+              child: Text(
+                'نعم، إلغاء',
+                style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.error,
+                ),
+              ),
             ),
           ],
         ),
@@ -266,7 +355,7 @@ class _StatusBanner extends StatelessWidget {
                 ),
               ),
               Text(
-                'تاريخ الطلب: ${_fmt(request.createdAt)}',
+                'تاريخ الطلب: ${_fmtDate(request.createdAt)}',
                 style: AppTextStyles.style(
                   fontSize: 11.sp,
                   color: isDark ? AppColors.grey400 : AppColors.textMuted,
@@ -274,34 +363,9 @@ class _StatusBanner extends StatelessWidget {
               ),
             ],
           ),
-          const Spacer(),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-            decoration: BoxDecoration(
-              color: _color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Text(
-              request.formattedPrice,
-              style: AppTextStyles.style(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.bold,
-                color: _color,
-              ),
-            ),
-          ),
         ],
       ),
     );
-  }
-
-  String _fmt(String raw) {
-    try {
-      final dt = DateTime.parse(raw.split('T').first);
-      return '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
-    } catch (_) {
-      return raw.split('T').first;
-    }
   }
 }
 
@@ -312,8 +376,11 @@ class _GeneralInfoCard extends StatelessWidget {
   final RequestModel request;
   final ThemeData theme;
   final bool isDark;
-  const _GeneralInfoCard(
-      {required this.request, required this.theme, required this.isDark});
+  const _GeneralInfoCard({
+    required this.request,
+    required this.theme,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -327,10 +394,14 @@ class _GeneralInfoCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 24.r,
-                backgroundColor:
-                    theme.colorScheme.primary.withValues(alpha: 0.1),
-                child: Icon(Icons.person_rounded,
-                    color: theme.colorScheme.primary, size: 24.r),
+                backgroundColor: theme.colorScheme.primary.withValues(
+                  alpha: 0.1,
+                ),
+                child: Icon(
+                  Icons.person_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 24.r,
+                ),
               ),
               SizedBox(width: 12.w),
               Expanded(
@@ -367,23 +438,12 @@ class _GeneralInfoCard extends StatelessWidget {
           ),
           _Divider(isDark: isDark),
 
-          // ── المدرسة ──
+          // ── تاريخ إرسال الطلب ──
           _InfoRow(
-            icon: Icons.school_rounded,
-            label: 'المدرسة',
-            value: request.school.name,
+            icon: Icons.calendar_today_rounded,
+            label: 'تاريخ إرسال الطلب',
+            value: _fmtDate(request.createdAt),
             isDark: isDark,
-          ),
-          _Divider(isDark: isDark),
-
-          // ── إجمالي السعر ──
-          _InfoRow(
-            icon: Icons.monetization_on_outlined,
-            label: 'الإجمالي',
-            value: request.formattedPrice,
-            isDark: isDark,
-            valueColor: theme.colorScheme.primary,
-            bold: true,
           ),
           _Divider(isDark: isDark),
 
@@ -418,43 +478,35 @@ class _ChildSubscriptionCard extends StatelessWidget {
   final RequestChild child;
   final ThemeData theme;
   final bool isDark;
-  const _ChildSubscriptionCard(
-      {required this.child, required this.theme, required this.isDark});
+  const _ChildSubscriptionCard({
+    required this.child,
+    required this.theme,
+    required this.isDark,
+  });
 
   String _typeLabel(String t) {
     switch (t.toLowerCase()) {
+      case 'monthly':
+        return 'شهري';
       case 'weekly':
         return 'أسبوعي';
       case 'daily':
         return 'يومي';
       default:
-        return 'شهري';
+        return t.isNotEmpty ? t : 'غير متوفر';
     }
   }
 
   String _dirLabel(String d) {
     switch (d.toLowerCase()) {
-      case 'to_school':
-      case 'morning':
+      case 'both':
+        return 'ذهاب وعودة';
+      case 'go':
         return 'ذهاب فقط';
-      case 'from_school':
-      case 'evening':
+      case 'return':
         return 'عودة فقط';
       default:
-        return 'ذهاب وعودة';
-    }
-  }
-
-  String _timingLabel(String t) {
-    return t.toUpperCase() == 'MORNING' ? 'صباحي 🌅' : 'مسائي 🌆';
-  }
-
-  String _fmt(String raw) {
-    try {
-      final dt = DateTime.parse(raw.split('T').first);
-      return '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
-    } catch (_) {
-      return raw.split('T').first;
+        return d.isNotEmpty ? d : 'غير متوفر';
     }
   }
 
@@ -473,10 +525,27 @@ class _ChildSubscriptionCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20.r,
-                backgroundColor:
-                    theme.colorScheme.primary.withValues(alpha: 0.1),
-                child: Icon(Icons.child_care_rounded,
-                    color: theme.colorScheme.primary, size: 20.r),
+                backgroundColor: theme.colorScheme.primary.withValues(
+                  alpha: 0.1,
+                ),
+                backgroundImage:
+                    (child.photoUrl != null && child.photoUrl!.isNotEmpty)
+                    ? CachedNetworkImageProvider(
+                        child.photoUrl!.startsWith('http')
+                            ? child.photoUrl!
+                            : '${ApiEndpoints.baseUrl.replaceAll('/api/', '')}/storage/${child.photoUrl!}',
+                      )
+                    : null,
+                child: (child.photoUrl == null || child.photoUrl!.isEmpty)
+                    ? Text(
+                        child.avatarInitials,
+                        style: AppTextStyles.style(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      )
+                    : null,
               ),
               SizedBox(width: 10.w),
               Expanded(
@@ -484,132 +553,170 @@ class _ChildSubscriptionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      child.name,
+                      child.name.isNotEmpty ? child.name : 'غير متوفر',
                       style: AppTextStyles.style(
                         fontWeight: FontWeight.bold,
                         fontSize: 14.sp,
                         color: isDark ? AppColors.white : AppColors.textDark,
                       ),
                     ),
-                    if (child.schoolName != null)
-                      Text(
-                        child.schoolName!,
-                        style: AppTextStyles.style(
-                          fontSize: 11.sp,
-                          color: isDark
-                              ? AppColors.grey400
-                              : AppColors.textMuted,
-                        ),
+                    Text(
+                      child.school.name.isNotEmpty
+                          ? child.school.name
+                          : 'غير متوفر',
+                      style: AppTextStyles.style(
+                        fontSize: 11.sp,
+                        color: isDark ? AppColors.grey400 : AppColors.textMuted,
                       ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Wrap(
+                      spacing: 6.w,
+                      runSpacing: 4.h,
+                      children: [
+                        _buildInfoChip(
+                          child.age != null
+                              ? 'العمر: ${child.age} سنوات'
+                              : 'العمر: غير متوفر',
+                          Icons.cake_outlined,
+                          isDark,
+                        ),
+                        _buildInfoChip(
+                          child.gender != null
+                              ? (child.gender == 'male' ? 'ذكر' : 'أنثى')
+                              : 'جنس الطفل: غير متوفر',
+                          child.gender == 'male'
+                              ? Icons.male_rounded
+                              : Icons.female_rounded,
+                          isDark,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-              // السعر
-              if (sub != null)
-                Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Text(
-                    '${sub.price.toInt()} د.ل',
-                    style: AppTextStyles.style(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
+              // السعر الخاص بالطفل
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Text(
+                  _formatAmount(child.price),
+                  style: AppTextStyles.style(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
+              ),
             ],
           ),
 
-          if (sub == null) ...[
-            _Divider(isDark: isDark),
-            Text(
-              'لا توجد بيانات اشتراك لهذا الطفل.',
-              style: AppTextStyles.style(
-                  fontSize: 12.sp,
-                  color: isDark ? AppColors.grey400 : AppColors.textMuted),
-            ),
-          ] else ...[
-            _Divider(isDark: isDark),
+          _Divider(isDark: isDark),
 
-            // ── تفاصيل الاشتراك ──
-            _InfoRow(
-              icon: Icons.repeat_rounded,
-              label: 'نوع الاشتراك',
-              value: _typeLabel(sub.subscriptionType),
-              isDark: isDark,
-            ),
-            _Divider(isDark: isDark),
-            _InfoRow(
-              icon: Icons.swap_horiz_rounded,
-              label: 'الاتجاه',
-              value: _dirLabel(sub.direction),
-              isDark: isDark,
-            ),
-            _Divider(isDark: isDark),
-            _InfoRow(
-              icon: Icons.wb_sunny_outlined,
-              label: 'التوقيت',
-              value: _timingLabel(sub.timing),
-              isDark: isDark,
-            ),
-            _Divider(isDark: isDark),
-            _InfoRow(
-              icon: Icons.calendar_today_rounded,
-              label: 'تاريخ البداية',
-              value: _fmt(sub.startDate),
-              isDark: isDark,
-            ),
-            if (sub.endDate != null) ...[
-              _Divider(isDark: isDark),
-              _InfoRow(
-                icon: Icons.event_rounded,
-                label: 'تاريخ النهاية',
-                value: _fmt(sub.endDate!),
-                isDark: isDark,
-              ),
-            ],
+          // ── تفاصيل الاشتراك ──
+          _InfoRow(
+            icon: Icons.repeat_rounded,
+            label: 'نوع الاشتراك',
+            value: _typeLabel(sub.type),
+            isDark: isDark,
+          ),
+          _Divider(isDark: isDark),
+          _InfoRow(
+            icon: Icons.swap_horiz_rounded,
+            label: 'الاتجاه',
+            value: _dirLabel(sub.tripType),
+            isDark: isDark,
+          ),
+          _Divider(isDark: isDark),
+          _InfoRow(
+            icon: Icons.calendar_today_rounded,
+            label: 'تاريخ بداية الاشتراك',
+            value: sub.startDate.isNotEmpty ? sub.startDate : 'غير متوفر',
+            isDark: isDark,
+          ),
+          _Divider(isDark: isDark),
+          _InfoRow(
+            icon: Icons.event_rounded,
+            label: 'تاريخ نهاية الاشتراك',
+            value:
+                (sub.endDate != null &&
+                    sub.endDate!.isNotEmpty &&
+                    sub.endDate != 'null')
+                ? sub.endDate!
+                : 'غير متوفر',
+            isDark: isDark,
+          ),
+          _Divider(isDark: isDark),
+          _InfoRow(
+            icon: Icons.date_range_rounded,
+            label: 'عدد أيام العمل',
+            value: '${sub.workingDaysCount} يوم',
+            isDark: isDark,
+          ),
+          _Divider(isDark: isDark),
+          _InfoRow(
+            icon: Icons.location_on_rounded,
+            label: 'عنوان المنزل',
+            value: child.home.address.isNotEmpty
+                ? child.home.address
+                : 'غير متوفر',
+            isDark: isDark,
+            valueColor: Colors.blue.shade700,
+          ),
+          _Divider(isDark: isDark),
+          _InfoRow(
+            icon: Icons.school_rounded,
+            label: 'اسم المدرسة',
+            value: child.school.name.isNotEmpty
+                ? child.school.name
+                : 'غير متوفر',
+            isDark: isDark,
+            valueColor: Colors.teal.shade700,
+          ),
+          _Divider(isDark: isDark),
+          _InfoRow(
+            icon: Icons.map_outlined,
+            label: 'عنوان المدرسة',
+            value:
+                (child.school.address != null &&
+                    child.school.address!.isNotEmpty)
+                ? child.school.address!
+                : 'غير متوفر',
+            isDark: isDark,
+          ),
+        ],
+      ),
+    );
+  }
 
-            // ── عنوان الانطلاق ──
-            if (sub.pickupAddress != null) ...[
-              _Divider(isDark: isDark),
-              _InfoRow(
-                icon: Icons.location_on_rounded,
-                label: 'نقطة الانطلاق',
-                value: sub.pickupAddress!.label,
-                isDark: isDark,
-                valueColor: Colors.blue.shade700,
-              ),
-            ],
-
-            // ── عنوان الوصول ──
-            if (sub.dropoffAddress != null) ...[
-              _Divider(isDark: isDark),
-              _InfoRow(
-                icon: Icons.school_rounded,
-                label: 'نقطة الوصول',
-                value: sub.dropoffAddress!.name,
-                isDark: isDark,
-                valueColor: Colors.teal.shade700,
-              ),
-            ],
-
-            // ── ملاحظات (فقط إذا وجدت) ──
-            if (sub.childNotes != null && sub.childNotes!.isNotEmpty) ...[
-              _Divider(isDark: isDark),
-              _InfoRow(
-                icon: Icons.sticky_note_2_outlined,
-                label: 'ملاحظات',
-                value: sub.childNotes!,
-                isDark: isDark,
-                valueColor: AppColors.error,
-              ),
-            ],
-          ],
+  Widget _buildInfoChip(String text, IconData icon, bool isDark) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.grey800
+            : AppColors.grey.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(6.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 10.sp,
+            color: isDark ? AppColors.grey400 : AppColors.textMuted,
+          ),
+          SizedBox(width: 3.w),
+          Text(
+            text,
+            style: AppTextStyles.style(
+              fontSize: 10.sp,
+              color: isDark ? AppColors.grey300 : AppColors.textMuted,
+            ),
+          ),
         ],
       ),
     );
@@ -625,12 +732,13 @@ class _SectionHeader extends StatelessWidget {
   final int count;
   final ThemeData theme;
   final bool isDark;
-  const _SectionHeader(
-      {required this.icon,
-      required this.title,
-      required this.count,
-      required this.theme,
-      required this.isDark});
+  const _SectionHeader({
+    required this.icon,
+    required this.title,
+    required this.count,
+    required this.theme,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -688,22 +796,29 @@ class _RejectionCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.error_outline_rounded,
-              color: AppColors.error, size: 20.r),
+          Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20.r),
           SizedBox(width: 10.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('سبب الرفض:',
-                    style: AppTextStyles.style(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13.sp,
-                        color: AppColors.error)),
+                Text(
+                  'سبب الرفض:',
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13.sp,
+                    color: AppColors.error,
+                  ),
+                ),
                 SizedBox(height: 4.h),
-                Text(reason,
-                    style: AppTextStyles.style(
-                        fontSize: 13.sp, color: AppColors.error, height: 1.4)),
+                Text(
+                  reason,
+                  style: AppTextStyles.style(
+                    fontSize: 13.sp,
+                    color: AppColors.error,
+                    height: 1.4,
+                  ),
+                ),
               ],
             ),
           ),
@@ -720,10 +835,12 @@ class _CancelButton extends StatelessWidget {
   final bool isCancelling;
   final VoidCallback onCancel;
   final bool isDark;
-  const _CancelButton(
-      {required this.isCancelling,
-      required this.onCancel,
-      required this.isDark});
+
+  const _CancelButton({
+    required this.isCancelling,
+    required this.onCancel,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -732,9 +849,11 @@ class _CancelButton extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         border: Border(
-            top: BorderSide(
-                color: isDark ? AppColors.grey800 : AppColors.grey200,
-                width: 0.5)),
+          top: BorderSide(
+            color: isDark ? AppColors.grey800 : AppColors.grey200,
+            width: 0.5,
+          ),
+        ),
         boxShadow: [
           BoxShadow(
             color: AppColors.black.withValues(alpha: isDark ? 0.25 : 0.05),
@@ -743,30 +862,42 @@ class _CancelButton extends StatelessWidget {
           ),
         ],
       ),
-      child: SizedBox(
-        width: double.infinity,
-        height: 50.h,
-        child: ElevatedButton.icon(
-          onPressed: isCancelling ? null : onCancel,
-          icon: isCancelling
-              ? SizedBox(
-                  width: 18.w,
-                  height: 18.h,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2.5, color: AppColors.white),
-                )
-              : Icon(Icons.delete_outline_rounded,
-                  size: 18.r, color: AppColors.white),
-          label: Text('إلغاء الطلب',
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          width: double.infinity,
+          height: 50.h,
+          child: ElevatedButton.icon(
+            onPressed: isCancelling ? null : onCancel,
+            icon: isCancelling
+                ? SizedBox(
+                    width: 18.w,
+                    height: 18.h,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: AppColors.white,
+                    ),
+                  )
+                : Icon(
+                    Icons.delete_outline_rounded,
+                    size: 18.r,
+                    color: AppColors.white,
+                  ),
+            label: Text(
+              'إلغاء الطلب',
               style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14.sp,
-                  color: AppColors.white)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.error,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14.r)),
+                fontWeight: FontWeight.bold,
+                fontSize: 14.sp,
+                color: AppColors.white,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+            ),
           ),
         ),
       ),
@@ -792,8 +923,8 @@ class _Card extends StatelessWidget {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: BorderRadius.circular(22.r),
         border: Border.all(
-          color: borderColor ??
-              (isDark ? AppColors.grey800 : AppColors.grey200),
+          color:
+              borderColor ?? (isDark ? AppColors.grey800 : AppColors.grey200),
           width: 1.2,
         ),
         boxShadow: [
@@ -815,7 +946,6 @@ class _InfoRow extends StatelessWidget {
   final String value;
   final bool isDark;
   final Color? valueColor;
-  final bool bold;
 
   const _InfoRow({
     required this.icon,
@@ -823,7 +953,6 @@ class _InfoRow extends StatelessWidget {
     required this.value,
     required this.isDark,
     this.valueColor,
-    this.bold = false,
   });
 
   @override
@@ -832,9 +961,11 @@ class _InfoRow extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: 5.h),
       child: Row(
         children: [
-          Icon(icon,
-              size: 15.r,
-              color: isDark ? AppColors.grey500 : AppColors.grey400),
+          Icon(
+            icon,
+            size: 15.r,
+            color: isDark ? AppColors.grey500 : AppColors.grey400,
+          ),
           SizedBox(width: 8.w),
           Text(
             label,
@@ -850,8 +981,9 @@ class _InfoRow extends StatelessWidget {
               textAlign: TextAlign.end,
               style: AppTextStyles.style(
                 fontSize: 13.sp,
-                fontWeight: bold ? FontWeight.bold : FontWeight.w600,
-                color: valueColor ??
+                fontWeight: FontWeight.w600,
+                color:
+                    valueColor ??
                     (isDark ? AppColors.white : AppColors.textDark),
               ),
             ),
@@ -869,7 +1001,9 @@ class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Divider(
-        color: isDark ? AppColors.grey800 : AppColors.grey100, height: 12);
+      color: isDark ? AppColors.grey800 : AppColors.grey100,
+      height: 12,
+    );
   }
 }
 
@@ -886,4 +1020,25 @@ class _IconChip extends StatelessWidget {
       child: Icon(icon, color: color, size: 16.r),
     );
   }
+}
+
+// ─────────────────────────────────────────────
+// Private helper function for formatting date
+// ─────────────────────────────────────────────
+
+String _fmtDate(String raw) {
+  try {
+    final dt = DateTime.parse(raw.split('T').first);
+    return '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
+  } catch (_) {
+    return raw.split('T').first;
+  }
+}
+
+// ─────────────────────────────────────────────
+// Private helper function for formatting amount
+// ─────────────────────────────────────────────
+
+String _formatAmount(double amount) {
+  return '${amount.toStringAsFixed(2)} د.ل';
 }

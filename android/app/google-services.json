@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "745946017392",
+    "project_id": "darpy-a247d",
+    "storage_bucket": "darpy-a247d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:745946017392:android:e7968428bf244516cf8eb5",
+        "android_client_info": {
+          "package_name": "com.example.kids_transport"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBADO7GXubTfAH1QjjvYLh2x4hOteeNSQc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

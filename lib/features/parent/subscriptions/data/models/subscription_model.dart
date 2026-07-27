@@ -73,7 +73,7 @@ class SubscriptionModel {
       timing: json['timing']?.toString() ?? '',
       startDate: json['start_date']?.toString() ?? '',
       endDate: json['end_date']?.toString() ?? '',
-      totalPrice: (json['total_price'] as num?)?.toDouble() ?? 0.0,
+      totalPrice: _parseDouble(json['total_price']) ?? 0.0,
       status: json['status']?.toString() ?? 'pending',
       statusAr: json['status_ar']?.toString(),
       pickupTime: json['pickup_time']?.toString(),
@@ -92,16 +92,10 @@ class SubscriptionModel {
           ? SubContract.fromJson(
               Map<String, dynamic>.from(json['contract'] as Map))
           : null,
-      pricePerChild: (json['price_per_child'] as num?)?.toDouble(),
+      pricePerChild: _parseDouble(json['price_per_child']),
       notes: json['notes']?.toString(),
       rejectionReason: json['rejection_reason']?.toString(),
     );
-  }
-
-  static int? _parseInt(dynamic v) {
-    if (v is int) return v;
-    if (v is num) return v.toInt();
-    return int.tryParse(v?.toString() ?? '');
   }
 
   Map<String, dynamic> toJson() => {
@@ -162,12 +156,12 @@ class SubDriver {
   SubDriverUser get user => SubDriverUser(fullName: name);
 
   factory SubDriver.fromJson(Map<String, dynamic> json) => SubDriver(
-        id: json['id'] as int? ?? 0,
+        id: _parseInt(json['id']) ?? 0,
         name: json['name']?.toString() ?? json['full_name']?.toString() ?? '',
         phone: json['phone']?.toString(),
-        rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
-        tripCount: json['trip_count'] as int? ?? json['trips_count'] as int?,
-        subscriptionCount: json['subscription_count'] as int? ?? json['subscriptions_count'] as int?,
+        rating: _parseDouble(json['rating']) ?? 5.0,
+        tripCount: _parseInt(json['trip_count'] ?? json['trips_count']),
+        subscriptionCount: _parseInt(json['subscription_count'] ?? json['subscriptions_count']),
         gender: json['gender']?.toString(),
       );
 
@@ -191,7 +185,7 @@ class SubSchool {
   const SubSchool({required this.id, required this.name, this.address});
 
   factory SubSchool.fromJson(Map<String, dynamic> json) => SubSchool(
-        id: json['id'] as int? ?? 0,
+        id: _parseInt(json['id']) ?? 0,
         name: json['name']?.toString() ?? '',
         address: json['address']?.toString(),
       );
@@ -233,17 +227,25 @@ class SubChild {
         : parts[0][0];
   }
 
-  factory SubChild.fromJson(Map<String, dynamic> json) => SubChild(
-        id: json['id'] as int?,
-        name: json['name']?.toString() ?? json['full_name']?.toString() ?? '',
-        schoolName: json['school_name']?.toString() ?? json['school']?['name']?.toString(),
-        pricePerChild: (json['price_per_child'] as num?)?.toDouble(),
-        photoUrl: json['photo_url']?.toString() ?? json['image']?.toString(),
-        grade: json['grade']?.toString() ?? 'ابتدائي',
-        school: SubSchool.fromJson(json['school'] as Map<String, dynamic>? ?? {
-          'name': json['school_name']?.toString() ?? '',
-        }),
-      );
+  factory SubChild.fromJson(Map<String, dynamic> json) {
+    double? price;
+    if (json['price_per_child'] != null) {
+      price = _parseDouble(json['price_per_child']);
+    } else if (json['pivot'] is Map) {
+      price = _parseDouble(json['pivot']['price_per_child']);
+    }
+    return SubChild(
+      id: _parseInt(json['id']),
+      name: json['name']?.toString() ?? json['full_name']?.toString() ?? '',
+      schoolName: json['school_name']?.toString() ?? json['school']?['name']?.toString(),
+      pricePerChild: price,
+      photoUrl: json['photo_url']?.toString() ?? json['image']?.toString(),
+      grade: json['grade']?.toString() ?? 'ابتدائي',
+      school: SubSchool.fromJson(json['school'] as Map<String, dynamic>? ?? {
+        'name': json['school_name']?.toString() ?? '',
+      }),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         if (id != null) 'id': id,
@@ -269,7 +271,7 @@ class SubContract {
   });
 
   factory SubContract.fromJson(Map<String, dynamic> json) => SubContract(
-        id: json['id'] as int? ?? 0,
+        id: _parseInt(json['id']) ?? 0,
         contractNumber: json['contract_number']?.toString() ?? '',
         pdfUrl: json['pdf_url']?.toString(),
       );
@@ -279,6 +281,24 @@ class SubContract {
         'contract_number': contractNumber,
         if (pdfUrl != null) 'pdf_url': pdfUrl,
       };
+}
+
+// ─────────────────────────────────────────────
+// Private helper functions for safe JSON parsing
+// ─────────────────────────────────────────────
+
+int? _parseInt(dynamic v) {
+  if (v == null) return null;
+  if (v is int) return v;
+  if (v is num) return v.toInt();
+  return int.tryParse(v.toString());
+}
+
+double? _parseDouble(dynamic v) {
+  if (v == null) return null;
+  if (v is double) return v;
+  if (v is num) return v.toDouble();
+  return double.tryParse(v.toString());
 }
 
 // ── أسماء مستعارة للتوافق مع الملفات القديمة ──

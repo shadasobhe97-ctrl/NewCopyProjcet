@@ -11,12 +11,14 @@ class ReviewCard extends StatelessWidget {
   final ReviewModel review;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final bool hasSubscription;
 
   const ReviewCard({
     super.key,
     required this.review,
     required this.onEdit,
     required this.onDelete,
+    required this.hasSubscription,
   });
 
   bool get _isOwnReview {
@@ -110,8 +112,8 @@ class ReviewCard extends StatelessWidget {
               ),
               // Rating stars
               RatingStars(rating: review.rating.toDouble(), itemSize: 14.r),
-              // Edit/Delete buttons if own review
-              if (_isOwnReview) ...[
+              // Edit/Delete buttons if own review AND has active subscription
+              if (_isOwnReview && hasSubscription) ...[
                 SizedBox(width: 6.w),
                 PopupMenuButton<String>(
                   icon: Icon(Icons.more_vert_rounded, color: isDark ? AppColors.grey400 : AppColors.grey500, size: 20.r),

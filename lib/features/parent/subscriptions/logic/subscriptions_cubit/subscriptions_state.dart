@@ -1,4 +1,5 @@
 import '../../data/models/active_subscription_model.dart';
+import '../../data/models/subscription_detail_model.dart';
 
 abstract class SubscriptionsState {
   const SubscriptionsState();
@@ -27,7 +28,7 @@ class SubscriptionsError extends SubscriptionsState {
 class SubscriptionDetailLoading extends SubscriptionsState {}
 
 class SubscriptionDetailLoaded extends SubscriptionsState {
-  final ActiveSubscriptionModel detail;
+  final SubscriptionDetailModel detail;
   const SubscriptionDetailLoaded(this.detail);
 }
 

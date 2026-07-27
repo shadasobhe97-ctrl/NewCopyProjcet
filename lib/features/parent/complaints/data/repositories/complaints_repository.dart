@@ -14,10 +14,9 @@ class ComplaintsRepository {
   Future<ComplaintModel> getComplaintDetails(int id) async {
     return await _remoteDataSource.getComplaintDetails(id);
   }
-
   Future<ComplaintModel> createComplaint({
     required int driverId,
-    required int tripId,
+    int? tripId,
     required String description,
   }) async {
     return await _remoteDataSource.createComplaint(

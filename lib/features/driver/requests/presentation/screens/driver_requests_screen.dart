@@ -7,9 +7,12 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/features/driver/requests/data/models/driver_request_model.dart';
 import 'package:kids_transport/features/driver/requests/logic/driver_requests_cubit.dart';
 import 'package:kids_transport/features/driver/requests/presentation/screens/driver_request_details_screen.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
+import 'package:kids_transport/core/network/api_endpoints.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kids_transport/features/driver/subscriptions/data/models/driver_subscription_model.dart';
 import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
-import 'package:kids_transport/features/driver/subscriptions/presentation/screens/driver_subscription_details_screen.dart';
 
 /// الشاشة الرئيسية لإدارة الطلبات والاشتراكات النشطة عند السائق
 /// تحتوي على تبويبين في الأعلى:
@@ -77,10 +80,7 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
-          _RequestsTabContent(),
-          _SubscriptionsTabContent(),
-        ],
+        children: const [_RequestsTabContent(), _SubscriptionsTabContent()],
       ),
     );
   }
@@ -155,7 +155,9 @@ class _RequestsTabContentState extends State<_RequestsTabContent> {
                       ? const CircularProgressIndicator()
                       : TextButton(
                           onPressed: () {
-                            context.read<DriverRequestsCubit>().loadMoreRequests();
+                            context
+                                .read<DriverRequestsCubit>()
+                                .loadMoreRequests();
                           },
                           child: Text(
                             'عرض المزيد',
@@ -175,19 +177,21 @@ class _RequestsTabContentState extends State<_RequestsTabContent> {
                 request: state.requests[index],
                 onTap: () {
                   final cubit = context.read<DriverRequestsCubit>();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: cubit,
-                        child: DriverRequestDetailsScreen(
-                          requestId: state.requests[index].id,
+                  Navigator.of(context)
+                      .push(
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: cubit,
+                            child: DriverRequestDetailsScreen(
+                              requestId: state.requests[index].id,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ).then((_) {
-                    // Refresh if returning from details screen
-                    cubit.refresh();
-                  });
+                      )
+                      .then((_) {
+                        // Refresh if returning from details screen
+                        cubit.refresh();
+                      });
                 },
               ),
             );
@@ -230,7 +234,8 @@ class _SubscriptionsTabContentState extends State<_SubscriptionsTabContent> {
   @override
   void initState() {
     super.initState();
-    context.read<DriverSubscriptionsCubit>().loadSubscriptions();
+    final cubit = context.read<DriverSubscriptionsCubit>();
+    cubit.loadSubscriptions(filter: cubit.currentFilter);
   }
 
   @override
@@ -243,7 +248,7 @@ class _SubscriptionsTabContentState extends State<_SubscriptionsTabContent> {
             _SubscriptionsFilterBar(
               activeFilter: state is DriverSubscriptionsLoaded
                   ? state.activeFilter
-                  : DriverSubscriptionsFilter.all,
+                  : context.read<DriverSubscriptionsCubit>().currentFilter,
             ),
             // القائمة
             Expanded(child: _buildSubscriptionsList(context, state)),
@@ -254,7 +259,9 @@ class _SubscriptionsTabContentState extends State<_SubscriptionsTabContent> {
   }
 
   Widget _buildSubscriptionsList(
-      BuildContext context, DriverSubscriptionsState state) {
+    BuildContext context,
+    DriverSubscriptionsState state,
+  ) {
     if (state is DriverSubscriptionsLoading ||
         state is DriverSubscriptionsInitial) {
       return const Center(child: CircularProgressIndicator());
@@ -284,14 +291,14 @@ class _SubscriptionsTabContentState extends State<_SubscriptionsTabContent> {
             padding: const EdgeInsets.only(bottom: 12),
             child: _DriverSubscriptionCard(
               subscription: state.subscriptions[index],
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => DriverSubscriptionDetailsScreen(
-                      subscription: state.subscriptions[index],
-                    ),
-                  ),
+              onTap: () async {
+                await Navigator.of(context).pushNamed(
+                  AppRoutes.driverSubscriptionDetails,
+                  arguments: state.subscriptions[index].id,
                 );
+                if (context.mounted) {
+                  context.read<DriverSubscriptionsCubit>().refresh();
+                }
               },
             ),
           ),
@@ -347,14 +354,19 @@ class _RequestsFilterBar extends StatelessWidget {
           color: isDark ? AppColors.grey900 : AppColors.backgroundLight,
           borderRadius: AppTheme.radius(10),
           border: AppTheme.border(
-            color: isDark ? AppColors.grey800 : AppColors.grey.withValues(alpha: 0.2),
+            color: isDark
+                ? AppColors.grey800
+                : AppColors.grey.withValues(alpha: 0.2),
           ),
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<DriverRequestsFilter>(
             value: activeFilter,
             isExpanded: true,
-            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textMuted),
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: AppColors.textMuted,
+            ),
             dropdownColor: isDark ? AppColors.surfaceDark : AppColors.white,
             style: AppTextStyles.style(
               fontSize: 14,
@@ -363,7 +375,9 @@ class _RequestsFilterBar extends StatelessWidget {
             ),
             onChanged: (DriverRequestsFilter? newValue) {
               if (newValue != null) {
-                context.read<DriverRequestsCubit>().loadRequests(filter: newValue);
+                context.read<DriverRequestsCubit>().loadRequests(
+                  filter: newValue,
+                );
               }
             },
             items: filters.map((f) {
@@ -391,88 +405,56 @@ class _SubscriptionsFilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final filters = [
-      (DriverSubscriptionsFilter.all, 'الكل', Icons.list_rounded),
-      (DriverSubscriptionsFilter.currentActive, 'نشط', Icons.check_circle_rounded),
-      (DriverSubscriptionsFilter.pendingStart, 'ينتظر البدء', Icons.play_arrow_rounded),
-      (DriverSubscriptionsFilter.completed, 'مكتمل', Icons.done_all_rounded),
-      (DriverSubscriptionsFilter.cancelled, 'ملغي', Icons.block_rounded),
+      (DriverSubscriptionsFilter.all, 'الكل'),
+      (DriverSubscriptionsFilter.currentActive, 'نشط'),
+      (DriverSubscriptionsFilter.pendingStart, 'معلق'),
+      (DriverSubscriptionsFilter.completed, 'مكتمل'),
+      (DriverSubscriptionsFilter.cancelled, 'ملغي'),
     ];
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       color: isDark ? AppColors.surfaceDark : AppColors.white,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: filters.map((f) {
-            final isActive = activeFilter == f.$1;
-            return Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: _FilterChipWidget(
-                label: f.$2,
-                icon: f.$3,
-                isActive: isActive,
-                onTap: () {
-                  context
-                      .read<DriverSubscriptionsCubit>()
-                      .loadSubscriptions(filter: f.$1);
-                },
-              ),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterChipWidget extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _FilterChipWidget({
-    required this.label,
-    required this.icon,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final activeColor = context.primaryColor;
-    final isDark = context.isDarkMode;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      width: double.infinity,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w),
         decoration: AppTheme.boxDecoration(
-          color: isActive
-              ? activeColor
-              : (isDark ? AppColors.grey800 : AppColors.backgroundLight),
-          borderRadius: AppTheme.radius(20),
+          color: isDark ? AppColors.grey900 : AppColors.backgroundLight,
+          borderRadius: AppTheme.radius(10.r),
+          border: AppTheme.border(
+            color: isDark
+                ? AppColors.grey800
+                : AppColors.grey.withValues(alpha: 0.2),
+          ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 14,
-              color: isActive ? AppColors.white : AppColors.textMuted,
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<DriverSubscriptionsFilter>(
+            value: activeFilter,
+            isExpanded: true,
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: AppColors.textMuted,
             ),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: AppTextStyles.style(
-                fontSize: 13,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                color: isActive ? AppColors.white : AppColors.textMuted,
-              ),
+            dropdownColor: isDark ? AppColors.surfaceDark : AppColors.white,
+            style: AppTextStyles.style(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.white : AppColors.black,
             ),
-          ],
+            onChanged: (DriverSubscriptionsFilter? newValue) {
+              if (newValue != null) {
+                context.read<DriverSubscriptionsCubit>().loadSubscriptions(
+                  filter: newValue,
+                );
+              }
+            },
+            items: filters.map((f) {
+              return DropdownMenuItem<DriverSubscriptionsFilter>(
+                value: f.$1,
+                child: Text(f.$2),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
@@ -539,7 +521,11 @@ class _DriverRequestCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.person_rounded, size: 16, color: AppColors.primaryLight),
+                          const Icon(
+                            Icons.person_rounded,
+                            size: 16,
+                            color: AppColors.primaryLight,
+                          ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
@@ -557,7 +543,11 @@ class _DriverRequestCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.child_care_rounded, size: 16, color: AppColors.textMuted),
+                          const Icon(
+                            Icons.child_care_rounded,
+                            size: 16,
+                            color: AppColors.textMuted,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             '${request.childrenCount} أطفال',
@@ -567,7 +557,11 @@ class _DriverRequestCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          const Icon(Icons.monetization_on_rounded, size: 16, color: AppColors.success),
+                          const Icon(
+                            Icons.monetization_on_rounded,
+                            size: 16,
+                            color: AppColors.success,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             '${request.totalPrice} د.ل',
@@ -582,7 +576,11 @@ class _DriverRequestCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.textMuted),
+                          const Icon(
+                            Icons.calendar_today_rounded,
+                            size: 16,
+                            color: AppColors.textMuted,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             request.subscriptionTypeDisplayLabel,
@@ -600,7 +598,10 @@ class _DriverRequestCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: AppTheme.boxDecoration(
                         color: statusColor.withValues(alpha: 0.1),
                         borderRadius: AppTheme.radius(20),
@@ -647,6 +648,7 @@ class _DriverSubscriptionCard extends StatelessWidget {
     switch (subscription.status.toLowerCase()) {
       case 'active':
         return AppColors.success;
+      case 'pending':
       case 'pending_start':
         return AppColors.pending;
       case 'completed':
@@ -658,18 +660,44 @@ class _DriverSubscriptionCard extends StatelessWidget {
     }
   }
 
+  String _formatDate(String? raw) {
+    if (raw == null || raw.isEmpty) return 'غير متوفر';
+    try {
+      final dt = DateTime.parse(raw);
+      return '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return raw;
+    }
+  }
+
+  String _formatTimeArabic(String? timeStr) {
+    if (timeStr == null || timeStr.isEmpty) return 'غير محدد';
+    try {
+      final parts = timeStr.split(':');
+      if (parts.length >= 2) {
+        final hour = int.parse(parts[0]);
+        final minute = int.parse(parts[1]);
+        final amPm = hour >= 12 ? 'م' : 'ص';
+        final formattedHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+        return '${formattedHour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $amPm';
+      }
+    } catch (_) {}
+    return timeStr;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final statusColor = _getStatusColor();
+    final child = subscription.child;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16.w),
         decoration: AppTheme.boxDecoration(
           color: isDark ? AppColors.surfaceDark : AppColors.white,
-          borderRadius: AppTheme.radius(16),
+          borderRadius: AppTheme.radius(16.r),
           border: AppTheme.border(
             color: isDark
                 ? AppColors.grey800
@@ -678,7 +706,7 @@ class _DriverSubscriptionCard extends StatelessWidget {
           boxShadow: [
             AppTheme.boxShadow(
               color: AppColors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
+              blurRadius: 8.r,
               offset: const Offset(0, 2),
             ),
           ],
@@ -690,48 +718,75 @@ class _DriverSubscriptionCard extends StatelessWidget {
             Row(
               children: [
                 CircleAvatar(
-                  radius: 24,
-                  backgroundColor:
-                      AppColors.success.withValues(alpha: 0.12),
-                  child: const Icon(
-                    Icons.child_care_rounded,
-                    color: AppColors.success,
-                    size: 24,
-                  ),
+                  radius: 24.r,
+                  backgroundColor: context.primaryColor.withValues(alpha: 0.1),
+                  backgroundImage:
+                      (child.photoUrl != null && child.photoUrl!.isNotEmpty)
+                      ? CachedNetworkImageProvider(
+                          child.photoUrl!.startsWith('http')
+                              ? child.photoUrl!
+                              : '${ApiEndpoints.baseUrl.replaceAll('/api/', '')}/storage/${child.photoUrl!}',
+                        )
+                      : null,
+                  child: (child.photoUrl == null || child.photoUrl!.isEmpty)
+                      ? Text(
+                          child.avatarInitials,
+                          style: AppTextStyles.style(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                            color: context.primaryColor,
+                          ),
+                        )
+                      : null,
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12.w),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        subscription.child.displayName,
+                        child.displayName,
                         style: AppTextStyles.style(
-                          fontSize: 15,
+                          fontSize: 15.sp,
                           fontWeight: FontWeight.bold,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 3),
+                      SizedBox(height: 4.h),
                       Row(
                         children: [
-                          const Icon(
-                            Icons.school_rounded,
-                            size: 13,
-                            color: AppColors.textMuted,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              subscription.child.schoolName,
+                          if (child.age != null) ...[
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              size: 12.sp,
+                              color: AppColors.textMuted,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              'العمر: ${child.age} سنة',
                               style: AppTextStyles.style(
-                                fontSize: 12,
+                                fontSize: 11.sp,
                                 color: AppColors.textMuted,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
+                            SizedBox(width: 10.w),
+                          ],
+                          if (child.grade != null) ...[
+                            Icon(
+                              Icons.grade_rounded,
+                              size: 12.sp,
+                              color: AppColors.textMuted,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              'الصف: ${child.grade}',
+                              style: AppTextStyles.style(
+                                fontSize: 11.sp,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -739,18 +794,18 @@ class _DriverSubscriptionCard extends StatelessWidget {
                 ),
                 // شارة الحالة
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
                   ),
                   decoration: AppTheme.boxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: AppTheme.radius(20),
+                    borderRadius: AppTheme.radius(20.r),
                   ),
                   child: Text(
                     subscription.statusDisplayLabel,
                     style: AppTextStyles.style(
-                      fontSize: 12,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                       color: statusColor,
                     ),
@@ -758,14 +813,14 @@ class _DriverSubscriptionCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12.h),
 
-            // تفاصيل المسار والأوقات
+            // تفاصيل الرحلة
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: EdgeInsets.all(12.w),
               decoration: AppTheme.boxDecoration(
                 color: isDark ? AppColors.grey900 : AppColors.backgroundLight,
-                borderRadius: AppTheme.radius(10),
+                borderRadius: AppTheme.radius(12.r),
               ),
               child: Column(
                 children: [
@@ -774,81 +829,112 @@ class _DriverSubscriptionCard extends StatelessWidget {
                     children: [
                       _MiniInfoWidget(
                         icon: Icons.login_rounded,
-                        text: subscription.pickupTime ?? 'غير محدد',
+                        text: _formatTimeArabic(subscription.pickupTime),
                         color: AppColors.pending,
                       ),
                       _MiniInfoWidget(
                         icon: Icons.logout_rounded,
-                        text: subscription.dropoffTime ?? 'غير محدد',
+                        text: _formatTimeArabic(subscription.dropoffTime),
                         color: AppColors.error,
                       ),
-                      if (subscription.contract != null)
-                        _MiniInfoWidget(
-                          icon: Icons.monetization_on_rounded,
-                          text: '${subscription.contract!.totalPrice} د.ل',
-                          color: AppColors.success,
-                        ),
+                      _MiniInfoWidget(
+                        icon: Icons.alt_route_rounded,
+                        text: subscription.tripType == 'both'
+                            ? 'ذهاب وعودة'
+                            : (subscription.tripType == 'morning'
+                                  ? 'ذهاب فقط'
+                                  : 'عودة فقط'),
+                        color: context.primaryColor,
+                      ),
                     ],
                   ),
-                  if (subscription.pickupLabel != null ||
-                      subscription.dropoffLabel != null) ...[
-                    const SizedBox(height: 8),
-                    const Divider(height: 1, thickness: 0.5),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_rounded,
-                            size: 13, color: AppColors.textMuted),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            'من: ${subscription.pickupLabel ?? "المنزل"} 📍 إلى: ${subscription.dropoffLabel ?? "المدرسة"} 🏫',
-                            style: AppTextStyles.style(
-                              fontSize: 11,
-                              color: AppColors.textMuted,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  SizedBox(height: 10.h),
+                  const Divider(height: 1, thickness: 0.5),
+                  SizedBox(height: 10.h),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.location_on_rounded,
+                        size: 14.sp,
+                        color: AppColors.textMuted,
+                      ),
+                      SizedBox(width: 4.w),
+                      Expanded(
+                        child: Text(
+                          'من: ${subscription.pickupLabel ?? "غير محدد"} 📍 إلى: ${subscription.dropoffLabel ?? "غير محدد"} 🏫',
+                          style: AppTextStyles.style(
+                            fontSize: 12.sp,
+                            color: AppColors.textMuted,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 12.h),
 
-            // الذيل
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  subscription.contract != null
-                      ? 'عقد: ${subscription.contract!.contractNumber}'
-                      : 'اشتراك #${subscription.id}',
+            // تفاصيل العقد
+            if (subscription.contract != null) ...[
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 4.w),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'عقد: ${subscription.contract!.contractNumber}',
+                      style: AppTextStyles.style(
+                        fontSize: 12.sp,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    Text(
+                      'سعر الاشتراك: ${subscription.contract!.totalPrice} د.ل',
+                      style: AppTextStyles.style(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.success,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 4.h),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 4.w),
+                child: Text(
+                  'المدة: ${_formatDate(subscription.contract!.startDate)} - ${_formatDate(subscription.contract!.endDate)}',
                   style: AppTextStyles.style(
-                    fontSize: 11,
+                    fontSize: 11.sp,
                     color: AppColors.textMuted,
                   ),
                 ),
-                Row(
-                  children: [
-                    Text(
-                      'عرض تفاصيل الاشتراك',
-                      style: AppTextStyles.style(
-                        fontSize: 11,
-                        color: context.primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 10,
-                      color: context.primaryColor,
-                    ),
-                  ],
+              ),
+              SizedBox(height: 10.h),
+            ],
+
+            const Divider(height: 1, thickness: 0.5),
+            SizedBox(height: 8.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'عرض تفاصيل الاشتراك',
+                  style: AppTextStyles.style(
+                    fontSize: 12.sp,
+                    color: context.primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(width: 4.w),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 11.sp,
+                  color: context.primaryColor,
                 ),
               ],
             ),
@@ -938,7 +1024,10 @@ class _ErrorView extends StatelessWidget {
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('إعادة المحاولة'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
               ),
             ),
           ],

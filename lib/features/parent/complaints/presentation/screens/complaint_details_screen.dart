@@ -292,7 +292,10 @@ class _ComplaintDetailsScreenState extends State<ComplaintDetailsScreen> {
                           _buildDetailRow(
                             icon: Icons.directions_bus_outlined,
                             label: 'الرحلة المعنية',
-                            value: item.tripTitle ?? 'رحلة #${item.tripId}',
+                            value: item.tripTitle ??
+                                ((item.tripId != null && item.tripId! > 0)
+                                    ? 'رحلة #${item.tripId}'
+                                    : 'شكوى عامة (ليست مرتبطة برحلة)'),
                             isDark: isDark,
                             theme: theme,
                           ),

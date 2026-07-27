@@ -8,16 +8,10 @@ class DriverSubscriptionsRepository {
   DriverSubscriptionsRepository(this._remoteDataSource);
 
   Future<List<DriverSubscriptionModel>> getSubscriptions({String? filter}) {
-    if (filter == 'current_active') {
-      return _remoteDataSource.fetchCurrentActive();
-    } else if (filter == 'pending_start') {
-      return _remoteDataSource.fetchPendingStart();
-    } else if (filter == 'completed') {
-      return _remoteDataSource.fetchCompleted();
-    } else if (filter == 'cancelled') {
-      return _remoteDataSource.fetchCancelled();
-    } else {
-      return _remoteDataSource.fetchAll();
-    }
+    return _remoteDataSource.fetchSubscriptions(filter: filter);
+  }
+
+  Future<DriverSubscriptionModel> getSubscriptionDetail(int id) {
+    return _remoteDataSource.fetchDetail(id);
   }
 }

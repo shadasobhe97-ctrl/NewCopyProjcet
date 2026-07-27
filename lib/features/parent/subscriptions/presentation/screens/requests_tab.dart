@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import '../../data/repositories/requests_repository.dart';
 import '../../logic/requests_cubit/requests_cubit.dart';
 import '../../data/models/request_model.dart';
 import '../widgets/request_card.dart';
@@ -267,15 +269,21 @@ class _RequestsTabState extends State<RequestsTab>
             isCancelling: state is RequestsActionLoading &&
                 state.actionId == req.id,
             onDetailsPressed: () {
-              Navigator.push(
+              Navigator.push<bool>(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => BlocProvider.value(
-                    value: context.read<RequestsCubit>(),
+                  builder: (_) => BlocProvider(
+                    create: (context) => RequestsCubit(
+                      getIt<RequestsRepository>(),
+                    ),
                     child: RequestDetailsScreen(request: req),
                   ),
                 ),
-              );
+              ).then((result) {
+                if (result == true && context.mounted) {
+                  context.read<RequestsCubit>().fetchRequests(status: _selectedFilter.apiValue);
+                }
+              });
             },
             onCancelPressed: req.status.toLowerCase() == 'pending'
                 ? () => _showCancelDialog(req.id)

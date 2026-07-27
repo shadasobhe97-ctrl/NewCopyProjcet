@@ -37,14 +37,22 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
 
   final List<ChildModel> _fallbackKids = [
     ChildModel(
-      id: 1, fullName: 'يوسف أحمد', gender: 'male',
-      birthDate: DateTime(2015, 5, 20), grade: 'ابتدائي',
-      schoolId: 101, addressId: '1',
+      id: 1,
+      fullName: 'يوسف أحمد',
+      gender: 'male',
+      birthDate: DateTime(2015, 5, 20),
+      grade: 'ابتدائي',
+      schoolId: 101,
+      addressId: '1',
     ),
     ChildModel(
-      id: 2, fullName: 'ريم أحمد', gender: 'female',
-      birthDate: DateTime(2017, 9, 10), grade: 'روضة',
-      schoolId: 102, addressId: '1',
+      id: 2,
+      fullName: 'ريم أحمد',
+      gender: 'female',
+      birthDate: DateTime(2017, 9, 10),
+      grade: 'روضة',
+      schoolId: 102,
+      addressId: '1',
     ),
   ];
 
@@ -62,7 +70,9 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
 
   void _onTapViewProfile(DriverSearchModel driver, {bool showPricing = true}) {
     final childrenState = context.read<ChildrenCubit>().state;
-    final kidsList = childrenState is ChildrenLoaded ? childrenState.children : _currentKids;
+    final kidsList = childrenState is ChildrenLoaded
+        ? childrenState.children
+        : _currentKids;
 
     Navigator.push(
       context,
@@ -107,9 +117,8 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
               body: SafeArea(
                 child: Column(
                   children: [
-                    // رأس الصفحة (Header) - يظهر فقط في الصفحات الفرعية
-                    if (_searchMethod != SearchMethod.none)
-                      _buildHeader(context),
+                    // رأس الصفحة (Header)
+                    _buildHeader(context),
 
                     // المحتوى القابل للتمرير
                     Expanded(
@@ -158,7 +167,8 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                     childIds: _selectedKidsIds,
                                   );
                                 },
-                                onDriverTapped: (d) => _onTapViewProfile(d, showPricing: false),
+                                onDriverTapped: (d) =>
+                                    _onTapViewProfile(d, showPricing: false),
                                 onBack: () => setState(() {
                                   _searchMethod = SearchMethod.none;
                                   context.read<SearchCubit>().resetState();
@@ -206,7 +216,11 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                     _hasAcOnly = hasAc;
                                   });
                                   context.read<SearchCubit>().searchDrivers(
-                                    searchQuery: _searchMethod == SearchMethod.nameOrNumber ? _searchQuery : '',
+                                    searchQuery:
+                                        _searchMethod ==
+                                            SearchMethod.nameOrNumber
+                                        ? _searchQuery
+                                        : '',
                                     driverGender: gender,
                                     hasAc: hasAc,
                                     childIds: _selectedKidsIds,
@@ -227,14 +241,15 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                   );
                                 },
                               ),
-                            
-                            // إظهار رسالة الخطأ إذا كان الـ state هو SearchError
                             if (state is SearchError)
                               Padding(
                                 padding: EdgeInsets.all(16.w),
                                 child: Text(
                                   state.errorMessage,
-                                  style: AppTextStyles.style(color: AppColors.red, fontWeight: FontWeight.bold),
+                                  style: AppTextStyles.style(
+                                    color: AppColors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                   textAlign: TextAlign.center,
                                 ),
                               ),
@@ -279,11 +294,15 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
         children: [
           if (_searchMethod != SearchMethod.none)
             IconButton(
-              icon: Icon(Icons.arrow_back_ios_new_rounded,
-                  size: 18.r, color: theme.colorScheme.primary),
+              icon: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 18.r,
+                color: theme.colorScheme.primary,
+              ),
               tooltip: 'رجوع',
               onPressed: () => setState(() {
-                if (_searchMethod == SearchMethod.byChildren && _hasSearchedByChildren) {
+                if (_searchMethod == SearchMethod.byChildren &&
+                    _hasSearchedByChildren) {
                   _hasSearchedByChildren = false;
                 } else {
                   _searchMethod = SearchMethod.none;

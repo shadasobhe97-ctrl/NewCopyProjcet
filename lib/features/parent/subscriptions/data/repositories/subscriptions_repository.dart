@@ -2,6 +2,7 @@ import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/data/local/subscriptions_local_data_source.dart';
 import '../datasources/subscriptions_remote_data_source.dart';
 import '../models/active_subscription_model.dart';
+import '../models/subscription_detail_model.dart';
 
 class SubscriptionsRepository {
   final SubscriptionsRemoteDataSource _remoteDataSource;
@@ -38,14 +39,14 @@ class SubscriptionsRepository {
   }
 
   // ---- جلب تفاصيل طلب واحد ----
-  Future<(ActiveSubscriptionModel?, String?)> getRequestDetail(int id) async {
+  Future<(SubscriptionDetailModel?, String?)> getRequestDetail(int id) async {
     try {
       final detail = await _remoteDataSource.getSubscriptionDetail(id);
       return (detail, null);
     } on ApiException catch (e) {
       return (null, e.message);
     } catch (_) {
-      return (null, 'تعذر تحميل تفاصيل الطلب، يرجى المحاولة مرة أخرى.');
+      return (null, 'تعذر تحميل تفاصيل الاشتراك، يرجى المحاولة مرة أخرى.');
     }
   }
 

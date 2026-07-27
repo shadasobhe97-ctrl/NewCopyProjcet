@@ -4,10 +4,8 @@ import 'package:kids_transport/features/driver/subscriptions/data/repositories/d
 
 part 'driver_subscriptions_state.dart';
 
-/// فلاتر الاشتراكات النشطة
 enum DriverSubscriptionsFilter { all, currentActive, pendingStart, completed, cancelled }
 
-/// كوبيت إدارة الاشتراكات النشطة للسائق
 class DriverSubscriptionsCubit extends Cubit<DriverSubscriptionsState> {
   final DriverSubscriptionsRepository _repository;
 
@@ -16,21 +14,19 @@ class DriverSubscriptionsCubit extends Cubit<DriverSubscriptionsState> {
   DriverSubscriptionsFilter _currentFilter = DriverSubscriptionsFilter.all;
   DriverSubscriptionsFilter get currentFilter => _currentFilter;
 
-  /// تحميل الاشتراكات بالفلتر المناسب
   Future<void> loadSubscriptions({
     DriverSubscriptionsFilter filter = DriverSubscriptionsFilter.all,
   }) async {
     _currentFilter = filter;
     emit(DriverSubscriptionsLoading());
-
     try {
-      final String? filterStr;
+      String? filterStr;
       switch (filter) {
         case DriverSubscriptionsFilter.currentActive:
-          filterStr = 'current_active';
+          filterStr = 'active';
           break;
         case DriverSubscriptionsFilter.pendingStart:
-          filterStr = 'pending_start';
+          filterStr = 'pending';
           break;
         case DriverSubscriptionsFilter.completed:
           filterStr = 'completed';
@@ -50,6 +46,15 @@ class DriverSubscriptionsCubit extends Cubit<DriverSubscriptionsState> {
     }
   }
 
-  /// إعادة تحميل الاشتراكات بنفس الفلتر الحالي
+  Future<void> loadSubscriptionDetail(int id) async {
+    emit(DriverSubscriptionDetailLoading());
+    try {
+      final detail = await _repository.getSubscriptionDetail(id);
+      emit(DriverSubscriptionDetailLoaded(detail));
+    } catch (e) {
+      emit(DriverSubscriptionDetailError('فشل تحميل تفاصيل الاشتراك: ${e.toString()}'));
+    }
+  }
+
   Future<void> refresh() => loadSubscriptions(filter: _currentFilter);
 }

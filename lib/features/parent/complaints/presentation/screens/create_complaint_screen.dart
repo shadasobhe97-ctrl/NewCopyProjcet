@@ -39,19 +39,10 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
   }
 
   void _submit(BuildContext context) {
-    if (_selectedTripId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('يرجى اختيار الرحلة المعنية بالشكوى.', style: AppTextStyles.style(color: AppColors.white)),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
     if (_formKey.currentState!.validate()) {
       context.read<ComplaintsCubit>().createComplaint(
             driverId: widget.driverId,
-            tripId: _selectedTripId!,
+            tripId: _selectedTripId,
             description: _descriptionController.text.trim(),
           );
     }
@@ -252,7 +243,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                             elevation: 0,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                           ),
-                          onPressed: (isSubmitting || _isLoadingTrips || _trips.isEmpty)
+                          onPressed: isSubmitting
                               ? null
                               : () => _submit(context),
                           child: isSubmitting

@@ -97,7 +97,10 @@ class ComplaintCard extends StatelessWidget {
                     Icon(Icons.directions_bus_outlined, size: 14.r, color: isDark ? AppColors.grey400 : AppColors.textMuted),
                     SizedBox(width: 6.w),
                     Text(
-                      complaint.tripTitle ?? 'رحلة #${complaint.tripId}',
+                      complaint.tripTitle ??
+                          ((complaint.tripId != null && complaint.tripId! > 0)
+                              ? 'رحلة #${complaint.tripId}'
+                              : 'شكوى عامة (ليست مرتبطة برحلة)'),
                       style: AppTextStyles.style(
                         fontSize: 11.5.sp,
                         color: isDark ? AppColors.grey300 : AppColors.grey700,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:kids_transport/firebase_options.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -23,6 +25,9 @@ import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   await StorageService.init();
   await HiveHelper.init(); // تهيئة قاعدة بيانات Hive
   setupDependencyInjection();

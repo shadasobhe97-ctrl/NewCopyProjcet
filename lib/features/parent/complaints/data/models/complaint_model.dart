@@ -3,7 +3,7 @@ class ComplaintModel {
   final int driverId;
   final String? driverName;
   final String? driverAvatar;
-  final int tripId;
+  final int? tripId;
   final String? tripTitle;
   final String description;
   final String createdAt;
@@ -17,7 +17,7 @@ class ComplaintModel {
     required this.driverId,
     this.driverName,
     this.driverAvatar,
-    required this.tripId,
+    this.tripId,
     this.tripTitle,
     required this.description,
     required this.createdAt,
@@ -28,17 +28,19 @@ class ComplaintModel {
   });
 
   bool get isPending => status.toLowerCase() == 'pending';
-  bool get isResolved => status.toLowerCase() == 'action_taken' || status.toLowerCase() == 'resolved' || status.toLowerCase() == 'closed';
+  bool get isResolved => status.toLowerCase() == 'completed' || status.toLowerCase() == 'action_taken' || status.toLowerCase() == 'resolved' || status.toLowerCase() == 'closed' || status.toLowerCase() == 'dismissed';
 
   String get statusAr {
     switch (status.toLowerCase()) {
       case 'pending':
         return 'قيد الانتظار';
+      case 'completed':
       case 'action_taken':
       case 'resolved':
-        return 'تم المعالجة';
+        return 'تمت المعالجة';
+      case 'dismissed':
       case 'rejected':
-        return 'مرفوضة';
+        return 'مغلقة / تم رفض الشكوى';
       case 'closed':
         return 'مغلقة';
       default:
@@ -53,8 +55,8 @@ class ComplaintModel {
     final rawDriverId = json['driver_id'] ?? (json['driver'] is Map ? json['driver']['id'] : 0);
     final driverIdVal = rawDriverId is num ? rawDriverId.toInt() : int.tryParse(rawDriverId.toString()) ?? 0;
 
-    final rawTripId = json['trip_id'] ?? (json['trip'] is Map ? json['trip']['id'] : 0);
-    final tripIdVal = rawTripId is num ? rawTripId.toInt() : int.tryParse(rawTripId.toString()) ?? 0;
+    final rawTripId = json['trip_id'] ?? (json['trip'] is Map ? json['trip']['id'] : null);
+    final tripIdVal = rawTripId is num ? rawTripId.toInt() : int.tryParse(rawTripId?.toString() ?? '');
 
     String? dName;
     String? dAvatar;
@@ -72,7 +74,7 @@ class ComplaintModel {
       final tripMap = Map<String, dynamic>.from(json['trip'] as Map);
       tTitle = tripMap['title'] ?? tripMap['name'] ?? 'رحلة #${tripMap['id']}';
     } else {
-      tTitle = json['trip_title']?.toString() ?? (tripIdVal > 0 ? 'رحلة #$tripIdVal' : null);
+      tTitle = json['trip_title']?.toString() ?? ((tripIdVal != null && tripIdVal > 0) ? 'رحلة #$tripIdVal' : 'شكوى عامة (ليست مرتبطة برحلة)');
     }
 
     return ComplaintModel(

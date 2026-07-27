@@ -102,12 +102,24 @@ class ComplaintTripDropdown extends StatelessWidget {
           ),
           icon: Icon(Icons.arrow_drop_down_rounded, color: theme.colorScheme.primary),
           items: trips.map((trip) {
+            final String timingAr = (trip.tripType?.toLowerCase() == 'morning') ? 'صباحية' : 'مسائية';
+            final String statusAr = switch (trip.status?.toLowerCase() ?? '') {
+              'pending' => 'معلقة',
+              'active' || 'ongoing' || 'started' => 'جاري التوصيل',
+              'completed' || 'finished' => 'مكتملة',
+              'cancelled' => 'ملغاة',
+              _ => trip.status ?? 'غير متوفر',
+            };
+            final String dateStr = trip.scheduledFor != null
+                ? trip.scheduledFor!.split('T').first
+                : 'غير متوفر';
+
             return DropdownMenuItem<int>(
               value: trip.id,
               child: Text(
-                trip.title,
+                'رحلة #${trip.id} - $timingAr (التاريخ: $dateStr) [الحالة: $statusAr]',
                 style: AppTextStyles.style(
-                  fontSize: 12.5.sp,
+                  fontSize: 12.sp,
                   color: isDark ? AppColors.white : AppColors.textDark,
                 ),
               ),

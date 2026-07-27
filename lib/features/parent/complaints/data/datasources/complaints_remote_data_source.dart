@@ -59,16 +59,19 @@ class ComplaintsRemoteDataSource {
   /// POST /api/parent/complaints
   Future<ComplaintModel> createComplaint({
     required int driverId,
-    required int tripId,
+    int? tripId,
     required String description,
   }) async {
+    final Map<String, dynamic> body = {
+      'driver_id': driverId,
+      'description': description,
+    };
+    if (tripId != null) {
+      body['trip_id'] = tripId;
+    }
     final response = await _client.post(
       ApiEndpoints.parentComplaints,
-      data: {
-        'driver_id': driverId,
-        'trip_id': tripId,
-        'description': description,
-      },
+      data: body,
       headers: _authHeader,
     );
 

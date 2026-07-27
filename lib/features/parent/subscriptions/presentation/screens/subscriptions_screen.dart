@@ -10,6 +10,7 @@ import '../../logic/requests_cubit/requests_cubit.dart';
 import '../../data/models/active_subscription_model.dart';
 import '../../data/repositories/requests_repository.dart';
 import '../../data/repositories/subscriptions_repository.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
 import '../widgets/subscription_card.dart';
 import 'requests_tab.dart';
 
@@ -105,6 +106,8 @@ class _SubscriptionsTab extends StatefulWidget {
 
 class _SubscriptionsTabState extends State<_SubscriptionsTab>
     with AutomaticKeepAliveClientMixin {
+  String _selectedFilter = 'all';
+
   @override
   bool get wantKeepAlive => true;
 
@@ -113,9 +116,14 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<SubscriptionsCubit>().fetchSubscriptions();
+        _loadSubscriptions();
       }
     });
+  }
+
+  void _loadSubscriptions() {
+    final filterParam = _selectedFilter == 'all' ? null : _selectedFilter;
+    context.read<SubscriptionsCubit>().fetchSubscriptions(filter: filterParam);
   }
 
   void _showSnackBar(String msg, Color bg) {
@@ -139,48 +147,104 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
     );
   }
 
+  Widget _buildFilterDropdown(ThemeData theme, bool isDark) {
+    final textStyle = AppTextStyles.style(
+      fontSize: 13.sp,
+      fontWeight: FontWeight.bold,
+      color: isDark ? AppColors.white : AppColors.textDark,
+    );
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: isDark ? AppColors.grey800 : AppColors.grey200,
+          width: 1.2,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedFilter,
+          icon: Icon(
+            Icons.filter_list_rounded,
+            color: theme.colorScheme.primary,
+            size: 20.sp,
+          ),
+          isExpanded: true,
+          dropdownColor: isDark ? AppColors.surfaceDark : AppColors.white,
+          style: textStyle,
+          items: const [
+            DropdownMenuItem(value: 'all', child: Text('الكل')),
+            DropdownMenuItem(value: 'active', child: Text('النشطة')),
+            DropdownMenuItem(value: 'pending', child: Text('المعلقة')),
+            DropdownMenuItem(value: 'completed', child: Text('المكتملة')),
+            DropdownMenuItem(value: 'cancelled', child: Text('الملغاة')),
+          ],
+          onChanged: (val) {
+            if (val != null && val != _selectedFilter) {
+              setState(() {
+                _selectedFilter = val;
+              });
+              _loadSubscriptions();
+            }
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
     final isDark = widget.isDark;
 
-    return BlocConsumer<SubscriptionsCubit, SubscriptionsState>(
-      listener: (context, state) {
-        if (state is SubscriptionsLoaded && state.message != null) {
-          _showSnackBar(state.message!, AppColors.success);
-        } else if (state is SubscriptionsEmpty && state.message != null) {
-          _showSnackBar(state.message!, AppColors.info);
-        } else if (state is SubscriptionsActionSuccess) {
-          _showSnackBar(state.message, AppColors.success);
-          context.read<SubscriptionsCubit>().fetchSubscriptions();
-        } else if (state is SubscriptionsActionError) {
-          _showSnackBar(state.message, AppColors.error);
-        }
-      },
-      builder: (context, state) {
-        if (state is SubscriptionsInitial || state is SubscriptionsLoading) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-        if (state is SubscriptionsError) {
-          return _buildError(state.message, isDark, theme, context);
-        }
-        if (state is SubscriptionsEmpty) {
-          return _buildEmpty(isDark, theme, context);
-        }
+    return Column(
+      children: [
+        _buildFilterDropdown(theme, isDark),
+        Expanded(
+          child: BlocConsumer<SubscriptionsCubit, SubscriptionsState>(
+            listener: (context, state) {
+              if (state is SubscriptionsLoaded && state.message != null) {
+                _showSnackBar(state.message!, AppColors.success);
+              } else if (state is SubscriptionsEmpty && state.message != null) {
+                _showSnackBar(state.message!, AppColors.info);
+              } else if (state is SubscriptionsActionSuccess) {
+                _showSnackBar(state.message, AppColors.success);
+                _loadSubscriptions();
+              } else if (state is SubscriptionsActionError) {
+                _showSnackBar(state.message, AppColors.error);
+              }
+            },
+            builder: (context, state) {
+              if (state is SubscriptionsInitial || state is SubscriptionsLoading) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+              if (state is SubscriptionsError) {
+                return _buildError(state.message, isDark, theme, context);
+              }
+              if (state is SubscriptionsEmpty) {
+                return _buildEmpty(isDark, theme, context);
+              }
 
-        final List<ActiveSubscriptionModel> subs;
-        if (state is SubscriptionsLoaded) {
-          subs = state.subscriptions;
-        } else {
-          subs = [];
-        }
+              final List<ActiveSubscriptionModel> subs;
+              if (state is SubscriptionsLoaded) {
+                subs = state.subscriptions;
+              } else {
+                subs = [];
+              }
 
-        if (subs.isEmpty) return _buildEmpty(isDark, theme, context);
-        return _buildList(subs, state, context);
-      },
+              if (subs.isEmpty) return _buildEmpty(isDark, theme, context);
+              return _buildList(subs, state, context);
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -190,8 +254,7 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
     BuildContext context,
   ) {
     return RefreshIndicator(
-      onRefresh: () =>
-          context.read<SubscriptionsCubit>().fetchSubscriptions(),
+      onRefresh: () async => _loadSubscriptions(),
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.all(16.w),
@@ -202,7 +265,13 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
             subscription: sub,
             isCancelling: state is SubscriptionsActionLoading &&
                 state.actionId == sub.id,
-            onDetailsPressed: () {},
+            onDetailsPressed: () {
+              Navigator.pushNamed(
+                context,
+                AppRoutes.subscriptionDetails,
+                arguments: sub.id,
+              );
+            },
             onCancelPressed: () {
               context.read<SubscriptionsCubit>().cancelSubscription(sub.id);
             },
@@ -232,8 +301,7 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
           ),
           SizedBox(height: 24.h),
           ElevatedButton.icon(
-            onPressed: () =>
-                context.read<SubscriptionsCubit>().fetchSubscriptions(),
+            onPressed: () => _loadSubscriptions(),
             icon: const Icon(Icons.refresh_rounded),
             label: Text(
               'إعادة المحاولة',
@@ -254,10 +322,25 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
   }
 
   Widget _buildEmpty(bool isDark, ThemeData theme, BuildContext context) {
+    String emptyMessage = 'لا توجد اشتراكات حالياً.';
+    switch (_selectedFilter) {
+      case 'active':
+        emptyMessage = 'لا توجد اشتراكات نشطة.';
+        break;
+      case 'pending':
+        emptyMessage = 'لا توجد اشتراكات معلقة.';
+        break;
+      case 'completed':
+        emptyMessage = 'لا توجد اشتراكات مكتملة.';
+        break;
+      case 'cancelled':
+        emptyMessage = 'لا توجد اشتراكات ملغاة.';
+        break;
+    }
+
     return LayoutBuilder(builder: (context, constraints) {
       return RefreshIndicator(
-        onRefresh: () =>
-            context.read<SubscriptionsCubit>().fetchSubscriptions(),
+        onRefresh: () async => _loadSubscriptions(),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Container(
@@ -281,7 +364,7 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
                 ),
                 SizedBox(height: 24.h),
                 Text(
-                  'لا توجد اشتراكات حالياً.',
+                  emptyMessage,
                   style: AppTextStyles.style(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.bold,

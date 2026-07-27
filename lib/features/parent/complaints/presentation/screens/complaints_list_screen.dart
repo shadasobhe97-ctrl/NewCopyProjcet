@@ -25,7 +25,7 @@ class _ComplaintsListScreenState extends State<ComplaintsListScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -68,9 +68,10 @@ class _ComplaintsListScreenState extends State<ComplaintsListScreen>
               labelStyle: AppTextStyles.style(fontSize: 13.sp, fontWeight: FontWeight.bold),
               unselectedLabelStyle: AppTextStyles.style(fontSize: 13.sp),
               tabs: const [
-                Tab(text: 'جميع الشكاوى'),
+                Tab(text: 'الكل'),
                 Tab(text: 'قيد الانتظار'),
-                Tab(text: 'تم المعالجة'),
+                Tab(text: 'تمت المعالجة'),
+                Tab(text: 'مغلقة'),
               ],
             ),
           ),
@@ -81,7 +82,8 @@ class _ComplaintsListScreenState extends State<ComplaintsListScreen>
                 children: [
                   _ComplaintsTabList(type: 'all', blocContext: blocCtx),
                   _ComplaintsTabList(type: 'pending', blocContext: blocCtx),
-                  _ComplaintsTabList(type: 'action_taken', blocContext: blocCtx),
+                  _ComplaintsTabList(type: 'completed', blocContext: blocCtx),
+                  _ComplaintsTabList(type: 'dismissed', blocContext: blocCtx),
                 ],
               );
             },

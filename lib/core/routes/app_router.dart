@@ -39,6 +39,8 @@ import 'package:kids_transport/features/driver/profile/logic/cubit/driver_profil
 import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 import 'package:kids_transport/features/driver/driver_preferences/logic/driver_preferences_cubit.dart';
 import 'package:kids_transport/features/driver/driver_preferences/presentation/screens/driver_preferences_screen.dart';
+import 'package:kids_transport/features/driver/subscriptions/presentation/screens/driver_subscription_details_screen.dart';
+import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
 
 import 'package:kids_transport/features/parent/addresses/presentation/screens/saved_addresses_screen.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
@@ -145,6 +147,7 @@ class AppRoutes {
   static const String driverDocsStage = '/driverDocsStage';
   static const String driverLocation = '/driverLocation';
   static const String driverWaiting = '/driverWaiting';
+  static const String driverSubscriptionDetails = '/driverSubscriptionDetails';
 
   static String getInitialRoute() {
     if (kIsWeb) {
@@ -374,6 +377,15 @@ class AppRoutes {
           BlocProvider(
             create: (context) => driverSl<DriverPreferencesCubit>(),
             child: DriverPreferencesScreen(isMandatory: isMandatory),
+          ),
+        );
+      case driverSubscriptionDetails:
+        final subscriptionId = settings.arguments as int;
+        return _route(
+          settings,
+          BlocProvider(
+            create: (_) => driverSl<DriverSubscriptionsCubit>(),
+            child: DriverSubscriptionDetailsScreen(subscriptionId: subscriptionId),
           ),
         );
       default:

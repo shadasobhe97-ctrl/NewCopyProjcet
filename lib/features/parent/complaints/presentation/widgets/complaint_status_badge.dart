@@ -26,17 +26,19 @@ class ComplaintStatusBadge extends StatelessWidget {
         label = 'قيد الانتظار';
         icon = Icons.hourglass_top_rounded;
         break;
+      case 'completed':
       case 'action_taken':
       case 'resolved':
         bgColor = AppColors.success.withValues(alpha: 0.12);
         textColor = AppColors.success;
-        label = 'تم المعالجة';
+        label = 'تمت المعالجة';
         icon = Icons.check_circle_outline_rounded;
         break;
+      case 'dismissed':
       case 'rejected':
         bgColor = AppColors.error.withValues(alpha: 0.12);
         textColor = AppColors.error;
-        label = 'مرفوضة';
+        label = 'مغلقة / تم رفض الشكوى';
         icon = Icons.cancel_outlined;
         break;
       case 'closed':

@@ -98,7 +98,12 @@ class ReviewsResponse {
         more = page < lastPage;
       }
 
-      if (json['current_page'] != null) {
+      final paginationObj = json['pagination'];
+      if (paginationObj is Map) {
+        page = paginationObj['current_page'] as int? ?? 1;
+        final lastPage = paginationObj['last_page'] as int? ?? 1;
+        more = page < lastPage;
+      } else if (json['current_page'] != null) {
         page = json['current_page'] as int? ?? 1;
         final lastPage = json['last_page'] as int? ?? 1;
         more = page < lastPage;

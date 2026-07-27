@@ -49,21 +49,30 @@ class SearchRemoteDataSource {
 
   /// POST /api/parent/requests
   Future<String> sendSubscription(SubscriptionRequest request) async {
-    debugPrint('\n================= SEARCH REMOTE DATA SOURCE =================');
-    debugPrint('>>> Endpoint: POST ${ApiEndpoints.parentrequestSubscription}');
-    debugPrint('>>> Full URL: ${ApiEndpoints.baseUrl}${ApiEndpoints.parentrequestSubscription}');
-    debugPrint('>>> HTTP Method: POST');
+    debugPrint('');
+    debugPrint('╔══════════════════════════════════════════════════╗');
+    debugPrint('║  SearchRemoteDataSource.sendSubscription        ║');
+    debugPrint('╚══════════════════════════════════════════════════╝');
+
+    final fullUrl =
+        '${ApiEndpoints.baseUrl}${ApiEndpoints.parentrequestSubscription}';
+    debugPrint('📍  الرابط الكامل: POST $fullUrl');
 
     final authHeader = _authHeader;
-    debugPrint('>>> Headers:');
-    debugPrint('  Authorization: ${authHeader['Authorization']}');
-    debugPrint('  Content-Type: application/json');
-    debugPrint('  Accept: application/json');
+    final tokenValue = authHeader['Authorization'];
+    debugPrint(
+      '🔑  التوكن: ${tokenValue != null && tokenValue.isNotEmpty ? tokenValue : "⚠️  بدون توكن"}',
+    );
+    if (tokenValue == null || tokenValue.isEmpty) {
+      debugPrint('⚠️  تحذير: التوكن فارغ أو غير موجود!');
+    }
 
     final jsonBody = request.toJson();
-    debugPrint('>>> Request Body: $jsonBody');
-    debugPrint('============================================================\n');
-    debugPrint('\n>>> [ApiClient.post] will now print the request...');
+    debugPrint('📦  البيانات (JSON):');
+    debugPrint('  ${jsonBody.toString()}');
+    debugPrint('');
+    debugPrint('════════════════════════════════════════════════════');
+    debugPrint('');
 
     final response = await _client.post(
       ApiEndpoints.parentrequestSubscription,
@@ -84,7 +93,9 @@ class SearchRemoteDataSource {
       debugPrint('<<< [DataSource] Returning success message: $message');
       return message;
     }
-    debugPrint('<<< [DataSource] Response data is not a Map, returning default message');
+    debugPrint(
+      '<<< [DataSource] Response data is not a Map, returning default message',
+    );
     return 'تم إرسال طلب الاشتراك بنجاح.';
   }
 }

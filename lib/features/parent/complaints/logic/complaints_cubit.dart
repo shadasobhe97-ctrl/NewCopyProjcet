@@ -45,7 +45,7 @@ class ComplaintsCubit extends Cubit<ComplaintsState> {
   /// Submit a new complaint
   Future<void> createComplaint({
     required int driverId,
-    required int tripId,
+    int? tripId,
     required String description,
   }) async {
     final currentState = state;

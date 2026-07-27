@@ -4,6 +4,7 @@ import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
 import '../models/active_subscription_model.dart';
+import '../models/subscription_detail_model.dart';
 
 class SubscriptionsRemoteDataSource {
   final ApiClient _client;
@@ -64,10 +65,10 @@ class SubscriptionsRemoteDataSource {
     return (<ActiveSubscriptionModel>[], backendMessage);
   }
 
-  /// GET /api/guardian/requests/{id} (لشاشة التفاصيل)
-  Future<ActiveSubscriptionModel> getSubscriptionDetail(int id) async {
+  /// GET /api/parent/subscription-details/{id} (لشاشة التفاصيل)
+  Future<SubscriptionDetailModel> getSubscriptionDetail(int id) async {
     final response = await _client.get(
-      ApiEndpoints.guardianRequestDetail(id),
+      ApiEndpoints.parentSubscriptionDetail(id),
       headers: _authHeader,
     );
     final data = response.data;
@@ -75,11 +76,11 @@ class SubscriptionsRemoteDataSource {
       final success = data['success'];
       if (success == false) {
         final serverMessage = ApiException.extractMessage(data);
-        throw ApiException(serverMessage ?? 'تعذر تحميل تفاصيل الطلب.');
+        throw ApiException(serverMessage ?? 'تعذر تحميل تفاصيل الاشتراك.');
       }
     }
     final detail = data['data'] ?? data;
-    return ActiveSubscriptionModel.fromJson(detail as Map<String, dynamic>);
+    return SubscriptionDetailModel.fromJson(detail as Map<String, dynamic>);
   }
 
   /// POST /api/guardian/requests/{id}/cancel (لإلغاء الطلب)

@@ -1,46 +1,230 @@
 // نموذج الاشتراكات النشطة للسائق - GET /api/driver/active-subscriptions
-// الفلاتر: current_active | pending_start | completed | cancelled
+// الفلاتر: active | pending | completed | cancelled
+
+class LocationModel {
+  final double latitude;
+  final double longitude;
+  final String? label;
+
+  LocationModel({
+    required this.latitude,
+    required this.longitude,
+    this.label,
+  });
+
+  factory LocationModel.fromJson(Map<String, dynamic> json) {
+    return LocationModel(
+      latitude: _parseDouble(json['latitude']) ?? 0.0,
+      longitude: _parseDouble(json['longitude']) ?? 0.0,
+      label: json['label']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'latitude': latitude,
+        'longitude': longitude,
+        'label': label,
+      };
+}
+
+class CoordinatesModel {
+  final LocationModel? home;
+  final LocationModel? school;
+
+  CoordinatesModel({
+    this.home,
+    this.school,
+  });
+
+  factory CoordinatesModel.fromJson(Map<String, dynamic> json) {
+    return CoordinatesModel(
+      home: json['home'] is Map ? LocationModel.fromJson(Map<String, dynamic>.from(json['home'] as Map)) : null,
+      school: json['school'] is Map ? LocationModel.fromJson(Map<String, dynamic>.from(json['school'] as Map)) : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'home': home?.toJson(),
+        'school': school?.toJson(),
+      };
+}
+
+class ParentSubscriptionModel {
+  final int id;
+  final String name;
+  final String? phone;
+  final String? email;
+
+  ParentSubscriptionModel({
+    required this.id,
+    required this.name,
+    this.phone,
+    this.email,
+  });
+
+  factory ParentSubscriptionModel.fromJson(Map<String, dynamic> json) {
+    return ParentSubscriptionModel(
+      id: _parseInt(json['id']) ?? 0,
+      name: json['name']?.toString() ?? 'غير معروف',
+      phone: json['phone']?.toString(),
+      email: json['email']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'phone': phone,
+        'email': email,
+      };
+}
+
+class ChildSubscriptionModel {
+  final int id;
+  final String? name;
+  final String? firstName;
+  final String? lastName;
+  final int? age;
+  final String? gender;
+  final int? grade;
+  final String? photoUrl;
+  final String? notes;
+  final String? school;
+
+  ChildSubscriptionModel({
+    required this.id,
+    this.name,
+    this.firstName,
+    this.lastName,
+    this.age,
+    this.gender,
+    this.grade,
+    this.photoUrl,
+    this.notes,
+    this.school,
+  });
+
+  String get displayName => name ?? '${firstName ?? ''} ${lastName ?? ''}'.trim();
+
+  String get schoolName => school ?? 'غير حدد';
+
+  String get avatarInitials {
+    final displayNameVal = displayName;
+    if (displayNameVal.isEmpty) return '?';
+    final parts = displayNameVal.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}';
+    }
+    return displayNameVal[0];
+  }
+
+  factory ChildSubscriptionModel.fromJson(Map<String, dynamic> json) {
+    return ChildSubscriptionModel(
+      id: _parseInt(json['id']) ?? 0,
+      name: json['name']?.toString(),
+      firstName: json['first_name']?.toString() ?? json['firstName']?.toString(),
+      lastName: json['last_name']?.toString() ?? json['lastName']?.toString(),
+      age: _parseInt(json['age']),
+      gender: json['gender']?.toString(),
+      grade: _parseInt(json['grade']),
+      photoUrl: json['photo_url']?.toString() ?? json['photoUrl']?.toString(),
+      notes: json['notes']?.toString(),
+      school: json['school']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'first_name': firstName,
+        'last_name': lastName,
+        'age': age,
+        'gender': gender,
+        'grade': grade,
+        'photo_url': photoUrl,
+        'notes': notes,
+        'school': school,
+      };
+}
+
+class ContractModel {
+  final int id;
+  final String contractNumber;
+  final String startDate;
+  final String endDate;
+  final int totalWorkingDays;
+  final double totalPrice;
+  final String status;
+
+  ContractModel({
+    required this.id,
+    required this.contractNumber,
+    required this.startDate,
+    required this.endDate,
+    required this.totalWorkingDays,
+    required this.totalPrice,
+    required this.status,
+  });
+
+  factory ContractModel.fromJson(Map<String, dynamic> json) {
+    return ContractModel(
+      id: _parseInt(json['id']) ?? 0,
+      contractNumber: json['contract_number']?.toString() ?? json['contractNumber']?.toString() ?? '',
+      startDate: json['start_date']?.toString() ?? json['startDate']?.toString() ?? '',
+      endDate: json['end_date']?.toString() ?? json['endDate']?.toString() ?? '',
+      totalWorkingDays: _parseInt(json['total_working_days'] ?? json['totalWorkingDays']) ?? 0,
+      totalPrice: _parseDouble(json['total_price'] ?? json['totalPrice']) ?? 0.0,
+      status: json['status']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'contract_number': contractNumber,
+        'start_date': startDate,
+        'end_date': endDate,
+        'total_working_days': totalWorkingDays,
+        'total_price': totalPrice,
+        'status': status,
+      };
+}
 
 class DriverSubscriptionModel {
   final int id;
-  final String status; // active | pending_start | completed | cancelled
+  final String status;
   final String? pickupTime;
   final String? dropoffTime;
-  final double? pickupLat;
-  final double? pickupLng;
-  final String? pickupLabel;
-  final double? dropoffLat;
-  final double? dropoffLng;
-  final String? dropoffLabel;
-  final DriverSubChild child;
-  final DriverSubParent parent;
-  final DriverSubContract? contract;
+  final String tripType;
+  final LocationModel? pickupLocation;
+  final LocationModel? dropoffLocation;
+  final CoordinatesModel? coordinates;
+  final ParentSubscriptionModel parent;
+  final ChildSubscriptionModel child;
+  final ContractModel? contract;
   final String createdAt;
 
-  const DriverSubscriptionModel({
+  DriverSubscriptionModel({
     required this.id,
     required this.status,
     this.pickupTime,
     this.dropoffTime,
-    this.pickupLat,
-    this.pickupLng,
-    this.pickupLabel,
-    this.dropoffLat,
-    this.dropoffLng,
-    this.dropoffLabel,
-    required this.child,
+    required this.tripType,
+    this.pickupLocation,
+    this.dropoffLocation,
+    this.coordinates,
     required this.parent,
+    required this.child,
     this.contract,
     required this.createdAt,
   });
 
-  // ── الحالة بالعربية ──
   String get statusDisplayLabel {
     switch (status.toLowerCase()) {
       case 'active':
         return 'نشط';
+      case 'pending':
       case 'pending_start':
-        return 'ينتظر البدء';
+        return 'معلق';
       case 'completed':
         return 'مكتمل';
       case 'cancelled':
@@ -50,134 +234,72 @@ class DriverSubscriptionModel {
     }
   }
 
-  static int? _parseInt(dynamic v) {
-    if (v is int) return v;
-    if (v is num) return v.toInt();
-    return int.tryParse(v?.toString() ?? '');
-  }
-
-  static double? _parseDouble(dynamic v) {
-    if (v is double) return v;
-    if (v is int) return v.toDouble();
-    return double.tryParse(v?.toString() ?? '');
-  }
+  String? get pickupLabel => pickupLocation?.label;
+  String? get dropoffLabel => dropoffLocation?.label;
 
   factory DriverSubscriptionModel.fromJson(Map<String, dynamic> json) {
     return DriverSubscriptionModel(
       id: _parseInt(json['id']) ?? 0,
       status: json['status']?.toString() ?? 'active',
-      pickupTime: json['pickup_time']?.toString(),
-      dropoffTime: json['dropoff_time']?.toString(),
-      pickupLat: _parseDouble(json['pickup_lat']),
-      pickupLng: _parseDouble(json['pickup_lng']),
-      pickupLabel: json['pickup_label']?.toString(),
-      dropoffLat: _parseDouble(json['dropoff_lat']),
-      dropoffLng: _parseDouble(json['dropoff_lng']),
-      dropoffLabel: json['dropoff_label']?.toString(),
-      child: json['child'] is Map
-          ? DriverSubChild.fromJson(
-              Map<String, dynamic>.from(json['child'] as Map))
-          : DriverSubChild.empty(),
-      parent: json['parent'] is Map
-          ? DriverSubParent.fromJson(
-              Map<String, dynamic>.from(json['parent'] as Map))
-          : DriverSubParent.empty(),
-      contract: json['contract'] is Map
-          ? DriverSubContract.fromJson(
-              Map<String, dynamic>.from(json['contract'] as Map))
+      pickupTime: json['pickup_time']?.toString() ?? json['pickupTime']?.toString(),
+      dropoffTime: json['dropoff_time']?.toString() ?? json['dropoffTime']?.toString(),
+      tripType: json['trip_type']?.toString() ?? json['tripType']?.toString() ?? 'both',
+      pickupLocation: json['pickup_location'] is Map
+          ? LocationModel.fromJson(Map<String, dynamic>.from(json['pickup_location'] as Map))
+          : (json['pickupLocation'] is Map
+              ? LocationModel.fromJson(Map<String, dynamic>.from(json['pickupLocation'] as Map))
+              : null),
+      dropoffLocation: json['dropoff_location'] is Map
+          ? LocationModel.fromJson(Map<String, dynamic>.from(json['dropoff_location'] as Map))
+          : (json['dropoffLocation'] is Map
+              ? LocationModel.fromJson(Map<String, dynamic>.from(json['dropoffLocation'] as Map))
+              : null),
+      coordinates: json['coordinates'] is Map
+          ? CoordinatesModel.fromJson(Map<String, dynamic>.from(json['coordinates'] as Map))
           : null,
-      createdAt: json['created_at']?.toString() ?? '',
+      parent: json['parent'] is Map
+          ? ParentSubscriptionModel.fromJson(Map<String, dynamic>.from(json['parent'] as Map))
+          : ParentSubscriptionModel(id: 0, name: 'غير معروف'),
+      child: json['child'] is Map
+          ? ChildSubscriptionModel.fromJson(Map<String, dynamic>.from(json['child'] as Map))
+          : ChildSubscriptionModel(id: 0),
+      contract: json['contract'] is Map
+          ? ContractModel.fromJson(Map<String, dynamic>.from(json['contract'] as Map))
+          : null,
+      createdAt: json['created_at']?.toString() ?? json['createdAt']?.toString() ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'status': status,
+        'pickup_time': pickupTime,
+        'dropoff_time': dropoffTime,
+        'trip_type': tripType,
+        'pickup_location': pickupLocation?.toJson(),
+        'dropoff_location': dropoffLocation?.toJson(),
+        'coordinates': coordinates?.toJson(),
+        'parent': parent.toJson(),
+        'child': child.toJson(),
+        'contract': contract?.toJson(),
+        'created_at': createdAt,
+      };
 }
 
-// ── الطفل ──
-class DriverSubChild {
-  final int id;
-  final String? name;
-  final String schoolName;
+// ─────────────────────────────────────────────
+// Private helper functions for safe JSON parsing
+// ─────────────────────────────────────────────
 
-  const DriverSubChild({
-    required this.id,
-    this.name,
-    required this.schoolName,
-  });
-
-  String get displayName => name ?? 'غير محدد';
-
-  factory DriverSubChild.fromJson(Map<String, dynamic> json) {
-    return DriverSubChild(
-      id: json['id'] as int? ?? 0,
-      name: json['name']?.toString(),
-      schoolName: json['school_name']?.toString() ?? '',
-    );
-  }
-
-  factory DriverSubChild.empty() => const DriverSubChild(id: 0, schoolName: '');
+int? _parseInt(dynamic v) {
+  if (v == null) return null;
+  if (v is int) return v;
+  if (v is num) return v.toInt();
+  return int.tryParse(v.toString());
 }
 
-// ── ولي الأمر ──
-class DriverSubParent {
-  final int id;
-  final String name;
-  final String? phone;
-  final String? avatarUrl;
-
-  const DriverSubParent({
-    required this.id,
-    required this.name,
-    this.phone,
-    this.avatarUrl,
-  });
-
-  factory DriverSubParent.fromJson(Map<String, dynamic> json) {
-    final userMap = json['user'] is Map
-        ? Map<String, dynamic>.from(json['user'] as Map)
-        : null;
-    return DriverSubParent(
-      id: json['id'] as int? ?? 0,
-      name: userMap?['full_name']?.toString() ?? json['name']?.toString() ?? '',
-      phone: userMap?['phone_number']?.toString() ?? json['phone']?.toString(),
-      avatarUrl: userMap?['avatar_url']?.toString() ?? json['avatar_url']?.toString(),
-    );
-  }
-
-  factory DriverSubParent.empty() =>
-      const DriverSubParent(id: 0, name: '');
-}
-
-// ── العقد ──
-class DriverSubContract {
-  final int id;
-  final String contractNumber;
-  final String startDate;
-  final String endDate;
-  final double totalPrice;
-  final String status;
-
-  const DriverSubContract({
-    required this.id,
-    required this.contractNumber,
-    required this.startDate,
-    required this.endDate,
-    required this.totalPrice,
-    required this.status,
-  });
-
-  static double? _parseDouble(dynamic v) {
-    if (v is double) return v;
-    if (v is int) return v.toDouble();
-    return double.tryParse(v?.toString() ?? '');
-  }
-
-  factory DriverSubContract.fromJson(Map<String, dynamic> json) {
-    return DriverSubContract(
-      id: json['id'] as int? ?? 0,
-      contractNumber: json['contract_number']?.toString() ?? '',
-      startDate: json['start_date']?.toString() ?? '',
-      endDate: json['end_date']?.toString() ?? '',
-      totalPrice: _parseDouble(json['total_price']) ?? 0.0,
-      status: json['status']?.toString() ?? '',
-    );
-  }
+double? _parseDouble(dynamic v) {
+  if (v == null) return null;
+  if (v is double) return v;
+  if (v is num) return v.toDouble();
+  return double.tryParse(v.toString());
 }

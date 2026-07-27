@@ -11,6 +11,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
   ReviewsCubit(this._repository) : super(ReviewsInitial());
 
   Future<void> loadReviews(int driverId) async {
+    if (state is ReviewsLoading) return;
     emit(ReviewsLoading());
     try {
       // Parallel calls: checkSubscription and getReviews
@@ -71,6 +72,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
     required int rating,
     required String comment,
   }) async {
+    if (state is ReviewsSubmitting) return;
     final currentState = state;
     List<ReviewModel> currentList = [];
     bool hasSub = false;
@@ -93,12 +95,12 @@ class ReviewsCubit extends Cubit<ReviewsState> {
       await loadReviews(driverId);
     } catch (e) {
       emit(ReviewsError(_parseError(e)));
-      if (currentList.isNotEmpty) {
+      if (currentState is ReviewsLoaded) {
         emit(
           ReviewsLoaded(
             reviews: currentList,
             hasSubscription: hasSub,
-            currentPage: (currentState as ReviewsLoaded).currentPage,
+            currentPage: currentState.currentPage,
             hasMore: currentState.hasMore,
           ),
         );
@@ -112,6 +114,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
     required int rating,
     required String comment,
   }) async {
+    if (state is ReviewsSubmitting) return;
     final currentState = state;
     List<ReviewModel> currentList = [];
     bool hasSub = false;
@@ -134,12 +137,12 @@ class ReviewsCubit extends Cubit<ReviewsState> {
       await loadReviews(driverId);
     } catch (e) {
       emit(ReviewsError(_parseError(e)));
-      if (currentList.isNotEmpty) {
+      if (currentState is ReviewsLoaded) {
         emit(
           ReviewsLoaded(
             reviews: currentList,
             hasSubscription: hasSub,
-            currentPage: (currentState as ReviewsLoaded).currentPage,
+            currentPage: currentState.currentPage,
             hasMore: currentState.hasMore,
           ),
         );
@@ -151,6 +154,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
     required int driverId,
     required int reviewId,
   }) async {
+    if (state is ReviewsSubmitting) return;
     final currentState = state;
     List<ReviewModel> currentList = [];
     bool hasSub = false;
@@ -169,12 +173,12 @@ class ReviewsCubit extends Cubit<ReviewsState> {
       await loadReviews(driverId);
     } catch (e) {
       emit(ReviewsError(_parseError(e)));
-      if (currentList.isNotEmpty) {
+      if (currentState is ReviewsLoaded) {
         emit(
           ReviewsLoaded(
             reviews: currentList,
             hasSubscription: hasSub,
-            currentPage: (currentState as ReviewsLoaded).currentPage,
+            currentPage: currentState.currentPage,
             hasMore: currentState.hasMore,
           ),
         );
