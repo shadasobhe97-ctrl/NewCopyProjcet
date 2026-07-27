@@ -77,6 +77,9 @@ import 'package:kids_transport/features/parent/complaints/presentation/screens/c
 import 'package:kids_transport/features/parent/complaints/presentation/screens/create_complaint_screen.dart';
 import 'package:kids_transport/features/parent/complaints/presentation/screens/complaint_details_screen.dart';
 
+// Absence
+import 'package:kids_transport/features/parent/absence/presentation/screens/absence_screen.dart';
+
 class AppRoutes {
   static const String splash = '/';
   static const String onboarding = '/onboarding';
@@ -114,6 +117,9 @@ class AppRoutes {
   static const String parentComplaints = '/parent-complaints';
   static const String createComplaint = '/create-complaint';
   static const String complaintDetails = '/complaint-details';
+
+  // Parent Absence Route
+  static const String parentAbsence = '/parent-absence';
 
   // ===== Driver Features =====
   static const String addChildStep1 = '/children/add/step1';
@@ -307,6 +313,17 @@ class AppRoutes {
       case complaintDetails:
         final id = settings.arguments as int;
         return _route(settings, ComplaintDetailsScreen(complaintId: id));
+
+      // --- Absence ---
+      case parentAbsence:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _route(
+          settings,
+          AbsenceScreen(
+            initialChildId: args?['childId'] as int?,
+            initialChildName: args?['childName'] as String?,
+          ),
+        );
 
       case parentEmail:
         return _route(settings, const ParentEmailScreen());

@@ -102,4 +102,14 @@ class ApiEndpoints {
   static String parentComplaintDetail(int id) => 'parent/complaints/$id';
   static String parentDriverTrips(int driverId) =>
       'parent/driver/$driverId/trips';
+
+  // Parent Child Absence
+  static String childAvailableAbsenceDates(int childId) =>
+      'parent/children/$childId/available-absence-dates';
+  static String childAbsences(int childId) =>
+      'parent/children/$childId/absences';
+  static String childSetAbsence(int childId) =>
+      'parent/children/$childId/set-absence';
+  static String childCancelAbsence(int childId) =>
+      'parent/children/$childId/cancel-absence';
 }

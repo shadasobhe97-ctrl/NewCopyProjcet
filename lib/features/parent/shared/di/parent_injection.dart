@@ -26,6 +26,11 @@ import 'package:kids_transport/features/parent/complaints/data/datasources/compl
 import 'package:kids_transport/features/parent/complaints/data/repositories/complaints_repository.dart';
 import 'package:kids_transport/features/parent/complaints/logic/complaints_cubit.dart';
 
+// Absence
+import 'package:kids_transport/features/parent/absence/data/datasources/absence_remote_data_source.dart';
+import 'package:kids_transport/features/parent/absence/data/repositories/absence_repository.dart';
+import 'package:kids_transport/features/parent/absence/logic/absence_cubit.dart';
+
 // Wallet & Finance
 import 'package:kids_transport/features/parent/wallet/data/datasources/wallet_remote_data_source.dart';
 import 'package:kids_transport/features/parent/wallet/data/datasources/invoices_remote_data_source.dart';
@@ -313,6 +318,25 @@ void initParentInjection() {
   if (!getIt.isRegistered<TripHistoryCubit>()) {
     getIt.registerFactory<TripHistoryCubit>(
       () => TripHistoryCubit(getIt<TripsRepository>()),
+    );
+  }
+
+  // =========================================
+  // 9. Absence Feature
+  // =========================================
+  if (!getIt.isRegistered<AbsenceRemoteDataSource>()) {
+    getIt.registerLazySingleton<AbsenceRemoteDataSource>(
+      () => AbsenceRemoteDataSource(getIt<ApiClient>()),
+    );
+  }
+  if (!getIt.isRegistered<AbsenceRepository>()) {
+    getIt.registerLazySingleton<AbsenceRepository>(
+      () => AbsenceRepository(getIt<AbsenceRemoteDataSource>()),
+    );
+  }
+  if (!getIt.isRegistered<AbsenceCubit>()) {
+    getIt.registerFactory<AbsenceCubit>(
+      () => AbsenceCubit(getIt<AbsenceRepository>()),
     );
   }
 }

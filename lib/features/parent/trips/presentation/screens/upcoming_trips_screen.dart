@@ -5,6 +5,7 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
 import '../../logic/upcoming_trips_cubit/upcoming_trips_cubit.dart';
 import '../../logic/upcoming_trips_cubit/upcoming_trips_state.dart';
 
@@ -141,6 +142,44 @@ class UpcomingTripsScreen extends StatelessWidget {
                             _buildInfoRow(Icons.school_rounded, 'المدرسة', trip.schoolName, isDark),
                             SizedBox(height: 6.h),
                             _buildInfoRow(Icons.person_rounded, 'السائق', trip.driverName, isDark),
+                            SizedBox(height: 12.h),
+                            // زر لن يستخدم النقل (الغياب)
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.parentAbsence,
+                                    arguments: {
+                                      'childName': trip.childName,
+                                    },
+                                  );
+                                },
+                                icon: Icon(
+                                  Icons.event_busy_rounded,
+                                  size: 16.r,
+                                  color: AppColors.warning,
+                                ),
+                                label: Text(
+                                  'لن يستخدم النقل',
+                                  style: AppTextStyles.style(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.warning,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(
+                                    color: AppColors.warning.withValues(alpha: 0.4),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                  ),
+                                  padding: EdgeInsets.symmetric(vertical: 10.h),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       );
