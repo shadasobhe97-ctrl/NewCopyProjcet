@@ -73,10 +73,8 @@ class ComplaintsRemoteDataSource {
     final Map<String, dynamic> body = {
       'driver_id': driverId,
       'description': description,
+      'trip_id': tripId,
     };
-    if (tripId != null) {
-      body['trip_id'] = tripId;
-    }
     final response = await _client.post(
       ApiEndpoints.parentComplaints,
       data: body,
