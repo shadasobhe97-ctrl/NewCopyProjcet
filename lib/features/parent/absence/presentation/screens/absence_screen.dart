@@ -13,7 +13,6 @@ import 'package:kids_transport/features/parent/absence/presentation/widgets/abse
 import 'package:kids_transport/features/parent/absence/presentation/widgets/scheduled_absence_card.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
-import 'package:kids_transport/features/parent/children/logic/children_cubit/children_state.dart';
 
 class AbsenceScreen extends StatelessWidget {
   /// إذا عُرف childId مسبقاً من كرت الرحلة يُمرَّر مباشرة
@@ -61,7 +60,6 @@ class _AbsenceScreenBody extends StatefulWidget {
 class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
   int? _selectedChildId;
   String? _selectedChildName;
-  String? _selectedChildPhoto;
 
   @override
   void initState() {
@@ -79,16 +77,6 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
     if (_selectedChildId != null) {
       context.read<AbsenceCubit>().loadAbsenceData(_selectedChildId!);
     }
-  }
-
-  void _selectChild(ChildModel child) {
-    if (child.id == null) return;
-    setState(() {
-      _selectedChildId = child.id;
-      _selectedChildName = child.fullName;
-      _selectedChildPhoto = child.photoUrl;
-    });
-    context.read<AbsenceCubit>().loadAbsenceData(child.id!);
   }
 
   // ─── SnackBar helpers ──────────────────────────────────────────────────
@@ -133,6 +121,7 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
     BuildContext context,
     AbsenceModel absence,
   ) async {
+    final absenceCubit = context.read<AbsenceCubit>();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -162,12 +151,12 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
       ),
     );
 
-    if (confirmed == true && _selectedChildId != null && mounted) {
-      context.read<AbsenceCubit>().cancelAbsence(
-            childId: _selectedChildId!,
-            date: absence.date,
-            absenceType: absence.absenceType,
-          );
+    if (confirmed == true && _selectedChildId != null) {
+      absenceCubit.cancelAbsence(
+        childId: _selectedChildId!,
+        date: absence.date,
+        absenceType: absence.absenceType,
+      );
     }
   }
 
@@ -285,7 +274,6 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
     setState(() {
       _selectedChildId = child.id;
       _selectedChildName = child.fullName;
-      _selectedChildPhoto = child.photoUrl;
     });
     context.read<AbsenceCubit>().loadAbsenceData(child.id!);
   }
@@ -301,7 +289,7 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: children.length,
-        separatorBuilder: (_, __) => SizedBox(width: 10.w),
+        separatorBuilder: (context, index) => SizedBox(width: 10.w),
         itemBuilder: (context, index) {
           final child = children[index];
           final isSelected = child.id == _selectedChildId;

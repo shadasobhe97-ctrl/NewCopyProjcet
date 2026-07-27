@@ -230,7 +230,7 @@ class _AbsenceCalendarWidgetState extends State<AbsenceCalendarWidget> {
                 color: textColor,
               ),
             ),
-            if (overlay != null) overlay,
+            ?overlay,
           ],
         ),
       ),

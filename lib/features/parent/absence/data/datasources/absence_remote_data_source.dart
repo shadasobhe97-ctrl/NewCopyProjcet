@@ -33,7 +33,7 @@ class AbsenceRemoteDataSource {
       }
       final payload = data['data'] is Map
           ? Map<String, dynamic>.from(data['data'] as Map)
-          : Map<String, dynamic>.from(data as Map);
+          : Map<String, dynamic>.from(data);
       return AvailableAbsenceDatesModel.fromJson(payload);
     }
     return const AvailableAbsenceDatesModel(
