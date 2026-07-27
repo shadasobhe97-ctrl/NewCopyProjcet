@@ -22,6 +22,8 @@ class StorageService {
     _prefs = await SharedPreferences.getInstance();
   }
 
+  static const String _fcmTokenKey = 'fcm_token';
+
   static Future<bool> saveThemeMode(bool isDarkMode) {
     return _prefs.setBool(_themeKey, isDarkMode);
   }
@@ -140,4 +142,10 @@ class StorageService {
 
   static bool getIsPreferencesSet() =>
       _prefs.getBool(_isPreferencesSetKey) ?? false;
+
+  static Future<bool> saveFcmToken(String token) {
+    return _prefs.setString(_fcmTokenKey, token);
+  }
+
+  static String? getFcmToken() => _prefs.getString(_fcmTokenKey);
 }

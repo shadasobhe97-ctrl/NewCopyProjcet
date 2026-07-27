@@ -55,33 +55,6 @@ class ComplaintTripDropdown extends StatelessWidget {
       );
     }
 
-    if (trips.isEmpty) {
-      return Container(
-        padding: EdgeInsets.all(14.w),
-        decoration: BoxDecoration(
-          color: AppColors.pending.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: AppColors.pending.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: AppColors.pending, size: 20.r),
-            SizedBox(width: 8.w),
-            Expanded(
-              child: Text(
-                'لا توجد رحلات متاحة لهذا السائق.',
-                style: AppTextStyles.style(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? AppColors.white : AppColors.textDark,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.h),
       decoration: BoxDecoration(
@@ -90,41 +63,54 @@ class ComplaintTripDropdown extends StatelessWidget {
         border: Border.all(color: isDark ? AppColors.grey800 : AppColors.grey300),
       ),
       child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
+        child: DropdownButton<int?>(
           value: selectedTripId,
           isExpanded: true,
           hint: Text(
-            'اختر الرحلة المعنية بالشكوى',
+            'شكوى عامة (ليست مرتبطة برحلة)',
             style: AppTextStyles.style(
               fontSize: 12.sp,
               color: isDark ? AppColors.grey400 : AppColors.textMuted,
             ),
           ),
           icon: Icon(Icons.arrow_drop_down_rounded, color: theme.colorScheme.primary),
-          items: trips.map((trip) {
-            final String timingAr = (trip.tripType?.toLowerCase() == 'morning') ? 'صباحية' : 'مسائية';
-            final String statusAr = switch (trip.status?.toLowerCase() ?? '') {
-              'pending' => 'معلقة',
-              'active' || 'ongoing' || 'started' => 'جاري التوصيل',
-              'completed' || 'finished' => 'مكتملة',
-              'cancelled' => 'ملغاة',
-              _ => trip.status ?? 'غير متوفر',
-            };
-            final String dateStr = trip.scheduledFor != null
-                ? trip.scheduledFor!.split('T').first
-                : 'غير متوفر';
-
-            return DropdownMenuItem<int>(
-              value: trip.id,
+          items: [
+            DropdownMenuItem<int?>(
+              value: null,
               child: Text(
-                'رحلة #${trip.id} - $timingAr (التاريخ: $dateStr) [الحالة: $statusAr]',
+                'شكوى عامة (ليست مرتبطة برحلة)',
                 style: AppTextStyles.style(
                   fontSize: 12.sp,
-                  color: isDark ? AppColors.white : AppColors.textDark,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
                 ),
               ),
-            );
-          }).toList(),
+            ),
+            ...trips.map((trip) {
+              final String timingAr = (trip.tripType?.toLowerCase() == 'morning') ? 'صباحية' : 'مسائية';
+              final String statusAr = switch (trip.status?.toLowerCase() ?? '') {
+                'pending' => 'معلقة',
+                'active' || 'ongoing' || 'started' => 'جاري التوصيل',
+                'completed' || 'finished' => 'مكتملة',
+                'cancelled' => 'ملغاة',
+                _ => trip.status ?? 'غير متوفر',
+              };
+              final String dateStr = trip.scheduledFor != null
+                  ? trip.scheduledFor!.split('T').first
+                  : 'غير متوفر';
+
+              return DropdownMenuItem<int?>(
+                value: trip.id,
+                child: Text(
+                  'رحلة #${trip.id} - $timingAr (التاريخ: $dateStr) [الحالة: $statusAr]',
+                  style: AppTextStyles.style(
+                    fontSize: 12.sp,
+                    color: isDark ? AppColors.white : AppColors.textDark,
+                  ),
+                ),
+              );
+            }),
+          ],
           onChanged: onChanged,
         ),
       ),

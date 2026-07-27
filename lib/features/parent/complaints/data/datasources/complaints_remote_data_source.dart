@@ -21,10 +21,7 @@ class ComplaintsRemoteDataSource {
         ? ApiEndpoints.parentComplaintsByType(type)
         : ApiEndpoints.parentComplaints;
 
-    final response = await _client.get(
-      endpoint,
-      headers: _authHeader,
-    );
+    final response = await _client.get(endpoint, headers: _authHeader);
 
     final data = response.data;
     if (data is Map) {
@@ -33,10 +30,21 @@ class ComplaintsRemoteDataSource {
         final msg = ApiException.extractMessage(data);
         throw ApiException(msg ?? 'تعذر جلب قائمة الشكاوى');
       }
-      final rawList = data['data'] as List<dynamic>? ?? data['complaints'] as List<dynamic>? ?? [];
-      return rawList.map((e) => ComplaintModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+      final rawList =
+          data['data'] as List<dynamic>? ??
+          data['complaints'] as List<dynamic>? ??
+          [];
+      return rawList
+          .map(
+            (e) => ComplaintModel.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList();
     } else if (data is List) {
-      return data.map((e) => ComplaintModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+      return data
+          .map(
+            (e) => ComplaintModel.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList();
     }
     return [];
   }
@@ -95,11 +103,10 @@ class ComplaintsRemoteDataSource {
     int? tripId,
   }) async {
     final body = <String, dynamic>{
+      '_method': 'POST',
       'description': description,
+      'trip_id': tripId,
     };
-    if (tripId != null) {
-      body['trip_id'] = tripId;
-    }
 
     final response = await _client.post(
       ApiEndpoints.parentComplaintDetail(id),
@@ -146,10 +153,23 @@ class ComplaintsRemoteDataSource {
 
     final data = response.data;
     if (data is Map) {
-      final rawList = data['data'] as List<dynamic>? ?? data['trips'] as List<dynamic>? ?? [];
-      return rawList.map((e) => DriverTripModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+      final rawList =
+          data['data'] as List<dynamic>? ??
+          data['trips'] as List<dynamic>? ??
+          [];
+      return rawList
+          .map(
+            (e) =>
+                DriverTripModel.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList();
     } else if (data is List) {
-      return data.map((e) => DriverTripModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+      return data
+          .map(
+            (e) =>
+                DriverTripModel.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList();
     }
     return [];
   }

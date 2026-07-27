@@ -8,11 +8,15 @@ import 'complaint_status_badge.dart';
 class ComplaintCard extends StatelessWidget {
   final ComplaintModel complaint;
   final VoidCallback onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const ComplaintCard({
     super.key,
     required this.complaint,
     required this.onTap,
+    this.onEdit,
+    this.onDelete,
   });
 
   String _fmtDate(String raw) {
@@ -129,6 +133,56 @@ class ComplaintCard extends StatelessWidget {
                     height: 1.35,
                   ),
                 ),
+                if (complaint.isPending && (onEdit != null || onDelete != null)) ...[
+                  SizedBox(height: 12.h),
+                  Divider(
+                    height: 1,
+                    color: isDark ? AppColors.grey800 : AppColors.grey200,
+                  ),
+                  SizedBox(height: 8.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (onEdit != null)
+                        TextButton.icon(
+                          onPressed: onEdit,
+                          icon: Icon(Icons.edit_outlined, size: 14.r, color: theme.colorScheme.primary),
+                          label: Text(
+                            'تعديل',
+                            style: AppTextStyles.style(
+                              fontSize: 11.5.sp,
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            minimumSize: Size.zero,
+                            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                      if (onEdit != null && onDelete != null) SizedBox(width: 8.w),
+                      if (onDelete != null)
+                        TextButton.icon(
+                          onPressed: onDelete,
+                          icon: Icon(Icons.delete_outline_rounded, size: 14.r, color: AppColors.error),
+                          label: Text(
+                            'حذف',
+                            style: AppTextStyles.style(
+                              fontSize: 11.5.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.error,
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            minimumSize: Size.zero,
+                            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

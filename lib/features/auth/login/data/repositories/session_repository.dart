@@ -22,6 +22,8 @@ class SessionRepository {
   Future<void> setFirstTimeComplete() => StorageService.setFirstTimeComplete();
   bool? getIsActive() => StorageService.getIsActive();
   String? getAuthorizationHeader() => StorageService.getAuthorizationHeader();
+  Future<bool> saveFcmToken(String token) => StorageService.saveFcmToken(token);
+  String? getFcmToken() => StorageService.getFcmToken();
 
   Future<void> saveUserSession({
     required String token,

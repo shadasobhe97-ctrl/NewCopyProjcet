@@ -19,6 +19,9 @@ import 'package:kids_transport/core/theme/app_theme.dart';
 // الحاضن الرئيسي لشاشات السائق (نظير ParentMainWrapper)
 // ==========================================
 
+import 'package:kids_transport/core/enums/user_role.dart';
+import 'package:kids_transport/features/chat/presentation/screens/chat_list_screen.dart';
+
 class DriverMainWrapper extends StatefulWidget {
   const DriverMainWrapper({super.key});
 
@@ -213,7 +216,16 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
                     color: context.primaryColor,
                     size: 20,
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChatListScreen(
+                          userRole: UserRole.driver,
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 Stack(
                   clipBehavior: Clip.none,

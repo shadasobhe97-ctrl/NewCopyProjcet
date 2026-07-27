@@ -80,9 +80,6 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                 setState(() {
                   _trips = state.trips;
                   _isLoadingTrips = false;
-                  if (_trips.length == 1) {
-                    _selectedTripId = _trips.first.id;
-                  }
                 });
               } else if (state is ComplaintSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(

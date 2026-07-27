@@ -13,6 +13,9 @@ import 'package:kids_transport/features/parent/subscriptions/presentation/screen
 import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profile_cubit.dart';
 import 'package:kids_transport/features/parent/trips/presentation/screens/trips_home_screen.dart';
 
+import 'package:kids_transport/core/enums/user_role.dart';
+import 'package:kids_transport/features/chat/presentation/screens/chat_list_screen.dart';
+
 class ParentMainWrapper extends StatefulWidget {
   const ParentMainWrapper({super.key});
 
@@ -208,7 +211,16 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                     color: context.primaryColor,
                     size: 20,
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChatListScreen(
+                          userRole: UserRole.parent,
+                        ),
+                      ),
+                    );
+                  },
                 ),
 
                 // أيقونة الإشعارات مع نقطة التنبيه الحمراء
