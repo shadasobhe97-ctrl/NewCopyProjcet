@@ -19,22 +19,14 @@ class AbsenceScreen extends StatelessWidget {
   final int? initialChildId;
   final String? initialChildName;
 
-  const AbsenceScreen({
-    super.key,
-    this.initialChildId,
-    this.initialChildName,
-  });
+  const AbsenceScreen({super.key, this.initialChildId, this.initialChildName});
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (_) => getIt<AbsenceCubit>(),
-        ),
-        BlocProvider(
-          create: (_) => getIt<ChildrenCubit>()..fetchChildren(),
-        ),
+        BlocProvider(create: (_) => getIt<AbsenceCubit>()),
+        BlocProvider(create: (_) => getIt<ChildrenCubit>()..fetchChildren()),
       ],
       child: _AbsenceScreenBody(
         initialChildId: initialChildId,
@@ -48,10 +40,7 @@ class _AbsenceScreenBody extends StatefulWidget {
   final int? initialChildId;
   final String? initialChildName;
 
-  const _AbsenceScreenBody({
-    this.initialChildId,
-    this.initialChildName,
-  });
+  const _AbsenceScreenBody({this.initialChildId, this.initialChildName});
 
   @override
   State<_AbsenceScreenBody> createState() => _AbsenceScreenBodyState();
@@ -144,8 +133,10 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('تأكيد الإلغاء',
-                style: TextStyle(color: AppColors.white)),
+            child: const Text(
+              'تأكيد الإلغاء',
+              style: TextStyle(color: AppColors.white),
+            ),
           ),
         ],
       ),
@@ -167,8 +158,9 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor:
-            isDark ? AppColors.backgroundDark : const Color(0xFFF8FAFC),
+        backgroundColor: isDark
+            ? AppColors.backgroundDark
+            : const Color(0xFFF8FAFC),
         appBar: AppBar(
           title: Text(
             'إدارة الغياب',
@@ -180,10 +172,8 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
           ),
           centerTitle: true,
           elevation: 0,
-          backgroundColor:
-              isDark ? AppColors.surfaceDark : AppColors.white,
-          foregroundColor:
-              isDark ? AppColors.white : AppColors.textDark,
+          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
+          foregroundColor: isDark ? AppColors.white : AppColors.textDark,
         ),
         body: BlocListener<AbsenceCubit, AbsenceState>(
           listener: (context, state) {
@@ -225,16 +215,17 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // ─── إذا الطفل الوحيد غير مشترك ─────────────────
-                      if (children.length == 1 && !children.first.hasActiveSubscription)
-                        _buildInactiveSubscriptionCard(context, children.first, isDark)
+                      if (children.length == 1 &&
+                          !children.first.hasActiveSubscription)
+                        _buildInactiveSubscriptionCard(
+                          context,
+                          children.first,
+                          isDark,
+                        )
                       else ...[
                         // ─── 1. اختيار الطفل ─────────────────────────────
                         if (children.length > 1) ...[
-                          _buildSectionTitle(
-                            context,
-                            '👶 اختر الطفل',
-                            isDark,
-                          ),
+                          _buildSectionTitle(context, '👶 اختر الطفل', isDark),
                           SizedBox(height: 10.h),
                           _buildChildSelector(context, children, isDark),
                           SizedBox(height: 20.h),
@@ -268,7 +259,9 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
   void _selectChild(ChildModel child) {
     if (child.id == null) return;
     if (!child.hasActiveSubscription) {
-      _showError('الطفل ${child.fullName} ليس لديه اشتراك نقل مفعل لتسجيل غياب له.');
+      _showError(
+        'الطفل ${child.fullName} ليس لديه اشتراك نقل مفعل لتسجيل غياب له.',
+      );
       return;
     }
     setState(() {
@@ -309,8 +302,8 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                   color: isSelected
                       ? context.primaryColor
                       : (!isActive
-                          ? AppColors.grey400.withValues(alpha: 0.5)
-                          : (isDark ? AppColors.grey700 : AppColors.grey200)),
+                            ? AppColors.grey400.withValues(alpha: 0.5)
+                            : (isDark ? AppColors.grey700 : AppColors.grey200)),
                   width: isSelected ? 2 : 1,
                 ),
                 boxShadow: isSelected
@@ -335,8 +328,8 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                           backgroundColor: isSelected
                               ? AppColors.white.withValues(alpha: 0.3)
                               : context.primaryColor.withValues(alpha: 0.1),
-                          backgroundImage: (child.photoUrl != null &&
-                                  child.hasRealPhoto)
+                          backgroundImage:
+                              (child.photoUrl != null && child.hasRealPhoto)
                               ? NetworkImage(child.photoUrl!)
                               : null,
                           child: (child.photoUrl == null || !child.hasRealPhoto)
@@ -405,9 +398,7 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppColors.warning.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -491,7 +482,8 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
             context,
             isDark,
             title: '📅 اختر أيام الغياب',
-            child: state.datesModel.availableDates.isEmpty &&
+            child:
+                state.datesModel.availableDates.isEmpty &&
                     state.datesModel.alreadyAbsentDates.isEmpty
                 ? _buildEmptyDates(context, isDark)
                 : AbsenceCalendarWidget(
@@ -556,8 +548,19 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
     bool isDark,
   ) {
     final monthNames = [
-      '', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+      '',
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر',
     ];
 
     final datesText = state.selectedDates
@@ -576,9 +579,7 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: context.primaryColor.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: context.primaryColor.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -602,11 +603,7 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
             ],
           ),
           SizedBox(height: 12.h),
-          _summaryRow(
-            '👶 الطفل',
-            _selectedChildName ?? '',
-            isDark,
-          ),
+          _summaryRow('👶 الطفل', _selectedChildName ?? '', isDark),
           SizedBox(height: 6.h),
           _summaryRow(
             '📆 عدد الأيام',
@@ -626,8 +623,10 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                   context.read<AbsenceCubit>().setAbsence(_selectedChildId!);
                 }
               },
-              icon: const Icon(Icons.check_circle_outline_rounded,
-                  color: AppColors.white),
+              icon: const Icon(
+                Icons.check_circle_outline_rounded,
+                color: AppColors.white,
+              ),
               label: Text(
                 'تأكيد الغياب',
                 style: AppTextStyles.style(
@@ -791,10 +790,7 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: AppTextStyles.style(
-              fontSize: 13.sp,
-              color: AppColors.error,
-            ),
+            style: AppTextStyles.style(fontSize: 13.sp, color: AppColors.error),
           ),
           SizedBox(height: 14.h),
           OutlinedButton.icon(
@@ -816,8 +812,7 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
 
   // ─── Skeleton Loader ───────────────────────────────────────────────────────
   Widget _buildSkeletonLoader(bool isDark) {
-    final shimmerColor =
-        isDark ? AppColors.grey800 : const Color(0xFFE8EDF2);
+    final shimmerColor = isDark ? AppColors.grey800 : const Color(0xFFE8EDF2);
 
     return Column(
       children: List.generate(3, (i) {
