@@ -135,6 +135,7 @@ class RegisterCubit extends Cubit<RegisterState> {
         return;
       }
 
+      final fcmToken = StorageService.getFcmToken();
       final request = ParentRegisterRequest(
         fullName: fullName ?? '',
         email: email ?? '',
@@ -145,7 +146,7 @@ class RegisterCubit extends Cubit<RegisterState> {
         otp: parsedOtp,
         deviceName: _deviceName,
         platform: _platform,
-        fcmToken: null,
+        fcmToken: fcmToken,
         avatar: avatarFile,
       );
 
@@ -210,6 +211,7 @@ class RegisterCubit extends Cubit<RegisterState> {
   Future<void> registerDriverFirstStage() async {
     emit(DriverRegisterFirstStageLoading());
     try {
+      final fcmToken = StorageService.getFcmToken();
       final request = DriverRegisterRequest(
         fullName: fullName ?? '',
         email: email ?? '',
@@ -219,7 +221,7 @@ class RegisterCubit extends Cubit<RegisterState> {
         avatarFile: avatarFile,
         deviceName: _deviceName,
         platform: _platform,
-        fcmToken: 'derbi_fcm_token_placeholder',
+        fcmToken: fcmToken,
         alternativePhone: alternativePhone,
       );
 

@@ -80,15 +80,15 @@ class AbsenceCubit extends Cubit<AbsenceState> {
           .map((d) => d.toIso8601String().split('T').first)
           .toList();
 
-      await _repository.setAbsence(
+      final serverMessage = await _repository.setAbsence(
         childId: childId,
         dates: dates,
         absenceType: snapshot.selectedType,
       );
 
-      emit(const AbsenceSuccess('تم تسجيل الغياب بنجاح ✓'));
+      emit(AbsenceSuccess(serverMessage ?? 'تم تسجيل الغياب بنجاح ✓'));
 
-      // إعادة تحميل البيانات بعد النجاح
+      // إعادة تحميل البيانات تلقائياً بعد النجاح لتحديث التقويم وقائمة الغيابات
       await loadAbsenceData(childId);
     } catch (e) {
       emit(AbsenceError(_parseError(e)));
@@ -109,15 +109,15 @@ class AbsenceCubit extends Cubit<AbsenceState> {
     final snapshot = current;
     emit(AbsenceSubmitting());
     try {
-      await _repository.cancelAbsence(
+      final serverMessage = await _repository.cancelAbsence(
         childId: childId,
         date: date,
         absenceType: absenceType,
       );
 
-      emit(const AbsenceSuccess('تم إلغاء الغياب بنجاح'));
+      emit(AbsenceSuccess(serverMessage ?? 'تم إلغاء الغياب بنجاح'));
 
-      // إعادة تحميل البيانات بعد الإلغاء
+      // إعادة تحميل البيانات تلقائياً بعد الإلغاء
       await loadAbsenceData(childId);
     } catch (e) {
       emit(AbsenceError(_parseError(e)));

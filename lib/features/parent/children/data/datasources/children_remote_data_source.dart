@@ -76,10 +76,27 @@ class ChildrenRemoteDataSource {
         throw ApiException(serverMessage ?? 'تعذر جلب قائمة الأطفال.');
       }
     }
-    final rawList = data['data'] ?? data;
+    dynamic rawList;
+    if (data is Map) {
+      if (data['data'] is List) {
+        rawList = data['data'];
+      } else if (data['children'] is List) {
+        rawList = data['children'];
+      } else if (data['data'] is Map) {
+        final innerMap = data['data'] as Map;
+        if (innerMap['children'] is List) {
+          rawList = innerMap['children'];
+        } else if (innerMap['data'] is List) {
+          rawList = innerMap['data'];
+        }
+      }
+    } else if (data is List) {
+      rawList = data;
+    }
+
     if (rawList is List) {
       final children = rawList
-          .map((e) => ChildModel.fromJson(e as Map<String, dynamic>))
+          .map((e) => ChildModel.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
       debugPrint('getChildren parsed ${children.length} children');
       for (final child in children) {

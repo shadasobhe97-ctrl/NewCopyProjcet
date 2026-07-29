@@ -40,7 +40,7 @@ class ParentRegisterRequest {
       if (deviceName != null && deviceName!.isNotEmpty)
         'device_name': deviceName,
       if (platform != null && platform!.isNotEmpty) 'platform': platform,
-      if (fcmToken != null && fcmToken!.isNotEmpty) 'fcm_token': fcmToken,
+      'fcm_token': fcmToken,
     };
   }
 }

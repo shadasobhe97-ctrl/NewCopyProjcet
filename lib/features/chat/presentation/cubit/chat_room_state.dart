@@ -14,11 +14,25 @@ class ChatRoomLoading extends ChatRoomState {}
 
 class ChatRoomLoaded extends ChatRoomState {
   final List<ChatMessageModel> messages;
+  final bool isOtherUserTyping;
 
-  const ChatRoomLoaded(this.messages);
+  const ChatRoomLoaded(
+    this.messages, {
+    this.isOtherUserTyping = false,
+  });
+
+  ChatRoomLoaded copyWith({
+    List<ChatMessageModel>? messages,
+    bool? isOtherUserTyping,
+  }) {
+    return ChatRoomLoaded(
+      messages ?? this.messages,
+      isOtherUserTyping: isOtherUserTyping ?? this.isOtherUserTyping,
+    );
+  }
 
   @override
-  List<Object?> get props => [messages];
+  List<Object?> get props => [messages, isOtherUserTyping];
 }
 
 class ChatRoomError extends ChatRoomState {
@@ -32,18 +46,26 @@ class ChatRoomError extends ChatRoomState {
 
 class ChatMessageSending extends ChatRoomState {
   final List<ChatMessageModel> messages;
+  final bool isOtherUserTyping;
 
-  const ChatMessageSending(this.messages);
+  const ChatMessageSending(
+    this.messages, {
+    this.isOtherUserTyping = false,
+  });
 
   @override
-  List<Object?> get props => [messages];
+  List<Object?> get props => [messages, isOtherUserTyping];
 }
 
 class ChatMessageSent extends ChatRoomState {
   final List<ChatMessageModel> messages;
+  final bool isOtherUserTyping;
 
-  const ChatMessageSent(this.messages);
+  const ChatMessageSent(
+    this.messages, {
+    this.isOtherUserTyping = false,
+  });
 
   @override
-  List<Object?> get props => [messages];
+  List<Object?> get props => [messages, isOtherUserTyping];
 }

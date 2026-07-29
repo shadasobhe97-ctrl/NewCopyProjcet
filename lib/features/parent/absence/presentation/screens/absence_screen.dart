@@ -194,15 +194,17 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                 children = childrenState.children;
               }
 
-              // اختيار تلقائي إذا طفل واحد فقط وله اشتراك مفعل
+              if (children.isEmpty) {
+                return _buildEmptyChildrenState(context, isDark);
+              }
+
+              // اختيار تلقائي للطفل الأول إذا وُجد طفل واحد فقط ولم يتم الاختيار سابقاً
               if (children.length == 1 &&
                   _selectedChildId == null &&
                   children.first.id != null) {
-                if (children.first.hasActiveSubscription) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _selectChild(children.first);
-                  });
-                }
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _selectChild(children.first);
+                });
               }
 
               return RefreshIndicator(
@@ -214,37 +216,27 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ─── إذا الطفل الوحيد غير مشترك ─────────────────
-                      if (children.length == 1 &&
-                          !children.first.hasActiveSubscription)
-                        _buildInactiveSubscriptionCard(
-                          context,
-                          children.first,
-                          isDark,
-                        )
-                      else ...[
-                        // ─── 1. اختيار الطفل ─────────────────────────────
-                        if (children.length > 1) ...[
-                          _buildSectionTitle(context, '👶 اختر الطفل', isDark),
-                          SizedBox(height: 10.h),
-                          _buildChildSelector(context, children, isDark),
-                          SizedBox(height: 20.h),
-                        ],
-
-                        // ─── بقية المحتوى بعد اختيار الطفل ──────────────
-                        if (_selectedChildId == null && children.length > 1)
-                          _buildSelectChildPrompt(context, isDark)
-                        else
-                          BlocBuilder<AbsenceCubit, AbsenceState>(
-                            builder: (context, absenceState) {
-                              return _buildAbsenceContent(
-                                context,
-                                absenceState,
-                                isDark,
-                              );
-                            },
-                          ),
+                      // ─── 1. اختيار الطفل ─────────────────────────────
+                      if (children.length > 1) ...[
+                        _buildSectionTitle(context, '👶 اختر الطفل', isDark),
+                        SizedBox(height: 10.h),
+                        _buildChildSelector(context, children, isDark),
+                        SizedBox(height: 20.h),
                       ],
+
+                      // ─── بقية المحتوى بعد اختيار الطفل ──────────────
+                      if (_selectedChildId == null && children.length > 1)
+                        _buildSelectChildPrompt(context, isDark)
+                      else
+                        BlocBuilder<AbsenceCubit, AbsenceState>(
+                          builder: (context, absenceState) {
+                            return _buildAbsenceContent(
+                              context,
+                              absenceState,
+                              isDark,
+                            );
+                          },
+                        ),
                     ],
                   ),
                 ),
@@ -258,12 +250,6 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
 
   void _selectChild(ChildModel child) {
     if (child.id == null) return;
-    if (!child.hasActiveSubscription) {
-      _showError(
-        'الطفل ${child.fullName} ليس لديه اشتراك نقل مفعل لتسجيل غياب له.',
-      );
-      return;
-    }
     setState(() {
       _selectedChildId = child.id;
       _selectedChildName = child.fullName;
@@ -271,114 +257,127 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
     context.read<AbsenceCubit>().loadAbsenceData(child.id!);
   }
 
-  // ─── قسم اختيار الطفل (Chips أفقية) ─────────────────────────────────────
+  // ─── قسم اختيار الطفل (WhatsApp/Messenger Style) ───────────────────────
   Widget _buildChildSelector(
     BuildContext context,
     List<ChildModel> children,
     bool isDark,
   ) {
     return SizedBox(
-      height: 90.h,
-      child: ListView.separated(
+      height: 135.h,
+      child: ListView.builder(
         scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
         itemCount: children.length,
-        separatorBuilder: (context, index) => SizedBox(width: 10.w),
         itemBuilder: (context, index) {
           final child = children[index];
           final isSelected = child.id == _selectedChildId;
-          final isActive = child.hasActiveSubscription;
+          final primaryColor = context.primaryColor;
 
           return GestureDetector(
             onTap: () => _selectChild(child),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? context.primaryColor
-                    : (isDark ? AppColors.surfaceDark : AppColors.white),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: isSelected
-                      ? context.primaryColor
-                      : (!isActive
-                            ? AppColors.grey400.withValues(alpha: 0.5)
-                            : (isDark ? AppColors.grey700 : AppColors.grey200)),
-                  width: isSelected ? 2 : 1,
-                ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: context.primaryColor.withValues(alpha: 0.25),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+              width: 76.w,
+              margin: EdgeInsets.symmetric(horizontal: 6.w),
+              padding: EdgeInsets.only(top: 6.h, bottom: 8.h, left: 2.w, right: 2.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  // ── الصورة مع الإطار وعلامة التأشير ──
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      // الحلقة الخارجية (border ring عند التحديد)
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected
+                                ? primaryColor
+                                : (isDark
+                                      ? AppColors.grey600
+                                      : AppColors.grey300),
+                            width: isSelected ? 2.5 : 1.5,
+                          ),
                         ),
-                      ]
-                    : [],
-              ),
-              child: Opacity(
-                opacity: isActive ? 1.0 : 0.55,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 20.r,
-                          backgroundColor: isSelected
-                              ? AppColors.white.withValues(alpha: 0.3)
-                              : context.primaryColor.withValues(alpha: 0.1),
+                        child: CircleAvatar(
+                          radius: 26.r,
+                          backgroundColor: isDark
+                              ? AppColors.grey700
+                              : primaryColor.withValues(alpha: 0.1),
                           backgroundImage:
                               (child.photoUrl != null && child.hasRealPhoto)
                               ? NetworkImage(child.photoUrl!)
                               : null,
                           child: (child.photoUrl == null || !child.hasRealPhoto)
-                              ? Icon(
-                                  Icons.child_care_rounded,
-                                  color: isSelected
-                                      ? AppColors.white
-                                      : context.primaryColor,
-                                  size: 18.r,
+                              ? Text(
+                                  child.fullName.isNotEmpty
+                                      ? child.fullName[0].toUpperCase()
+                                      : '؟',
+                                  style: AppTextStyles.style(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: primaryColor,
+                                  ),
                                 )
                               : null,
                         ),
-                        if (!isActive)
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: CircleAvatar(
-                              radius: 8.r,
-                              backgroundColor: AppColors.error,
+                      ),
+
+                      // علامة ✔ الزرقاء عند التحديد
+                      if (isSelected)
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: AnimatedScale(
+                            scale: isSelected ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 200),
+                            child: Container(
+                              width: 18.r,
+                              height: 18.r,
+                              decoration: BoxDecoration(
+                                color: primaryColor,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isDark
+                                      ? AppColors.surfaceDark
+                                      : AppColors.white,
+                                  width: 2,
+                                ),
+                              ),
                               child: Icon(
-                                Icons.block_rounded,
-                                size: 10.r,
+                                Icons.check_rounded,
                                 color: AppColors.white,
+                                size: 10.r,
                               ),
                             ),
                           ),
-                      ],
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      child.fullName.split(' ').first,
-                      style: AppTextStyles.style(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected
-                            ? AppColors.white
-                            : (isDark ? AppColors.white : AppColors.textDark),
-                      ),
-                    ),
-                    if (!isActive)
-                      Text(
-                        'غير مشترك',
-                        style: AppTextStyles.style(
-                          fontSize: 9.sp,
-                          color: AppColors.error,
                         ),
-                      ),
-                  ],
-                ),
+                    ],
+                  ),
+
+                  SizedBox(height: 8.h),
+
+                  // ── اسم الطفل ──
+                  Text(
+                    child.fullName.split(' ').first,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.style(
+                      fontSize: 11.sp,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected
+                          ? primaryColor
+                          : (isDark ? AppColors.grey300 : AppColors.textDark),
+                    ),
+                  ),
+                ],
               ),
             ),
           );
@@ -387,45 +386,40 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
     );
   }
 
-  Widget _buildInactiveSubscriptionCard(
-    BuildContext context,
-    ChildModel child,
-    bool isDark,
-  ) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(28.w),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.warning_amber_rounded,
-            size: 48.r,
-            color: AppColors.warning,
-          ),
-          SizedBox(height: 12.h),
-          Text(
-            'لا يوجد اشتراك نقل مفعل',
-            style: AppTextStyles.style(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.bold,
-              color: isDark ? AppColors.white : AppColors.textDark,
+
+
+  Widget _buildEmptyChildrenState(BuildContext context, bool isDark) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(32.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.child_care_rounded,
+              size: 64.r,
+              color: context.primaryColor.withValues(alpha: 0.4),
             ),
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            'الطفل ${child.fullName} لا يملك اشتراك نقل نشط حالياً للإبلاغ عن غياب.',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.style(
-              fontSize: 13.sp,
-              color: isDark ? AppColors.grey400 : AppColors.textMuted,
+            SizedBox(height: 16.h),
+            Text(
+              'لا يوجد أطفال مسجلون',
+              style: AppTextStyles.style(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.white : AppColors.textDark,
+              ),
             ),
-          ),
-        ],
+            SizedBox(height: 8.h),
+            Text(
+              'قم بإضافة بيانات أطفالك أولاً لإدارة غياباتهم عن رحلات النقل.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.style(
+                fontSize: 13.sp,
+                color: isDark ? AppColors.grey400 : AppColors.textMuted,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -478,22 +472,18 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ─── 2. التقويم ───────────────────────────────────────────
-          _buildSection(
-            context,
-            isDark,
-            title: '📅 اختر أيام الغياب',
-            child:
-                state.datesModel.availableDates.isEmpty &&
-                    state.datesModel.alreadyAbsentDates.isEmpty
-                ? _buildEmptyDates(context, isDark)
-                : AbsenceCalendarWidget(
-                    datesModel: state.datesModel,
-                    selectedDates: state.selectedDates,
-                    onDateTap: (date) =>
-                        context.read<AbsenceCubit>().toggleDate(date),
-                  ),
-          ),
-          SizedBox(height: 16.h),
+          _buildCalendarHeader(context, isDark),
+          SizedBox(height: 12.h),
+          state.datesModel.availableDates.isEmpty &&
+                  state.datesModel.alreadyAbsentDates.isEmpty
+              ? _buildEmptyDates(context, isDark)
+              : AbsenceCalendarWidget(
+                  datesModel: state.datesModel,
+                  selectedDates: state.selectedDates,
+                  onDateTap: (date) =>
+                      context.read<AbsenceCubit>().toggleDate(date),
+                ),
+          SizedBox(height: 20.h),
 
           // ─── 3. نوع الغياب ────────────────────────────────────────
           if (state.selectedDates.isNotEmpty) ...[
@@ -721,6 +711,39 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
         fontSize: 14.sp,
         fontWeight: FontWeight.bold,
         color: isDark ? AppColors.white : AppColors.textDark,
+      ),
+    );
+  }
+
+  Widget _buildCalendarHeader(BuildContext context, bool isDark) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'اختر أيام الغياب',
+            style: AppTextStyles.style(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.white : AppColors.textDark,
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.all(10.r),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? context.primaryColor.withValues(alpha: 0.15)
+                  : const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(14.r),
+            ),
+            child: Icon(
+              Icons.calendar_today_rounded,
+              color: context.primaryColor,
+              size: 20.r,
+            ),
+          ),
+        ],
       ),
     );
   }

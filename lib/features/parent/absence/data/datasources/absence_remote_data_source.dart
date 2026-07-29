@@ -56,15 +56,30 @@ class AbsenceRemoteDataSource {
         final msg = ApiException.extractMessage(data);
         throw ApiException(msg ?? 'تعذر جلب قائمة الغيابات');
       }
-      final rawList =
-          data['data'] as List<dynamic>? ??
-          data['absences'] as List<dynamic>? ??
-          [];
-      return rawList
-          .map(
-            (e) => AbsenceModel.fromJson(Map<String, dynamic>.from(e as Map)),
-          )
-          .toList();
+
+      dynamic rawList;
+      if (data['data'] is List) {
+        rawList = data['data'];
+      } else if (data['absences'] is List) {
+        rawList = data['absences'];
+      } else if (data['data'] is Map) {
+        final innerMap = data['data'] as Map;
+        if (innerMap['absences'] is List) {
+          rawList = innerMap['absences'];
+        } else if (innerMap['data'] is List) {
+          rawList = innerMap['data'];
+        }
+      }
+
+      rawList ??= [];
+
+      if (rawList is List) {
+        return rawList
+            .map(
+              (e) => AbsenceModel.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
+            .toList();
+      }
     } else if (data is List) {
       return data
           .map(
@@ -77,7 +92,7 @@ class AbsenceRemoteDataSource {
 
   /// POST /api/parent/children/{childId}/set-absence
   /// Body: { "dates": [...], "absence_type": "both" }
-  Future<void> setAbsence({
+  Future<String?> setAbsence({
     required int childId,
     required List<String> dates,
     required AbsenceType absenceType,
@@ -100,12 +115,14 @@ class AbsenceRemoteDataSource {
         final msg = ApiException.extractMessage(data);
         throw ApiException(msg ?? 'تعذر تسجيل الغياب');
       }
+      return data['message']?.toString();
     }
+    return null;
   }
 
   /// POST /api/parent/children/{childId}/cancel-absence
   /// Body: { "dates": [date], "absence_type": "..." }
-  Future<void> cancelAbsence({
+  Future<String?> cancelAbsence({
     required int childId,
     required String date,
     required AbsenceType absenceType,
@@ -128,6 +145,8 @@ class AbsenceRemoteDataSource {
         final msg = ApiException.extractMessage(data);
         throw ApiException(msg ?? 'تعذر إلغاء الغياب');
       }
+      return data['message']?.toString();
     }
+    return null;
   }
 }

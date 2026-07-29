@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../../core/routes/app_router.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/theme/text_styles.dart';
@@ -234,8 +235,14 @@ class ChildPassScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 50.h,
                 child: ElevatedButton(
-                  onPressed: () =>
-                      Navigator.of(context).popUntil((route) => route.isFirst),
+                  onPressed: () => Navigator.of(context)
+                      .pushNamedAndRemoveUntil(
+                    AppRoutes.myChildren,
+                    (route) =>
+                        route.settings.name == AppRoutes.parentMainWrapper ||
+                        route.settings.name == AppRoutes.parentHome ||
+                        route.settings.name == AppRoutes.parentHomeLegacy,
+                  ),
                   style: AppTheme.elevatedButtonStyle(
                     backgroundColor: context.primaryColor,
                   ),

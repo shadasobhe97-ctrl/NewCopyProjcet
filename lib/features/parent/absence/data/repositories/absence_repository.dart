@@ -17,24 +17,24 @@ class AbsenceRepository {
     return await _remoteDataSource.getAbsences(childId);
   }
 
-  Future<void> setAbsence({
+  Future<String?> setAbsence({
     required int childId,
     required List<String> dates,
     required AbsenceType absenceType,
   }) async {
-    await _remoteDataSource.setAbsence(
+    return await _remoteDataSource.setAbsence(
       childId: childId,
       dates: dates,
       absenceType: absenceType,
     );
   }
 
-  Future<void> cancelAbsence({
+  Future<String?> cancelAbsence({
     required int childId,
     required String date,
     required AbsenceType absenceType,
   }) async {
-    await _remoteDataSource.cancelAbsence(
+    return await _remoteDataSource.cancelAbsence(
       childId: childId,
       date: date,
       absenceType: absenceType,

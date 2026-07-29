@@ -7,6 +7,11 @@ class ChatMessageModel {
   final String message;
   final DateTime timestamp;
   final bool isRead;
+  final String type; // 'text', 'image', 'video', 'audio'
+  final String? mediaUrl;
+  final int? audioDuration;
+  final bool isDeletedForEveryone;
+  final List<String> deletedForUsers;
 
   ChatMessageModel({
     required this.id,
@@ -15,6 +20,11 @@ class ChatMessageModel {
     required this.message,
     required this.timestamp,
     required this.isRead,
+    this.type = 'text',
+    this.mediaUrl,
+    this.audioDuration,
+    this.isDeletedForEveryone = false,
+    this.deletedForUsers = const [],
   });
 
   factory ChatMessageModel.fromFirestore(DocumentSnapshot doc) {
@@ -33,13 +43,28 @@ class ChatMessageModel {
       timeVal = DateTime.now();
     }
 
+    final rawAudioDuration = data['audio_duration'] ?? data['audioDuration'];
+    final rawDeletedUsers =
+        data['deleted_for_users'] ?? data['deletedForUsers'];
+    final List<String> deletedUsersList = rawDeletedUsers is List
+        ? rawDeletedUsers.map((e) => e.toString()).toList()
+        : [];
+
     return ChatMessageModel(
       id: doc.id,
       senderId: (data['sender_id'] ?? data['senderId'] ?? '').toString(),
-      senderRole: data['sender_role']?.toString() ?? data['senderRole']?.toString() ?? '',
+      senderRole:
+          data['sender_role']?.toString() ?? data['senderRole']?.toString() ?? '',
       message: data['message']?.toString() ?? '',
       timestamp: timeVal,
       isRead: data['is_read'] as bool? ?? data['isRead'] as bool? ?? false,
+      type: data['type']?.toString() ?? 'text',
+      mediaUrl: data['media_url']?.toString() ?? data['mediaUrl']?.toString(),
+      audioDuration: rawAudioDuration is num ? rawAudioDuration.toInt() : null,
+      isDeletedForEveryone: data['is_deleted_for_everyone'] as bool? ??
+          data['isDeletedForEveryone'] as bool? ??
+          false,
+      deletedForUsers: deletedUsersList,
     );
   }
 
@@ -50,6 +75,11 @@ class ChatMessageModel {
       'message': message,
       'timestamp': Timestamp.fromDate(timestamp),
       'is_read': isRead,
+      'type': type,
+      if (mediaUrl != null) 'media_url': mediaUrl,
+      if (audioDuration != null) 'audio_duration': audioDuration,
+      'is_deleted_for_everyone': isDeletedForEveryone,
+      'deleted_for_users': deletedForUsers,
     };
   }
 }

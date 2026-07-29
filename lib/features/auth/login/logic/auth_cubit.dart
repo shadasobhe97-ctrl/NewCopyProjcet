@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/auth/login/data/models/login_request_model.dart';
 import 'package:kids_transport/features/auth/login/data/models/reset_password_request_model.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/auth_repository.dart';
@@ -25,11 +26,13 @@ class AuthCubit extends Cubit<AuthState> {
   }) async {
     emit(AuthLoading());
     try {
+      final fcmToken = StorageService.getFcmToken();
       final request = LoginRequestModel(
         phoneNumber: phone,
         password: password,
         deviceName: _deviceName,
         platform: _platform,
+        fcmToken: fcmToken,
       );
 
       final response = await _repository.login(request);

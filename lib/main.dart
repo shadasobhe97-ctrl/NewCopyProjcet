@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:kids_transport/firebase_options.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
@@ -23,17 +25,73 @@ import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
 import 'package:kids_transport/core/services/hive_helper.dart';
 import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 import 'package:kids_transport/core/services/notification_service.dart';
+import 'package:kids_transport/features/chat/presentation/screens/chat_room_screen.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+void _setupNotificationDeepLink() {
+  NotificationService.setNotificationTapCallback((Map<String, dynamic> data) async {
+    try {
+      if (kDebugMode) {
+        debugPrint('🔔 [Notification Tap Callback Triggered]: $data');
+      }
+
+      final String? type = data['type']?.toString();
+      final String? chatRoomId = data['chat_room_id']?.toString() ??
+          data['chatRoomId']?.toString();
+
+      if (type == 'chat_message' ||
+          (chatRoomId != null && chatRoomId.isNotEmpty)) {
+        final sessionRepo = getIt<SessionRepository>();
+        final String? currentUserId = sessionRepo.getUserId();
+        final String currentUserRole = sessionRepo.getRoleName() ?? '';
+
+        final String otherUserName = data['sender_name']?.toString() ??
+            data['other_user_name']?.toString() ??
+            data['title']?.toString() ??
+            'محادثة جديدة';
+
+        final String? otherUserPhoto = data['sender_photo']?.toString() ??
+            data['other_user_photo']?.toString();
+
+        if (currentUserId != null &&
+            currentUserId.isNotEmpty &&
+            chatRoomId != null &&
+            chatRoomId.isNotEmpty) {
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (context) => ChatRoomScreen(
+                chatRoomId: chatRoomId,
+                otherUserName: otherUserName,
+                otherUserPhoto: otherUserPhoto,
+                canChat: true,
+                currentUserId: currentUserId,
+                currentUserRole: currentUserRole,
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Error handling notification deep link: $e');
+      }
+    }
+  });
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await StorageService.init();
   await HiveHelper.init(); // تهيئة قاعدة بيانات Hive
   setupDependencyInjection();
   initDriverInjection();
   await NotificationService.init();
+  _setupNotificationDeepLink();
   runApp(const TransportApp());
 }
 
@@ -72,6 +130,7 @@ class TransportApp extends StatelessWidget {
             splitScreenMode: false,
             builder: (context, child) {
               return MaterialApp(
+                navigatorKey: navigatorKey,
                 title: 'تطبيق دربي المدارس',
                 debugShowCheckedModeBanner: false,
                 locale: const Locale('ar', 'LY'),

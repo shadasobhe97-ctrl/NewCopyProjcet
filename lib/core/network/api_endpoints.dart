@@ -2,7 +2,7 @@ class ApiEndpoints {
   const ApiEndpoints._();
 
   // الرابط الأساسي للسيرفر (يحتوي على /api/)
-  static const String baseUrl = 'https://terrible-cheetah-59.loca.lt/api/';
+  static const String baseUrl = 'http://127.0.0.1:8000/api/';
 
   //=========================================
   // Auth Endpoints (مسارات المصادقة العامة)

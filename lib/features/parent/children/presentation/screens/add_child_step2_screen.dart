@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:kids_transport/features/parent/children/presentation/widgets/add_child_shared_widgets.dart';
+import '../../../../../core/routes/app_router.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/theme/text_styles.dart';
@@ -169,7 +170,14 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                     backgroundColor: Colors.green,
                   ),
                 );
-                Navigator.of(context).popUntil((route) => route.isFirst);
+                // العودة لشاشة أطفالي مباشرة وإزالة شاشات الإضافة/التعديل من المكدس
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  AppRoutes.myChildren,
+                  (route) =>
+                      route.settings.name == AppRoutes.parentMainWrapper ||
+                      route.settings.name == AppRoutes.parentHome ||
+                      route.settings.name == AppRoutes.parentHomeLegacy,
+                );
               } else {
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(

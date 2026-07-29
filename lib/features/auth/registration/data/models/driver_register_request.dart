@@ -9,7 +9,7 @@ class DriverRegisterRequest {
   final File? avatarFile; // ملف الصورة الشخصية الاختياري
   final String deviceName;
   final String platform; // ios, android, web
-  final String fcmToken;
+  final String? fcmToken;
   final String? alternativePhone;
 
   DriverRegisterRequest({
@@ -21,7 +21,7 @@ class DriverRegisterRequest {
     this.avatarFile,
     required this.deviceName,
     required this.platform,
-    required this.fcmToken,
+    this.fcmToken,
     this.alternativePhone,
   });
 
