@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:kids_transport/core/services/notification_service.dart';
+import '../models/chat_conversation_model.dart';
 import '../models/chat_message_model.dart';
 
 class ChatFirebaseDataSource {
@@ -34,6 +36,68 @@ class ChatFirebaseDataSource {
         .doc(chatRoomId)
         .snapshots()
         .map((doc) => doc.data());
+  }
+
+  /// Streams ordered conversations dynamically based on Firestore chat_rooms real-time updates.
+  /// Sorts rooms descending by lastMessageTime so room with newest message jumps to top (Index 0).
+  Stream<List<ChatConversationModel>> getOrderedConversationsStream({
+    required List<ChatConversationModel> apiConversations,
+    required String currentUserId,
+  }) {
+    return _firestore.collection('chat_rooms').snapshots().map((snapshot) {
+      final Map<String, Map<String, dynamic>> roomDataMap = {};
+      for (final doc in snapshot.docs) {
+        roomDataMap[doc.id] = doc.data();
+      }
+
+      final List<ChatConversationModel> updatedList = [];
+
+      for (final conv in apiConversations) {
+        final roomData = roomDataMap[conv.chatRoomId];
+        if (roomData != null) {
+          // Check soft-delete for user
+          final rawDeletedUsers =
+              roomData['deleted_for_users'] ?? roomData['deletedForUsers'];
+          final List<String> deletedList = rawDeletedUsers is List
+              ? rawDeletedUsers.map((e) => e.toString()).toList()
+              : [];
+
+          if (deletedList.contains(currentUserId)) {
+            continue; // Skip soft deleted conversation
+          }
+
+          // Parse lastMessageTime
+          final rawTime = roomData['lastMessageTime'];
+          DateTime? msgTime;
+          if (rawTime is Timestamp) {
+            msgTime = rawTime.toDate();
+          } else if (rawTime is String) {
+            msgTime = DateTime.tryParse(rawTime);
+          } else if (rawTime is int) {
+            msgTime = DateTime.fromMillisecondsSinceEpoch(rawTime);
+          }
+
+          final String? lastMsg = roomData['lastMessage']?.toString();
+
+          updatedList.add(conv.copyWith(
+            lastMessageTime: msgTime,
+            lastMessagePreview: lastMsg,
+          ));
+        } else {
+          updatedList.add(conv);
+        }
+      }
+
+      // Sort descending by lastMessageTime
+      updatedList.sort((a, b) {
+        if (a.lastMessageTime == null && b.lastMessageTime == null) return 0;
+        if (a.lastMessageTime == null) return 1;
+        if (b.lastMessageTime == null) return -1;
+        return b.lastMessageTime!.compareTo(a.lastMessageTime!);
+      });
+
+      return updatedList;
+    });
   }
 
   /// Streams room IDs that have been soft-deleted by currentUserId.
@@ -231,7 +295,8 @@ class ChatFirebaseDataSource {
     }
   }
 
-  /// Sends a message and updates room summary, automatically clearing deleted_for_users array so conversation reappears for both parties.
+  /// Sends a message and updates room summary, automatically clearing deleted_for_users array so conversation reappears for both parties,
+  /// and sends a Client-to-Client FCM HTTP v1 push notification to the receiver.
   Future<void> sendMessage({
     required String chatRoomId,
     required ChatMessageModel message,
@@ -279,5 +344,62 @@ class ChatFirebaseDataSource {
     );
 
     await batch.commit();
+
+    // Trigger Client-to-Client Push Notification via FCM HTTP v1 API
+    try {
+      final roomDoc =
+          await _firestore.collection('chat_rooms').doc(chatRoomId).get();
+      if (roomDoc.exists) {
+        final roomData = roomDoc.data() ?? {};
+
+        final String parentId =
+            (roomData['parent_id'] ?? roomData['parentId'] ?? '').toString();
+        final String driverId =
+            (roomData['driver_id'] ?? roomData['driverId'] ?? '').toString();
+        final String parentName =
+            (roomData['parent_name'] ?? roomData['parentName'] ?? 'ولي الأمر')
+                .toString();
+        final String driverName =
+            (roomData['driver_name'] ?? roomData['driverName'] ?? 'السائق')
+                .toString();
+
+        final String roleLower = message.senderRole.toLowerCase();
+        final bool isSenderParent = message.senderId == parentId ||
+            roleLower.contains('parent') ||
+            roleLower.contains('ولي');
+
+        final String receiverId = isSenderParent ? driverId : parentId;
+        final String senderTitle = isSenderParent ? parentName : driverName;
+
+        if (receiverId.isNotEmpty) {
+          final userDoc =
+              await _firestore.collection('users').doc(receiverId).get();
+          if (userDoc.exists) {
+            final userData = userDoc.data() ?? {};
+            final String? receiverToken = userData['fcm_token']?.toString() ??
+                userData['fcmToken']?.toString();
+
+            if (receiverToken != null && receiverToken.isNotEmpty) {
+              String bodyText = message.message;
+              if (message.type == 'image') bodyText = '📷 أرسل صورة';
+              if (message.type == 'video') bodyText = '🎥 أرسل فيديو';
+              if (message.type == 'audio') bodyText = '🎤 أرسل رسالة صوتية';
+
+              await NotificationService.sendPushNotification(
+                receiverToken: receiverToken,
+                title: senderTitle,
+                body: bodyText,
+                chatRoomId: chatRoomId,
+              );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+            '❌ Error sending client-to-client push notification in sendMessage: $e');
+      }
+    }
   }
 }

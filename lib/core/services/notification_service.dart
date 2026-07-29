@@ -1,8 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:googleapis_auth/auth_io.dart';
+import 'package:http/http.dart' as http;
 import 'package:kids_transport/firebase_options.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
@@ -138,6 +142,89 @@ class NotificationService {
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Error getting initial FCM message: $e');
+      }
+    }
+  }
+
+  /// Saves current device's FCM Token into Firestore under users/{userId} document
+  static Future<void> saveTokenToFirestore(String userId) async {
+    if (userId.isEmpty) return;
+    try {
+      final String? token = await getFcmToken();
+      if (token != null && token.isNotEmpty) {
+        await FirebaseFirestore.instance.collection('users').doc(userId).set(
+          {'fcm_token': token},
+          SetOptions(merge: true),
+        );
+        if (kDebugMode) {
+          debugPrint('✅ Saved FCM Token to Firestore users/$userId: $token');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Error saving FCM token to Firestore users/$userId: $e');
+      }
+    }
+  }
+
+  /// Sends Client-to-Client Push Notification using FCM HTTP v1 API & service_account.json
+  static Future<void> sendPushNotification({
+    required String receiverToken,
+    required String title,
+    required String body,
+    required String chatRoomId,
+  }) async {
+    if (receiverToken.isEmpty) return;
+
+    try {
+      final String jsonString =
+          await rootBundle.loadString('assets/service_account.json');
+      final Map<String, dynamic> serviceAccount =
+          jsonDecode(jsonString) as Map<String, dynamic>;
+
+      final ServiceAccountCredentials credentials =
+          ServiceAccountCredentials.fromJson(serviceAccount);
+      const List<String> scopes = [
+        'https://www.googleapis.com/auth/firebase.messaging',
+      ];
+
+      final AuthClient client =
+          await clientViaServiceAccount(credentials, scopes);
+
+      final String projectId =
+          serviceAccount['project_id']?.toString() ?? 'darpy-a247d';
+      final Uri url = Uri.parse(
+          'https://fcm.googleapis.com/v1/projects/$projectId/messages:send');
+
+      final Map<String, dynamic> payload = {
+        'message': {
+          'token': receiverToken,
+          'notification': {
+            'title': title,
+            'body': body,
+          },
+          'data': {
+            'type': 'chat_message',
+            'chat_room_id': chatRoomId,
+          },
+        },
+      };
+
+      final http.Response response = await client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(payload),
+      );
+
+      if (kDebugMode) {
+        debugPrint(
+            '🚀 [FCM HTTP v1 Push Sent]: status=${response.statusCode}, body=${response.body}');
+      }
+
+      client.close();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Error sending FCM HTTP v1 push notification: $e');
       }
     }
   }

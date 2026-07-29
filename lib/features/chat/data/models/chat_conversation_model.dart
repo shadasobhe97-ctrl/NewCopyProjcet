@@ -7,6 +7,8 @@ class ChatConversationModel {
   final String? otherUserPhoto;
   final bool canChat;
   final String subscriptionStatus;
+  final DateTime? lastMessageTime;
+  final String? lastMessagePreview;
 
   ChatConversationModel({
     required this.chatRoomId,
@@ -17,21 +19,46 @@ class ChatConversationModel {
     this.otherUserPhoto,
     required this.canChat,
     required this.subscriptionStatus,
+    this.lastMessageTime,
+    this.lastMessagePreview,
   });
+
+  ChatConversationModel copyWith({
+    DateTime? lastMessageTime,
+    String? lastMessagePreview,
+  }) {
+    return ChatConversationModel(
+      chatRoomId: chatRoomId,
+      otherUserId: otherUserId,
+      otherUserAuthId: otherUserAuthId,
+      otherUserName: otherUserName,
+      otherUserPhone: otherUserPhone,
+      otherUserPhoto: otherUserPhoto,
+      canChat: canChat,
+      subscriptionStatus: subscriptionStatus,
+      lastMessageTime: lastMessageTime ?? this.lastMessageTime,
+      lastMessagePreview: lastMessagePreview ?? this.lastMessagePreview,
+    );
+  }
 
   factory ChatConversationModel.fromJson(Map<String, dynamic> json) {
     // 1. chatRoomId
-    final roomId = json['chat_room_id']?.toString() ?? json['chatRoomId']?.toString() ?? '';
+    final roomId =
+        json['chat_room_id']?.toString() ??
+        json['chatRoomId']?.toString() ??
+        '';
 
     // 2. otherUserId (Intelligently maps driver_id or parent_id)
-    final int otherId = json['driver_id'] as int? ??
+    final int otherId =
+        json['driver_id'] as int? ??
         json['parent_id'] as int? ??
         json['other_user_id'] as int? ??
         json['otherUserId'] as int? ??
         0;
 
     // 3. otherUserAuthId (Intelligently maps driver_user_id or parent_user_id)
-    final int otherAuthId = json['driver_user_id'] as int? ??
+    final int otherAuthId =
+        json['driver_user_id'] as int? ??
         json['parent_user_id'] as int? ??
         json['driver_auth_id'] as int? ??
         json['parent_auth_id'] as int? ??
@@ -40,20 +67,23 @@ class ChatConversationModel {
         0;
 
     // 4. otherUserName (Intelligently maps driver_name or parent_name)
-    final String name = json['driver_name']?.toString() ??
+    final String name =
+        json['driver_name']?.toString() ??
         json['parent_name']?.toString() ??
         json['other_user_name']?.toString() ??
         json['otherUserName']?.toString() ??
         '';
 
     // 5. otherUserPhone
-    final String? phone = json['driver_phone']?.toString() ??
+    final String? phone =
+        json['driver_phone']?.toString() ??
         json['parent_phone']?.toString() ??
         json['other_user_phone']?.toString() ??
         json['otherUserPhone']?.toString();
 
     // 6. otherUserPhoto
-    final String? photo = json['driver_photo']?.toString() ??
+    final String? photo =
+        json['driver_photo']?.toString() ??
         json['driver_photo_url']?.toString() ??
         json['driver_avatar']?.toString() ??
         json['parent_photo']?.toString() ??
@@ -64,10 +94,12 @@ class ChatConversationModel {
         json['other_user_photo_url']?.toString();
 
     // 7. canChat
-    final bool canChatVal = json['can_chat'] as bool? ?? json['canChat'] as bool? ?? false;
+    final bool canChatVal =
+        json['can_chat'] as bool? ?? json['canChat'] as bool? ?? false;
 
     // 8. subscriptionStatus
-    final String subStatus = json['subscription_status']?.toString() ??
+    final String subStatus =
+        json['subscription_status']?.toString() ??
         json['subscriptionStatus']?.toString() ??
         '';
 

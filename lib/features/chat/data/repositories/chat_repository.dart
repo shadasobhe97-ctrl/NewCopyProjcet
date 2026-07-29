@@ -30,7 +30,9 @@ class ChatRepository {
 
   /// Get real-time stream of messages in Firestore for a chat room, filtered by currentUserId.
   Stream<List<ChatMessageModel>> getMessages(
-      String chatRoomId, String currentUserId) {
+    String chatRoomId,
+    String currentUserId,
+  ) {
     return _firebaseDataSource.getMessagesStream(chatRoomId, currentUserId);
   }
 

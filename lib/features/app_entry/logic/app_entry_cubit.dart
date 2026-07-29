@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/services/notification_service.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import 'package:kids_transport/features/driver/driver_preferences/data/repositories/driver_preferences_repository.dart';
 import 'app_entry_state.dart';
@@ -21,6 +22,12 @@ class AppEntryCubit extends Cubit<AppEntryState> {
     if (!_sessionRepository.hasValidSession()) {
       emit(NavigateToLogin());
       return;
+    }
+
+    // Save FCM Token in Firestore for valid active session
+    final currentUserId = _sessionRepository.getUserId();
+    if (currentUserId != null && currentUserId.isNotEmpty) {
+      NotificationService.saveTokenToFirestore(currentUserId);
     }
 
     final roleId = _sessionRepository.getRoleId();

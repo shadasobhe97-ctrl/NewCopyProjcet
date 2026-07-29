@@ -15,10 +15,7 @@ import 'chat_room_screen.dart';
 class ChatListScreen extends StatefulWidget {
   final UserRole userRole;
 
-  const ChatListScreen({
-    super.key,
-    required this.userRole,
-  });
+  const ChatListScreen({super.key, required this.userRole});
 
   @override
   State<ChatListScreen> createState() => _ChatListScreenState();
@@ -31,11 +28,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return BlocProvider<ChatListCubit>(
-      create: (context) => getIt<ChatListCubit>()..getConversations(widget.userRole),
+      create: (context) =>
+          getIt<ChatListCubit>()..getConversations(widget.userRole),
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF8FAFC),
+          backgroundColor: isDark
+              ? AppColors.backgroundDark
+              : const Color(0xFFF8FAFC),
           appBar: AppBar(
             title: Text(
               'المحادثات المباشرة',
@@ -79,13 +79,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           textAlign: TextAlign.center,
                           style: AppTextStyles.style(
                             fontSize: 14.sp,
-                            color: isDark ? AppColors.grey300 : AppColors.textDark,
+                            color: isDark
+                                ? AppColors.grey300
+                                : AppColors.textDark,
                           ),
                         ),
                         SizedBox(height: 16.h),
                         ElevatedButton.icon(
                           onPressed: () {
-                            context.read<ChatListCubit>().getConversations(widget.userRole);
+                            context.read<ChatListCubit>().getConversations(
+                              widget.userRole,
+                            );
                           },
                           icon: const Icon(Icons.refresh_rounded),
                           label: Text(
@@ -98,7 +102,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: theme.colorScheme.primary,
                             foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 24.w,
+                              vertical: 12.h,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12.r),
                             ),
@@ -115,16 +122,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 final session = getIt<SessionRepository>();
                 final currentUserId = session.getUserId() ?? '';
 
-                return StreamBuilder<List<String>>(
-                  stream: getIt<ChatRepository>()
-                      .getDeletedRoomIdsStream(currentUserId),
-                  builder: (context, snapshot) {
-                    final deletedIds = snapshot.data ?? [];
-                    final activeConversations = list
-                        .where((item) => !deletedIds.contains(item.chatRoomId))
-                        .toList();
-
-                    if (activeConversations.isEmpty) {
+                if (list.isEmpty) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -153,9 +151,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
                     return ListView.builder(
                       padding: EdgeInsets.all(16.w),
-                      itemCount: activeConversations.length,
+                      itemCount: list.length,
                       itemBuilder: (context, index) {
-                        final item = activeConversations[index];
+                        final item = list[index];
                         final currentUserRole = session.getRoleName() ?? '';
                         final isSubActive =
                             item.subscriptionStatus.toLowerCase() == 'active';
@@ -170,7 +168,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     ? AppColors.surfaceDark
                                     : AppColors.white,
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16.r)),
+                                  borderRadius: BorderRadius.circular(16.r),
+                                ),
                                 title: Text(
                                   'حذف المحادثة',
                                   style: AppTextStyles.style(
@@ -193,19 +192,26 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(ctx, false),
-                                    child: Text('إلغاء',
-                                        style: AppTextStyles.style(
-                                            fontSize: 13.sp)),
+                                    child: Text(
+                                      'إلغاء',
+                                      style: AppTextStyles.style(
+                                        fontSize: 13.sp,
+                                      ),
+                                    ),
                                   ),
                                   ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.error),
+                                      backgroundColor: AppColors.error,
+                                    ),
                                     onPressed: () => Navigator.pop(ctx, true),
-                                    child: Text('حذف',
-                                        style: AppTextStyles.style(
-                                            fontSize: 13.sp,
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold)),
+                                    child: Text(
+                                      'حذف',
+                                      style: AppTextStyles.style(
+                                        fontSize: 13.sp,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -231,8 +237,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                             ),
                             alignment: Alignment.centerLeft,
                             padding: EdgeInsets.symmetric(horizontal: 20.w),
-                            child: Icon(Icons.delete_outline_rounded,
-                                color: Colors.white, size: 28.r),
+                            child: Icon(
+                              Icons.delete_outline_rounded,
+                              color: Colors.white,
+                              size: 28.r,
+                            ),
                           ),
                           child: Card(
                             margin: EdgeInsets.only(bottom: 12.h),
@@ -241,8 +250,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               borderRadius: BorderRadius.circular(16.r),
                               side: BorderSide(
                                 color: isDark
-                                    ? AppColors.surfaceDark
-                                        .withValues(alpha: 0.5)
+                                    ? AppColors.surfaceDark.withValues(
+                                        alpha: 0.5,
+                                      )
                                     : AppColors.grey200,
                                 width: 1,
                               ),
@@ -271,9 +281,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 if (confirmed == true) {
                                   await getIt<ChatRepository>()
                                       .deleteConversationForMe(
-                                    chatRoomId: item.chatRoomId,
-                                    currentUserId: currentUserId,
-                                  );
+                                        chatRoomId: item.chatRoomId,
+                                        currentUserId: currentUserId,
+                                      );
                                 }
                               },
                               borderRadius: BorderRadius.circular(16.r),
@@ -286,42 +296,53 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                       clipBehavior: Clip.none,
                                       children: [
                                         ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(24.r),
+                                          borderRadius: BorderRadius.circular(
+                                            24.r,
+                                          ),
                                           child: Container(
                                             width: 48.w,
                                             height: 48.w,
                                             color: isDark
                                                 ? AppColors.grey800
                                                 : AppColors.grey100,
-                                            child: item.otherUserPhoto !=
-                                                        null &&
-                                                    item.otherUserPhoto!
+                                            child:
+                                                item.otherUserPhoto != null &&
+                                                    item
+                                                        .otherUserPhoto!
                                                         .isNotEmpty
                                                 ? CachedNetworkImage(
                                                     imageUrl:
                                                         item.otherUserPhoto!,
                                                     fit: BoxFit.cover,
                                                     placeholder:
-                                                        (context, url) =>
-                                                            const Center(
-                                                      child: SizedBox(
-                                                        width: 20,
-                                                        height: 20,
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                                strokeWidth: 2),
-                                                      ),
-                                                    ),
-                                                    errorWidget: (context, url,
-                                                            error) =>
-                                                        Icon(
-                                                      Icons.person_rounded,
-                                                      color: isDark
-                                                          ? AppColors.grey400
-                                                          : AppColors.grey600,
-                                                      size: 24.r,
-                                                    ),
+                                                        (
+                                                          context,
+                                                          url,
+                                                        ) => const Center(
+                                                          child: SizedBox(
+                                                            width: 20,
+                                                            height: 20,
+                                                            child:
+                                                                CircularProgressIndicator(
+                                                                  strokeWidth:
+                                                                      2,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                    errorWidget:
+                                                        (
+                                                          context,
+                                                          url,
+                                                          error,
+                                                        ) => Icon(
+                                                          Icons.person_rounded,
+                                                          color: isDark
+                                                              ? AppColors
+                                                                    .grey400
+                                                              : AppColors
+                                                                    .grey600,
+                                                          size: 24.r,
+                                                        ),
                                                   )
                                                 : Icon(
                                                     Icons.person_rounded,
@@ -337,9 +358,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                         StreamBuilder<int>(
                                           stream: getIt<ChatRepository>()
                                               .getUnreadCountStream(
-                                            item.chatRoomId,
-                                            currentUserId,
-                                          ),
+                                                item.chatRoomId,
+                                                currentUserId,
+                                              ),
                                           builder: (context, snapshot) {
                                             final count = snapshot.data ?? 0;
                                             if (count == 0) {
@@ -361,7 +382,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                                 ),
                                                 child: Center(
                                                   child: Text(
-                                                    count > 99 ? '99+' : '$count',
+                                                    count > 99
+                                                        ? '99+'
+                                                        : '$count',
                                                     style: AppTextStyles.style(
                                                       fontSize: 9.sp,
                                                       fontWeight:
@@ -396,7 +419,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                             ),
                                           ),
                                           if (item.otherUserPhone != null &&
-                                              item.otherUserPhone!
+                                              item
+                                                  .otherUserPhone!
                                                   .isNotEmpty) ...[
                                             SizedBox(height: 4.h),
                                             Text(
@@ -416,21 +440,28 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     // Subscription Status Badge
                                     Container(
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 10.w, vertical: 4.h),
+                                        horizontal: 10.w,
+                                        vertical: 4.h,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: isSubActive
-                                            ? AppColors.success
-                                                .withValues(alpha: 0.12)
-                                            : AppColors.error
-                                                .withValues(alpha: 0.12),
-                                        borderRadius:
-                                            BorderRadius.circular(12.r),
+                                            ? AppColors.success.withValues(
+                                                alpha: 0.12,
+                                              )
+                                            : AppColors.error.withValues(
+                                                alpha: 0.12,
+                                              ),
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
                                         border: Border.all(
                                           color: isSubActive
-                                              ? AppColors.success
-                                                  .withValues(alpha: 0.25)
-                                              : AppColors.error
-                                                  .withValues(alpha: 0.25),
+                                              ? AppColors.success.withValues(
+                                                  alpha: 0.25,
+                                                )
+                                              : AppColors.error.withValues(
+                                                  alpha: 0.25,
+                                                ),
                                           width: 1,
                                         ),
                                       ),
@@ -455,9 +486,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         );
                       },
                     );
-                  },
-                );
-              }
+                  }
 
               return const SizedBox();
             },
