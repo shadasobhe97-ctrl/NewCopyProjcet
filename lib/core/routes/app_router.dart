@@ -71,6 +71,9 @@ import 'package:kids_transport/features/parent/trips/presentation/screens/trips_
 import 'package:kids_transport/features/parent/trips/presentation/screens/trip_tracking_screen.dart';
 import 'package:kids_transport/features/parent/trips/presentation/screens/upcoming_trips_screen.dart';
 import 'package:kids_transport/features/parent/trips/presentation/screens/trip_history_screen.dart';
+import 'package:kids_transport/features/parent/trips/presentation/screens/trip_details_screen.dart';
+import 'package:kids_transport/features/parent/trips/presentation/screens/trip_timeline_screen.dart';
+import 'package:kids_transport/features/parent/trips/presentation/screens/child_trips_screen.dart';
 
 // Complaints
 import 'package:kids_transport/features/parent/complaints/presentation/screens/complaints_list_screen.dart';
@@ -109,9 +112,14 @@ class AppRoutes {
 
   // Parent Trips & Live Tracking Routes
   static const String parentTripsHome = '/parent-trips-home';
+  static const String parentTrips = '/parent-trips';
   static const String parentTripTracking = '/parent-trip-tracking';
+  static const String parentTracking = '/parent-tracking';
   static const String parentUpcomingTrips = '/parent-upcoming-trips';
   static const String parentTripHistory = '/parent-trip-history';
+  static const String parentTripDetails = '/parent-trip-details';
+  static const String parentTripTimeline = '/parent-trip-timeline';
+  static const String parentChildTrips = '/parent-child-trips';
 
   // Parent Complaints Routes
   static const String parentComplaints = '/parent-complaints';
@@ -288,14 +296,44 @@ class AppRoutes {
 
       // --- Trips & Live Tracking ---
       case parentTripsHome:
+      case parentTrips:
         return _route(settings, const TripsHomeScreen());
       case parentTripTracking:
-        final trip = settings.arguments as ActiveTripModel;
-        return _route(settings, TripTrackingScreen(trip: trip));
+      case parentTracking:
+        ActiveTripModel? tripArg;
+        List<ActiveTripModel> allTripsArg = [];
+        if (settings.arguments is ActiveTripModel) {
+          tripArg = settings.arguments as ActiveTripModel;
+        } else if (settings.arguments is Map<String, dynamic>) {
+          final args = settings.arguments as Map<String, dynamic>;
+          tripArg = args['trip'] as ActiveTripModel?;
+          if (args['allTrips'] is List<ActiveTripModel>) {
+            allTripsArg = args['allTrips'] as List<ActiveTripModel>;
+          }
+        }
+        return _route(
+          settings,
+          TripTrackingScreen(trip: tripArg, allActiveTrips: allTripsArg),
+        );
       case parentUpcomingTrips:
         return _route(settings, const UpcomingTripsScreen());
       case parentTripHistory:
         return _route(settings, const TripHistoryScreen());
+      case parentTripDetails:
+        final tripId = settings.arguments;
+        return _route(settings, TripDetailsScreen(tripId: tripId));
+      case parentTripTimeline:
+        final args = settings.arguments as Map<String, dynamic>;
+        return _route(
+          settings,
+          TripTimelineScreen(
+            tripTitle: args['title']?.toString() ?? 'الرحلة',
+            timelineItems: args['timeline'] ?? [],
+          ),
+        );
+      case parentChildTrips:
+        final childId = settings.arguments;
+        return _route(settings, ChildTripsScreen(childId: childId));
 
       // --- Complaints ---
       case parentComplaints:

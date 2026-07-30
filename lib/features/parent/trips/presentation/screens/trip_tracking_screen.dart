@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
@@ -11,11 +9,20 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import '../../data/models/active_trip_model.dart';
 import '../../logic/trip_tracking_cubit/trip_tracking_cubit.dart';
 import '../../logic/trip_tracking_cubit/trip_tracking_state.dart';
+import '../widgets/messenger_children_bar.dart';
+import '../widgets/tracking_map_widget.dart';
+import '../widgets/tracking_bottom_sheet.dart';
+import 'trip_details_screen.dart';
 
 class TripTrackingScreen extends StatefulWidget {
-  final ActiveTripModel trip;
+  final ActiveTripModel? trip;
+  final List<ActiveTripModel> allActiveTrips;
 
-  const TripTrackingScreen({super.key, required this.trip});
+  const TripTrackingScreen({
+    super.key,
+    this.trip,
+    this.allActiveTrips = const [],
+  });
 
   @override
   State<TripTrackingScreen> createState() => _TripTrackingScreenState();
@@ -24,13 +31,34 @@ class TripTrackingScreen extends StatefulWidget {
 class _TripTrackingScreenState extends State<TripTrackingScreen> {
   late final TripTrackingCubit _trackingCubit;
   late final MapController _mapController;
-  bool _followDriver = true;
+
+  bool _isAllSelected = false;
+  int? _selectedChildId;
+  ActiveTripModel? _currentDisplayedTrip;
 
   @override
   void initState() {
     super.initState();
     _mapController = MapController();
-    _trackingCubit = getIt<TripTrackingCubit>()..startTracking(widget.trip.tripId);
+    _trackingCubit = getIt<TripTrackingCubit>();
+
+    if (widget.allActiveTrips.isNotEmpty) {
+      _trackingCubit.setAllActiveTrips(widget.allActiveTrips);
+    }
+
+    if (widget.trip != null) {
+      _currentDisplayedTrip = widget.trip;
+      if (widget.trip!.children.isNotEmpty) {
+        _selectedChildId = widget.trip!.children.first.childId;
+      }
+      _trackingCubit.startTracking(widget.trip!.tripId, activeTrip: widget.trip);
+    } else if (widget.allActiveTrips.isNotEmpty) {
+      _isAllSelected = true;
+      _currentDisplayedTrip = widget.allActiveTrips.first;
+      _trackingCubit.startMultiTracking(activeTrips: widget.allActiveTrips);
+    } else {
+      _trackingCubit.startMultiTracking();
+    }
   }
 
   @override
@@ -39,13 +67,63 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     super.dispose();
   }
 
-  void _centerOnDriver(double lat, double lng) {
-    _mapController.move(LatLng(lat, lng), _mapController.camera.zoom);
+  List<MessengerChildItem> _extractChildrenItems() {
+    final List<MessengerChildItem> items = [];
+    final tripsToScan = widget.allActiveTrips.isNotEmpty
+        ? widget.allActiveTrips
+        : (widget.trip != null ? [widget.trip!] : <ActiveTripModel>[]);
+
+    for (var t in tripsToScan) {
+      for (var c in t.children) {
+        items.add(
+          MessengerChildItem(
+            childId: c.childId,
+            childName: c.childName,
+            childPhoto: c.childPhoto,
+            childStatus: c.childStatus,
+            tripId: t.tripId,
+          ),
+        );
+      }
+    }
+    return items;
+  }
+
+  void _onSelectAll() {
+    setState(() {
+      _isAllSelected = true;
+      _selectedChildId = null;
+    });
+    _trackingCubit.startMultiTracking(activeTrips: widget.allActiveTrips);
+  }
+
+  void _onSelectChild(MessengerChildItem item) {
+    ActiveTripModel? targetTrip;
+
+    try {
+      targetTrip = widget.allActiveTrips.firstWhere((t) => t.tripId == item.tripId);
+    } catch (_) {
+      targetTrip = widget.trip;
+    }
+
+    final bool isSameTrip = _currentDisplayedTrip != null && _currentDisplayedTrip!.tripId == item.tripId;
+
+    setState(() {
+      _isAllSelected = false;
+      _selectedChildId = item.childId;
+      _currentDisplayedTrip = targetTrip;
+    });
+
+    if (!isSameTrip && targetTrip != null) {
+      // Different trip -> reload map for new trip
+      _trackingCubit.startTracking(targetTrip.tripId, activeTrip: targetTrip, childId: item.childId);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDarkMode;
+    final childrenItems = _extractChildrenItems();
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -53,10 +131,10 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
         backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF8FAFC),
         appBar: AppBar(
           title: Text(
-            'تتبع رحلة ${widget.trip.childName}',
+            'تتبع الرحلات المباشر',
             style: AppTextStyles.style(
               fontWeight: FontWeight.bold,
-              fontSize: 16.sp,
+              fontSize: 17.sp,
               color: isDark ? AppColors.white : AppColors.textDark,
             ),
           ),
@@ -64,180 +142,133 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
           elevation: 0,
           backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
           foregroundColor: isDark ? AppColors.white : AppColors.textDark,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              onPressed: () => _trackingCubit.refresh(),
+            ),
+          ],
         ),
         body: BlocProvider.value(
           value: _trackingCubit,
           child: BlocBuilder<TripTrackingCubit, TripTrackingState>(
             builder: (context, state) {
-              LatLng driverPos = const LatLng(32.8872, 13.1913); // Default location (Tripoli)
-              String lastUpdate = 'جاري الاتصال...';
+              bool isOffline = false;
+              String? offlineMessage;
 
-              if (state is TripTrackingLoaded) {
-                driverPos = LatLng(state.trackData.driverLat, state.trackData.driverLng);
-                lastUpdate = 'آخر تحديث: ${state.trackData.lastUpdated}';
-
-                if (_followDriver) {
-                  // Auto-move map center to driver coordinates
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) {
-                      _centerOnDriver(driverPos.latitude, driverPos.longitude);
-                    }
-                  });
+              if (state is TripTrackingSingleLoaded) {
+                isOffline = state.isOffline;
+                offlineMessage = state.offlineMessage;
+                if (state.activeTrip != null) {
+                  _currentDisplayedTrip = state.activeTrip;
                 }
               }
 
-              return Stack(
+              return Column(
                 children: [
-                  // ─── الخريطة التفاعلية ───
-                  FlutterMap(
-                    mapController: _mapController,
-                    options: MapOptions(
-                      initialCenter: driverPos,
-                      initialZoom: 15.0,
-                      onPositionChanged: (position, hasGesture) {
-                        if (hasGesture) {
-                          // Stop auto-following if parent drags map manually
-                          setState(() {
-                            _followDriver = false;
-                          });
-                        }
-                      },
+                  // 1. Messenger Stories Children Bar
+                  if (childrenItems.isNotEmpty)
+                    MessengerChildrenBar(
+                      children: childrenItems,
+                      isAllSelected: _isAllSelected,
+                      selectedChildId: _selectedChildId,
+                      onSelectAll: _onSelectAll,
+                      onSelectChild: _onSelectChild,
                     ),
-                    children: [
-                      TileLayer(
-                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'ly.derbi.kids_transport',
-                      ),
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: driverPos,
-                            width: 60.r,
-                            height: 60.r,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                // Halo animation ring
-                                Container(
-                                  width: 48.r,
-                                  height: 48.r,
-                                  decoration: BoxDecoration(
-                                    color: context.primaryColor.withValues(alpha: 0.25),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                CircleAvatar(
-                                  radius: 20.r,
-                                  backgroundColor: context.primaryColor,
-                                  child: const Icon(
-                                    Icons.directions_bus_rounded,
-                                    color: AppColors.white,
-                                    size: 22,
-                                  ),
-                                ),
-                              ],
+
+                  // 2. Offline Banner Warning (If Stale/Offline)
+                  if (isOffline)
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                      color: AppColors.pending,
+                      child: Row(
+                        children: [
+                          Icon(Icons.wifi_off_rounded, color: AppColors.white, size: 18.r),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              offlineMessage ?? 'آخر تحديث للموقع منذ فترة... جاري إعادة الاتصال',
+                              style: AppTextStyles.style(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.white,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-
-                  // ─── شارة آخر تحديث العائمة ───
-                  Positioned(
-                    top: 16.h,
-                    left: 16.w,
-                    right: 16.w,
-                    child: Center(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.surfaceDark : AppColors.white,
-                          borderRadius: BorderRadius.circular(30.r),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 8.r,
-                              height: 8.r,
-                              decoration: const BoxDecoration(
-                                color: AppColors.success,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            SizedBox(width: 8.w),
-                            Text(
-                              lastUpdate,
-                              style: AppTextStyles.style(
-                                fontSize: 11.5.sp,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? AppColors.white : AppColors.textDark,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
-                  ),
 
-                  // ─── أزرار التحكم الجانبية العائمة ───
-                  Positioned(
-                    left: 16.w,
-                    bottom: 230.h,
-                    child: Column(
+                  // 3. Interactive Map Canvas
+                  Expanded(
+                    child: Stack(
                       children: [
-                        _buildFloatingButton(
-                          icon: Icons.add_rounded,
-                          onPressed: () {
-                            _mapController.move(
-                              _mapController.camera.center,
-                              _mapController.camera.zoom + 1,
-                            );
+                        TrackingMapWidget(
+                          mapController: _mapController,
+                          isMultiMode: _isAllSelected || state is TripTrackingMultiLoaded,
+                          singleTrack: state is TripTrackingSingleLoaded ? state.trackData : null,
+                          singleTrip: _currentDisplayedTrip,
+                          multiTracks: state is TripTrackingMultiLoaded ? state.tracks : [],
+                          multiTrips: widget.allActiveTrips,
+                          onSelectTrip: (selectedTripId) {
+                            try {
+                              final tripObj = widget.allActiveTrips.firstWhere((t) => t.tripId == selectedTripId);
+                              setState(() {
+                                _isAllSelected = false;
+                                _currentDisplayedTrip = tripObj;
+                              });
+                              _trackingCubit.startTracking(selectedTripId, activeTrip: tripObj);
+                            } catch (_) {}
                           },
-                          isDark: isDark,
                         ),
-                        SizedBox(height: 8.h),
-                        _buildFloatingButton(
-                          icon: Icons.remove_rounded,
-                          onPressed: () {
-                            _mapController.move(
-                              _mapController.camera.center,
-                              _mapController.camera.zoom - 1,
-                            );
-                          },
-                          isDark: isDark,
-                        ),
-                        SizedBox(height: 8.h),
-                        _buildFloatingButton(
-                          icon: _followDriver ? Icons.gps_fixed_rounded : Icons.gps_not_fixed_rounded,
-                          color: _followDriver ? context.primaryColor : null,
-                          onPressed: () {
-                            setState(() {
-                              _followDriver = true;
-                            });
-                            _centerOnDriver(driverPos.latitude, driverPos.longitude);
-                          },
-                          isDark: isDark,
-                        ),
+
+                        // Loading overlay if initial load
+                        if (state is TripTrackingLoading)
+                          Positioned(
+                            top: 20.h,
+                            left: 20.w,
+                            right: 20.w,
+                            child: Container(
+                              padding: EdgeInsets.all(10.r),
+                              decoration: BoxDecoration(
+                                color: context.cardSurface.withValues(alpha: 0.9),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 16.r,
+                                    height: 16.r,
+                                    child: const CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  Text(
+                                    'جاري التحديث البصري للموقع...',
+                                    style: AppTextStyles.style(fontSize: 12.sp, fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
 
-                  // ─── اللوحة السفلية (Bottom Card) ───
-                  Positioned(
-                    bottom: 16.h,
-                    left: 16.w,
-                    right: 16.w,
-                    child: _buildBottomPanel(context, isDark),
-                  ),
+                  // 4. Dynamic Bottom Sheet
+                  if (_currentDisplayedTrip != null)
+                    TrackingBottomSheet(
+                      trip: _currentDisplayedTrip!,
+                      onOpenDetails: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TripDetailsScreen(tripId: _currentDisplayedTrip!.tripId),
+                          ),
+                        );
+                      },
+                    ),
                 ],
               );
             },
@@ -245,157 +276,5 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildFloatingButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-    required bool isDark,
-    Color? color,
-  }) {
-    return Container(
-      width: 44.r,
-      height: 44.r,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon: Icon(icon, color: color ?? (isDark ? AppColors.white : AppColors.textDark), size: 20.r),
-        onPressed: onPressed,
-      ),
-    );
-  }
-
-  Widget _buildBottomPanel(BuildContext context, bool isDark) {
-    return Container(
-      padding: EdgeInsets.all(18.w),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(color: isDark ? AppColors.grey800 : AppColors.grey200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // شارة حالة الطفل
-          Row(
-            children: [
-              Container(
-                width: 10.r,
-                height: 10.r,
-                decoration: const BoxDecoration(
-                  color: AppColors.orange,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
-                  widget.trip.childStatus,
-                  style: AppTextStyles.style(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.white : AppColors.textDark,
-                  ),
-                ),
-              ),
-              Text(
-                'البداية: ${widget.trip.startedAt.split('T').first}',
-                style: AppTextStyles.style(
-                  fontSize: 11.sp,
-                  color: isDark ? AppColors.grey400 : AppColors.textMuted,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 14.h),
-          const Divider(height: 1),
-          SizedBox(height: 14.h),
-
-          // تفاصيل الطفل والسائق
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 20.r,
-                backgroundColor: context.primaryColor.withValues(alpha: 0.1),
-                child: Icon(Icons.child_care_rounded, color: context.primaryColor, size: 20.r),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.trip.childName,
-                      style: AppTextStyles.style(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? AppColors.white : AppColors.textDark,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      'الكابتن: ${widget.trip.driverName} • ${widget.trip.vehicleInfo}',
-                      style: AppTextStyles.style(
-                        fontSize: 11.sp,
-                        color: isDark ? AppColors.grey400 : AppColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-
-          // زر الاتصال
-          SizedBox(
-            width: double.infinity,
-            height: 48.h,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.primaryColor,
-                foregroundColor: AppColors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
-                elevation: 0,
-              ),
-              icon: const Icon(Icons.phone_in_talk_rounded, color: AppColors.white),
-              label: Text(
-                'اتصل بالسائق 📞',
-                style: AppTextStyles.style(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.white,
-                ),
-              ),
-              onPressed: () => _callDriver(widget.trip.driverPhone),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _callDriver(String phone) async {
-    final uri = Uri.parse('tel:$phone');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
   }
 }

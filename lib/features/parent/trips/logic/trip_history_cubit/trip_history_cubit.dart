@@ -22,6 +22,27 @@ class TripHistoryCubit extends Cubit<TripHistoryState> {
     }
   }
 
+  void filterByChild(int? childId) {
+    if (state is TripHistoryLoaded) {
+      final current = state as TripHistoryLoaded;
+      emit(current.copyWith(selectedChildId: childId));
+    }
+  }
+
+  void filterByDate(String? date) {
+    if (state is TripHistoryLoaded) {
+      final current = state as TripHistoryLoaded;
+      emit(current.copyWith(selectedDate: date));
+    }
+  }
+
+  void filterByDirection(String direction) {
+    if (state is TripHistoryLoaded) {
+      final current = state as TripHistoryLoaded;
+      emit(current.copyWith(selectedDirection: direction));
+    }
+  }
+
   Future<void> loadMore() async {
     final currentState = state;
     if (currentState is! TripHistoryLoaded || _isLoadingMore || !currentState.hasMore) {
@@ -34,20 +55,16 @@ class TripHistoryCubit extends Cubit<TripHistoryState> {
     try {
       final nextList = await _repository.getTripHistory(nextPage);
       if (nextList.isEmpty) {
-        emit(TripHistoryLoaded(
-          historyTrips: currentState.historyTrips,
-          currentPage: currentState.currentPage,
-          hasMore: false,
-        ));
+        emit(currentState.copyWith(hasMore: false));
       } else {
-        emit(TripHistoryLoaded(
+        emit(currentState.copyWith(
           historyTrips: [...currentState.historyTrips, ...nextList],
           currentPage: nextPage,
           hasMore: true,
         ));
       }
     } catch (e) {
-      // Keep state as is, just stop loading more
+      // Keep state
     } finally {
       _isLoadingMore = false;
     }

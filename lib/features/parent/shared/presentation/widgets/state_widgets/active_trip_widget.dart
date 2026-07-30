@@ -114,18 +114,7 @@ class ActiveTripWidget extends StatelessWidget {
                 // زر التتبع
                 ElevatedButton.icon(
                   onPressed: () {
-                    final tripModel = ActiveTripModel(
-                      tripId: activeTrip['trip_id'] as int? ?? 1,
-                      tripType: activeTrip['trip_type']?.toString() ?? 'to_school',
-                      status: activeTrip['status']?.toString() ?? 'started',
-                      driverName: activeTrip['driver_name']?.toString() ?? 'سائق',
-                      driverPhone: activeTrip['driver_phone']?.toString() ?? '0910000000',
-                      vehicleInfo: activeTrip['vehicle_info']?.toString() ?? 'سيارة',
-                      childId: activeTrip['child_id'] as int? ?? 1,
-                      childName: activeTrip['child_name']?.toString() ?? 'الطفل',
-                      childStatus: activeTrip['status']?.toString() ?? 'في الطريق',
-                      startedAt: DateTime.now().toIso8601String(),
-                    );
+                    final tripModel = ActiveTripModel.fromJson(activeTrip);
                     Navigator.pushNamed(
                       context,
                       AppRoutes.parentTripTracking,

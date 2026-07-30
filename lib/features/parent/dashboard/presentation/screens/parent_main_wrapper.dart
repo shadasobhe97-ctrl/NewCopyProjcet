@@ -4,7 +4,6 @@ import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/features/parent/dashboard/presentation/widgets/parent_drawer.dart';
 import 'package:kids_transport/features/parent/home/presentation/screens/parent_home_screen.dart';
-import 'package:kids_transport/features/parent/search/presentation/screens/parent_search_screen.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/my_children_screen.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
@@ -12,6 +11,7 @@ import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscriptions_screen.dart';
 import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profile_cubit.dart';
 import 'package:kids_transport/features/parent/trips/presentation/screens/trips_home_screen.dart';
+import 'package:kids_transport/features/parent/trips/presentation/screens/trip_tracking_screen.dart';
 
 import 'package:kids_transport/core/enums/user_role.dart';
 import 'package:kids_transport/features/chat/presentation/screens/chat_list_screen.dart';
@@ -63,11 +63,11 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
       case 1:
         return 'أطفالي';
       case 2:
-        return 'البحث عن سائق';
+        return 'رحلاتي';
       case 3:
-        return 'اشتراكاتي';
+        return 'التتبع المباشر';
       case 4:
-        return 'الرحلات والتتبع';
+        return 'اشتراكاتي';
       default:
         return 'داربي';
     }
@@ -82,9 +82,9 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
     _screens = [
       const ParentHomeScreen(),
       const MyChildrenScreen(),
-      const ParentSearchScreen(),
-      const SubscriptionsScreen(),
       const TripsHomeScreen(),
+      const TripTrackingScreen(),
+      const SubscriptionsScreen(),
     ];
   }
 
@@ -122,22 +122,22 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: 12.0,
-                vertical: 12.0,
+                horizontal: 8.0,
+                vertical: 10.0,
               ),
               child: GNav(
-                gap: 6,
+                gap: 4,
                 activeColor: context.primaryColor,
                 iconSize: 22,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 10,
+                  horizontal: 8,
+                  vertical: 8,
                 ),
                 duration: const Duration(milliseconds: 300),
                 tabBackgroundColor: context.primaryColor.withValues(alpha: 0.1),
                 color: AppColors.grey400,
                 textStyle: AppTextStyles.style(
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.bold,
                   color: context.primaryColor,
                 ),
@@ -148,9 +148,9 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                 tabs: const [
                   GButton(icon: Icons.home_rounded, text: 'الرئيسية'),
                   GButton(icon: Icons.people_alt_rounded, text: 'أطفالي'),
-                  GButton(icon: Icons.search_rounded, text: 'البحث'),
+                  GButton(icon: Icons.directions_bus_rounded, text: 'رحلاتي'),
+                  GButton(icon: Icons.map_rounded, text: 'التتبع'),
                   GButton(icon: Icons.description_rounded, text: 'اشتراكاتي'),
-                  GButton(icon: Icons.map_outlined, text: 'الرحلات'),
                 ],
               ),
             ),

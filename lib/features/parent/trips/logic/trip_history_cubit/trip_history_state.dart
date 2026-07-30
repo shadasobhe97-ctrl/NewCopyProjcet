@@ -16,15 +16,62 @@ class TripHistoryLoaded extends TripHistoryState {
   final List<TripHistoryModel> historyTrips;
   final int currentPage;
   final bool hasMore;
+  final int? selectedChildId;
+  final String? selectedDate;
+  final String selectedDirection; // 'all', 'to_school', 'to_home'
 
   const TripHistoryLoaded({
     required this.historyTrips,
     required this.currentPage,
     required this.hasMore,
+    this.selectedChildId,
+    this.selectedDate,
+    this.selectedDirection = 'all',
   });
 
+  List<TripHistoryModel> get filteredTrips {
+    return historyTrips.where((trip) {
+      if (selectedChildId != null && selectedChildId != 0) {
+        final matchesChild = trip.children.any((c) => c.childId == selectedChildId);
+        if (!matchesChild) return false;
+      }
+      if (selectedDate != null && selectedDate!.isNotEmpty) {
+        if (!trip.tripDate.contains(selectedDate!)) return false;
+      }
+      if (selectedDirection != 'all' && selectedDirection.isNotEmpty) {
+        if (trip.direction != selectedDirection && trip.tripType != selectedDirection) return false;
+      }
+      return true;
+    }).toList();
+  }
+
+  TripHistoryLoaded copyWith({
+    List<TripHistoryModel>? historyTrips,
+    int? currentPage,
+    bool? hasMore,
+    int? selectedChildId,
+    String? selectedDate,
+    String? selectedDirection,
+  }) {
+    return TripHistoryLoaded(
+      historyTrips: historyTrips ?? this.historyTrips,
+      currentPage: currentPage ?? this.currentPage,
+      hasMore: hasMore ?? this.hasMore,
+      selectedChildId: selectedChildId ?? this.selectedChildId,
+      selectedDate: selectedDate ?? this.selectedDate,
+      selectedDirection: selectedDirection ?? this.selectedDirection,
+    );
+  }
+
   @override
-  List<Object?> get props => [historyTrips, currentPage, hasMore];
+  List<Object?> get props => [
+        historyTrips,
+        currentPage,
+        hasMore,
+        selectedChildId,
+        selectedDate,
+        selectedDirection,
+      ];
 }
 
 class TripHistoryError extends TripHistoryState {

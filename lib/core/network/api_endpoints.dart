@@ -82,9 +82,15 @@ class ApiEndpoints {
 
   // Parent Trips & Live Tracking
   static const String parentActiveTrips = 'parent/trips/active';
-  static String parentTripTrack(int id) => 'parent/trips/$id/track';
+  static String parentTripTrack(dynamic id) => 'parent/trips/$id/track';
+  static const String parentMultipleActiveTracking = 'parent/trips/active/tracking';
   static const String parentUpcomingTrips = 'parent/trips/upcoming';
   static const String parentTripHistory = 'parent/trips/history';
+  static String parentTripDetails(dynamic id) => 'parent/trips/$id';
+  static String parentTripTimeline(dynamic id) => 'parent/trips/$id/timeline';
+  static String parentChildTrips(dynamic childId) => 'parent/children/$childId/trips';
+  static String parentChildTripStatus(dynamic tripId, dynamic childId) =>
+      'parent/trips/$tripId/children/$childId/status';
 
   // Parent Driver Reviews
   static String checkSubscription(int driverId) =>

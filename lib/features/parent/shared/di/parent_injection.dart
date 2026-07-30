@@ -12,6 +12,8 @@ import 'package:kids_transport/features/parent/trips/logic/active_trip_cubit/act
 import 'package:kids_transport/features/parent/trips/logic/trip_tracking_cubit/trip_tracking_cubit.dart';
 import 'package:kids_transport/features/parent/trips/logic/upcoming_trips_cubit/upcoming_trips_cubit.dart';
 import 'package:kids_transport/features/parent/trips/logic/trip_history_cubit/trip_history_cubit.dart';
+import 'package:kids_transport/features/parent/trips/logic/trip_details_cubit/trip_details_cubit.dart';
+import 'package:kids_transport/features/parent/trips/logic/child_trips_cubit/child_trips_cubit.dart';
 
 // Search
 import 'package:kids_transport/features/parent/search/data/datasources/search_remote_data_source.dart';
@@ -318,6 +320,16 @@ void initParentInjection() {
   if (!getIt.isRegistered<TripHistoryCubit>()) {
     getIt.registerFactory<TripHistoryCubit>(
       () => TripHistoryCubit(getIt<TripsRepository>()),
+    );
+  }
+  if (!getIt.isRegistered<TripDetailsCubit>()) {
+    getIt.registerFactory<TripDetailsCubit>(
+      () => TripDetailsCubit(getIt<TripsRepository>()),
+    );
+  }
+  if (!getIt.isRegistered<ChildTripsCubit>()) {
+    getIt.registerFactory<ChildTripsCubit>(
+      () => ChildTripsCubit(getIt<TripsRepository>()),
     );
   }
 
