@@ -15,6 +15,9 @@ class TripTimelineItemModel {
     this.isCurrent = false,
   });
 
+  bool get isCompleted => isDone;
+  String get statusKey => status;
+
   factory TripTimelineItemModel.fromJson(Map<String, dynamic> json) {
     return TripTimelineItemModel(
       status: json['status']?.toString() ?? '',

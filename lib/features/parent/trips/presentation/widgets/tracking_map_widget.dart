@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import '../../data/models/active_trip_model.dart';
 import '../../data/models/trip_track_model.dart';
@@ -33,18 +34,20 @@ class TrackingMapWidget extends StatefulWidget {
 }
 
 class _TrackingMapWidgetState extends State<TrackingMapWidget> {
-  static const LatLng defaultLocation = LatLng(32.8872, 13.1913); // Tripoli fallback
+  static const LatLng defaultLocation = LatLng(32.8872, 13.1913);
 
-  final List<Color> _polylineColors = const [
+  final List<Color> _paletteColors = const [
     AppColors.primaryLight,
     AppColors.amber,
     AppColors.accentPurple,
-    AppColors.green,
-    AppColors.femalePink,
+    AppColors.accentGreen,
+    AppColors.maleBlue,
   ];
 
   Future<void> _openGoogleMaps(double lat, double lng) async {
-    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+    );
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
@@ -52,12 +55,18 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
 
   void _zoomIn() {
     final currentZoom = widget.mapController.camera.zoom;
-    widget.mapController.move(widget.mapController.camera.center, currentZoom + 1);
+    widget.mapController.move(
+      widget.mapController.camera.center,
+      currentZoom + 1,
+    );
   }
 
   void _zoomOut() {
     final currentZoom = widget.mapController.camera.zoom;
-    widget.mapController.move(widget.mapController.camera.center, currentZoom - 1);
+    widget.mapController.move(
+      widget.mapController.camera.center,
+      currentZoom - 1,
+    );
   }
 
   void _centerDriver() {
@@ -68,9 +77,14 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
       );
     } else if (widget.multiTracks.isNotEmpty) {
       widget.mapController.move(
-        LatLng(widget.multiTracks.first.driverLat, widget.multiTracks.first.driverLng),
+        LatLng(
+          widget.multiTracks.first.driverLat,
+          widget.multiTracks.first.driverLng,
+        ),
         13.5,
       );
+    } else {
+      widget.mapController.move(defaultLocation, 13.5);
     }
   }
 
@@ -81,85 +95,122 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
     LatLng initialCenter = defaultLocation;
 
     if (!widget.isMultiMode && widget.singleTrack != null) {
-      final driverLatLng = LatLng(widget.singleTrack!.driverLat, widget.singleTrack!.driverLng);
+      final driverLatLng = LatLng(
+        widget.singleTrack!.driverLat,
+        widget.singleTrack!.driverLng,
+      );
       initialCenter = driverLatLng;
 
       // Driver marker
       markers.add(
         Marker(
           point: driverLatLng,
-          width: 50.r,
-          height: 50.r,
-          child: _buildBusMarker(context, AppColors.primaryLight, widget.singleTrip?.driverName ?? 'السائق'),
+          width: 70.w,
+          height: 70.h,
+          child: GestureDetector(
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'السائق: ${widget.singleTrip?.driverName ?? "السائق"}',
+                  ),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            child: _buildDriverBusMarker(
+              context,
+              context.primaryColor,
+              widget.singleTrip?.driverName ?? 'السائق',
+            ),
+          ),
         ),
       );
 
-      // Destination marker
+      // Destination marker with Name Tag above
       if (widget.singleTrip != null) {
-        final destLatLng = LatLng(widget.singleTrip!.destination.lat, widget.singleTrip!.destination.lng);
+        final destLatLng = LatLng(
+          widget.singleTrip!.destination.lat,
+          widget.singleTrip!.destination.lng,
+        );
         markers.add(
           Marker(
             point: destLatLng,
-            width: 44.r,
-            height: 44.r,
+            width: 100.w,
+            height: 75.h,
             child: _buildDestinationMarker(
               context,
-              widget.singleTrip!.destination.type == 'home' ? Icons.home_rounded : Icons.school_rounded,
+              widget.singleTrip!.destination.type == 'home'
+                  ? Icons.home_rounded
+                  : Icons.school_rounded,
               widget.singleTrip!.destination.name,
             ),
           ),
         );
 
-        // Polyline connecting driver to destination
         polylines.add(
           Polyline(
             points: [driverLatLng, destLatLng],
-            strokeWidth: 4.5,
+            strokeWidth: 5.0,
             color: context.primaryColor,
           ),
         );
       }
     } else if (widget.isMultiMode && widget.multiTracks.isNotEmpty) {
-      initialCenter = LatLng(widget.multiTracks.first.driverLat, widget.multiTracks.first.driverLng);
+      initialCenter = LatLng(
+        widget.multiTracks.first.driverLat,
+        widget.multiTracks.first.driverLng,
+      );
 
       for (int i = 0; i < widget.multiTracks.length; i++) {
         final track = widget.multiTracks[i];
-        final color = _polylineColors[i % _polylineColors.length];
+        final color = _paletteColors[i % _paletteColors.length];
         final driverLatLng = LatLng(track.driverLat, track.driverLng);
 
         ActiveTripModel? tripMatch;
         try {
-          tripMatch = widget.multiTrips.firstWhere((t) => t.tripId == track.tripId);
+          tripMatch = widget.multiTrips.firstWhere(
+            (t) => t.tripId == track.tripId,
+          );
         } catch (_) {}
 
         // Driver Marker
         markers.add(
           Marker(
             point: driverLatLng,
-            width: 50.r,
-            height: 50.r,
+            width: 70.w,
+            height: 70.h,
             child: GestureDetector(
               onTap: () {
                 if (widget.onSelectTrip != null) {
                   widget.onSelectTrip!(track.tripId);
                 }
               },
-              child: _buildBusMarker(context, color, tripMatch?.driverName ?? 'حافلة ${i + 1}'),
+              child: _buildDriverBusMarker(
+                context,
+                color,
+                tripMatch?.driverName ?? 'حافلة ${i + 1}',
+              ),
             ),
           ),
         );
 
         // Destination Marker
         if (tripMatch != null) {
-          final destLatLng = LatLng(tripMatch.destination.lat, tripMatch.destination.lng);
+          final destLatLng = LatLng(
+            tripMatch.destination.lat,
+            tripMatch.destination.lng,
+          );
           markers.add(
             Marker(
               point: destLatLng,
-              width: 44.r,
-              height: 44.r,
+              width: 100.w,
+              height: 75.h,
               child: _buildDestinationMarker(
                 context,
-                tripMatch.destination.type == 'home' ? Icons.home_rounded : Icons.school_rounded,
+                tripMatch.destination.type == 'home'
+                    ? Icons.home_rounded
+                    : Icons.school_rounded,
                 tripMatch.destination.name,
               ),
             ),
@@ -168,7 +219,7 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
           polylines.add(
             Polyline(
               points: [driverLatLng, destLatLng],
-              strokeWidth: 4.5,
+              strokeWidth: 5.0,
               color: color,
             ),
           );
@@ -194,38 +245,48 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
           ],
         ),
 
-        // Floating Control Buttons
+        // Re-arranged Floating Buttons: 📍 Locate -> 🧭 Navigation -> ➕ Zoom In -> ➖ Zoom Out
         Positioned(
           left: 16.w,
           top: 16.h,
           child: Column(
             children: [
               _buildFloatingBtn(
-                icon: Icons.add_rounded,
-                onPressed: _zoomIn,
-              ),
-              SizedBox(height: 8.h),
-              _buildFloatingBtn(
-                icon: Icons.remove_rounded,
-                onPressed: _zoomOut,
-              ),
-              SizedBox(height: 8.h),
-              _buildFloatingBtn(
                 icon: Icons.my_location_rounded,
+                tooltip: 'إعادة التوسيط ومتابعة موقع الحافلة',
                 onPressed: _centerDriver,
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: 10.h),
               _buildFloatingBtn(
-                icon: Icons.map_rounded,
+                icon: Icons.near_me_rounded,
+                tooltip: 'فتح المسار في Google Maps',
                 color: AppColors.green,
                 iconColor: AppColors.white,
                 onPressed: () {
                   if (widget.singleTrack != null) {
-                    _openGoogleMaps(widget.singleTrack!.driverLat, widget.singleTrack!.driverLng);
+                    _openGoogleMaps(
+                      widget.singleTrack!.driverLat,
+                      widget.singleTrack!.driverLng,
+                    );
                   } else if (widget.multiTracks.isNotEmpty) {
-                    _openGoogleMaps(widget.multiTracks.first.driverLat, widget.multiTracks.first.driverLng);
+                    _openGoogleMaps(
+                      widget.multiTracks.first.driverLat,
+                      widget.multiTracks.first.driverLng,
+                    );
                   }
                 },
+              ),
+              SizedBox(height: 10.h),
+              _buildFloatingBtn(
+                icon: Icons.add_rounded,
+                tooltip: 'تكبير الخريطة',
+                onPressed: _zoomIn,
+              ),
+              SizedBox(height: 10.h),
+              _buildFloatingBtn(
+                icon: Icons.remove_rounded,
+                tooltip: 'تصغير الخريطة',
+                onPressed: _zoomOut,
               ),
             ],
           ),
@@ -234,76 +295,125 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
     );
   }
 
-  Widget _buildBusMarker(BuildContext context, Color color, String label) {
+  Widget _buildDriverBusMarker(
+    BuildContext context,
+    Color color,
+    String driverName,
+  ) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: EdgeInsets.all(6.r),
+          padding: EdgeInsets.all(8.r),
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
+            border: Border.all(color: AppColors.white, width: 2),
             boxShadow: const [
-              BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
+              BoxShadow(
+                color: Colors.black38,
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
             ],
           ),
           child: Icon(
             Icons.directions_bus_filled_rounded,
             color: AppColors.white,
-            size: 22.r,
+            size: 24.r,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDestinationMarker(BuildContext context, IconData icon, String label) {
-    return Container(
-      padding: EdgeInsets.all(6.r),
-      decoration: const BoxDecoration(
-        color: AppColors.red,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
-        ],
-      ),
-      child: Icon(
-        icon,
-        color: AppColors.white,
-        size: 20.r,
-      ),
+  Widget _buildDestinationMarker(
+    BuildContext context,
+    IconData icon,
+    String destinationName,
+  ) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Destination Label Pill
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+          decoration: BoxDecoration(
+            color: context.isDarkMode ? context.cardSurface : AppColors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.red, width: 1),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Text(
+            destinationName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.style(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.bold,
+              color: context.textPrimary,
+            ),
+          ),
+        ),
+        SizedBox(height: 2.h),
+        Container(
+          padding: EdgeInsets.all(6.r),
+          decoration: const BoxDecoration(
+            color: AppColors.red,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black38,
+                blurRadius: 6,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: AppColors.white, size: 18.r),
+        ),
+      ],
     );
   }
 
   Widget _buildFloatingBtn({
     required IconData icon,
+    required String tooltip,
     required VoidCallback onPressed,
     Color? color,
     Color? iconColor,
   }) {
     final isDark = context.isDarkMode;
     return Container(
-      width: 40.r,
-      height: 40.r,
+      width: 44.r,
+      height: 44.r,
       decoration: BoxDecoration(
         color: color ?? (isDark ? context.cardSurface : AppColors.white),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        icon: Icon(
-          icon,
-          size: 20.r,
-          color: iconColor ?? (isDark ? AppColors.white : AppColors.textDark),
+      child: Tooltip(
+        message: tooltip,
+        child: IconButton(
+          padding: EdgeInsets.zero,
+          icon: Icon(
+            icon,
+            size: 22.r,
+            color: iconColor ?? (isDark ? AppColors.white : AppColors.textDark),
+          ),
+          onPressed: onPressed,
         ),
-        onPressed: onPressed,
       ),
     );
   }

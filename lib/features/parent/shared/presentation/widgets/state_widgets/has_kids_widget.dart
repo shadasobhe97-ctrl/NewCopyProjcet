@@ -19,6 +19,76 @@ class HasKidsWidget extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
+        // ─── كرت التتبع المباشر للرحلات ────────────────────────────
+        Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          decoration: AppTheme.boxDecoration(
+            color: isDark ? AppColors.darkCard : AppColors.white,
+            borderRadius: AppTheme.radius(16),
+            border: AppTheme.border(
+              color: context.primaryColor.withValues(alpha: 0.3),
+            ),
+            boxShadow: [
+              AppTheme.boxShadow(
+                color: AppColors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Material(
+            color: AppColors.transparent,
+            borderRadius: AppTheme.radius(16),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: AppTheme.boxDecoration(
+                  color: context.primaryColor.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.map_rounded,
+                  color: context.primaryColor,
+                  size: 22,
+                ),
+              ),
+              title: Text(
+                'التتبع المباشر للرحلات',
+                style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: context.primaryColor,
+                ),
+              ),
+              subtitle: Text(
+                'متابعة موقع الحافلة والأطفال مباشرة على الخريطة',
+                style: AppTextStyles.style(
+                  fontSize: 12,
+                  color: context.textMuted,
+                ),
+              ),
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: AppTheme.boxDecoration(
+                  color: context.primaryColor,
+                  borderRadius: AppTheme.radius(12),
+                ),
+                child: Text(
+                  'فتح الخريطة 🟢',
+                  style: AppTextStyles.style(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+              onTap: () {
+                Navigator.pushNamed(context, AppRoutes.parentTripTracking);
+              },
+            ),
+          ),
+        ),
         // ─── كرت إدارة الغياب المستقل ────────────────────────────
         Container(
           margin: const EdgeInsets.only(bottom: 20),

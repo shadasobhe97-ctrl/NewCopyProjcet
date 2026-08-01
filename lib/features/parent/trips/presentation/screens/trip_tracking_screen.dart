@@ -7,11 +7,14 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import '../../data/models/active_trip_model.dart';
+import '../../data/datasources/trips_mock_data.dart';
 import '../../logic/trip_tracking_cubit/trip_tracking_cubit.dart';
 import '../../logic/trip_tracking_cubit/trip_tracking_state.dart';
 import '../widgets/messenger_children_bar.dart';
 import '../widgets/tracking_map_widget.dart';
-import '../widgets/tracking_bottom_sheet.dart';
+import '../widgets/trip_status_chip.dart';
+import 'child_tracking_screen.dart';
+import 'full_tracking_map_screen.dart';
 import 'trip_details_screen.dart';
 
 class TripTrackingScreen extends StatefulWidget {
@@ -32,9 +35,10 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
   late final TripTrackingCubit _trackingCubit;
   late final MapController _mapController;
 
-  bool _isAllSelected = false;
+  bool _isAllSelected = true;
   int? _selectedChildId;
   ActiveTripModel? _currentDisplayedTrip;
+  List<ActiveTripModel> _effectiveTrips = [];
 
   @override
   void initState() {
@@ -43,21 +47,16 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     _trackingCubit = getIt<TripTrackingCubit>();
 
     if (widget.allActiveTrips.isNotEmpty) {
-      _trackingCubit.setAllActiveTrips(widget.allActiveTrips);
+      _effectiveTrips = widget.allActiveTrips;
+    } else if (widget.trip != null) {
+      _effectiveTrips = [widget.trip!];
+    } else {
+      _effectiveTrips = TripsMockData.activeTrips;
     }
 
-    if (widget.trip != null) {
-      _currentDisplayedTrip = widget.trip;
-      if (widget.trip!.children.isNotEmpty) {
-        _selectedChildId = widget.trip!.children.first.childId;
-      }
-      _trackingCubit.startTracking(widget.trip!.tripId, activeTrip: widget.trip);
-    } else if (widget.allActiveTrips.isNotEmpty) {
-      _isAllSelected = true;
-      _currentDisplayedTrip = widget.allActiveTrips.first;
-      _trackingCubit.startMultiTracking(activeTrips: widget.allActiveTrips);
-    } else {
-      _trackingCubit.startMultiTracking();
+    if (_effectiveTrips.isNotEmpty) {
+      _currentDisplayedTrip = widget.trip ?? _effectiveTrips.first;
+      _trackingCubit.startMultiTracking(activeTrips: _effectiveTrips);
     }
   }
 
@@ -69,21 +68,22 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
 
   List<MessengerChildItem> _extractChildrenItems() {
     final List<MessengerChildItem> items = [];
-    final tripsToScan = widget.allActiveTrips.isNotEmpty
-        ? widget.allActiveTrips
-        : (widget.trip != null ? [widget.trip!] : <ActiveTripModel>[]);
+    final Set<int> addedChildIds = {};
 
-    for (var t in tripsToScan) {
-      for (var c in t.children) {
-        items.add(
-          MessengerChildItem(
-            childId: c.childId,
-            childName: c.childName,
-            childPhoto: c.childPhoto,
-            childStatus: c.childStatus,
-            tripId: t.tripId,
-          ),
-        );
+    for (final trip in _effectiveTrips) {
+      for (final child in trip.children) {
+        if (!addedChildIds.contains(child.childId)) {
+          addedChildIds.add(child.childId);
+          items.add(
+            MessengerChildItem(
+              childId: child.childId,
+              childName: child.childName,
+              childPhoto: child.childPhoto,
+              childStatus: child.childStatus,
+              tripId: trip.tripId,
+            ),
+          );
+        }
       }
     }
     return items;
@@ -93,20 +93,20 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     setState(() {
       _isAllSelected = true;
       _selectedChildId = null;
+      if (_effectiveTrips.isNotEmpty) {
+        _currentDisplayedTrip = _effectiveTrips.first;
+      }
     });
-    _trackingCubit.startMultiTracking(activeTrips: widget.allActiveTrips);
+    _trackingCubit.startMultiTracking(activeTrips: _effectiveTrips);
   }
 
   void _onSelectChild(MessengerChildItem item) {
     ActiveTripModel? targetTrip;
-
     try {
-      targetTrip = widget.allActiveTrips.firstWhere((t) => t.tripId == item.tripId);
+      targetTrip = _effectiveTrips.firstWhere((t) => t.tripId == item.tripId);
     } catch (_) {
-      targetTrip = widget.trip;
+      targetTrip = null;
     }
-
-    final bool isSameTrip = _currentDisplayedTrip != null && _currentDisplayedTrip!.tripId == item.tripId;
 
     setState(() {
       _isAllSelected = false;
@@ -114,9 +114,19 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
       _currentDisplayedTrip = targetTrip;
     });
 
-    if (!isSameTrip && targetTrip != null) {
-      // Different trip -> reload map for new trip
-      _trackingCubit.startTracking(targetTrip.tripId, activeTrip: targetTrip, childId: item.childId);
+    if (targetTrip != null) {
+      // Navigate to dedicated Child Tracking Screen (Screenshot #2)
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChildTrackingScreen(
+            childId: item.childId,
+            childName: item.childName,
+            childPhoto: item.childPhoto,
+            trip: targetTrip!,
+          ),
+        ),
+      );
     }
   }
 
@@ -131,7 +141,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
         backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF8FAFC),
         appBar: AppBar(
           title: Text(
-            'تتبع الرحلات المباشر',
+            'تتبع أبنائي',
             style: AppTextStyles.style(
               fontWeight: FontWeight.bold,
               fontSize: 17.sp,
@@ -141,138 +151,243 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
           centerTitle: true,
           elevation: 0,
           backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
-          foregroundColor: isDark ? AppColors.white : AppColors.textDark,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh_rounded),
-              onPressed: () => _trackingCubit.refresh(),
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: isDark ? AppColors.white : AppColors.textDark,
+              size: 18.r,
             ),
-          ],
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-        body: BlocProvider.value(
-          value: _trackingCubit,
-          child: BlocBuilder<TripTrackingCubit, TripTrackingState>(
-            builder: (context, state) {
-              bool isOffline = false;
-              String? offlineMessage;
+        body: Column(
+          children: [
+            // 1) TOP MESSENGER STORIES BAR
+            if (childrenItems.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                child: MessengerChildrenBar(
+                  children: childrenItems,
+                  isAllSelected: _isAllSelected,
+                  selectedChildId: _selectedChildId,
+                  activeTripsCount: _effectiveTrips.length,
+                  onSelectAll: _onSelectAll,
+                  onSelectChild: _onSelectChild,
+                ),
+              ),
 
-              if (state is TripTrackingSingleLoaded) {
-                isOffline = state.isOffline;
-                offlineMessage = state.offlineMessage;
-                if (state.activeTrip != null) {
-                  _currentDisplayedTrip = state.activeTrip;
-                }
-              }
-
-              return Column(
+            // 2) MIDDLE INTERACTIVE MAP WITH FLOATING EXPAND BUTTON
+            Expanded(
+              flex: 5,
+              child: Stack(
                 children: [
-                  // 1. Messenger Stories Children Bar
-                  if (childrenItems.isNotEmpty)
-                    MessengerChildrenBar(
-                      children: childrenItems,
-                      isAllSelected: _isAllSelected,
-                      selectedChildId: _selectedChildId,
-                      onSelectAll: _onSelectAll,
-                      onSelectChild: _onSelectChild,
-                    ),
-
-                  // 2. Offline Banner Warning (If Stale/Offline)
-                  if (isOffline)
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                      color: AppColors.pending,
-                      child: Row(
-                        children: [
-                          Icon(Icons.wifi_off_rounded, color: AppColors.white, size: 18.r),
-                          SizedBox(width: 8.w),
-                          Expanded(
-                            child: Text(
-                              offlineMessage ?? 'آخر تحديث للموقع منذ فترة... جاري إعادة الاتصال',
-                              style: AppTextStyles.style(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.white,
-                              ),
-                            ),
-                          ),
-                        ],
+                  Positioned.fill(
+                    child: BlocProvider.value(
+                      value: _trackingCubit,
+                      child: BlocBuilder<TripTrackingCubit, TripTrackingState>(
+                        builder: (context, state) {
+                          return TrackingMapWidget(
+                            mapController: _mapController,
+                            isMultiMode: _isAllSelected || state is TripTrackingMultiLoaded,
+                            singleTrack: state is TripTrackingSingleLoaded ? state.trackData : null,
+                            singleTrip: _currentDisplayedTrip,
+                            multiTracks: state is TripTrackingMultiLoaded ? state.tracks : [],
+                            multiTrips: _effectiveTrips,
+                          );
+                        },
                       ),
                     ),
-
-                  // 3. Interactive Map Canvas
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        TrackingMapWidget(
-                          mapController: _mapController,
-                          isMultiMode: _isAllSelected || state is TripTrackingMultiLoaded,
-                          singleTrack: state is TripTrackingSingleLoaded ? state.trackData : null,
-                          singleTrip: _currentDisplayedTrip,
-                          multiTracks: state is TripTrackingMultiLoaded ? state.tracks : [],
-                          multiTrips: widget.allActiveTrips,
-                          onSelectTrip: (selectedTripId) {
-                            try {
-                              final tripObj = widget.allActiveTrips.firstWhere((t) => t.tripId == selectedTripId);
-                              setState(() {
-                                _isAllSelected = false;
-                                _currentDisplayedTrip = tripObj;
-                              });
-                              _trackingCubit.startTracking(selectedTripId, activeTrip: tripObj);
-                            } catch (_) {}
-                          },
-                        ),
-
-                        // Loading overlay if initial load
-                        if (state is TripTrackingLoading)
-                          Positioned(
-                            top: 20.h,
-                            left: 20.w,
-                            right: 20.w,
-                            child: Container(
-                              padding: EdgeInsets.all(10.r),
-                              decoration: BoxDecoration(
-                                color: context.cardSurface.withValues(alpha: 0.9),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 16.r,
-                                    height: 16.r,
-                                    child: const CircularProgressIndicator(strokeWidth: 2),
-                                  ),
-                                  SizedBox(width: 10.w),
-                                  Text(
-                                    'جاري التحديث البصري للموقع...',
-                                    style: AppTextStyles.style(fontSize: 12.sp, fontWeight: FontWeight.w600),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
                   ),
-
-                  // 4. Dynamic Bottom Sheet
-                  if (_currentDisplayedTrip != null)
-                    TrackingBottomSheet(
-                      trip: _currentDisplayedTrip!,
-                      onOpenDetails: () {
+                  Positioned(
+                    bottom: 16.h,
+                    left: 16.w,
+                    child: FloatingActionButton.small(
+                      heroTag: 'expand_map_main',
+                      backgroundColor: isDark ? AppColors.grey400 : AppColors.white,
+                      elevation: 4,
+                      onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => TripDetailsScreen(tripId: _currentDisplayedTrip!.tripId),
+                            builder: (context) => FullTrackingMapScreen(
+                              selectedTrip: _currentDisplayedTrip,
+                              allTrips: _effectiveTrips,
+                            ),
                           ),
                         );
                       },
+                      child: Icon(Icons.fullscreen_rounded, color: context.primaryColor, size: 24.r),
                     ),
+                  ),
                 ],
-              );
-            },
+              ),
+            ),
+
+            // 3) BOTTOM DRAGGABLE LIST OF ACTIVE TRIPS (Matching Screenshot #1)
+            Expanded(
+              flex: 5,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDark ? context.cardSurface : AppColors.white,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        margin: EdgeInsets.only(top: 10.h, bottom: 6.h),
+                        width: 40.w,
+                        height: 4.h,
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.grey700 : AppColors.grey300,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+                      child: Text(
+                        'الرحلات النشطة (${_effectiveTrips.length})',
+                        style: AppTextStyles.style(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.separated(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+                        itemCount: _effectiveTrips.length,
+                        separatorBuilder: (_, __) => SizedBox(height: 10.h),
+                        itemBuilder: (context, index) {
+                          final trip = _effectiveTrips[index];
+                          return _buildActiveTripCard(context, trip, isDark);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveTripCard(BuildContext context, ActiveTripModel trip, bool isDark) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TripDetailsScreen(tripId: trip.tripId),
           ),
+        );
+      },
+      child: Container(
+        padding: EdgeInsets.all(12.r),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.grey900 : AppColors.grey50,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: isDark ? AppColors.grey800 : AppColors.grey200,
+          ),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 22.r,
+                  backgroundColor: context.primaryColor.withValues(alpha: 0.1),
+                  child: Icon(Icons.person_rounded, color: context.primaryColor, size: 22.r),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        trip.driver.name,
+                        style: AppTextStyles.style(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        trip.vehicle.info,
+                        style: AppTextStyles.style(
+                          fontSize: 10.sp,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    TripStatusChip.fromStatusString(trip.status),
+                    SizedBox(height: 4.h),
+                    Text(
+                      trip.startedAt,
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            Divider(height: 16.h, thickness: 1),
+            Row(
+              children: [
+                Text(
+                  'الأطفال: ',
+                  style: AppTextStyles.style(
+                    fontSize: 10.sp,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                ...trip.children.map((c) {
+                  return Padding(
+                    padding: EdgeInsets.only(left: 6.w),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: 8.r,
+                          child: Icon(Icons.person, size: 8.r),
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          c.childName.split(' ')[0],
+                          style: AppTextStyles.style(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w600,
+                            color: context.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ],
         ),
       ),
     );

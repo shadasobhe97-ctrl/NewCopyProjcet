@@ -69,6 +69,9 @@ import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_
 import 'package:kids_transport/features/parent/trips/data/models/active_trip_model.dart';
 import 'package:kids_transport/features/parent/trips/presentation/screens/trips_home_screen.dart';
 import 'package:kids_transport/features/parent/trips/presentation/screens/trip_tracking_screen.dart';
+import 'package:kids_transport/features/parent/trips/presentation/screens/child_tracking_screen.dart';
+import 'package:kids_transport/features/parent/trips/presentation/screens/child_details_in_trip_screen.dart';
+import 'package:kids_transport/features/parent/trips/presentation/screens/full_tracking_map_screen.dart';
 import 'package:kids_transport/features/parent/trips/presentation/screens/upcoming_trips_screen.dart';
 import 'package:kids_transport/features/parent/trips/presentation/screens/trip_history_screen.dart';
 import 'package:kids_transport/features/parent/trips/presentation/screens/trip_details_screen.dart';
@@ -115,6 +118,9 @@ class AppRoutes {
   static const String parentTrips = '/parent-trips';
   static const String parentTripTracking = '/parent-trip-tracking';
   static const String parentTracking = '/parent-tracking';
+  static const String parentChildTracking = '/parent-child-tracking';
+  static const String parentChildDetailsInTrip = '/parent-child-details-in-trip';
+  static const String parentFullTrackingMap = '/parent-full-tracking-map';
   static const String parentUpcomingTrips = '/parent-upcoming-trips';
   static const String parentTripHistory = '/parent-trip-history';
   static const String parentTripDetails = '/parent-trip-details';
@@ -334,6 +340,35 @@ class AppRoutes {
       case parentChildTrips:
         final childId = settings.arguments;
         return _route(settings, ChildTripsScreen(childId: childId));
+      case parentChildTracking:
+        final args = settings.arguments as Map<String, dynamic>;
+        return _route(
+          settings,
+          ChildTrackingScreen(
+            childId: args['childId'] as int,
+            childName: args['childName'] as String,
+            childPhoto: args['childPhoto'] as String?,
+            trip: args['trip'] as ActiveTripModel,
+          ),
+        );
+      case parentChildDetailsInTrip:
+        final args = settings.arguments as Map<String, dynamic>;
+        return _route(
+          settings,
+          ChildDetailsInTripScreen(
+            trip: args['trip'] as ActiveTripModel,
+            child: args['child'] as TripChildInfo,
+          ),
+        );
+      case parentFullTrackingMap:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _route(
+          settings,
+          FullTrackingMapScreen(
+            selectedTrip: args?['selectedTrip'] as ActiveTripModel?,
+            allTrips: (args?['allTrips'] as List<ActiveTripModel>?) ?? const [],
+          ),
+        );
 
       // --- Complaints ---
       case parentComplaints:

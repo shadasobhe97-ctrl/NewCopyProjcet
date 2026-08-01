@@ -48,12 +48,18 @@ class TripChildInfo {
   final String childName;
   final String? childPhoto;
   final String childStatus;
+  final String? pickupTime;
+  final String? dropoffTime;
+  final String? direction;
 
   const TripChildInfo({
     required this.childId,
     required this.childName,
     this.childPhoto,
     required this.childStatus,
+    this.pickupTime,
+    this.dropoffTime,
+    this.direction,
   });
 
   factory TripChildInfo.fromJson(Map<String, dynamic> json) {
@@ -62,6 +68,9 @@ class TripChildInfo {
       childName: json['child_name']?.toString() ?? json['name']?.toString() ?? '',
       childPhoto: json['child_photo']?.toString() ?? json['photo']?.toString(),
       childStatus: json['child_status']?.toString() ?? json['status']?.toString() ?? 'waiting',
+      pickupTime: json['pickup_time']?.toString() ?? json['onboard_time']?.toString(),
+      dropoffTime: json['dropoff_time']?.toString() ?? json['arrival_time']?.toString(),
+      direction: json['direction']?.toString(),
     );
   }
 }

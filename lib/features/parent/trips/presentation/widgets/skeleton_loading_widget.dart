@@ -61,6 +61,28 @@ class _SkeletonContainerState extends State<SkeletonContainer>
   }
 }
 
+class SkeletonLoadingWidget extends StatelessWidget {
+  final double? width;
+  final double height;
+  final double radius;
+
+  const SkeletonLoadingWidget({
+    super.key,
+    this.width,
+    required this.height,
+    this.radius = 12,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonContainer(
+      width: width ?? double.infinity,
+      height: height,
+      borderRadius: radius,
+    );
+  }
+}
+
 class TripCardSkeleton extends StatelessWidget {
   const TripCardSkeleton({super.key});
 
@@ -99,7 +121,11 @@ class TripCardSkeleton extends StatelessWidget {
             ],
           ),
           SizedBox(height: 14.h),
-          SkeletonContainer(width: double.infinity, height: 42.h, borderRadius: 14),
+          SkeletonContainer(
+            width: double.infinity,
+            height: 42.h,
+            borderRadius: 14,
+          ),
         ],
       ),
     );

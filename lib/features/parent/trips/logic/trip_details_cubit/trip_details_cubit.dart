@@ -16,4 +16,6 @@ class TripDetailsCubit extends Cubit<TripDetailsState> {
       emit(TripDetailsError(e.toString()));
     }
   }
+
+  Future<void> fetchTripDetails(dynamic tripId) => loadTripDetails(tripId);
 }

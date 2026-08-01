@@ -144,12 +144,21 @@ class ParentDrawer extends StatelessWidget {
                         onTap: () => Navigator.pop(context),
                       ),
                       AppDrawerItem(
-                        icon: Icons.map_outlined,
+                        icon: Icons.directions_bus_rounded,
                         iconColor: context.primaryColor,
-                        label: 'الرحلات والتتبع اللحظي',
+                        label: 'جدول رحلات أطفالي',
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.pushNamed(context, AppRoutes.parentTripsHome);
+                        },
+                      ),
+                      AppDrawerItem(
+                        icon: Icons.map_rounded,
+                        iconColor: context.successColor,
+                        label: 'التتبع المباشر للرحلات 🟢',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, AppRoutes.parentTripTracking);
                         },
                       ),
                       AppDrawerItem(

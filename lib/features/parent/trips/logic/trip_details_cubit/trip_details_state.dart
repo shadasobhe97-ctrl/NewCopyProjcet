@@ -17,6 +17,8 @@ class TripDetailsLoaded extends TripDetailsState {
 
   const TripDetailsLoaded(this.tripDetails);
 
+  TripDetailsModel get trip => tripDetails;
+
   @override
   List<Object?> get props => [tripDetails];
 }
