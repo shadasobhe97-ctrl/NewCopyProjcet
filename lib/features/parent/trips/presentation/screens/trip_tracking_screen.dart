@@ -12,19 +12,21 @@ import '../../logic/trip_tracking_cubit/trip_tracking_cubit.dart';
 import '../../logic/trip_tracking_cubit/trip_tracking_state.dart';
 import '../widgets/messenger_children_bar.dart';
 import '../widgets/tracking_map_widget.dart';
+import '../widgets/driver_card.dart';
 import '../widgets/trip_status_chip.dart';
-import 'child_tracking_screen.dart';
 import 'full_tracking_map_screen.dart';
 import 'trip_details_screen.dart';
 
 class TripTrackingScreen extends StatefulWidget {
   final ActiveTripModel? trip;
   final List<ActiveTripModel> allActiveTrips;
+  final int? initialSelectedChildId;
 
   const TripTrackingScreen({
     super.key,
     this.trip,
     this.allActiveTrips = const [],
+    this.initialSelectedChildId,
   });
 
   @override
@@ -45,6 +47,11 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     super.initState();
     _mapController = MapController();
     _trackingCubit = getIt<TripTrackingCubit>();
+
+    if (widget.initialSelectedChildId != null) {
+      _isAllSelected = false;
+      _selectedChildId = widget.initialSelectedChildId;
+    }
 
     if (widget.allActiveTrips.isNotEmpty) {
       _effectiveTrips = widget.allActiveTrips;
@@ -100,6 +107,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     _trackingCubit.startMultiTracking(activeTrips: _effectiveTrips);
   }
 
+  // 🌟 UX FIX: Selecting a child story updates page mode dynamically without pushing a new screen!
   void _onSelectChild(MessengerChildItem item) {
     ActiveTripModel? targetTrip;
     try {
@@ -115,17 +123,10 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     });
 
     if (targetTrip != null) {
-      // Navigate to dedicated Child Tracking Screen (Screenshot #2)
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ChildTrackingScreen(
-            childId: item.childId,
-            childName: item.childName,
-            childPhoto: item.childPhoto,
-            trip: targetTrip!,
-          ),
-        ),
+      _trackingCubit.startTracking(
+        targetTrip.tripId,
+        activeTrip: targetTrip,
+        childId: item.childId,
       );
     }
   }
@@ -134,6 +135,14 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final childrenItems = _extractChildrenItems();
+
+    // Selected child info if single child mode is active
+    MessengerChildItem? selectedChildItem;
+    if (!_isAllSelected && _selectedChildId != null) {
+      try {
+        selectedChildItem = childrenItems.firstWhere((c) => c.childId == _selectedChildId);
+      } catch (_) {}
+    }
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -162,7 +171,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
         ),
         body: Column(
           children: [
-            // 1) TOP MESSENGER STORIES BAR
+            // 1) TOP STORIES BAR (RTL)
             if (childrenItems.isNotEmpty)
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
@@ -176,7 +185,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                 ),
               ),
 
-            // 2) MIDDLE INTERACTIVE MAP WITH FLOATING EXPAND BUTTON
+            // 2) MIDDLE INTERACTIVE MAP WITH EXPAND BUTTON
             Expanded(
               flex: 5,
               child: Stack(
@@ -210,7 +219,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => FullTrackingMapScreen(
-                              selectedTrip: _currentDisplayedTrip,
+                              selectedTrip: _isAllSelected ? null : _currentDisplayedTrip,
                               allTrips: _effectiveTrips,
                             ),
                           ),
@@ -223,7 +232,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
               ),
             ),
 
-            // 3) BOTTOM DRAGGABLE LIST OF ACTIVE TRIPS (Matching Screenshot #1)
+            // 3) DYNAMIC BOTTOM SHEET (MODE 1: ALL TRIPS | MODE 2: SINGLE CHILD TRIP)
             Expanded(
               flex: 5,
               child: Container(
@@ -255,7 +264,9 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
                       child: Text(
-                        'الرحلات النشطة (${_effectiveTrips.length})',
+                        _isAllSelected
+                            ? 'الرحلات النشطة (${_effectiveTrips.length})'
+                            : 'تتبع رحلة ${selectedChildItem?.childName ?? "الطفل"}',
                         style: AppTextStyles.style(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.bold,
@@ -264,15 +275,22 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                       ),
                     ),
                     Expanded(
-                      child: ListView.separated(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-                        itemCount: _effectiveTrips.length,
-                        separatorBuilder: (_, __) => SizedBox(height: 10.h),
-                        itemBuilder: (context, index) {
-                          final trip = _effectiveTrips[index];
-                          return _buildActiveTripCard(context, trip, isDark);
-                        },
-                      ),
+                      child: _isAllSelected
+                          ? ListView.separated(
+                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+                              itemCount: _effectiveTrips.length,
+                              separatorBuilder: (context, index) => SizedBox(height: 10.h),
+                              itemBuilder: (context, index) {
+                                final trip = _effectiveTrips[index];
+                                return _buildActiveTripCard(context, trip, isDark);
+                              },
+                            )
+                          : _buildSingleChildTripContent(
+                              context,
+                              selectedChildItem,
+                              _currentDisplayedTrip,
+                              isDark,
+                            ),
                     ),
                   ],
                 ),
@@ -284,6 +302,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     );
   }
 
+  // MODE 1 CARD: Active Trip Item Card in Trips List Mode
   Widget _buildActiveTripCard(BuildContext context, ActiveTripModel trip, bool isDark) {
     return GestureDetector(
       onTap: () {
@@ -386,6 +405,191 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                   );
                 }),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // MODE 2 CONTENT: Single Child Trip View inside Bottom Sheet without page navigation
+  Widget _buildSingleChildTripContent(
+    BuildContext context,
+    MessengerChildItem? childItem,
+    ActiveTripModel? trip,
+    bool isDark,
+  ) {
+    if (trip == null || childItem == null) {
+      return Center(
+        child: Text(
+          'لا توجد رحلة نشطة لهذا الطفل حالياً',
+          style: AppTextStyles.style(fontSize: 13.sp, color: AppColors.textMuted),
+        ),
+      );
+    }
+
+    final childInfo = trip.children.firstWhere(
+      (c) => c.childId == childItem.childId,
+      orElse: () => trip.children.first,
+    );
+
+    return ListView(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+      children: [
+        // 1) 3 METRIC CARDS ROW
+        Row(
+          children: [
+            _buildMetricCard(context, Icons.flag_rounded, 'وقت الانطلاق', trip.startedAt),
+            SizedBox(width: 8.w),
+            _buildMetricCard(context, Icons.access_time_rounded, 'الوقت المتبقي', '20 دقيقة'),
+            SizedBox(width: 8.w),
+            _buildMetricCard(context, Icons.alt_route_rounded, 'المسافة المتبقية', '2.4 كم'),
+          ],
+        ),
+        SizedBox(height: 12.h),
+
+        // 2) DRIVER CARD WITH CALL / CHAT BUTTONS
+        DriverCard(driver: trip.driver),
+        SizedBox(height: 12.h),
+
+        // 3) CHILD STATUS CARD IN TRIP
+        Container(
+          padding: EdgeInsets.all(12.r),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.grey900 : AppColors.grey50,
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(
+              color: isDark ? AppColors.grey800 : AppColors.grey200,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'حالة ${childItem.childName.split(" ")[0]} في الرحلة',
+                style: AppTextStyles.style(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.bold,
+                  color: context.textPrimary,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Row(
+                children: [
+                  Icon(Icons.check_circle_rounded, size: 16.r, color: AppColors.success),
+                  SizedBox(width: 8.w),
+                  Text(
+                    'تم الصعود',
+                    style: AppTextStyles.style(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    childInfo.pickupTime ?? '07:35 AM',
+                    style: AppTextStyles.style(
+                      fontSize: 11.sp,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 6.h),
+              Row(
+                children: [
+                  Icon(Icons.location_on_rounded, size: 16.r, color: context.primaryColor),
+                  SizedBox(width: 8.w),
+                  Text(
+                    'الوجهة: ',
+                    style: AppTextStyles.style(
+                      fontSize: 11.sp,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  Text(
+                    trip.destination.name,
+                    style: AppTextStyles.style(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.bold,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 14.h),
+
+        // 4) ACTION BUTTON: FULL TRIP DETAILS
+        SizedBox(
+          width: double.infinity,
+          height: 46.h,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TripDetailsScreen(tripId: trip.tripId),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: context.primaryColor,
+              foregroundColor: AppColors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+              elevation: 0,
+            ),
+            icon: const Icon(Icons.assignment_outlined, size: 18),
+            label: Text(
+              'عرض تفاصيل الرحلة بالكامل',
+              style: AppTextStyles.style(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.bold,
+                color: AppColors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetricCard(BuildContext context, IconData icon, String title, String value) {
+    final isDark = context.isDarkMode;
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 6.w),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.grey900 : AppColors.grey50,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: isDark ? AppColors.grey800 : AppColors.grey200,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 16.r, color: context.primaryColor),
+            SizedBox(height: 4.h),
+            Text(
+              title,
+              style: AppTextStyles.style(
+                fontSize: 10.sp,
+                color: AppColors.textMuted,
+              ),
+            ),
+            SizedBox(height: 2.h),
+            Text(
+              value,
+              style: AppTextStyles.style(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.bold,
+                color: context.textPrimary,
+              ),
             ),
           ],
         ),

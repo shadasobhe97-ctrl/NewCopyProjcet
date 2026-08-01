@@ -8,8 +8,7 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import '../../data/models/active_trip_model.dart';
 import '../widgets/driver_card.dart';
-import 'full_tracking_map_screen.dart';
-import 'trip_timeline_screen.dart';
+import 'trip_tracking_screen.dart';
 
 class ChildDetailsInTripScreen extends StatelessWidget {
   final ActiveTripModel trip;
@@ -42,15 +41,13 @@ class ChildDetailsInTripScreen extends StatelessWidget {
           backgroundColor: isDark ? context.cardSurface : AppColors.white,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_rounded, color: context.primaryColor, size: 20.r),
+            icon: Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: context.textPrimary,
+              size: 18.r,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.more_vert_rounded, color: context.textPrimary),
-              onPressed: () {},
-            ),
-          ],
         ),
         body: ListView(
           padding: EdgeInsets.all(16.r),
@@ -199,79 +196,40 @@ class ChildDetailsInTripScreen extends StatelessWidget {
             ),
             SizedBox(height: 20.h),
 
-            // 5) ACTION BUTTONS (TIMELINE & FULL MAP)
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 46.h,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => TripTimelineScreen(
-                              tripTitle: 'رحلة ${child.childName}',
-                            ),
-                          ),
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: context.primaryColor,
-                        side: BorderSide(color: context.primaryColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.r),
-                        ),
-                      ),
-                      icon: const Icon(Icons.timeline_rounded, size: 18),
-                      label: Text(
-                        'الخط الزمني',
-                        style: AppTextStyles.style(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.bold,
-                          color: context.primaryColor,
-                        ),
+            // 🌟 5) TRACK ON MAP BUTTON (RETURNS TO TRACKING DASHBOARD MAP / POP STEP BACK)
+            SizedBox(
+              width: double.infinity,
+              height: 46.h,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TripTrackingScreen(
+                        trip: trip,
+                        initialSelectedChildId: child.childId,
                       ),
                     ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.primaryColor,
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                  elevation: 0,
+                ),
+                icon: const Icon(Icons.location_on_rounded, size: 20),
+                label: Text(
+                  'تتبع على الخريطة',
+                  style: AppTextStyles.style(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.white,
                   ),
                 ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: SizedBox(
-                    height: 46.h,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => FullTrackingMapScreen(
-                              selectedTrip: trip,
-                              allTrips: [trip],
-                            ),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: context.primaryColor,
-                        foregroundColor: AppColors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.r),
-                        ),
-                        elevation: 0,
-                      ),
-                      icon: const Icon(Icons.fullscreen_rounded, size: 20),
-                      label: Text(
-                        'تتبع كخريطة كاملة',
-                        style: AppTextStyles.style(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),

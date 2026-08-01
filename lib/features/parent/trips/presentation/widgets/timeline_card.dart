@@ -70,17 +70,17 @@ class _TimelineCardState extends State<TimelineCard>
 
   IconData _getIcon() {
     final status = widget.item.statusKey.toLowerCase();
-    if (status.contains('start') || status.contains('انطلاق')) {
+    if (status == 'started' || status.contains('start') || status.contains('انطلاق')) {
       return Icons.play_arrow_rounded;
     }
-    if (status.contains('pickup') || status.contains('صعود')) {
+    if (status == 'picked_up' || status.contains('pickup') || status.contains('صعود')) {
       return Icons.directions_bus_rounded;
     }
-    if (status.contains('way') || status.contains('طريق')) {
-      return Icons.near_me_rounded;
+    if (status == 'arrived_school' || status.contains('arrive') || status.contains('مدرسة')) {
+      return Icons.school_rounded;
     }
-    if (status.contains('arrive') || status.contains('وصول')) {
-      return Icons.location_on_rounded;
+    if (status == 'completed' || status.contains('complete') || status.contains('مكتمل')) {
+      return Icons.task_alt_rounded;
     }
     return Icons.check_circle_rounded;
   }

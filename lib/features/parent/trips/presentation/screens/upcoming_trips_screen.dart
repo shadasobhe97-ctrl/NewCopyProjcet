@@ -5,16 +5,30 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
-import 'package:kids_transport/core/routes/app_router.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
+import '../../data/models/upcoming_trip_model.dart';
 import '../../logic/upcoming_trips_cubit/upcoming_trips_cubit.dart';
 import '../../logic/upcoming_trips_cubit/upcoming_trips_state.dart';
 
-class UpcomingTripsScreen extends StatelessWidget {
-  const UpcomingTripsScreen({super.key});
+class UpcomingTripsScreen extends StatefulWidget {
+  final List<UpcomingTripModel>? upcomingTrips;
+
+  const UpcomingTripsScreen({
+    super.key,
+    this.upcomingTrips,
+  });
+
+  @override
+  State<UpcomingTripsScreen> createState() => _UpcomingTripsScreenState();
+}
+
+class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
+  String _selectedDirectionFilter = 'all'; // 'all', 'to_school', 'to_home'
+  final Set<int> _expandedTripIds = {};
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDarkMode;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -22,200 +36,391 @@ class UpcomingTripsScreen extends StatelessWidget {
         backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF8FAFC),
         appBar: AppBar(
           title: Text(
-            'الرحلات القادمة المجدولة',
+            'الرحلات القادمة',
             style: AppTextStyles.style(
               fontWeight: FontWeight.bold,
               fontSize: 16.sp,
-              color: isDark ? AppColors.white : AppColors.textDark,
+              color: context.textPrimary,
             ),
           ),
           centerTitle: true,
           elevation: 0,
-          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
-          foregroundColor: isDark ? AppColors.white : AppColors.textDark,
+          backgroundColor: isDark ? context.cardSurface : AppColors.white,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: context.textPrimary,
+              size: 18.r,
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-        body: BlocProvider(
-          create: (context) => getIt<UpcomingTripsCubit>()..loadUpcomingTrips(),
-          child: BlocBuilder<UpcomingTripsCubit, UpcomingTripsState>(
-            builder: (context, state) {
-              if (state is UpcomingTripsLoading) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (state is UpcomingTripsError) {
-                return Center(
-                  child: Text(
-                    state.message,
-                    style: AppTextStyles.style(color: AppColors.error),
-                  ),
-                );
-              } else if (state is UpcomingTripsLoaded) {
-                if (state.upcomingTrips.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'لا توجد رحلات قادمة مجدولة.',
-                      style: AppTextStyles.style(
-                        color: isDark ? AppColors.grey400 : AppColors.textMuted,
+        body: Column(
+          children: [
+            // 🌟 FULL-WIDTH DROPDOWN FILTER CONTAINER (SPANNING FULL SCREEN WIDTH)
+            _buildFullWidthDropdownFilter(context, isDark),
+
+            Expanded(
+              child: widget.upcomingTrips != null
+                  ? _buildTripsList(widget.upcomingTrips!, isDark)
+                  : BlocProvider(
+                      create: (context) => getIt<UpcomingTripsCubit>()..loadUpcomingTrips(),
+                      child: BlocBuilder<UpcomingTripsCubit, UpcomingTripsState>(
+                        builder: (context, state) {
+                          if (state is UpcomingTripsLoading) {
+                            return const Center(child: CircularProgressIndicator());
+                          } else if (state is UpcomingTripsError) {
+                            return Center(
+                              child: Text(
+                                state.message,
+                                style: AppTextStyles.style(color: AppColors.error),
+                              ),
+                            );
+                          } else if (state is UpcomingTripsLoaded) {
+                            return _buildTripsList(state.upcomingTrips, isDark);
+                          }
+                          return const SizedBox.shrink();
+                        },
                       ),
                     ),
-                  );
-                }
-                return RefreshIndicator(
-                  color: context.primaryColor,
-                  onRefresh: () => context.read<UpcomingTripsCubit>().loadUpcomingTrips(),
-                  child: ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    itemCount: state.upcomingTrips.length,
-                    itemBuilder: (context, index) {
-                      final trip = state.upcomingTrips[index];
-                      return Container(
-                        margin: EdgeInsets.only(bottom: 12.h),
-                        padding: EdgeInsets.all(16.w),
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.surfaceDark : AppColors.white,
-                          borderRadius: BorderRadius.circular(18.r),
-                          border: Border.all(
-                            color: isDark ? AppColors.grey800 : AppColors.grey200,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            )
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 18.r,
-                                  backgroundColor: context.primaryColor.withValues(alpha: 0.1),
-                                  child: Icon(Icons.directions_bus_rounded, color: context.primaryColor, size: 18.r),
-                                ),
-                                SizedBox(width: 12.w),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        trip.title,
-                                        style: AppTextStyles.style(
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: isDark ? AppColors.white : AppColors.textDark,
-                                        ),
-                                      ),
-                                      Text(
-                                        'النوع: ${trip.tripType == 'to_school' ? 'ذهاب للمدرسة' : 'عودة للمنزل'}',
-                                        style: AppTextStyles.style(
-                                          fontSize: 11.sp,
-                                          color: isDark ? AppColors.grey400 : AppColors.textMuted,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                                  decoration: BoxDecoration(
-                                    color: context.primaryColor.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(10.r),
-                                  ),
-                                  child: Text(
-                                    trip.scheduledFor,
-                                    style: AppTextStyles.style(
-                                      fontSize: 11.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: context.primaryColor,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 12.h),
-                            const Divider(height: 1),
-                            SizedBox(height: 12.h),
-                            _buildInfoRow(Icons.child_care_rounded, 'الطفل', trip.childName, isDark),
-                            SizedBox(height: 6.h),
-                            _buildInfoRow(Icons.school_rounded, 'المدرسة', trip.schoolName, isDark),
-                            SizedBox(height: 6.h),
-                            _buildInfoRow(Icons.person_rounded, 'السائق', trip.driverName, isDark),
-                            SizedBox(height: 12.h),
-                            // زر لن يستخدم النقل (الغياب)
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.parentAbsence,
-                                    arguments: {
-                                      'childName': trip.childName,
-                                    },
-                                  );
-                                },
-                                icon: Icon(
-                                  Icons.event_busy_rounded,
-                                  size: 16.r,
-                                  color: AppColors.warning,
-                                ),
-                                label: Text(
-                                  'لن يستخدم النقل',
-                                  style: AppTextStyles.style(
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.warning,
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                    color: AppColors.warning.withValues(alpha: 0.4),
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12.r),
-                                  ),
-                                  padding: EdgeInsets.symmetric(vertical: 10.h),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value, bool isDark) {
-    return Row(
-      children: [
-        Icon(icon, size: 14.r, color: isDark ? AppColors.grey500 : AppColors.grey400),
-        SizedBox(width: 8.w),
-        Text(
-          '$label: ',
+  // Full-Width Dropdown Filter (Edge-to-Edge)
+  Widget _buildFullWidthDropdownFilter(BuildContext context, bool isDark) {
+    final List<Map<String, String>> filterOptions = [
+      {'value': 'all', 'label': 'جميع اتجاهات الرحلات'},
+      {'value': 'to_school', 'label': 'رحلات الذهاب (إلى المدرسة)'},
+      {'value': 'to_home', 'label': 'رحلات العودة (إلى المنزل)'},
+    ];
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        color: isDark ? context.cardSurface : AppColors.white,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(
+          color: isDark ? AppColors.grey800 : AppColors.grey200,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded: true,
+          value: _selectedDirectionFilter,
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: context.primaryColor, size: 22.r),
+          items: filterOptions.map((opt) {
+            return DropdownMenuItem<String>(
+              value: opt['value'],
+              child: Row(
+                children: [
+                  Icon(
+                    opt['value'] == 'to_school'
+                        ? Icons.school_rounded
+                        : (opt['value'] == 'to_home' ? Icons.home_rounded : Icons.alt_route_rounded),
+                    color: context.primaryColor,
+                    size: 18.r,
+                  ),
+                  SizedBox(width: 10.w),
+                  Text(
+                    opt['label']!,
+                    style: AppTextStyles.style(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (val) {
+            if (val != null) {
+              setState(() {
+                _selectedDirectionFilter = val;
+              });
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTripsList(List<UpcomingTripModel> trips, bool isDark) {
+    final filtered = trips.where((t) {
+      if (_selectedDirectionFilter == 'all') return true;
+      return t.direction == _selectedDirectionFilter;
+    }).toList();
+
+    if (filtered.isEmpty) {
+      return Center(
+        child: Text(
+          'لا توجد رحلات قادمة تطابق التصفية',
           style: AppTextStyles.style(
-            fontSize: 12.sp,
-            color: isDark ? AppColors.grey400 : AppColors.textMuted,
+            fontSize: 13.sp,
+            color: AppColors.textMuted,
           ),
         ),
-        Text(
-          value,
-          style: AppTextStyles.style(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w600,
-            color: isDark ? AppColors.white : AppColors.textDark,
-          ),
+      );
+    }
+
+    return ListView.separated(
+      padding: EdgeInsets.all(16.r),
+      itemCount: filtered.length,
+      separatorBuilder: (context, index) => SizedBox(height: 14.h),
+      itemBuilder: (context, index) {
+        final trip = filtered[index];
+        final isExpanded = _expandedTripIds.contains(trip.tripId);
+        return _buildExpandableUpcomingCard(context, trip, isExpanded, isDark);
+      },
+    );
+  }
+
+  // 🌟 EXPANDABLE UPCOMING TRIP CARD (NO NAVIGATION, INLINE EXPANSION)
+  Widget _buildExpandableUpcomingCard(
+    BuildContext context,
+    UpcomingTripModel trip,
+    bool isExpanded,
+    bool isDark,
+  ) {
+    final isToSchool = trip.direction == 'to_school';
+    final totalCost = trip.children.length * 15;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      padding: EdgeInsets.all(14.r),
+      decoration: BoxDecoration(
+        color: isDark ? context.cardSurface : AppColors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: isDark ? AppColors.grey800 : AppColors.grey200,
         ),
-      ],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header: Title & Scheduled Time
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                trip.title,
+                style: AppTextStyles.style(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.bold,
+                  color: context.textPrimary,
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: (isToSchool ? context.primaryColor : AppColors.pending).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Text(
+                  trip.scheduledFor,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isToSchool ? context.primaryColor : AppColors.pending,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+
+          // Driver Name
+          Row(
+            children: [
+              Icon(Icons.person_rounded, size: 14.r, color: AppColors.textMuted),
+              SizedBox(width: 6.w),
+              Text(
+                'السائق: ${trip.driver.name}',
+                style: AppTextStyles.style(
+                  fontSize: 11.sp,
+                  color: context.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          Divider(height: 16.h, thickness: 1),
+
+          // Children List (Collapsed Summary)
+          Text(
+            'الأطفال (${trip.children.length}):',
+            style: AppTextStyles.style(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textMuted,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          ...trip.children.map((c) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: 6.h),
+              child: Row(
+                children: [
+                  AppUserAvatar(imageUrl: c.childPhoto, radius: 10.r),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          c.childName,
+                          style: AppTextStyles.style(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.bold,
+                            color: context.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          trip.destination.name,
+                          style: AppTextStyles.style(
+                            fontSize: 9.sp,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          SizedBox(height: 8.h),
+
+          // 🌟 EXPANDED DETAILS (In-place inline details)
+          if (isExpanded) ...[
+            Container(
+              padding: EdgeInsets.all(10.r),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.grey900 : AppColors.grey50,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(
+                  color: isDark ? AppColors.grey800 : AppColors.grey200,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'تفاصيل التكلفة والتسعير:',
+                    style: AppTextStyles.style(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.bold,
+                      color: context.primaryColor,
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+                  ...trip.children.map((c) {
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: 4.h),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            c.childName,
+                            style: AppTextStyles.style(
+                              fontSize: 10.sp,
+                              color: context.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            '15 LYD',
+                            style: AppTextStyles.style(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.bold,
+                              color: context.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+            SizedBox(height: 10.h),
+          ],
+
+          // Total Cost & Expand Button Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'إجمالي الرحلة: ',
+                    style: AppTextStyles.style(
+                      fontSize: 11.sp,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  Text(
+                    '$totalCost LYD',
+                    style: AppTextStyles.style(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: context.primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    if (isExpanded) {
+                      _expandedTripIds.remove(trip.tripId);
+                    } else {
+                      _expandedTripIds.add(trip.tripId);
+                    }
+                  });
+                },
+                child: Row(
+                  children: [
+                    Text(
+                      isExpanded ? 'عرض أقل' : 'عرض المزيد',
+                      style: AppTextStyles.style(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.bold,
+                        color: context.primaryColor,
+                      ),
+                    ),
+                    SizedBox(width: 4.w),
+                    Icon(
+                      isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                      size: 18.r,
+                      color: context.primaryColor,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

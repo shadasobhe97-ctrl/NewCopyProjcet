@@ -19,58 +19,34 @@ class TripTimelineScreen extends StatelessWidget {
   List<TripTimelineItemModel> _getMockTimeline() {
     return const [
       TripTimelineItemModel(
-        time: '07:30 ص',
+        time: '07:05 ص',
         title: 'بدأت الرحلة',
-        description: 'تم انطلاق الحافلة من النقطة الأولى',
-        status: 'start',
+        description: 'انطلق السائق في المسار المحجوز',
+        status: 'started',
         isDone: true,
         isCurrent: false,
       ),
       TripTimelineItemModel(
-        time: '07:35 ص',
-        title: 'تم صعود أحمد علي',
-        description: 'تم الصعود والحضور بنجاح',
-        status: 'pickup',
+        time: '07:12 ص',
+        title: 'تم صعود الطفل سند',
+        description: 'تم توثيق الصعود عبر رمز QR الخريطة',
+        status: 'picked_up',
         isDone: true,
         isCurrent: false,
       ),
       TripTimelineItemModel(
-        time: '07:38 ص',
-        title: 'تم صعود سارة محمد',
-        description: 'تم الصعود والحضور بنجاح',
-        status: 'pickup',
+        time: '07:28 ص',
+        title: 'وصل الطفل سند للمدرسة',
+        description: 'تسليم الطفل بسلامة الله لدى مدرسة المعرفة الدولية',
+        status: 'arrived_school',
         isDone: true,
-        isCurrent: false,
-      ),
-      TripTimelineItemModel(
-        time: '07:40 ص',
-        title: 'في الطريق إلى المدرسة',
-        description: 'الرحلة مستمرة بأمان نحو مدرسة المعرفة',
-        status: 'on_the_way',
-        isDone: false,
         isCurrent: true,
       ),
       TripTimelineItemModel(
-        time: '08:00 ص',
-        title: 'الوصول إلى المدرسة',
-        description: 'الوصول والنزول الآمن لجميع الطلاب',
-        status: 'arrive',
-        isDone: false,
-        isCurrent: false,
-      ),
-      TripTimelineItemModel(
-        time: '13:30 م',
-        title: 'بدء رحلة العودة',
-        description: 'لم تبدأ بعد',
-        status: 'return_start',
-        isDone: false,
-        isCurrent: false,
-      ),
-      TripTimelineItemModel(
-        time: '14:00 م',
-        title: 'الوصول إلى المنزل',
-        description: 'لم تبدأ بعد',
-        status: 'return_arrive',
+        time: '07:40 ص',
+        title: 'اكتمال الرحلة بالكامل',
+        description: 'تم إنهاء الرحلة وتأكيد سلامة الطلاب',
+        status: 'completed',
         isDone: false,
         isCurrent: false,
       ),
@@ -88,7 +64,7 @@ class TripTimelineScreen extends StatelessWidget {
         backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF8FAFC),
         appBar: AppBar(
           title: Text(
-            'الخط الزمني للرحلة',
+            'المخطط الزمني للرحلة',
             style: AppTextStyles.style(
               fontSize: 16.sp,
               fontWeight: FontWeight.bold,
@@ -99,7 +75,7 @@ class TripTimelineScreen extends StatelessWidget {
           backgroundColor: isDark ? context.cardSurface : AppColors.white,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_rounded, color: context.primaryColor, size: 20.r),
+            icon: Icon(Icons.arrow_forward_ios_rounded, color: context.primaryColor, size: 18.r),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -117,7 +93,7 @@ class TripTimelineScreen extends StatelessWidget {
                   Text(
                     tripTitle,
                     style: AppTextStyles.style(
-                      fontSize: 14.sp,
+                      fontSize: 13.sp,
                       fontWeight: FontWeight.bold,
                       color: context.textPrimary,
                     ),
@@ -130,7 +106,7 @@ class TripTimelineScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: Text(
-                      'مباشر حقيقي',
+                      'مباشر',
                       style: TextStyle(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.bold,

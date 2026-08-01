@@ -18,10 +18,7 @@ import 'trip_timeline_screen.dart';
 class TripDetailsScreen extends StatefulWidget {
   final dynamic tripId;
 
-  const TripDetailsScreen({
-    super.key,
-    required this.tripId,
-  });
+  const TripDetailsScreen({super.key, required this.tripId});
 
   @override
   State<TripDetailsScreen> createState() => _TripDetailsScreenState();
@@ -44,7 +41,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF8FAFC),
+        backgroundColor: isDark
+            ? AppColors.backgroundDark
+            : const Color(0xFFF8FAFC),
         appBar: AppBar(
           title: Text(
             'تفاصيل الرحلة',
@@ -58,15 +57,13 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
           backgroundColor: isDark ? context.cardSurface : AppColors.white,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_rounded, color: context.primaryColor, size: 20.r),
+            icon: Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: context.textPrimary,
+              size: 18.r,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.more_vert_rounded, color: context.textPrimary),
-              onPressed: () {},
-            ),
-          ],
         ),
         body: BlocProvider.value(
           value: _detailsCubit,
@@ -86,7 +83,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                 );
               }
 
-              // Transform TripDetailsModel into ActiveTripModel if needed for nested screens
+              // Transform TripDetailsModel into ActiveTripModel for nested components
               final activeTrip = ActiveTripModel(
                 tripId: trip.tripId,
                 tripType: trip.tripType,
@@ -110,20 +107,22 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                   lng: trip.destination.lng,
                 ),
                 children: trip.children
-                    .map((c) => TripChildInfo(
-                          childId: c.childId,
-                          childName: c.childName,
-                          childStatus: c.childStatus,
-                          childPhoto: c.childPhoto,
-                          pickupTime: c.pickupTime,
-                        ))
+                    .map(
+                      (c) => TripChildInfo(
+                        childId: c.childId,
+                        childName: c.childName,
+                        childStatus: c.childStatus,
+                        childPhoto: c.childPhoto,
+                        pickupTime: c.pickupTime,
+                      ),
+                    )
                     .toList(),
               );
 
               return ListView(
                 padding: EdgeInsets.all(16.r),
                 children: [
-                  // 1) TRIP HEADER CARD
+                  // 1) TRIP HEADER SUMMARY CARD
                   Container(
                     padding: EdgeInsets.all(14.r),
                     decoration: BoxDecoration(
@@ -132,6 +131,15 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                       border: Border.all(
                         color: isDark ? AppColors.grey800 : AppColors.grey200,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.2 : 0.04,
+                          ),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,7 +149,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                             Text(
                               'رحلة #${trip.tripId}',
                               style: AppTextStyles.style(
-                                fontSize: 15.sp,
+                                fontSize: 14.sp,
                                 fontWeight: FontWeight.bold,
                                 color: context.textPrimary,
                               ),
@@ -154,10 +162,17 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _buildSummaryItem('نوع الرحلة', trip.tripType),
+                            _buildSummaryItem(
+                              'نوع الرحلة',
+                              trip.tripType == 'morning'
+                                  ? 'رحلة صباحية'
+                                  : 'رحلة مسائية',
+                            ),
                             _buildSummaryItem(
                               'الاتجاه',
-                              trip.direction == 'to_school' ? 'إلى المدرسة' : 'إلى المنزل',
+                              trip.direction == 'to_school'
+                                  ? 'إلى المدرسة'
+                                  : 'إلى المنزل',
                             ),
                             _buildSummaryItem('وقت الانطلاق', trip.startedAt),
                           ],
@@ -173,18 +188,18 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
 
                   // 3) VEHICLE CARD
                   VehicleCard(vehicle: activeTrip.vehicle),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 14.h),
 
-                  // 4) CHILDREN IN THIS TRIP SECTION
+                  // 5) CHILDREN IN THIS TRIP SECTION
                   Text(
                     'الأطفال في هذه الرحلة (${trip.children.length}):',
                     style: AppTextStyles.style(
-                      fontSize: 14.sp,
+                      fontSize: 13.sp,
                       fontWeight: FontWeight.bold,
                       color: context.textPrimary,
                     ),
                   ),
-                  SizedBox(height: 10.h),
+                  SizedBox(height: 8.h),
                   ...trip.children.map((child) {
                     final childInfo = TripChildInfo(
                       childId: child.childId,
@@ -210,19 +225,21 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                         margin: EdgeInsets.only(bottom: 8.h),
                         padding: EdgeInsets.all(10.r),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.grey800 : AppColors.white,
+                          color: isDark ? AppColors.grey900 : AppColors.white,
                           borderRadius: BorderRadius.circular(12.r),
                           border: Border.all(
-                            color: isDark ? AppColors.grey700 : AppColors.grey200,
+                            color: isDark
+                                ? AppColors.grey800
+                                : AppColors.grey200,
                           ),
                         ),
                         child: Row(
                           children: [
                             AppUserAvatar(
                               imageUrl: child.childPhoto,
-                              radius: 18.r,
+                              radius: 16.r,
                             ),
-                            SizedBox(width: 12.w),
+                            SizedBox(width: 10.w),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,14 +247,16 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                                   Text(
                                     child.childName,
                                     style: AppTextStyles.style(
-                                      fontSize: 13.sp,
+                                      fontSize: 12.sp,
                                       fontWeight: FontWeight.bold,
                                       color: context.textPrimary,
                                     ),
                                   ),
                                   SizedBox(height: 2.h),
                                   Text(
-                                    child.direction == 'to_school' ? 'إلى المدرسة' : 'إلى المنزل',
+                                    child.direction == 'to_school'
+                                        ? 'إلى المدرسة'
+                                        : 'إلى المنزل',
                                     style: AppTextStyles.style(
                                       fontSize: 10.sp,
                                       color: AppColors.textMuted,
@@ -248,81 +267,85 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                             ),
                             TripStatusChip.fromStatusString(child.childStatus),
                             SizedBox(width: 4.w),
-                            Icon(Icons.arrow_forward_ios_rounded, size: 12.r, color: AppColors.grey400),
+                            Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              size: 12.r,
+                              color: AppColors.grey400,
+                            ),
                           ],
                         ),
                       ),
                     );
                   }),
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 18.h),
 
-                  // 5) BOTTOM BUTTONS (SHARE & TIMELINE)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 46.h,
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('تم نسخ رابط الرحلة للمشاركة')),
-                              );
-                            },
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: context.primaryColor,
-                              side: BorderSide(color: context.primaryColor),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14.r),
-                              ),
-                            ),
-                            icon: const Icon(Icons.share_outlined, size: 18),
-                            label: Text(
-                              'مشاركة الرحلة',
-                              style: AppTextStyles.style(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.bold,
-                                color: context.primaryColor,
-                              ),
+                  // 🌟 6) ACTION BUTTON: OPEN DEDICATED TIMELINE SCREEN
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46.h,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        // 🌟 Opens dedicated TripTimelineScreen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TripTimelineScreen(
+                              tripTitle: 'رحلة #${trip.tripId}',
+                              timelineItems: trip.timeline,
                             ),
                           ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: context.primaryColor,
+                        foregroundColor: AppColors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.timeline_rounded, size: 20),
+                      label: Text(
+                        'عرض المخطط الزمني',
+                        style: AppTextStyles.style(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.white,
                         ),
                       ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: SizedBox(
-                          height: 46.h,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => TripTimelineScreen(
-                                    tripTitle: 'رحلة #${trip.tripId}',
-                                  ),
-                                ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: context.primaryColor,
-                              foregroundColor: AppColors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14.r),
-                              ),
-                              elevation: 0,
-                            ),
-                            icon: const Icon(Icons.timeline_rounded, size: 20),
-                            label: Text(
-                              'الخط الزمني',
-                              style: AppTextStyles.style(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.white,
-                              ),
-                            ),
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+
+                  // 7) SECONDARY BUTTON: SHARE TRIP
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44.h,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('تم نسخ رابط تفاصيل الرحلة للمشاركة'),
                           ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: context.primaryColor,
+                        side: BorderSide(color: context.primaryColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14.r),
                         ),
                       ),
-                    ],
+                      icon: const Icon(Icons.share_outlined, size: 18),
+                      label: Text(
+                        'مشاركة الرحلة',
+                        style: AppTextStyles.style(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                          color: context.primaryColor,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               );
@@ -339,12 +362,18 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       children: [
         Text(
           label,
-          style: AppTextStyles.style(fontSize: 10.sp, color: AppColors.textMuted),
+          style: AppTextStyles.style(
+            fontSize: 10.sp,
+            color: AppColors.textMuted,
+          ),
         ),
         SizedBox(height: 2.h),
         Text(
           value,
-          style: AppTextStyles.style(fontSize: 12.sp, fontWeight: FontWeight.bold),
+          style: AppTextStyles.style(
+            fontSize: 11.sp,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
