@@ -18,6 +18,9 @@ class TripsLoaded extends TripsState {
   final List<ActiveTripModel> activeTrips;
   final List<UpcomingTripModel> upcomingTrips;
   final List<TripHistoryModel> historyTrips;
+  final String? activeError;
+  final String? upcomingError;
+  final String? historyError;
   final int? selectedChildId;
   final String selectedChildName;
 
@@ -25,6 +28,9 @@ class TripsLoaded extends TripsState {
     required this.activeTrips,
     required this.upcomingTrips,
     required this.historyTrips,
+    this.activeError,
+    this.upcomingError,
+    this.historyError,
     this.selectedChildId,
     this.selectedChildName = 'جميع الأطفال',
   });
@@ -49,6 +55,9 @@ class TripsLoaded extends TripsState {
     List<ActiveTripModel>? activeTrips,
     List<UpcomingTripModel>? upcomingTrips,
     List<TripHistoryModel>? historyTrips,
+    String? activeError,
+    String? upcomingError,
+    String? historyError,
     int? selectedChildId,
     String? selectedChildName,
     bool clearChildFilter = false,
@@ -57,6 +66,9 @@ class TripsLoaded extends TripsState {
       activeTrips: activeTrips ?? this.activeTrips,
       upcomingTrips: upcomingTrips ?? this.upcomingTrips,
       historyTrips: historyTrips ?? this.historyTrips,
+      activeError: activeError ?? this.activeError,
+      upcomingError: upcomingError ?? this.upcomingError,
+      historyError: historyError ?? this.historyError,
       selectedChildId: clearChildFilter ? null : (selectedChildId ?? this.selectedChildId),
       selectedChildName: clearChildFilter ? 'جميع الأطفال' : (selectedChildName ?? this.selectedChildName),
     );
@@ -67,6 +79,9 @@ class TripsLoaded extends TripsState {
         activeTrips,
         upcomingTrips,
         historyTrips,
+        activeError,
+        upcomingError,
+        historyError,
         selectedChildId,
         selectedChildName,
       ];

@@ -15,6 +15,8 @@ class TripHistoryLoading extends TripHistoryState {}
 class TripHistoryLoaded extends TripHistoryState {
   final List<TripHistoryModel> historyTrips;
   final int currentPage;
+  final int perPage;
+  final int total;
   final bool hasMore;
   final int? selectedChildId;
   final String? selectedDate;
@@ -23,6 +25,8 @@ class TripHistoryLoaded extends TripHistoryState {
   const TripHistoryLoaded({
     required this.historyTrips,
     required this.currentPage,
+    this.perPage = 15,
+    this.total = 0,
     required this.hasMore,
     this.selectedChildId,
     this.selectedDate,
@@ -48,6 +52,8 @@ class TripHistoryLoaded extends TripHistoryState {
   TripHistoryLoaded copyWith({
     List<TripHistoryModel>? historyTrips,
     int? currentPage,
+    int? perPage,
+    int? total,
     bool? hasMore,
     int? selectedChildId,
     String? selectedDate,
@@ -56,6 +62,8 @@ class TripHistoryLoaded extends TripHistoryState {
     return TripHistoryLoaded(
       historyTrips: historyTrips ?? this.historyTrips,
       currentPage: currentPage ?? this.currentPage,
+      perPage: perPage ?? this.perPage,
+      total: total ?? this.total,
       hasMore: hasMore ?? this.hasMore,
       selectedChildId: selectedChildId ?? this.selectedChildId,
       selectedDate: selectedDate ?? this.selectedDate,
@@ -67,6 +75,8 @@ class TripHistoryLoaded extends TripHistoryState {
   List<Object?> get props => [
         historyTrips,
         currentPage,
+        perPage,
+        total,
         hasMore,
         selectedChildId,
         selectedDate,

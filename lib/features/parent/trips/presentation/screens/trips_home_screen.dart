@@ -105,7 +105,9 @@ class _TripsHomeScreenState extends State<TripsHomeScreen> {
                           },
                         ),
                         SizedBox(height: 10.h),
-                        if (activeTrips.isEmpty)
+                        if (state.activeError != null)
+                          _buildErrorSectionCard(context, state.activeError!)
+                        else if (activeTrips.isEmpty)
                           _buildEmptySectionCard(
                             context,
                             'لا توجد رحلات نشطة حالياً',
@@ -136,7 +138,9 @@ class _TripsHomeScreenState extends State<TripsHomeScreen> {
                           },
                         ),
                         SizedBox(height: 10.h),
-                        if (upcomingTrips.isEmpty)
+                        if (state.upcomingError != null)
+                          _buildErrorSectionCard(context, state.upcomingError!)
+                        else if (upcomingTrips.isEmpty)
                           _buildEmptySectionCard(
                             context,
                             'لا توجد رحلات قادمة مجدولة',
@@ -165,7 +169,9 @@ class _TripsHomeScreenState extends State<TripsHomeScreen> {
                           },
                         ),
                         SizedBox(height: 10.h),
-                        if (historyTrips.isEmpty)
+                        if (state.historyError != null)
+                          _buildErrorSectionCard(context, state.historyError!)
+                        else if (historyTrips.isEmpty)
                           _buildEmptySectionCard(
                             context,
                             'لا توجد رحلات بسجل المكتملة',
@@ -197,10 +203,32 @@ class _TripsHomeScreenState extends State<TripsHomeScreen> {
     TripsLoaded state,
     bool isDark,
   ) {
+    final Map<int, String> uniqueChildren = {};
+    for (final t in state.activeTrips) {
+      for (final c in t.children) {
+        if (c.childId > 0 && c.childName.isNotEmpty) {
+          uniqueChildren[c.childId] = c.childName;
+        }
+      }
+    }
+    for (final t in state.upcomingTrips) {
+      for (final c in t.children) {
+        if (c.childId > 0 && c.childName.isNotEmpty) {
+          uniqueChildren[c.childId] = c.childName;
+        }
+      }
+    }
+    for (final t in state.historyTrips) {
+      for (final c in t.children) {
+        if (c.childId > 0 && c.childName.isNotEmpty) {
+          uniqueChildren[c.childId] = c.childName;
+        }
+      }
+    }
+
     final List<Map<String, dynamic>> childrenOptions = [
       {'id': null, 'name': 'جميع الأطفال'},
-      {'id': 1, 'name': 'سارة محمود'},
-      {'id': 2, 'name': 'أحمد محمود'},
+      ...uniqueChildren.entries.map((e) => {'id': e.key, 'name': e.value}),
     ];
 
     return Container(
@@ -714,6 +742,32 @@ class _TripsHomeScreenState extends State<TripsHomeScreen> {
         message,
         textAlign: TextAlign.center,
         style: AppTextStyles.style(fontSize: 10.sp, color: AppColors.textMuted),
+      ),
+    );
+  }
+
+  Widget _buildErrorSectionCard(BuildContext context, String message) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(12.r),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline_rounded, size: 16.r, color: AppColors.error),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              message,
+              textAlign: TextAlign.start,
+              style: AppTextStyles.style(fontSize: 10.sp, color: AppColors.error),
+            ),
+          ),
+        ],
       ),
     );
   }

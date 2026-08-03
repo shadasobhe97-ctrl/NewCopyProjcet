@@ -65,7 +65,17 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                   ? _buildTripsList(widget.upcomingTrips!, isDark)
                   : BlocProvider(
                       create: (context) => getIt<UpcomingTripsCubit>()..loadUpcomingTrips(),
-                      child: BlocBuilder<UpcomingTripsCubit, UpcomingTripsState>(
+                      child: BlocConsumer<UpcomingTripsCubit, UpcomingTripsState>(
+                        listener: (context, state) {
+                          if (state is UpcomingTripsError) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(state.message),
+                                backgroundColor: context.errorColor,
+                              ),
+                            );
+                          }
+                        },
                         builder: (context, state) {
                           if (state is UpcomingTripsLoading) {
                             return const Center(child: CircularProgressIndicator());
@@ -196,7 +206,6 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
     bool isDark,
   ) {
     final isToSchool = trip.direction == 'to_school';
-    final totalCost = trip.children.length * 15;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -348,7 +357,7 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                             ),
                           ),
                           Text(
-                            '15 LYD',
+                            '${trip.pricing.costPerChild} ${trip.pricing.currency}',
                             style: AppTextStyles.style(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.bold,
@@ -379,7 +388,7 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                     ),
                   ),
                   Text(
-                    '$totalCost LYD',
+                    '${trip.pricing.totalTripCost} ${trip.pricing.currency}',
                     style: AppTextStyles.style(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.bold,

@@ -7,7 +7,6 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import '../../data/models/active_trip_model.dart';
-import '../../data/datasources/trips_mock_data.dart';
 import '../../logic/trip_tracking_cubit/trip_tracking_cubit.dart';
 import '../../logic/trip_tracking_cubit/trip_tracking_state.dart';
 import '../widgets/messenger_children_bar.dart';
@@ -58,12 +57,14 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     } else if (widget.trip != null) {
       _effectiveTrips = [widget.trip!];
     } else {
-      _effectiveTrips = TripsMockData.activeTrips;
+      _effectiveTrips = [];
     }
 
     if (_effectiveTrips.isNotEmpty) {
       _currentDisplayedTrip = widget.trip ?? _effectiveTrips.first;
       _trackingCubit.startMultiTracking(activeTrips: _effectiveTrips);
+    } else {
+      _trackingCubit.startMultiTracking(activeTrips: []);
     }
   }
 
@@ -440,10 +441,6 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
         Row(
           children: [
             _buildMetricCard(context, Icons.flag_rounded, 'وقت الانطلاق', trip.startedAt),
-            SizedBox(width: 8.w),
-            _buildMetricCard(context, Icons.access_time_rounded, 'الوقت المتبقي', '20 دقيقة'),
-            SizedBox(width: 8.w),
-            _buildMetricCard(context, Icons.alt_route_rounded, 'المسافة المتبقية', '2.4 كم'),
           ],
         ),
         SizedBox(height: 12.h),
@@ -488,7 +485,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                   ),
                   const Spacer(),
                   Text(
-                    childInfo.pickupTime ?? '07:35 AM',
+                    childInfo.pickupTime ?? '-',
                     style: AppTextStyles.style(
                       fontSize: 11.sp,
                       color: AppColors.textMuted,

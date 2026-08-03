@@ -16,47 +16,10 @@ class TripTimelineScreen extends StatelessWidget {
     this.timelineItems,
   });
 
-  List<TripTimelineItemModel> _getMockTimeline() {
-    return const [
-      TripTimelineItemModel(
-        time: '07:05 ص',
-        title: 'بدأت الرحلة',
-        description: 'انطلق السائق في المسار المحجوز',
-        status: 'started',
-        isDone: true,
-        isCurrent: false,
-      ),
-      TripTimelineItemModel(
-        time: '07:12 ص',
-        title: 'تم صعود الطفل سند',
-        description: 'تم توثيق الصعود عبر رمز QR الخريطة',
-        status: 'picked_up',
-        isDone: true,
-        isCurrent: false,
-      ),
-      TripTimelineItemModel(
-        time: '07:28 ص',
-        title: 'وصل الطفل سند للمدرسة',
-        description: 'تسليم الطفل بسلامة الله لدى مدرسة المعرفة الدولية',
-        status: 'arrived_school',
-        isDone: true,
-        isCurrent: true,
-      ),
-      TripTimelineItemModel(
-        time: '07:40 ص',
-        title: 'اكتمال الرحلة بالكامل',
-        description: 'تم إنهاء الرحلة وتأكيد سلامة الطلاب',
-        status: 'completed',
-        isDone: false,
-        isCurrent: false,
-      ),
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
-    final items = (timelineItems != null && timelineItems!.isNotEmpty) ? timelineItems! : _getMockTimeline();
+    final items = timelineItems ?? const [];
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -118,17 +81,38 @@ class TripTimelineScreen extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.all(16.r),
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  return TimelineCard(
-                    item: items[index],
-                    isFirst: index == 0,
-                    isLast: index == items.length - 1,
-                  );
-                },
-              ),
+              child: items.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.history_rounded,
+                            size: 48.r,
+                            color: AppColors.textMuted.withValues(alpha: 0.5),
+                          ),
+                          SizedBox(height: 12.h),
+                          Text(
+                            'لا توجد أحداث في المخطط الزمني حالياً',
+                            style: AppTextStyles.style(
+                              fontSize: 13.sp,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: EdgeInsets.all(16.r),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        return TimelineCard(
+                          item: items[index],
+                          isFirst: index == 0,
+                          isLast: index == items.length - 1,
+                        );
+                      },
+                    ),
             ),
           ],
         ),

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/network/api_exception.dart';
 import '../../data/repositories/trips_repository.dart';
 import 'trip_details_state.dart';
 
@@ -13,7 +14,10 @@ class TripDetailsCubit extends Cubit<TripDetailsState> {
       final details = await _repository.getTripDetails(tripId);
       emit(TripDetailsLoaded(details));
     } catch (e) {
-      emit(TripDetailsError(e.toString()));
+      final msg = (e is ApiException)
+          ? e.message
+          : e.toString().replaceAll('Exception:', '').trim();
+      emit(TripDetailsError(msg));
     }
   }
 

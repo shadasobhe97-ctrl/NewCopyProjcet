@@ -65,7 +65,17 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
                   ? _buildHistoryList(widget.historyTrips!, isDark)
                   : BlocProvider(
                       create: (context) => getIt<TripHistoryCubit>()..loadHistory(),
-                      child: BlocBuilder<TripHistoryCubit, TripHistoryState>(
+                      child: BlocConsumer<TripHistoryCubit, TripHistoryState>(
+                        listener: (context, state) {
+                          if (state is TripHistoryError) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(state.message),
+                                backgroundColor: context.errorColor,
+                              ),
+                            );
+                          }
+                        },
                         builder: (context, state) {
                           if (state is TripHistoryLoading) {
                             return const Center(child: CircularProgressIndicator());
@@ -196,7 +206,6 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
     bool isDark,
   ) {
     final isToSchool = trip.direction == 'to_school';
-    final totalCost = trip.children.isNotEmpty ? trip.children.length * 15 : 30;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -304,7 +313,7 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
                           ),
                         ),
                         Text(
-                          'مدرسة الجيل الجديد الدولية',
+                          c.schoolName,
                           style: AppTextStyles.style(
                             fontSize: 9.sp,
                             color: AppColors.textMuted,
@@ -356,7 +365,7 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
                             ),
                           ),
                           Text(
-                            '15 LYD',
+                            '${c.tripCost} ${trip.pricing.currency}',
                             style: AppTextStyles.style(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.bold,
@@ -387,7 +396,7 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
                     ),
                   ),
                   Text(
-                    '$totalCost LYD',
+                    '${trip.tripCost} ${trip.pricing.currency}',
                     style: AppTextStyles.style(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.bold,

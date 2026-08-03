@@ -474,11 +474,66 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                     ),
                     const SizedBox(height: 16),
 
-                    Flexible(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: availableKids.length,
-                        itemBuilder: (lCtx, index) {
+                    if (availableKids.isEmpty) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 28,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.grey900
+                              : AppColors.grey50,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark
+                                ? AppColors.grey800
+                                : AppColors.grey200,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.child_care_rounded,
+                              size: 36,
+                              color: isDark
+                                  ? AppColors.grey500
+                                  : AppColors.grey400,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'لا يوجد أطفال',
+                              style: AppTextStyles.style(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: isDark
+                                    ? AppColors.grey300
+                                    : AppColors.textDark,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'قم بإضافة بيانات أطفالك أولاً من قسم أطفالي ثم عد للبحث عن سائق.',
+                              style: AppTextStyles.style(
+                                fontSize: 12,
+                                color: isDark
+                                    ? AppColors.grey400
+                                    : AppColors.textMuted,
+                                height: 1.5,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else
+                      Flexible(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: availableKids.length,
+                          itemBuilder: (lCtx, index) {
                           final kid = availableKids[index];
                           final isSel = kid.id != null && temp.contains(kid.id);
                           final isMale = kid.gender.toLowerCase() == 'male';

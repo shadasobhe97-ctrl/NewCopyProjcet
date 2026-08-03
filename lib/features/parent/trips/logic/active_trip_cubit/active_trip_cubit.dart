@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/network/api_exception.dart';
 import '../../data/repositories/trips_repository.dart';
 import 'active_trip_state.dart';
 
@@ -13,7 +14,10 @@ class ActiveTripCubit extends Cubit<ActiveTripState> {
       final activeTrips = await _repository.getActiveTrips();
       emit(ActiveTripLoaded(activeTrips));
     } catch (e) {
-      emit(ActiveTripError(e.toString()));
+      final msg = (e is ApiException)
+          ? e.message
+          : e.toString().replaceAll('Exception:', '').trim();
+      emit(ActiveTripError(msg));
     }
   }
 
@@ -22,7 +26,10 @@ class ActiveTripCubit extends Cubit<ActiveTripState> {
       final activeTrips = await _repository.getActiveTrips();
       emit(ActiveTripLoaded(activeTrips));
     } catch (e) {
-      emit(ActiveTripError(e.toString()));
+      final msg = (e is ApiException)
+          ? e.message
+          : e.toString().replaceAll('Exception:', '').trim();
+      emit(ActiveTripError(msg));
     }
   }
 }

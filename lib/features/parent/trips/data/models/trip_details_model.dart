@@ -74,8 +74,8 @@ class TripDetailsModel {
       destination: destObj,
       children: childrenList,
       timeline: timelineList,
-      totalDistance: json['total_distance']?.toString() ?? '12.4 كم',
-      estimatedDuration: json['estimated_duration']?.toString() ?? '25 دقيقة',
+      totalDistance: json['total_distance']?.toString(),
+      estimatedDuration: json['estimated_duration']?.toString(),
     );
   }
 }

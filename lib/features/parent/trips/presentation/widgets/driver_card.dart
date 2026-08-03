@@ -21,7 +21,7 @@ class DriverCard extends StatelessWidget {
     this.onChatPressed,
   });
 
-  void _defaultMockCall(BuildContext context) {
+  void _defaultCall(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('مكالمة السائق: ${driver.phone}'),
@@ -30,7 +30,7 @@ class DriverCard extends StatelessWidget {
     );
   }
 
-  void _defaultMockChat(BuildContext context) {
+  void _defaultChat(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('مراسلة السائق: ${driver.name}'),
@@ -100,7 +100,7 @@ class DriverCard extends StatelessWidget {
                 constraints: const BoxConstraints(),
                 onPressed: () => onCallPressed != null
                     ? onCallPressed!()
-                    : _defaultMockCall(context),
+                    : _defaultCall(context),
                 icon: const Icon(
                   Icons.phone_rounded,
                   color: AppColors.success,
@@ -118,7 +118,7 @@ class DriverCard extends StatelessWidget {
                 constraints: const BoxConstraints(),
                 onPressed: () => onChatPressed != null
                     ? onChatPressed!()
-                    : _defaultMockChat(context),
+                    : _defaultChat(context),
                 icon: Icon(
                   Icons.chat_bubble_rounded,
                   color: context.primaryColor,
