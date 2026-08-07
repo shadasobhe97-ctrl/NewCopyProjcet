@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/network/api_exception.dart';
 import '../../data/repositories/trips_repository.dart';
 import '../../data/models/active_trip_model.dart';
-import '../../data/datasources/trips_mock_data.dart';
 import 'trip_tracking_state.dart';
 
 class TripTrackingCubit extends Cubit<TripTrackingState> {
@@ -18,25 +18,6 @@ class TripTrackingCubit extends Cubit<TripTrackingState> {
     _allActiveTrips = trips;
   }
 
-  /// 🌟 دالة البيانات الوهمية لتجربة الـ UI والتنقل الحقيقي
-  void loadMockData({bool isEmpty = false}) {
-    _stopTimer();
-    emit(TripTrackingLoading());
-    if (isEmpty) {
-      _allActiveTrips = [];
-      emit(const TripTrackingMultiLoaded(tracks: [], activeTrips: []));
-    } else {
-      _allActiveTrips = TripsMockData.activeTrips;
-      _isMultiMode = true;
-      emit(
-        TripTrackingMultiLoaded(
-          tracks: TripsMockData.multiTracking,
-          activeTrips: _allActiveTrips,
-        ),
-      );
-    }
-  }
-
   void startTracking(
     dynamic tripId, {
     ActiveTripModel? activeTrip,
@@ -46,7 +27,6 @@ class TripTrackingCubit extends Cubit<TripTrackingState> {
     _currentTripId = tripId;
     _stopTimer();
 
-    // 🌟 تحديث أولي إذا لم توجد بيانات سابقة
     if (state is! TripTrackingSingleLoaded &&
         state is! TripTrackingMultiLoaded) {
       emit(TripTrackingLoading());
@@ -59,7 +39,6 @@ class TripTrackingCubit extends Cubit<TripTrackingState> {
       isSilent: false,
     );
 
-    // 🌟 Polling صامت كل 5 ثوانٍ بدون إطلاق Loading جديد
     _timer = Timer.periodic(const Duration(seconds: 5), (_) {
       _fetchSingleTrack(
         tripId,
@@ -78,7 +57,6 @@ class TripTrackingCubit extends Cubit<TripTrackingState> {
     }
     _stopTimer();
 
-    // 🌟 تحديث أولي إذا لم توجد بيانات سابقة
     if (state is! TripTrackingMultiLoaded &&
         state is! TripTrackingSingleLoaded) {
       emit(TripTrackingLoading());
@@ -86,7 +64,6 @@ class TripTrackingCubit extends Cubit<TripTrackingState> {
 
     _fetchMultiTrack(isSilent: false);
 
-    // 🌟 Polling صامت كل 5 ثوانٍ بدون إطلاق Loading جديد
     _timer = Timer.periodic(const Duration(seconds: 5), (_) {
       _fetchMultiTrack(isSilent: true);
     });
@@ -133,7 +110,6 @@ class TripTrackingCubit extends Cubit<TripTrackingState> {
         ),
       );
     } catch (e) {
-      // 🌟 في حالة الخطأ الاحتفاظ بآخر بيانات ناجحة وعدم مسح الخريطة
       if (state is TripTrackingSingleLoaded) {
         final current = state as TripTrackingSingleLoaded;
         emit(
@@ -146,7 +122,10 @@ class TripTrackingCubit extends Cubit<TripTrackingState> {
           ),
         );
       } else if (!isSilent) {
-        emit(TripTrackingError(e.toString()));
+        final msg = (e is ApiException)
+            ? e.message
+            : e.toString().replaceAll('Exception:', '').trim();
+        emit(TripTrackingError(msg));
       }
     }
   }
@@ -158,7 +137,6 @@ class TripTrackingCubit extends Cubit<TripTrackingState> {
         TripTrackingMultiLoaded(tracks: tracks, activeTrips: _allActiveTrips),
       );
     } catch (e) {
-      // 🌟 في حالة الخطأ الاحتفاظ بآخر بيانات ناجحة وعدم إخلاء الخريطة
       if (state is TripTrackingMultiLoaded) {
         final current = state as TripTrackingMultiLoaded;
         emit(
@@ -169,7 +147,10 @@ class TripTrackingCubit extends Cubit<TripTrackingState> {
           ),
         );
       } else if (!isSilent) {
-        emit(TripTrackingError(e.toString()));
+        final msg = (e is ApiException)
+            ? e.message
+            : e.toString().replaceAll('Exception:', '').trim();
+        emit(TripTrackingError(msg));
       }
     }
   }

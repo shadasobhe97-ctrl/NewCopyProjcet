@@ -28,8 +28,11 @@ class TripsRepository {
     return await _remoteDataSource.getUpcomingTrips();
   }
 
-  Future<List<TripHistoryModel>> getTripHistory(int page) async {
-    return await _remoteDataSource.getTripHistory(page);
+  Future<TripHistoryResponseModel> getTripHistory({
+    int page = 1,
+    int perPage = 15,
+  }) async {
+    return await _remoteDataSource.getTripHistory(page: page, perPage: perPage);
   }
 
   Future<TripDetailsModel> getTripDetails(dynamic tripId) async {

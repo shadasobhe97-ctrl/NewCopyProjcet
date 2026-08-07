@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/routes/app_router.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
@@ -10,6 +11,8 @@ import '../../../../../core/theme/text_styles.dart';
 import '../../../../../core/utils/theme_context.dart';
 import '../../../../../core/widgets/app_bars.dart';
 import '../../data/models/child_model.dart';
+import '../../logic/children_cubit/children_cubit.dart';
+import '../../../dashboard/presentation/screens/parent_main_wrapper.dart';
 
 class ChildPassScreen extends StatelessWidget {
   final ChildModel child;
@@ -235,14 +238,17 @@ class ChildPassScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 50.h,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.of(context)
-                      .pushNamedAndRemoveUntil(
-                    AppRoutes.myChildren,
-                    (route) =>
-                        route.settings.name == AppRoutes.parentMainWrapper ||
-                        route.settings.name == AppRoutes.parentHome ||
-                        route.settings.name == AppRoutes.parentHomeLegacy,
-                  ),
+                  onPressed: () {
+                    // العودة لتبويب "أطفالي" في شريط التنقل السفلي وتحديث القائمة
+                    ParentMainWrapper.changeTab(1);
+                    context.read<ChildrenCubit>().fetchChildren();
+                    Navigator.of(context).popUntil(
+                      (route) =>
+                          route.settings.name == AppRoutes.parentMainWrapper ||
+                          route.settings.name == AppRoutes.parentHome ||
+                          route.settings.name == AppRoutes.parentHomeLegacy,
+                    );
+                  },
                   style: AppTheme.elevatedButtonStyle(
                     backgroundColor: context.primaryColor,
                   ),

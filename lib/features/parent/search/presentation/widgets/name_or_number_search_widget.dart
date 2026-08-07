@@ -8,7 +8,6 @@ import 'empty_state_widget.dart';
 import 'search_loading_widget.dart';
 import 'warning_card.dart';
 
-
 class NameOrNumberSearchWidget extends StatefulWidget {
   final List<DriverSearchModel> filteredDrivers;
   final bool isLoading;
@@ -26,7 +25,8 @@ class NameOrNumberSearchWidget extends StatefulWidget {
   });
 
   @override
-  State<NameOrNumberSearchWidget> createState() => _NameOrNumberSearchWidgetState();
+  State<NameOrNumberSearchWidget> createState() =>
+      _NameOrNumberSearchWidgetState();
 }
 
 class _NameOrNumberSearchWidgetState extends State<NameOrNumberSearchWidget> {
@@ -81,7 +81,9 @@ class _NameOrNumberSearchWidgetState extends State<NameOrNumberSearchWidget> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
-                disabledBackgroundColor: isDark ? AppColors.grey800 : AppColors.grey200,
+                disabledBackgroundColor: isDark
+                    ? AppColors.grey800
+                    : AppColors.grey200,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -120,10 +122,13 @@ class _NameOrNumberSearchWidgetState extends State<NameOrNumberSearchWidget> {
 
   Widget _buildDriversList(BuildContext context) {
     if (widget.filteredDrivers.isEmpty) {
-      return const EmptyStateWidget(
-        icon: Icons.person_search_rounded,
-        title: 'لم يتم العثور على نتائج.',
-        description: 'تأكد من كتابة الاسم أو رقم الهاتف بشكل صحيح وحاول مرة أخرى.',
+      return const Center(
+        child: EmptyStateWidget(
+          icon: Icons.person_search_rounded,
+          title: 'لم يتم العثور على نتائج.',
+          description:
+              'تأكد من كتابة الاسم أو رقم الهاتف بشكل صحيح وحاول مرة أخرى.',
+        ),
       );
     }
 
@@ -133,7 +138,8 @@ class _NameOrNumberSearchWidgetState extends State<NameOrNumberSearchWidget> {
         WarningCard(
           icon: Icons.info_outline_rounded,
           color: Theme.of(context).colorScheme.primary,
-          message: "يمكنك إرسال طلبات اشتراك لأكثر من سائق في نفس الوقت. بمجرد قبول أحد السائقين لطلبك، سيتم إلغاء بقية الطلبات تلقائيًا تفاديًا للازدواجية.",
+          message:
+              "يمكنك إرسال طلبات اشتراك لأكثر من سائق في نفس الوقت. بمجرد قبول أحد السائقين لطلبك، سيتم إلغاء بقية الطلبات تلقائيًا تفاديًا للازدواجية.",
         ),
         const SizedBox(height: 16),
         ListView.builder(
@@ -145,7 +151,8 @@ class _NameOrNumberSearchWidgetState extends State<NameOrNumberSearchWidget> {
             return DriverSearchCardWidget(
               driver: driver,
               isSelected: false,
-              showPricing: false, // لا تظهر الأسعار لأن الأطفال لم يتم تحديدهم بعد
+              showPricing:
+                  false, // لا تظهر الأسعار لأن الأطفال لم يتم تحديدهم بعد
               showCheckbox: false,
               onTap: () => widget.onDriverTapped(driver),
             );

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/network/api_exception.dart';
 import '../../data/repositories/trips_repository.dart';
 import 'trip_history_state.dart';
 
@@ -11,14 +12,19 @@ class TripHistoryCubit extends Cubit<TripHistoryState> {
   Future<void> loadHistory() async {
     emit(TripHistoryLoading());
     try {
-      final list = await _repository.getTripHistory(1);
+      final response = await _repository.getTripHistory(page: 1, perPage: 15);
       emit(TripHistoryLoaded(
-        historyTrips: list,
-        currentPage: 1,
-        hasMore: list.isNotEmpty,
+        historyTrips: response.data,
+        currentPage: response.currentPage,
+        perPage: response.perPage,
+        total: response.total,
+        hasMore: response.hasMore,
       ));
     } catch (e) {
-      emit(TripHistoryError(e.toString()));
+      final msg = (e is ApiException)
+          ? e.message
+          : e.toString().replaceAll('Exception:', '').trim();
+      emit(TripHistoryError(msg));
     }
   }
 
@@ -53,18 +59,18 @@ class TripHistoryCubit extends Cubit<TripHistoryState> {
     final nextPage = currentState.currentPage + 1;
 
     try {
-      final nextList = await _repository.getTripHistory(nextPage);
-      if (nextList.isEmpty) {
-        emit(currentState.copyWith(hasMore: false));
-      } else {
-        emit(currentState.copyWith(
-          historyTrips: [...currentState.historyTrips, ...nextList],
-          currentPage: nextPage,
-          hasMore: true,
-        ));
-      }
+      final response = await _repository.getTripHistory(
+        page: nextPage,
+        perPage: currentState.perPage,
+      );
+      emit(currentState.copyWith(
+        historyTrips: [...currentState.historyTrips, ...response.data],
+        currentPage: response.currentPage,
+        total: response.total,
+        hasMore: response.hasMore,
+      ));
     } catch (e) {
-      // Keep state
+      // Keep state on pagination error
     } finally {
       _isLoadingMore = false;
     }

@@ -14,11 +14,13 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 class ProfileEmailField extends StatelessWidget {
   final TextEditingController controller;
   final bool isVerified;
+  final bool isEdited;
 
   const ProfileEmailField({
     super.key,
     required this.controller,
     required this.isVerified,
+    this.isEdited = false,
   });
 
   @override
@@ -50,16 +52,26 @@ class ProfileEmailField extends StatelessWidget {
         Row(
           children: [
             Icon(
-              isVerified ? Icons.verified_rounded : Icons.watch_later_outlined,
+              isEdited
+                  ? Icons.watch_later_outlined
+                  : (isVerified
+                      ? Icons.verified_rounded
+                      : Icons.watch_later_outlined),
               size: 13,
-              color: isVerified ? AppColors.success : AppColors.pending,
+              color: isEdited
+                  ? AppColors.pending
+                  : (isVerified ? AppColors.success : AppColors.pending),
             ),
             const SizedBox(width: 4),
             Text(
-              isVerified ? 'محقَّق' : 'بانتظار تأكيد آخر تغيير',
+              isEdited
+                  ? 'غير متحقق منه'
+                  : (isVerified ? 'محقَّق' : 'بانتظار تأكيد آخر تغيير'),
               style: AppTextStyles.style(
                 fontSize: 11,
-                color: isVerified ? AppColors.success : AppColors.pending,
+                color: isEdited
+                    ? AppColors.pending
+                    : (isVerified ? AppColors.success : AppColors.pending),
               ),
             ),
           ],

@@ -10,6 +10,7 @@ import 'package:kids_transport/core/widgets/app_bars.dart';
 import 'package:kids_transport/core/widgets/primary_button.dart';
 import 'package:kids_transport/features/parent/profile/presentation/widgets/profile_avatar_editor.dart';
 import 'package:kids_transport/features/parent/profile/presentation/widgets/profile_email_field.dart';
+import '../../data/models/parent_model.dart';
 import '../../logic/cubit/parent_profile_cubit.dart';
 import '../../logic/cubit/parent_profile_state.dart';
 
@@ -34,6 +35,8 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
 
   String _originalEmail = '';
   bool _isEmailVerified = true;
+  bool _isEmailEdited = false;
+  bool _lastSavedEmailChanged = false;
   String? _avatarUrl;
 
   final _nameFocus = FocusNode();
@@ -53,6 +56,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     );
     _backupPhoneController = TextEditingController(text: '');
     _emailController = TextEditingController(text: '');
+    _emailController.addListener(_onEmailChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -65,12 +69,25 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _backupPhoneController.dispose();
+    _emailController.removeListener(_onEmailChanged);
     _emailController.dispose();
     _nameFocus.dispose();
     _phoneFocus.dispose();
     _backupFocus.dispose();
     _emailFocus.dispose();
     super.dispose();
+  }
+
+  void _onEmailChanged() {
+    if (!mounted) return;
+    final current = _emailController.text.trim();
+    final isDifferent =
+        current.isNotEmpty && _originalEmail.isNotEmpty && current != _originalEmail;
+    if (isDifferent != _isEmailEdited) {
+      setState(() {
+        _isEmailEdited = isDifferent;
+      });
+    }
   }
 
   Future<void> _pickImage() async {
@@ -101,19 +118,21 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     }
   }
 
-  void _fillFieldsFrom(dynamic parent) {
+  void _fillFieldsFrom(ParentModel parent) {
     _nameController.text = parent.fullName;
     _phoneController.text = parent.phoneNumber;
     _backupPhoneController.text = parent.alternativePhone ?? '';
     _emailController.text = parent.email;
     _originalEmail = parent.email;
-    _isEmailVerified = !parent.emailChangePending;
+    _isEmailVerified = parent.emailChangePending != true;
+    _isEmailEdited = false;
   }
 
   void _saveProfile() {
     if (_formKey.currentState!.validate()) {
       final newEmail = _emailController.text.trim();
       final emailChanged = newEmail.isNotEmpty && newEmail != _originalEmail;
+      _lastSavedEmailChanged = emailChanged;
 
       context.read<ParentProfileCubit>().updateProfile(
         fullName: _nameController.text.trim(),
@@ -137,6 +156,9 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
             _avatarUrl = state.parent.avatarUrl;
           });
         } else if (state is ParentProfileSuccess) {
+          final wasEmailChanged = _lastSavedEmailChanged;
+          _lastSavedEmailChanged = false;
+
           setState(() {
             _fillFieldsFrom(state.parent);
             final url = state.parent.avatarUrl;
@@ -154,7 +176,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
             ),
           );
 
-          if (state.parent.emailChangePending) {
+          if (wasEmailChanged || (state.parent.emailChangePending == true)) {
             showDialog(
               context: context,
               builder: (ctx) => AlertDialog(
@@ -163,7 +185,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                 ),
                 title: const Text('تفعيل البريد الإلكتروني'),
                 content: const Text(
-                  'تم إرسال رسالة إلى بريدك الإلكتروني الجديد، يرجى فتح البريد والضغط على رابط التفعيل خلال 30 دقيقة.',
+                  'ستصلك رسالة إلى بريدك الإلكتروني الجديد لتأكيد التغيير، يرجى فتح البريد والضغط على رابط التفعيل.',
                   style: TextStyle(height: 1.5),
                 ),
                 actions: [
@@ -175,7 +197,6 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
               ),
             );
           }
-          // تم إزالة النافيجيتور بوب اللي كان يسكر في الشاشة هنا
         } else if (state is ParentProfileError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -198,14 +219,19 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
               children: [
                 if (isLoading) const LinearProgressIndicator(),
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(
-                      MediaQuery.sizeOf(context).width * 0.05,
-                      MediaQuery.sizeOf(context).height * 0.025,
-                      MediaQuery.sizeOf(context).width * 0.05,
-                      MediaQuery.sizeOf(context).height * 0.04,
-                    ),
-                    child: Form(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      await context.read<ParentProfileCubit>().fetchProfile();
+                    },
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(
+                        MediaQuery.sizeOf(context).width * 0.05,
+                        MediaQuery.sizeOf(context).height * 0.025,
+                        MediaQuery.sizeOf(context).width * 0.05,
+                        MediaQuery.sizeOf(context).height * 0.04,
+                      ),
+                      child: Form(
                       key: _formKey,
                       child: Column(
                         children: [
@@ -290,6 +316,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                                 ProfileEmailField(
                                   controller: _emailController,
                                   isVerified: _isEmailVerified,
+                                  isEdited: _isEmailEdited,
                                 ),
                               ],
                             ),
@@ -313,10 +340,11 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        );
+        ),
+      );
       },
     );
   }

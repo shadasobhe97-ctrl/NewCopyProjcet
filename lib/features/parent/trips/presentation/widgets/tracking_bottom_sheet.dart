@@ -21,19 +21,19 @@ class TrackingBottomSheet extends StatelessWidget {
     this.onOpenDetails,
   });
 
-  void _onMockCall(BuildContext context, String phone) {
+  void _onCall(BuildContext context, String phone) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('مكالمة تجريبية للسائق: $phone'),
+        content: Text('مكالمة السائق: $phone'),
         duration: const Duration(seconds: 2),
       ),
     );
   }
 
-  void _onMockMessage(BuildContext context, String phone) {
+  void _onMessage(BuildContext context, String phone) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('رسالة تجريبية للسائق: $phone'),
+        content: Text('رسالة السائق: $phone'),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -179,7 +179,7 @@ class TrackingBottomSheet extends StatelessWidget {
               child: IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                onPressed: () => _onMockCall(context, trip.driver.phone),
+                onPressed: () => _onCall(context, trip.driver.phone),
                 icon: const Icon(
                   Icons.phone_rounded,
                   color: AppColors.success,
@@ -194,7 +194,7 @@ class TrackingBottomSheet extends StatelessWidget {
               child: IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                onPressed: () => _onMockMessage(context, trip.driver.phone),
+                onPressed: () => _onMessage(context, trip.driver.phone),
                 icon: Icon(
                   Icons.chat_bubble_rounded,
                   color: context.primaryColor,

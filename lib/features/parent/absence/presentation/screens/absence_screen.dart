@@ -750,49 +750,61 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
 
   // ─── Empty States ──────────────────────────────────────────────────────────
   Widget _buildEmptyDates(BuildContext context, bool isDark) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 20.h),
-      child: Column(
-        children: [
-          Icon(
-            Icons.event_busy_rounded,
-            size: 44.r,
-            color: context.primaryColor.withValues(alpha: 0.35),
-          ),
-          SizedBox(height: 10.h),
-          Text(
-            'لا توجد أيام متاحة لتسجيل الغياب',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.style(
-              fontSize: 13.sp,
-              color: isDark ? AppColors.grey400 : AppColors.textMuted,
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minHeight: MediaQuery.of(context).size.height * 0.35,
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_busy_rounded,
+              size: 44.r,
+              color: context.primaryColor.withValues(alpha: 0.35),
             ),
-          ),
-        ],
+            SizedBox(height: 10.h),
+            Text(
+              'لا توجد أيام متاحة لتسجيل الغياب',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.style(
+                fontSize: 13.sp,
+                color: isDark ? AppColors.grey400 : AppColors.textMuted,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildEmptyAbsences(BuildContext context, bool isDark) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 20.h),
-      child: Column(
-        children: [
-          Icon(
-            Icons.check_circle_outline_rounded,
-            size: 44.r,
-            color: AppColors.success.withValues(alpha: 0.4),
-          ),
-          SizedBox(height: 10.h),
-          Text(
-            'لا توجد غيابات مجدولة حتى الآن',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.style(
-              fontSize: 13.sp,
-              color: isDark ? AppColors.grey400 : AppColors.textMuted,
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minHeight: MediaQuery.of(context).size.height * 0.16,
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.check_circle_outline_rounded,
+              size: 44.r,
+              color: AppColors.success.withValues(alpha: 0.4),
             ),
-          ),
-        ],
+            SizedBox(height: 10.h),
+            Text(
+              'لا توجد غيابات مجدولة حتى الآن',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.style(
+                fontSize: 13.sp,
+                color: isDark ? AppColors.grey400 : AppColors.textMuted,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

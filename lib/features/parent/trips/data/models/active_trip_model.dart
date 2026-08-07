@@ -35,11 +35,11 @@ class VehicleInfoModel {
       return VehicleInfoModel(info: json);
     } else if (json is Map<String, dynamic>) {
       return VehicleInfoModel(
-        info: json['info']?.toString() ?? json['model']?.toString() ?? 'حافلة مدرسية',
+        info: json['info']?.toString() ?? json['model']?.toString() ?? '',
         plateNumber: json['plate_number']?.toString() ?? json['plate']?.toString(),
       );
     }
-    return const VehicleInfoModel(info: 'حافلة مدرسية');
+    return const VehicleInfoModel(info: '');
   }
 }
 
@@ -67,7 +67,7 @@ class TripChildInfo {
       childId: json['child_id'] as int? ?? json['id'] as int? ?? 0,
       childName: json['child_name']?.toString() ?? json['name']?.toString() ?? '',
       childPhoto: json['child_photo']?.toString() ?? json['photo']?.toString(),
-      childStatus: json['child_status']?.toString() ?? json['status']?.toString() ?? 'waiting',
+      childStatus: json['child_status']?.toString() ?? json['status']?.toString() ?? '',
       pickupTime: json['pickup_time']?.toString() ?? json['onboard_time']?.toString(),
       dropoffTime: json['dropoff_time']?.toString() ?? json['arrival_time']?.toString(),
       direction: json['direction']?.toString(),
@@ -90,10 +90,10 @@ class DestinationInfo {
 
   factory DestinationInfo.fromJson(Map<String, dynamic> json) {
     return DestinationInfo(
-      name: json['name']?.toString() ?? 'الوجهة',
-      type: json['type']?.toString() ?? 'school',
-      lat: (json['lat'] as num?)?.toDouble() ?? (json['latitude'] as num?)?.toDouble() ?? 32.8872,
-      lng: (json['lng'] as num?)?.toDouble() ?? (json['longitude'] as num?)?.toDouble() ?? 13.1913,
+      name: json['name']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      lat: (json['lat'] as num?)?.toDouble() ?? (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      lng: (json['lng'] as num?)?.toDouble() ?? (json['longitude'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }
@@ -157,7 +157,7 @@ class ActiveTripModel {
           childId: json['child_id'] as int? ?? 0,
           childName: json['child_name']?.toString() ?? '',
           childPhoto: json['child_photo']?.toString(),
-          childStatus: json['child_status']?.toString() ?? 'waiting',
+          childStatus: json['child_status']?.toString() ?? '',
         )
       ];
     }
@@ -167,18 +167,18 @@ class ActiveTripModel {
       destObj = DestinationInfo.fromJson(json['destination'] as Map<String, dynamic>);
     } else {
       destObj = DestinationInfo(
-        name: json['destination_name']?.toString() ?? 'المدرسة',
-        type: json['destination_type']?.toString() ?? 'school',
-        lat: (json['dest_lat'] as num?)?.toDouble() ?? 32.8872,
-        lng: (json['dest_lng'] as num?)?.toDouble() ?? 13.1913,
+        name: json['destination_name']?.toString() ?? '',
+        type: json['destination_type']?.toString() ?? '',
+        lat: (json['dest_lat'] as num?)?.toDouble() ?? 0.0,
+        lng: (json['dest_lng'] as num?)?.toDouble() ?? 0.0,
       );
     }
 
     return ActiveTripModel(
       tripId: json['trip_id'] as int? ?? json['id'] as int? ?? 0,
-      tripType: json['trip_type']?.toString() ?? 'morning',
-      direction: json['direction']?.toString() ?? (json['trip_type'] == 'evening' ? 'to_home' : 'to_school'),
-      status: json['status']?.toString() ?? 'active',
+      tripType: json['trip_type']?.toString() ?? '',
+      direction: json['direction']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
       startedAt: json['started_at']?.toString() ?? '',
       driver: driverObj,
       vehicle: vehicleObj,

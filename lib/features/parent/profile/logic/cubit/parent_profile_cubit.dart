@@ -39,20 +39,24 @@ class ParentProfileCubit extends Cubit<ParentProfileState> {
       emit(ParentProfileUpdateLoading(_currentParent!));
     }
     try {
-      final updatedParent = await repository.updateParentProfile(
+      await repository.updateParentProfile(
         fullName: fullName,
         phoneNumber: phoneNumber,
         email: email,
         alternativePhone: alternativePhone,
         avatarFile: avatarFile,
       );
-      _currentParent = updatedParent;
+
+      // إعادة جلب أحدث البيانات من الباك إند فوراً بعد عملية التعديل (Refresh)
+      final freshParent = await repository.getParentProfile();
+      _currentParent = freshParent;
+
       debugPrint(
-        '✅ [ParentProfileCubit] تحديث ناجح — avatarUrl: ${updatedParent.avatarUrl}, '
-        'emailChangePending: ${updatedParent.emailChangePending}',
+        '✅ [ParentProfileCubit] تحديث ورفرش ناجح من الباك إند — avatarUrl: ${freshParent.avatarUrl}, '
+        'emailChangePending: ${freshParent.emailChangePending}',
       );
-      emit(ParentProfileSuccess(updatedParent, 'تم تحديث الملف الشخصي بنجاح'));
-      emit(ParentProfileLoaded(updatedParent));
+      emit(ParentProfileSuccess(freshParent, 'تم تحديث الملف الشخصي بنجاح'));
+      emit(ParentProfileLoaded(freshParent));
     } catch (e) {
       debugPrint('❌ [ParentProfileCubit] updateProfile: $e');
       emit(ParentProfileError(e.toString().replaceAll('Exception:', '')));

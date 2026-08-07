@@ -1,20 +1,55 @@
 import 'active_trip_model.dart';
 
+class TrackingChildInfo {
+  final int childId;
+  final String childName;
+  final String status;
+
+  const TrackingChildInfo({
+    required this.childId,
+    required this.childName,
+    required this.status,
+  });
+
+  factory TrackingChildInfo.fromJson(Map<String, dynamic> json) {
+    return TrackingChildInfo(
+      childId: _parseInt(json['child_id'] ?? json['id']),
+      childName: json['child_name']?.toString() ?? json['name']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+    );
+  }
+
+  static int _parseInt(dynamic val) {
+    if (val is int) return val;
+    if (val is num) return val.toInt();
+    if (val != null) return int.tryParse(val.toString()) ?? 0;
+    return 0;
+  }
+}
+
 class LiveTrackingModel {
   final int tripId;
+  final int? driverId;
+  final String? driverName;
   final String status;
   final double driverLat;
   final double driverLng;
+  final double? speed;
   final DestinationInfo? destination;
+  final List<TrackingChildInfo> children;
   final String lastUpdated;
   final bool isOnline;
 
   const LiveTrackingModel({
     required this.tripId,
+    this.driverId,
+    this.driverName,
     required this.status,
     required this.driverLat,
     required this.driverLng,
+    this.speed,
     this.destination,
+    this.children = const [],
     required this.lastUpdated,
     this.isOnline = true,
   });
@@ -34,18 +69,43 @@ class LiveTrackingModel {
 
     DestinationInfo? dest;
     if (json['destination'] is Map<String, dynamic>) {
-      dest = DestinationInfo.fromJson(json['destination'] as Map<String, dynamic>);
+      dest = DestinationInfo.fromJson(Map<String, dynamic>.from(json['destination'] as Map));
+    }
+
+    List<TrackingChildInfo> childrenList = [];
+    if (json['children'] is List) {
+      childrenList = (json['children'] as List)
+          .map((e) => TrackingChildInfo.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
     }
 
     return LiveTrackingModel(
-      tripId: json['trip_id'] as int? ?? json['id'] as int? ?? 0,
+      tripId: _parseInt(json['trip_id'] ?? json['id']),
+      driverId: _parseNullableInt(json['driver_id']),
+      driverName: json['driver_name']?.toString(),
       status: json['status']?.toString() ?? 'active',
       driverLat: lat,
       driverLng: lng,
+      speed: (json['speed'] as num?)?.toDouble(),
       destination: dest,
+      children: childrenList,
       lastUpdated: json['last_updated']?.toString() ?? 'الآن',
       isOnline: json['is_online'] as bool? ?? true,
     );
+  }
+
+  static int _parseInt(dynamic val) {
+    if (val is int) return val;
+    if (val is num) return val.toInt();
+    if (val != null) return int.tryParse(val.toString()) ?? 0;
+    return 0;
+  }
+
+  static int? _parseNullableInt(dynamic val) {
+    if (val is int) return val;
+    if (val is num) return val.toInt();
+    if (val != null) return int.tryParse(val.toString());
+    return null;
   }
 }
 
