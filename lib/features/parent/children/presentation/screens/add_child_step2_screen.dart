@@ -313,8 +313,9 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                     firstDate: DateTime(2000),
                                     lastDate: DateTime(2100),
                                   );
-                                  if (date != null)
+                                  if (date != null) {
                                     setState(() => _startDate = date);
+                                  }
                                 },
                                 child: InputDecorator(
                                   decoration: InputDecoration(
@@ -353,8 +354,9 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                     firstDate: DateTime(2000),
                                     lastDate: DateTime(2100),
                                   );
-                                  if (date != null)
+                                  if (date != null) {
                                     setState(() => _endDate = date);
+                                  }
                                 },
                                 child: InputDecorator(
                                   decoration: InputDecoration(
@@ -407,10 +409,11 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                           context: context,
                                           initialTime: _schoolStartTime,
                                         );
-                                        if (time != null)
+                                        if (time != null) {
                                           setState(
                                             () => _schoolStartTime = time,
                                           );
+                                        }
                                       },
                                       child: InputDecorator(
                                         decoration: InputDecoration(
@@ -441,8 +444,9 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                           context: context,
                                           initialTime: _schoolEndTime,
                                         );
-                                        if (time != null)
+                                        if (time != null) {
                                           setState(() => _schoolEndTime = time);
+                                        }
                                       },
                                       child: InputDecorator(
                                         decoration: InputDecoration(

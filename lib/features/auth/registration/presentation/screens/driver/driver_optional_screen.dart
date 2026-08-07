@@ -57,8 +57,9 @@ class _DriverOptionalScreenState extends State<DriverOptionalScreen> {
                         source: ImageSource.gallery,
                         imageQuality: 60,
                       );
-                      if (file != null)
+                      if (file != null) {
                         setState(() => _imageFile = File(file.path));
+                      }
                     },
                     child: CircleAvatar(
                       radius: 60,

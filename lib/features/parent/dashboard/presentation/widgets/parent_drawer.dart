@@ -291,12 +291,12 @@ class _DrawerHeader extends StatelessWidget {
                                 width: 76,
                                 height: 76,
                                 fit: BoxFit.cover,
-                                placeholder: (_, __) => const Icon(
+                                placeholder: (_, _) => const Icon(
                                   Icons.person_rounded,
                                   color: AppColors.white,
                                   size: 36,
                                 ),
-                                errorWidget: (_, __, ___) => const Icon(
+                                errorWidget: (_, _, _) => const Icon(
                                   Icons.person_rounded,
                                   color: AppColors.white,
                                   size: 36,

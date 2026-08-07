@@ -11,6 +11,8 @@ import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscr
 import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 import 'package:kids_transport/features/driver/finance/presentation/screens/finance_dashboard_screen.dart';
 import 'package:kids_transport/features/driver/finance/presentation/logic/finance_cubit.dart';
+import 'package:kids_transport/features/driver/trips/logic/driver_trips_cubit/driver_trips_cubit.dart';
+import 'package:kids_transport/features/driver/trips/presentation/screens/driver_trips_screen.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -51,20 +53,20 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
   int _selectedIndex = 0;
 
   late final List<Widget> _screens;
+  late final DriverTripsCubit _tripsCubit;
 
   @override
   void initState() {
     super.initState();
+    _tripsCubit = driverSl<DriverTripsCubit>();
     _screens = [
       // الشاشة الرئيسية للسائق
       const DriverHomeScreen(),
 
-      // TODO: استبدل هذه الشاشات بالشاشات الحقيقية عند إنشائها
-      Center(
-        child: Text(
-          '🗺️ رحلاتي',
-          style: AppTextStyles.style(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+      // شاشة رحلاتي اليوم
+      BlocProvider.value(
+        value: _tripsCubit,
+        child: const DriverTripsScreen(),
       ),
       BlocProvider(
         create: (_) => driverSl<FinanceCubit>(),
@@ -148,6 +150,7 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
                       selectedIndex: _selectedIndex,
                       onTabChange: (index) {
                         setState(() => _selectedIndex = index);
+                        if (index == 1) _tripsCubit.refresh();
                       },
                       tabs: const [
                         GButton(icon: Icons.home_rounded, text: 'الرئيسية'),

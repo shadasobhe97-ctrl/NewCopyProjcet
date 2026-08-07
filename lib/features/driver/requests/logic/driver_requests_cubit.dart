@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/features/driver/requests/data/models/accept_request_response_model.dart';
 import 'package:kids_transport/features/driver/requests/data/models/driver_request_model.dart';
 import 'package:kids_transport/features/driver/requests/data/repositories/driver_requests_repository.dart';
+
 
 part 'driver_requests_state.dart';
 
@@ -129,31 +131,23 @@ class DriverRequestsCubit extends Cubit<DriverRequestsState> {
   Future<void> refresh() => loadRequests(filter: _currentFilter);
 
   /// قبول طلب اشتراك
-  Future<bool> acceptRequest(int requestId) async {
-    print('==== [Cubit] جاري إرسال طلب القبول للطلب رقم: $requestId ====');
+  Future<AcceptRequestResponseModel?> acceptRequest(int requestId) async {
     try {
-      await _repository.acceptRequest(requestId);
-      print('==== [Cubit] تم القبول بنجاح ====');
-      return true;
-    } catch (e) {
-      print('==== [Cubit] ❌ خطأ أثناء القبول ====');
-      print(e.toString());
-      return false;
+      final response = await _repository.acceptRequest(requestId);
+      return response;
+    } catch (_) {
+      return null;
     }
   }
 
   /// رفض طلب اشتراك
   Future<bool> rejectRequest(int requestId, {required String reason}) async {
-    print('==== [Cubit] جاري إرسال طلب الرفض للطلب رقم: $requestId ====');
-    print('==== [Cubit] سبب الرفض: $reason ====');
     try {
       await _repository.rejectRequest(requestId, reason: reason);
-      print('==== [Cubit] تم الرفض بنجاح ====');
       return true;
-    } catch (e) {
-      print('==== [Cubit] ❌ خطأ أثناء الرفض ====');
-      print(e.toString());
+    } catch (_) {
       return false;
     }
   }
+
 }

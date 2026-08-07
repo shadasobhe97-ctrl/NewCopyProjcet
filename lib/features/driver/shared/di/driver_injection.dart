@@ -33,6 +33,14 @@ import 'package:kids_transport/features/driver/finance/data/datasources/finance_
 import 'package:kids_transport/features/driver/finance/data/repositories/finance_repository.dart';
 import 'package:kids_transport/features/driver/finance/presentation/logic/finance_cubit.dart';
 
+// Trips
+import 'package:kids_transport/features/driver/trips/data/datasources/driver_trips_remote_data_source.dart';
+import 'package:kids_transport/features/driver/trips/data/repositories/driver_trips_repository.dart';
+import 'package:kids_transport/features/driver/trips/logic/driver_trips_cubit/driver_trips_cubit.dart';
+import 'package:kids_transport/features/driver/trips/logic/live_trip_cubit/live_trip_cubit.dart';
+import 'package:kids_transport/features/driver/trips/logic/driver_trips_history_cubit/driver_trips_history_cubit.dart';
+import 'package:kids_transport/features/driver/trips/logic/driver_absence_cubit/driver_absence_cubit.dart';
+
 final GetIt driverSl = GetIt.instance;
 
 void initDriverInjection() {
@@ -152,4 +160,39 @@ void initDriverInjection() {
       () => FinanceCubit(driverSl<FinanceRepository>()),
     );
   }
+
+  // =========================================
+  // 7. Trips Feature
+  // =========================================
+  if (!driverSl.isRegistered<DriverTripsRemoteDataSource>()) {
+    driverSl.registerLazySingleton<DriverTripsRemoteDataSource>(
+      () => DriverTripsRemoteDataSource(driverSl<ApiClient>()),
+    );
+  }
+  if (!driverSl.isRegistered<DriverTripsRepository>()) {
+    driverSl.registerLazySingleton<DriverTripsRepository>(
+      () => DriverTripsRepository(driverSl<DriverTripsRemoteDataSource>()),
+    );
+  }
+  if (!driverSl.isRegistered<DriverTripsCubit>()) {
+    driverSl.registerFactory<DriverTripsCubit>(
+      () => DriverTripsCubit(driverSl<DriverTripsRepository>()),
+    );
+  }
+  if (!driverSl.isRegistered<LiveTripCubit>()) {
+    driverSl.registerFactory<LiveTripCubit>(
+      () => LiveTripCubit(driverSl<DriverTripsRepository>()),
+    );
+  }
+  if (!driverSl.isRegistered<DriverTripsHistoryCubit>()) {
+    driverSl.registerFactory<DriverTripsHistoryCubit>(
+      () => DriverTripsHistoryCubit(driverSl<DriverTripsRepository>()),
+    );
+  }
+  if (!driverSl.isRegistered<DriverAbsenceCubit>()) {
+    driverSl.registerFactory<DriverAbsenceCubit>(
+      () => DriverAbsenceCubit(driverSl<DriverTripsRepository>()),
+    );
+  }
 }
+

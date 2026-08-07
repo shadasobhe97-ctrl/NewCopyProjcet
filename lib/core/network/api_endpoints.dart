@@ -2,7 +2,7 @@ class ApiEndpoints {
   const ApiEndpoints._();
 
   // الرابط الأساسي للسيرفر (يحتوي على /api/)
-  static const String baseUrl = 'http://127.0.0.1:8000/api/';
+  static const String baseUrl = 'https://cold-sloth-88.loca.lt/api/';
 
   //=========================================
   // Auth Endpoints (مسارات المصادقة العامة)
@@ -43,10 +43,40 @@ class ApiEndpoints {
   static const String parentDriversSearch = 'parent/drivers/search';
   static const String parentSubscriptions = 'parent/subscriptions';
 
+  static const String driverPreferenceDefaults =
+      'v1/driver/preferences/defaults';
   static const String driverPreferences = 'v1/driver/preferences';
-  static const String driverZones = 'v1/driver/zones';
   static const String driverProfile = 'v1/driver/profile';
   static const String driverProfileUpdate = 'v1/driver/profile/update';
+
+  // ================= Driver Trips =================
+  static const String driverTripsToday = 'v1/driver/trips/today';
+  static String driverTripDetails(dynamic tripId) => 'v1/driver/trips/$tripId';
+  static String driverTripStart(dynamic tripId) =>
+      'v1/driver/trips/$tripId/start';
+  static String driverTripLive(dynamic tripId) =>
+      'v1/driver/trips/$tripId/live';
+  static String driverTripLocation(dynamic tripId) =>
+      'v1/driver/trips/$tripId/location';
+  static String driverTripStops(dynamic tripId) =>
+      'v1/driver/trips/$tripId/stops';
+  static String driverTripChildStatus(dynamic tripId, dynamic tripChildId) =>
+      'v1/driver/trips/$tripId/children/$tripChildId/status';
+  static String driverTripSkipChild(dynamic tripId, dynamic childId) =>
+      'v1/driver/trips/$tripId/skip/$childId';
+  static String driverTripVerifyQr(dynamic tripId, dynamic childId) =>
+      'v1/driver/trips/$tripId/verify-qr/$childId';
+  static String driverTripComplete(dynamic tripId) =>
+      'v1/driver/trips/$tripId/complete';
+  static const String driverTripsHistory = 'v1/driver/trips/history';
+  static String driverTripHistoryDetails(dynamic tripId) =>
+      'v1/driver/trips/history/$tripId';
+  static const String driverTripsRegisterAbsence =
+      'v1/driver/trips/register-absence';
+  static String driverTripReportBreakdown(dynamic tripId) =>
+      'v1/driver/trips/$tripId/report-breakdown';
+  static String driverTripResume(dynamic tripId) =>
+      'v1/driver/trips/$tripId/resume';
 
   // ================= Driver Subscriptions =================
   static const String driverActiveSubscriptions = 'driver/active-subscriptions';

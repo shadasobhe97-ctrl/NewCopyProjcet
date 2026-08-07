@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/features/driver/requests/logic/driver_requests_cubit.dart';
 import 'package:kids_transport/features/driver/requests/data/models/driver_request_model.dart';
 
+
 /// شاشة تفاصيل طلب الاشتراك للسائق
 /// تستدعي [DriverRequestsCubit.loadRequestDetails] لجلب التفاصيل من API
 class DriverRequestDetailsScreen extends StatefulWidget {
@@ -202,7 +203,7 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
       builder: (dCtx) => AlertDialog(
         title: const Text('قبول الطلب', textAlign: TextAlign.right),
         content: const Text(
-          'هل أنت متأكد من قبول هذا الطلب؟ سيتم إنشاء عقد اشتراك نشط تلقائياً للطفل.',
+          'هل أنت متأكد من قبول هذا الطلب؟ سيظهر الطفل تلقائياً في رحلاتك القادمة حسب مسارك.',
           textAlign: TextAlign.right,
         ),
         actions: [
@@ -211,26 +212,44 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              final cubit = context.read<DriverRequestsCubit>();
+              final messenger = ScaffoldMessenger.of(context);
+
               Navigator.of(dCtx).pop();
-              context
-                  .read<DriverRequestsCubit>()
-                  .acceptRequest(request.id)
-                  .then((_) {
-                if (mounted) {
-                  context
-                      .read<DriverRequestsCubit>()
-                      .loadRequestDetails(request.id);
-                }
-              });
+              final result = await cubit.acceptRequest(request.id);
+
+              if (!mounted) return;
+
+              if (result != null && result.success) {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(result.message.isNotEmpty
+                        ? result.message
+                        : 'تم قبول الطلب وتفعيل الاشتراك بنجاح.'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+
+                cubit.loadRequestDetails(request.id);
+              } else {
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('تعذر قبول الطلب. الرجاء المحاولة مرة أخرى.'),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
             },
+
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
-            child: const Text('قبول ونقل'),
+            child: const Text('قبول وإسناد'),
           ),
         ],
       ),
     );
   }
+
 
   void _showRejectDialog(BuildContext context, DriverRequestModel request) {
     final controller = TextEditingController();
@@ -261,28 +280,24 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (controller.text.trim().isEmpty) {
                 ScaffoldMessenger.of(dCtx).showSnackBar(
                   const SnackBar(content: Text('الرجاء إدخال سبب الرفض')),
                 );
                 return;
               }
+              final cubit = context.read<DriverRequestsCubit>();
               Navigator.of(dCtx).pop();
-              context
-                  .read<DriverRequestsCubit>()
-                  .rejectRequest(
-                    request.id,
-                    reason: controller.text.trim(),
-                  )
-                  .then((_) {
-                if (mounted) {
-                  context
-                      .read<DriverRequestsCubit>()
-                      .loadRequestDetails(request.id);
-                }
-              });
+              await cubit.rejectRequest(
+                request.id,
+                reason: controller.text.trim(),
+              );
+              if (mounted) {
+                cubit.loadRequestDetails(request.id);
+              }
             },
+
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('رفض الطلب'),
           ),

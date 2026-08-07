@@ -167,12 +167,15 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                         : () {
                             // التحقق من وجود الملفات الإلزامية قبل الإرسال
                             final missingDocs = <String>[];
-                            if (widget.finalData['license_doc'] == null)
+                            if (widget.finalData['license_doc'] == null) {
                               missingDocs.add('رخصة القيادة');
-                            if (widget.finalData['criminal_doc'] == null)
+                            }
+                            if (widget.finalData['criminal_doc'] == null) {
                               missingDocs.add('شهادة الحالة الجنائية');
-                            if (widget.finalData['logbook_doc'] == null)
+                            }
+                            if (widget.finalData['logbook_doc'] == null) {
                               missingDocs.add('كتيب المركبة');
+                            }
 
                             if (missingDocs.isNotEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(

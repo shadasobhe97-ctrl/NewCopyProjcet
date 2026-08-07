@@ -141,24 +141,24 @@ class ApiClient {
     Map<String, dynamic>? headers,
   }) async {
     final fullUrl = '${_dio.options.baseUrl}$path';
-    print('--> HTTP GET $fullUrl');
-    print('QueryParameters: $queryParameters');
+    debugPrint('--> HTTP GET $fullUrl');
+    debugPrint('QueryParameters: $queryParameters');
     final mergedHeaders = {..._dio.options.headers, ...?headers};
-    print('Headers: $mergedHeaders');
+    debugPrint('Headers: $mergedHeaders');
     try {
       final response = await _dio.get(
         path,
         queryParameters: queryParameters,
         options: Options(headers: headers),
       );
-      print('<-- STATUS ${response.statusCode} ($path)');
-      print('Response Body: ${response.data}');
+      debugPrint('<-- STATUS ${response.statusCode} ($path)');
+      debugPrint('Response Body: ${response.data}');
       return response;
     } on DioException catch (error) {
-      print('<!- ERROR ($path): ${error.message}');
+      debugPrint('<!- ERROR ($path): ${error.message}');
       if (error.response != null) {
-        print('Error Status: ${error.response?.statusCode}');
-        print('Error Response Body: ${error.response?.data}');
+        debugPrint('Error Status: ${error.response?.statusCode}');
+        debugPrint('Error Response Body: ${error.response?.data}');
       }
       throw ApiException.fromDioException(error);
     }
@@ -169,22 +169,22 @@ class ApiClient {
     Map<String, dynamic>? headers,
   }) async {
     final fullUrl = '${_dio.options.baseUrl}$path';
-    print('--> HTTP DELETE $fullUrl');
+    debugPrint('--> HTTP DELETE $fullUrl');
     final mergedHeaders = {..._dio.options.headers, ...?headers};
-    print('Headers: $mergedHeaders');
+    debugPrint('Headers: $mergedHeaders');
     try {
       final response = await _dio.delete(
         path,
         options: Options(headers: headers),
       );
-      print('<-- STATUS ${response.statusCode} ($path)');
-      print('Response Body: ${response.data}');
+      debugPrint('<-- STATUS ${response.statusCode} ($path)');
+      debugPrint('Response Body: ${response.data}');
       return response;
     } on DioException catch (error) {
-      print('<!- ERROR ($path): ${error.message}');
+      debugPrint('<!- ERROR ($path): ${error.message}');
       if (error.response != null) {
-        print('Error Status: ${error.response?.statusCode}');
-        print('Error Response Body: ${error.response?.data}');
+        debugPrint('Error Status: ${error.response?.statusCode}');
+        debugPrint('Error Response Body: ${error.response?.data}');
       }
       throw ApiException.fromDioException(error);
     }

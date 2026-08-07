@@ -52,8 +52,9 @@ class _AuthPasswordFieldState extends State<AuthPasswordField> {
       validator:
           widget.validator ??
           (value) {
-            if (value == null || value.isEmpty)
+            if (value == null || value.isEmpty) {
               return 'الرجاء إدخال كلمة المرور';
+            }
             if (value.length < 6) return 'كلمة المرور يجب أن لا تقل عن 6 خانات';
 
             final hasLetter = RegExp(r'[a-zA-Z]').hasMatch(value);

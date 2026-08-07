@@ -36,8 +36,9 @@ class RegisterCubit extends Cubit<RegisterState> {
 
   String get _deviceName {
     if (kIsWeb) return 'Derbi_Flutter_Web';
-    if (defaultTargetPlatform == TargetPlatform.android)
+    if (defaultTargetPlatform == TargetPlatform.android) {
       return 'Derbi_Flutter_Android';
+    }
     if (defaultTargetPlatform == TargetPlatform.iOS) return 'Derbi_Flutter_iOS';
     return 'Derbi_Flutter';
   }

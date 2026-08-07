@@ -149,8 +149,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       controller: _confirmPasswordController,
                       hintText: 'تأكيد كلمة المرور الجديدة',
                       validator: (value) {
-                        if (value != _passwordController.text)
+                        if (value != _passwordController.text) {
                           return 'كلمات المرور غير متطابقة';
+                        }
                         return null;
                       },
                     ),

@@ -121,6 +121,35 @@ class DriverDrawer extends StatelessWidget {
                     },
                   ),
 
+                  // ── سجل الرحلات ──
+                  AppDrawerItem(
+                    icon: Icons.history_rounded,
+                    iconColor: context.primaryColor,
+                    label: 'سجل الرحلات',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.driverTripsHistory,
+                      );
+                    },
+                  ),
+
+                  // ── تسجيل غياب ──
+                  AppDrawerItem(
+                    icon: Icons.event_busy_rounded,
+                    iconColor: context.primaryColor,
+                    label: 'تسجيل غياب',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.driverAbsence,
+                      );
+                    },
+                  ),
+
+
                   // ── المركبة الاحتياطية ──
                   /*BackupVehicleDrawerItem(
                     driver: driver,
@@ -277,12 +306,12 @@ class _DriverDrawerHeader extends StatelessWidget {
                                 width: 76,
                                 height: 76,
                                 fit: BoxFit.cover,
-                                placeholder: (_, __) => const Icon(
+                                placeholder: (_, _) => const Icon(
                                   Icons.person_rounded,
                                   color: AppColors.white,
                                   size: 36,
                                 ),
-                                errorWidget: (_, __, ___) => const Icon(
+                                errorWidget: (_, _, _) => const Icon(
                                   Icons.person_rounded,
                                   color: AppColors.white,
                                   size: 36,

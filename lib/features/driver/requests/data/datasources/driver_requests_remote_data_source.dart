@@ -1,7 +1,9 @@
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/features/driver/requests/data/models/accept_request_response_model.dart';
 import 'package:kids_transport/features/driver/requests/data/models/driver_request_model.dart';
+
 
 class DriverRequestsRemoteDataSource {
   final ApiClient _apiClient;
@@ -30,13 +32,15 @@ class DriverRequestsRemoteDataSource {
     );
 
     final data = response.data;
-    if (data == null)
+    if (data == null) {
       return PaginatedDriverRequests(
         data: [],
         currentPage: 1,
         lastPage: 1,
         perPage: 15,
       );
+    }
+
     if (data is Map) {
       final success = data['success'];
       if (success == false) {
@@ -105,44 +109,38 @@ class DriverRequestsRemoteDataSource {
     throw ApiException('تعذر تحميل تفاصيل الطلب.');
   }
 
-  Future<void> acceptRequest(int requestId) async {
-    try {
-      print('===> ⏳ جاري إرسال طلب القبول للسيرفر (الطلب رقم: $requestId)');
+  Future<AcceptRequestResponseModel> acceptRequest(int requestId) async {
+    final response = await _apiClient.put(
+      'driver/$requestId/status',
+      data: {'status': 'accepted'},
+      headers: _authHeader,
+    );
 
-      final response = await _apiClient.put(
-        'driver/$requestId/status',
-        data: {'status': 'accepted'},
-        headers: _authHeader,
-      );
-
-      print('===> ✅ تم القبول بنجاح! كود الرد: ${response.statusCode}');
-      print('===> 📄 بيانات الرد: ${response.data}');
-
-      // ... باقي الكود الخاص بيك
-    } catch (e) {
-      print('===> ❌ حدث خطأ أثناء إرسال طلب القبول!');
-      print('===> 📝 نوع الخطأ: ${e.toString()}');
-
-      // لو كنتِ تستخدمي في باكدج Dio، السطور هذي حتجيبلك رسالة الخطأ الدقيقة من السيرفر:
-      try {
-        final dioError = e as dynamic;
-        if (dioError.response != null) {
-          print('===> 🔴 كود خطأ السيرفر: ${dioError.response?.statusCode}');
-          print('===> 🔴 تفاصيل خطأ السيرفر: ${dioError.response?.data}');
-        }
-      } catch (_) {}
-
-      rethrow;
+    final data = response.data;
+    if (data == null) {
+      throw const ApiException('تعذر قبول الطلب.');
     }
+
+    if (data is Map) {
+      final success = data['success'];
+      if (success == false) {
+        final msg = ApiException.extractMessage(data);
+        throw ApiException(msg ?? 'تعذر قبول الطلب.');
+      }
+      return AcceptRequestResponseModel.fromJson(
+          Map<String, dynamic>.from(data));
+    }
+
+    throw const ApiException('تعذر معالجة استجابة قبول الطلب.');
   }
 
+
   Future<void> rejectRequest(int requestId, {required String reason}) async {
-    // التعديل: مسار ريان الدقيق بدون كلمة requests
-    final response = await _apiClient.put(
+    await _apiClient.put(
       'driver/$requestId/status',
       data: {'status': 'rejected', 'rejection_reason': reason},
       headers: _authHeader,
     );
-    // ... باقي الكود
   }
+
 }

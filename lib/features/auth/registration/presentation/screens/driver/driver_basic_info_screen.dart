@@ -106,10 +106,12 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                     prefixIcon: Icon(Icons.person_outline),
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty)
+                    if (v == null || v.trim().isEmpty) {
                       return "الرجاء إدخال الاسم الكامل";
-                    if (v.trim().length < 10 || v.trim().length > 100)
+                    }
+                    if (v.trim().length < 10 || v.trim().length > 100) {
                       return "يجب أن يكون الاسم بين 10 إلى 100 حرف";
+                    }
                     return null;
                   },
                 ),
@@ -143,12 +145,15 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                     prefixIcon: Icon(Icons.phone_android),
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty)
+                    if (v == null || v.trim().isEmpty) {
                       return "رقم الهاتف إجباري";
-                    if (v.trim().length != 10)
+                    }
+                    if (v.trim().length != 10) {
                       return "يجب أن يتكون الرقم من 10 أرقام بالضبط";
-                    if (!v.trim().startsWith("09"))
+                    }
+                    if (!v.trim().startsWith("09")) {
                       return "يجب أن يبدأ الرقم بـ 09 حصراً";
+                    }
                     return null;
                   },
                 ),
@@ -197,10 +202,12 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                     ),
                   ),
                   validator: (v) {
-                    if (v == null || v.isEmpty)
+                    if (v == null || v.isEmpty) {
                       return "الرجاء تأكيد كلمة المرور";
-                    if (v != _passwordController.text)
+                    }
+                    if (v != _passwordController.text) {
                       return "كلمة المرور غير متطابقة";
+                    }
                     return null;
                   },
                 ),

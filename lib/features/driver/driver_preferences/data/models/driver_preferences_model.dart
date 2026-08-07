@@ -1,106 +1,57 @@
+import 'coverage_model.dart';
+import 'driver_shift_slots_model.dart';
+import 'seat_slot_model.dart';
+
 class DriverPreferencesModel {
   final int driverId;
-  final int shift;
+  final DriverShiftSlotsModel shiftSlots;
   final String subscriptionType;
-  final CoverageModel coverage;
+  final SeatSlotModel seatSlots;
+  final List<CoverageModel> coverage;
 
   DriverPreferencesModel({
     required this.driverId,
-    required this.shift,
+    required this.shiftSlots,
     required this.subscriptionType,
+    required this.seatSlots,
     required this.coverage,
   });
 
   factory DriverPreferencesModel.fromJson(Map<String, dynamic> json) {
+    // 🛡️ دالة حماية: إذا جاءت البيانات من لارافل كمصفوفة فارغة [] تحولها لكائن فارغ {}
+    Map<String, dynamic> safeMap(dynamic value) {
+      if (value is Map) return Map<String, dynamic>.from(value);
+      return {};
+    }
+
+    // 🛡️ معالجة التغطية: لارافل يرسلها [] عندما تكون فارغة، و {} عندما تكون ممتلئة
+    List<CoverageModel> parsedCoverage = [];
+    if (json['coverage'] is List) {
+      parsedCoverage = (json['coverage'] as List)
+          .map((e) => CoverageModel.fromJson(safeMap(e)))
+          .toList();
+    } else if (json['coverage'] is Map) {
+      parsedCoverage = (json['coverage'] as Map).values
+          .map((e) => CoverageModel.fromJson(safeMap(e)))
+          .toList();
+    }
+
     return DriverPreferencesModel(
-      driverId: json['driver_id'] as int,
-      shift: json['shift'] as int,
-      subscriptionType: json['subscription_type'] as String,
-      coverage: CoverageModel.fromJson(json['coverage'] as Map<String, dynamic>),
+      driverId: json['driver_id'] as int? ?? 0,
+      shiftSlots: DriverShiftSlotsModel.fromJson(safeMap(json['shift_slots'])),
+      subscriptionType: json['subscription_type'] as String? ?? '',
+      seatSlots: SeatSlotModel.fromJson(safeMap(json['seat_slots'])),
+      coverage: parsedCoverage,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'driver_id': driverId,
-      'shift': shift,
+      'shift_slots': shiftSlots.toJson(),
       'subscription_type': subscriptionType,
-      'coverage': coverage.toJson(),
-    };
-  }
-}
-
-class CoverageModel {
-  final Map<String, MunicipalityCoverageModel> coverages;
-
-  CoverageModel({required this.coverages});
-
-  factory CoverageModel.fromJson(Map<String, dynamic> json) {
-    final map = <String, MunicipalityCoverageModel>{};
-    json.forEach((key, value) {
-      if (value is Map<String, dynamic>) {
-        map[key] = MunicipalityCoverageModel.fromJson(value);
-      }
-    });
-    return CoverageModel(coverages: map);
-  }
-
-  Map<String, dynamic> toJson() {
-    return coverages.map((key, value) => MapEntry(key, value.toJson()));
-  }
-}
-
-class MunicipalityCoverageModel {
-  final String municipalityName;
-  final String subMunicipalityName;
-  final List<ZoneModel> zones;
-
-  MunicipalityCoverageModel({
-    required this.municipalityName,
-    required this.subMunicipalityName,
-    required this.zones,
-  });
-
-  factory MunicipalityCoverageModel.fromJson(Map<String, dynamic> json) {
-    return MunicipalityCoverageModel(
-      municipalityName: json['municipality_name'] as String,
-      subMunicipalityName: json['sub_municipality_name'] as String,
-      zones: (json['zones'] as List<dynamic>?)
-              ?.map((e) => ZoneModel.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'municipality_name': municipalityName,
-      'sub_municipality_name': subMunicipalityName,
-      'zones': zones.map((e) => e.toJson()).toList(),
-    };
-  }
-}
-
-class ZoneModel {
-  final int id;
-  final String name;
-
-  ZoneModel({
-    required this.id,
-    required this.name,
-  });
-
-  factory ZoneModel.fromJson(Map<String, dynamic> json) {
-    return ZoneModel(
-      id: json['id'] as int,
-      name: json['name'] as String,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
+      'seat_slots': seatSlots.toJson(),
+      'coverage': coverage.map((e) => e.toJson()).toList(),
     };
   }
 }

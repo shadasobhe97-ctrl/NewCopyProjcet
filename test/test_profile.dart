@@ -72,3 +72,4 @@ void main() {
     print('DriverProfileView loaded successfully in test.');
   });
 }
+// ignore_for_file: avoid_print

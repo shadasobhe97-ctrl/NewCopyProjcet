@@ -33,8 +33,9 @@ class LoginFormFields extends StatelessWidget {
             prefixIcon: Icon(Icons.phone_android_rounded),
           ),
           validator: (value) {
-            if (value == null || value.trim().isEmpty)
+            if (value == null || value.trim().isEmpty) {
               return 'الرجاء إدخال رقم الهاتف';
+            }
             final regExp = RegExp(r'^(091|092|094|095)\d{7}$');
             if (!regExp.hasMatch(value.trim())) {
               return 'رقم هاتف ليبي غير صحيح (يجب أن يبدأ بـ 09X ويتكون من 10 أرقام)';

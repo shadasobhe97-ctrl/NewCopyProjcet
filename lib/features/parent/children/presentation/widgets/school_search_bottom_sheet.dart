@@ -108,7 +108,7 @@ class _SchoolSearchBottomSheetState extends State<SchoolSearchBottomSheet> {
                       ? const Center(child: Text('لم يتم العثور على مدارس.'))
                       : ListView.separated(
                           itemCount: _schools.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          separatorBuilder: (_, _) => const Divider(height: 1),
                           itemBuilder: (context, index) {
                             final school = _schools[index];
                             return ListTile(

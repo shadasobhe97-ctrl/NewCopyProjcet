@@ -1,12 +1,8 @@
 import '../models/driver_preferences_model.dart';
-import '../models/zone_model.dart';
+import '../models/preference_defaults_model.dart';
 
 abstract class DriverPreferencesRepository {
+  Future<PreferenceDefaultsModel> getPreferenceDefaults();
   Future<DriverPreferencesModel?> getPreferences();
-  Future<bool> savePreferences({
-    required int shift,
-    required String subscriptionType,
-    required List<int> zoneIds,
-  });
-  Future<List<Zone>> getZones();
+  Future<bool> updatePreferences(Map<String, dynamic> payload);
 }

@@ -131,8 +131,9 @@ class _DriverNationalInfoScreenState extends State<DriverNationalInfoScreen> {
                     prefixIcon: Icon(Icons.card_membership_outlined),
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty)
+                    if (v == null || v.trim().isEmpty) {
                       return "الرجاء إدخال رقم رخصة القيادة";
+                    }
                     return null;
                   },
                 ),
@@ -151,8 +152,9 @@ class _DriverNationalInfoScreenState extends State<DriverNationalInfoScreen> {
                     hintText: "اضغط لاختيار التاريخ",
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty)
+                    if (v == null || v.trim().isEmpty) {
                       return "الرجاء إدخال تاريخ انتهاء الرخصة";
+                    }
                     return null;
                   },
                 ),
@@ -160,7 +162,7 @@ class _DriverNationalInfoScreenState extends State<DriverNationalInfoScreen> {
                 const SizedBox(height: 16),
                 // الجنس
                 DropdownButtonFormField<String>(
-                  value: _selectedGender,
+                  initialValue: _selectedGender,
                   decoration: AppTheme.inputDecoration(context, 
                     labelText: "الجنس",
                     prefixIcon: Icon(Icons.wc),

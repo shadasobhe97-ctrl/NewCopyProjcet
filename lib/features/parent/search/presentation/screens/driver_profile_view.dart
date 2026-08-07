@@ -1571,7 +1571,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: breakdownList.length,
-            separatorBuilder: (_, __) => _divider(isDark),
+            separatorBuilder: (_, _) => _divider(isDark),
             itemBuilder: (context, index) {
               final item = breakdownList[index];
               final hasError = item.error != null && item.error!.isNotEmpty;

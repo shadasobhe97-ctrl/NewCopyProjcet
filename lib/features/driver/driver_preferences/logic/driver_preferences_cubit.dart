@@ -2,20 +2,44 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
 import '../data/repositories/driver_preferences_repository.dart';
 import 'driver_preferences_state.dart';
+import '../data/models/preference_defaults_model.dart';
+import '../data/models/driver_preferences_model.dart';
 
 class DriverPreferencesCubit extends Cubit<DriverPreferencesState> {
   final DriverPreferencesRepository _repository;
 
+  PreferenceDefaultsModel? _defaults;
+  PreferenceDefaultsModel? get defaults => _defaults;
+
+  DriverPreferencesModel? _preferences;
+  DriverPreferencesModel? get preferences => _preferences;
+
+
   DriverPreferencesCubit(this._repository) : super(DriverPreferencesInitial());
 
-  Future<void> loadPreferencesAndZones() async {
+  Future<void> loadPreferenceDefaults() async {
+    emit(PreferenceDefaultsLoading());
+    try {
+      _defaults = await _repository.getPreferenceDefaults();
+      emit(PreferenceDefaultsLoaded(_defaults!));
+      await loadDriverPreferences();
+    } on ApiException catch (e) {
+      emit(PreferenceDefaultsError(e.message));
+    } catch (e) {
+      emit(PreferenceDefaultsError(e.toString().replaceAll('Exception:', '')));
+    }
+  }
+
+  Future<void> loadDriverPreferences() async {
+    if (_defaults == null) return;
+    
     emit(DriverPreferencesLoading());
     try {
-      final preferences = await _repository.getPreferences();
-      final zones = await _repository.getZones();
-      emit(DriverPreferencesLoadSuccess(
-        preferences: preferences,
-        zones: zones,
+      final fetchedPreferences = await _repository.getPreferences();
+      _preferences = fetchedPreferences;
+      emit(DriverPreferencesLoaded(
+        preferences: fetchedPreferences,
+        defaults: _defaults!,
       ));
     } on ApiException catch (e) {
       emit(DriverPreferencesError(e.message));
@@ -24,27 +48,20 @@ class DriverPreferencesCubit extends Cubit<DriverPreferencesState> {
     }
   }
 
-  Future<void> savePreferences({
-    required int shift,
-    required String subscriptionType,
-    required List<int> zoneIds,
-  }) async {
-    emit(DriverPreferencesSaveLoading());
+  Future<void> updatePreferences(Map<String, dynamic> payload) async {
+    emit(UpdatingPreferences());
     try {
-      final success = await _repository.savePreferences(
-        shift: shift,
-        subscriptionType: subscriptionType,
-        zoneIds: zoneIds,
-      );
+      final success = await _repository.updatePreferences(payload);
       if (success) {
-        emit(DriverPreferencesSaveSuccess());
+        emit(UpdatePreferencesSuccess());
+        await loadPreferenceDefaults(); // Reload all data after success
       } else {
-        emit(const DriverPreferencesError('فشل حفظ التفضيلات.'));
+        emit(const UpdatePreferencesError('فشل حفظ التفضيلات.'));
       }
     } on ApiException catch (e) {
-      emit(DriverPreferencesError(e.message));
+      emit(UpdatePreferencesError(e.message));
     } catch (e) {
-      emit(DriverPreferencesError(e.toString().replaceAll('Exception:', '')));
+      emit(UpdatePreferencesError(e.toString().replaceAll('Exception:', '')));
     }
   }
 }

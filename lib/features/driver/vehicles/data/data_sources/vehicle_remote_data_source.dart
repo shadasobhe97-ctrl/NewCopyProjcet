@@ -79,16 +79,20 @@ class VehicleRemoteDataSource {
       'license_expiry_date': licenseExpiry,
     };
 
-    if (docLicense != null)
+    if (docLicense != null) {
       data['doc_license'] = await MultipartFile.fromFile(docLicense.path);
-    if (docLogbook != null)
+    }
+    if (docLogbook != null) {
       data['doc_logbook'] = await MultipartFile.fromFile(docLogbook.path);
-    if (docInsurance != null)
+    }
+    if (docInsurance != null) {
       data['doc_insurance'] = await MultipartFile.fromFile(docInsurance.path);
-    if (docCriminalRecord != null)
+    }
+    if (docCriminalRecord != null) {
       data['doc_criminal_record'] = await MultipartFile.fromFile(
         docCriminalRecord.path,
       );
+    }
 
     return await _dio.post(
       '${baseUrl}driver/profile/legal-data',

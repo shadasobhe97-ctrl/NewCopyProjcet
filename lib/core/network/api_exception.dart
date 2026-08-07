@@ -3,17 +3,22 @@ import 'package:dio/dio.dart';
 class ApiException implements Exception {
   final String message;
   final int? statusCode;
+  final String? errorCode;
 
-  const ApiException(this.message, {this.statusCode});
+  const ApiException(this.message, {this.statusCode, this.errorCode});
 
   factory ApiException.fromDioException(DioException error) {
     final response = error.response;
     final data = response?.data;
     final serverMessage = extractMessage(data);
-    
+    final serverErrorCode = extractErrorCode(data);
 
     if (serverMessage != null && serverMessage.isNotEmpty) {
-      return ApiException(serverMessage, statusCode: response?.statusCode);
+      return ApiException(
+        serverMessage,
+        statusCode: response?.statusCode,
+        errorCode: serverErrorCode,
+      );
     }
 
     switch (error.type) {
@@ -41,6 +46,13 @@ class ApiException implements Exception {
           'حدث خطأ غير متوقع أثناء الاتصال بالخادم.',
         );
     }
+  }
+
+  static String? extractErrorCode(dynamic data) {
+    if (data is Map && data['error_code'] != null) {
+      return data['error_code'].toString();
+    }
+    return null;
   }
 
   static String? extractMessage(dynamic data) {

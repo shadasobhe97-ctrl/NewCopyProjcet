@@ -42,6 +42,21 @@ import 'package:kids_transport/features/driver/driver_preferences/presentation/s
 import 'package:kids_transport/features/driver/subscriptions/presentation/screens/driver_subscription_details_screen.dart';
 import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
 
+// Driver Trips Feature
+import 'package:kids_transport/features/driver/trips/presentation/screens/trip_details_screen.dart'
+    as driver_trips;
+import 'package:kids_transport/features/driver/trips/presentation/screens/live_trip_screen.dart';
+import 'package:kids_transport/features/driver/trips/presentation/screens/trip_history_screen.dart'
+    as driver_trips;
+import 'package:kids_transport/features/driver/trips/presentation/screens/trip_history_details_screen.dart';
+import 'package:kids_transport/features/driver/trips/presentation/screens/driver_absence_screen.dart';
+import 'package:kids_transport/features/driver/trips/logic/driver_trips_cubit/driver_trips_cubit.dart';
+import 'package:kids_transport/features/driver/trips/logic/live_trip_cubit/live_trip_cubit.dart';
+import 'package:kids_transport/features/driver/trips/logic/driver_trips_history_cubit/driver_trips_history_cubit.dart';
+import 'package:kids_transport/features/driver/trips/logic/driver_absence_cubit/driver_absence_cubit.dart';
+
+
+
 import 'package:kids_transport/features/parent/addresses/presentation/screens/saved_addresses_screen.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step1_screen.dart';
@@ -168,6 +183,13 @@ class AppRoutes {
   static const String driverLocation = '/driverLocation';
   static const String driverWaiting = '/driverWaiting';
   static const String driverSubscriptionDetails = '/driverSubscriptionDetails';
+
+  // Driver Trips Routes
+  static const String driverTripDetails = '/driverTripDetails';
+  static const String driverLiveTrip = '/driverLiveTrip';
+  static const String driverTripsHistory = '/driverTripsHistory';
+  static const String driverTripHistoryDetails = '/driverTripHistoryDetails';
+  static const String driverAbsence = '/driverAbsence';
 
   static String getInitialRoute() {
     if (kIsWeb) {
@@ -478,10 +500,55 @@ class AppRoutes {
             child: DriverSubscriptionDetailsScreen(subscriptionId: subscriptionId),
           ),
         );
+      case driverTripDetails:
+        final tripId = settings.arguments as int;
+        return _route(
+          settings,
+          BlocProvider(
+            create: (_) => driverSl<DriverTripsCubit>(),
+            child: driver_trips.TripDetailsScreen(tripId: tripId),
+          ),
+        );
+      case driverLiveTrip:
+        final tripId = settings.arguments as int;
+        return _route(
+          settings,
+          BlocProvider(
+            create: (_) => driverSl<LiveTripCubit>(),
+            child: LiveTripScreen(tripId: tripId),
+          ),
+        );
+      case driverTripsHistory:
+        return _route(
+          settings,
+          BlocProvider(
+            create: (_) => driverSl<DriverTripsHistoryCubit>(),
+            child: const driver_trips.TripHistoryScreen(),
+          ),
+        );
+      case driverTripHistoryDetails:
+        final tripId = settings.arguments as int;
+        return _route(
+          settings,
+          BlocProvider(
+            create: (_) => driverSl<DriverTripsHistoryCubit>(),
+            child: TripHistoryDetailsScreen(tripId: tripId),
+          ),
+        );
+      case driverAbsence:
+        return _route(
+          settings,
+          BlocProvider(
+            create: (_) => driverSl<DriverAbsenceCubit>(),
+            child: const DriverAbsenceScreen(),
+          ),
+        );
+
       default:
         return null;
     }
   }
+
 
   static MaterialPageRoute<dynamic> _route(
     RouteSettings settings,

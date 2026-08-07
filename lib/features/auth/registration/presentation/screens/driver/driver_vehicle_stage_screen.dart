@@ -186,7 +186,7 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: _selectedTypeEnglish,
+                      initialValue: _selectedTypeEnglish,
                       decoration: _buildInputDecoration("نوع المركبة",
                         Icons.merge_type_outlined,
                       ),
@@ -205,8 +205,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                         );
                       }).toList(),
                       onChanged: (val) {
-                        if (val != null)
+                        if (val != null) {
                           setState(() => _selectedTypeEnglish = val);
+                        }
                       },
                     ),
                   ],

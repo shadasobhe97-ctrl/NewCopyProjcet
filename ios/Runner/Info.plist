@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>يحتاج التطبيق للوصول إلى الكاميرا لمسح رمز QR الخاص بالطفل عند الصعود أو النزول.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>يحتاج التطبيق لموقعك لتحديد بداية الرحلة وتحديث موقعك أثناء تنفيذها.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>يحتاج التطبيق لموقعك لتحديد بداية الرحلة وتحديث موقعك أثناء تنفيذها.</string>
 </dict>
 </plist>
