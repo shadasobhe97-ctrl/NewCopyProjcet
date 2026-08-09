@@ -48,6 +48,14 @@ class ApiEndpoints {
   static const String driverPreferences = 'v1/driver/preferences';
   static const String driverProfile = 'v1/driver/profile';
   static const String driverProfileUpdate = 'v1/driver/profile/update';
+  static const String driverCancelEmailChange =
+      'v1/driver/profile/email-change/cancel';
+  static const String driverEmailChangeStatus =
+      'v1/driver/profile/email-change/status';
+  static const String driverLegalData = 'v1/driver/profile/legal-data';
+  static const String driverVehicleProfile = 'v1/driver/profile/vehicle';
+  static String driverVehicleUpdate(dynamic vehicleId) =>
+      'v1/driver/profile/vehicle/$vehicleId';
 
   // ================= Driver Trips =================
   static const String driverTripsToday = 'v1/driver/trips/today';
@@ -85,6 +93,10 @@ class ApiEndpoints {
 
   static const String parentProfile = 'parent/profile';
   static const String parentProfileUpdate = 'parent/profile/update';
+  static const String parentCancelEmailChange =
+      'parent/profile/email-change/cancel';
+  static const String parentEmailChangeStatus =
+      'parent/profile/email-change/status';
 
   // Parent Subscriptions (تم التعديل)
   static const String parentRequests = 'parent/requests';
@@ -107,6 +119,9 @@ class ApiEndpoints {
   static const String parentWalletPaymentMethods =
       'parent/wallet/payment-methods';
   static const String parentWalletRecharge = 'parent/wallet/recharge';
+  static const String parentWalletHoldTrip = 'parent/wallet/hold-trip';
+  static String parentTripDispute(dynamic tripId) =>
+      'parent/trips/$tripId/dispute';
   static const String parentInvoices = 'parent/invoices';
   static String parentInvoiceDetail(int id) => 'parent/invoices/$id';
 

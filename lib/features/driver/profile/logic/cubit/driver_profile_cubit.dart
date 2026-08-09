@@ -43,7 +43,7 @@ class DriverProfileCubit extends Cubit<DriverProfileState> {
     }
 
     try {
-      final updatedDriver = await repository.updateProfile(
+      final result = await repository.updateProfile(
         fullName: fullName,
         phoneNumber: phoneNumber,
         alternativePhone: alternativePhone,
@@ -51,22 +51,54 @@ class DriverProfileCubit extends Cubit<DriverProfileState> {
         avatarFile: avatarFile,
       );
 
+      final freshDriver = await repository.getDriverProfile();
+
       if (!isClosed) {
         emit(
           DriverProfileSuccess(
-            updatedDriver,
-            'تم تحديث ملفك الشخصي بنجاح',
+            freshDriver,
+            result.message,
             isNameChanged: isNameChanged,
+            emailVerification: result.emailVerification,
           ),
         );
 
-        // تحديث الواجهة بالبيانات الجديدة مباشرة بدون الحاجة لطلب جديد
-        emit(DriverProfileLoaded(updatedDriver));
+        // تحديث الواجهة بالبيانات الجديدة مباشرة
+        emit(DriverProfileLoaded(freshDriver));
       }
     } catch (e) {
       if (!isClosed) {
         emit(DriverProfileError(e.toString().replaceAll('Exception:', '')));
       }
+    }
+  }
+
+  // 3. إلغاء تغيير البريد الإلكتروني
+  Future<void> cancelEmailChange() async {
+    try {
+      await repository.cancelEmailChange();
+      await fetchProfile();
+    } catch (e) {
+      if (!isClosed) {
+        emit(DriverProfileError(e.toString().replaceAll('Exception:', '')));
+      }
+      rethrow;
+    }
+  }
+
+  // 4. فحص حالة تغيير البريد الإلكتروني
+  Future<String> checkEmailChangeStatus() async {
+    try {
+      final status = await repository.getEmailChangeStatus();
+      if (status == 'verified' || status == 'rejected' || status == 'expired') {
+        await fetchProfile();
+      }
+      return status;
+    } catch (e) {
+      if (!isClosed) {
+        emit(DriverProfileError(e.toString().replaceAll('Exception:', '')));
+      }
+      rethrow;
     }
   }
 

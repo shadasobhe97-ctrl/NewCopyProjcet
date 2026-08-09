@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'package:kids_transport/core/models/email_verification_info.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import '../data_sources/driver_profile_remote_data_source.dart';
 import '../models/driver_model.dart';
+import '../models/driver_legal_data_model.dart';
 
 class DriverProfileRepository {
   final DriverProfileRemoteDataSource remoteDataSource;
@@ -32,14 +34,14 @@ class DriverProfileRepository {
   }
 
   /// تحديث بيانات السائق بالسيرفر وتحديث الكاش المحلي عند النجاح فقط (API-First Strategy)
-  Future<DriverModel> updateProfile({
+  Future<ProfileUpdateResult<DriverModel>> updateProfile({
     String? fullName,
     String? phoneNumber,
     String? alternativePhone,
     String? email,
     File? avatarFile,
   }) async {
-    final driver = await remoteDataSource.updateDriverProfile(
+    final result = await remoteDataSource.updateDriverProfile(
       fullName: fullName,
       phoneNumber: phoneNumber,
       alternativePhone: alternativePhone,
@@ -47,6 +49,7 @@ class DriverProfileRepository {
       avatarFile: avatarFile,
     );
 
+    final driver = result.profile;
     // تحديث البيانات المحلية فقط عند نجاح الـ API بالكامل
     await sessionRepository.saveUserSession(
       token: sessionRepository.getToken() ?? '',
@@ -59,7 +62,33 @@ class DriverProfileRepository {
       isActive: driver.isActive,
     );
 
-    return driver;
+    return result;
+  }
+
+  Future<void> cancelEmailChange() async {
+    await remoteDataSource.cancelEmailChange();
+  }
+
+  Future<String> getEmailChangeStatus() async {
+    return await remoteDataSource.getEmailChangeStatus();
+  }
+
+  Future<DriverLegalDataModel> getLegalData() async {
+    return await remoteDataSource.getLegalData();
+  }
+
+  Future<DriverLegalDataModel> updateLegalData({
+    String? nationalId,
+    String? licenseNumber,
+    String? licenseExpiry,
+    Map<String, File>? newFiles,
+  }) async {
+    return await remoteDataSource.updateLegalData(
+      nationalId: nationalId,
+      licenseNumber: licenseNumber,
+      licenseExpiry: licenseExpiry,
+      newFiles: newFiles,
+    );
   }
 
   String getCachedFullName() => sessionRepository.getFullName() ?? '';

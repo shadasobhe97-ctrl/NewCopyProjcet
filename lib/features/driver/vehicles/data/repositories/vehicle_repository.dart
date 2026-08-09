@@ -11,33 +11,44 @@ class VehicleRepository {
   // 📥 جلب تفاصيل المركبة والوثائق معاً ودمجهم في الـ Model
   Future<VehicleModel> getVehicleDetails() async {
     try {
-      // إرسال الطلبين في نفس الوقت لتوفير الوقت
       final vehicleResponse = await remoteDataSource.getVehicleData();
-      final legalResponse = await remoteDataSource.getLegalData();
+      final vehicleData = (vehicleResponse.data is Map && vehicleResponse.data['data'] != null)
+          ? vehicleResponse.data['data']
+          : {};
 
-      final vehicleData = vehicleResponse.data['data'];
-      final legalData = legalResponse.data['data'];
+      Map<String, dynamic> mergedData = Map<String, dynamic>.from(vehicleData as Map);
 
-      // دمج بيانات المسارين داخل كائن الـ VehicleModel واحد لترتاح الواجهة
-      return VehicleModel.fromJson({
-        ...vehicleData,
-        'national_id': legalData['national_id'],
-        'license_number': legalData['license_number'],
-        'license_expiry': legalData['license_expiry'],
-      });
+      try {
+        final legalResponse = await remoteDataSource.getLegalData();
+        final legalData = (legalResponse.data is Map && legalResponse.data['data'] != null)
+            ? legalResponse.data['data']
+            : {};
+        if (legalData is Map) {
+          mergedData['national_id'] = legalData['national_id'];
+          mergedData['license_number'] = legalData['license_number'];
+          mergedData['license_expiry'] = legalData['license_expiry'];
+        }
+      } catch (_) {}
+
+      return VehicleModel.fromJson(mergedData);
     } on DioException catch (e) {
       throw _handleDioError(e);
+    } catch (e) {
+      throw e.toString();
     }
   }
 
   // 📤 تحديث تفاصيل المركبة
   Future<VehicleModel> updateVehicle({
     required int vehicleId,
-    required String brand,
-    required String model,
-    required int year,
-    required String plateNumber,
-    required int capacityManual,
+    String? brand,
+    String? model,
+    int? year,
+    String? plateNumber,
+    String? color,
+    String? type,
+    int? capacityManual,
+    bool? hasAc,
     File? vehicleImage,
   }) async {
     try {
@@ -47,12 +58,20 @@ class VehicleRepository {
         model: model,
         year: year,
         plateNumber: plateNumber,
+        color: color,
+        type: type,
         capacityManual: capacityManual,
+        hasAc: hasAc,
         vehicleImage: vehicleImage,
       );
-      return VehicleModel.fromJson(response.data['data']);
+      final data = (response.data is Map && response.data['data'] != null)
+          ? response.data['data']
+          : {};
+      return VehicleModel.fromJson(Map<String, dynamic>.from(data as Map));
     } on DioException catch (e) {
       throw _handleDioError(e);
+    } catch (e) {
+      throw e.toString();
     }
   }
 
@@ -83,9 +102,11 @@ class VehicleRepository {
   }
 
   String _handleDioError(DioException e) {
+    if (e.response?.data is Map && e.response?.data['message'] != null) {
+      return e.response!.data['message'].toString();
+    }
     if (e.response?.statusCode == 422) {
-      return e.response?.data['message'] ??
-          'البيانات المرسلة غير مطابقة لشروط النظام.';
+      return 'البيانات المرسلة غير مطابقة لشروط النظام.';
     }
     return 'حدث خطأ في الاتصال بالسيرفر، تأكد من اتصال الإنترنت.';
   }

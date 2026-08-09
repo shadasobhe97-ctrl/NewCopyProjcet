@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:kids_transport/core/models/email_verification_info.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
@@ -50,7 +51,7 @@ class ParentProfileRemoteDataSource {
   }
 
   /// POST /api/parent/profile/update
-  Future<ParentModel> updateParentProfile({
+  Future<ProfileUpdateResult<ParentModel>> updateParentProfile({
     required String fullName,
     required String phoneNumber,
     String? email,
@@ -66,7 +67,7 @@ class ParentProfileRemoteDataSource {
     final fields = <String, dynamic>{
       'full_name': fullName,
       'phone_number': phoneNumber,
-      'email': ?email,
+      if (email != null) 'email': email,
       'alternative_phone':
           alternativePhone, // ترسل null لحذفه كما طلبت الباك إند
     };
@@ -95,15 +96,61 @@ class ParentProfileRemoteDataSource {
     debugPrint('📥 [ProfileAPI] POST /profile/update => $data');
     _checkSuccess(data, 'تعذر تحديث الملف الشخصي.');
 
-    final payload = data is Map ? data['data'] : null;
-    if (payload is Map<String, dynamic>) {
-      return ParentModel.fromJson(payload);
+    EmailVerificationInfo? emailVerification;
+    if (data is Map &&
+        data['data'] is Map &&
+        data['data']['email_verification'] is Map) {
+      emailVerification = EmailVerificationInfo.fromJson(
+        Map<String, dynamic>.from(data['data']['email_verification'] as Map),
+      );
     }
 
-    debugPrint(
-      '⚠️ [ProfileAPI] رد التحديث ما فيه كائن profile كامل، '
-      'رح أجيب البيانات الطازجة من GET /profile بدل ما أفشل.',
+    final payload = data is Map ? data['data'] : null;
+    ParentModel parent;
+    if (payload is Map<String, dynamic>) {
+      parent = ParentModel.fromJson(payload);
+    } else {
+      debugPrint(
+        '⚠️ [ProfileAPI] رد التحديث ما فيه كائن profile كامل، '
+        'رح أجيب البيانات الطازجة من GET /profile بدل ما أفشل.',
+      );
+      parent = await getParentProfile();
+    }
+
+    final serverMessage = (data is Map && data['message'] != null)
+        ? data['message'].toString()
+        : 'تم تحديث الملف الشخصي بنجاح';
+
+    return ProfileUpdateResult<ParentModel>(
+      profile: parent,
+      emailVerification: emailVerification,
+      message: serverMessage,
     );
-    return getParentProfile();
+  }
+
+  /// POST /api/parent/profile/email-change/cancel
+  Future<void> cancelEmailChange() async {
+    final response = await _client.post(
+      ApiEndpoints.parentCancelEmailChange,
+      headers: _authHeader,
+    );
+    final data = response.data;
+    debugPrint('📥 [ProfileAPI] POST /email-change/cancel => $data');
+    _checkSuccess(data, 'تعذر إلغاء تغيير البريد الإلكتروني.');
+  }
+
+  /// GET /api/parent/profile/email-change/status
+  Future<String> getEmailChangeStatus() async {
+    final response = await _client.get(
+      ApiEndpoints.parentEmailChangeStatus,
+      headers: _authHeader,
+    );
+    final data = response.data;
+    debugPrint('📥 [ProfileAPI] GET /email-change/status => $data');
+    _checkSuccess(data, 'تعذر فحص حالة تغيير البريد الإلكتروني.');
+    if (data is Map && data['data'] is Map) {
+      return (data['data']['status'] ?? '').toString();
+    }
+    return '';
   }
 }

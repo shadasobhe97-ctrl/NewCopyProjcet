@@ -7,8 +7,14 @@ class InvoicesRepository {
 
   InvoicesRepository(this._remoteDataSource);
 
-  Future<List<InvoiceModel>> getInvoices() async {
-    return await _remoteDataSource.getInvoices();
+  Future<List<InvoiceModel>> getInvoices({
+    String? status,
+    int? page,
+  }) async {
+    return await _remoteDataSource.getInvoices(
+      status: status,
+      page: page,
+    );
   }
 
   Future<InvoiceDetailsModel> getInvoiceDetails(int id) async {

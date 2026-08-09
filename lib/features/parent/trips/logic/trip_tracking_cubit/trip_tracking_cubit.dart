@@ -1,16 +1,20 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:kids_transport/core/network/api_exception.dart';
 import '../../data/repositories/trips_repository.dart';
 import '../../data/models/active_trip_model.dart';
+import '../../data/models/trip_track_model.dart';
 import 'trip_tracking_state.dart';
 
 class TripTrackingCubit extends Cubit<TripTrackingState> {
   final TripsRepository _repository;
-  Timer? _timer;
+
+  StreamSubscription<LiveTrackingModel>? _singleTrackSubscription;
+  StreamSubscription<List<LiveTrackingModel>>? _multiTrackSubscription;
+
   dynamic _currentTripId;
   bool _isMultiMode = false;
   List<ActiveTripModel> _allActiveTrips = [];
+  LiveTrackingModel? _baseTrackData;
 
   TripTrackingCubit(this._repository) : super(TripTrackingInitial());
 
@@ -18,6 +22,7 @@ class TripTrackingCubit extends Cubit<TripTrackingState> {
     _allActiveTrips = trips;
   }
 
+  /// ─── 1. تتبع رحلة واحدة عبر الفايربيز (Clean Architecture) ───
   void startTracking(
     dynamic tripId, {
     ActiveTripModel? activeTrip,
@@ -25,148 +30,140 @@ class TripTrackingCubit extends Cubit<TripTrackingState> {
   }) {
     _isMultiMode = false;
     _currentTripId = tripId;
-    _stopTimer();
+    _stopSubscriptions();
 
     if (state is! TripTrackingSingleLoaded &&
         state is! TripTrackingMultiLoaded) {
       emit(TripTrackingLoading());
     }
 
-    _fetchSingleTrack(
+    _initAndListenSingleTrack(
       tripId,
       activeTrip: activeTrip,
       childId: childId,
-      isSilent: false,
     );
-
-    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
-      _fetchSingleTrack(
-        tripId,
-        activeTrip: activeTrip,
-        childId: childId,
-        isSilent: true,
-      );
-    });
   }
 
+  Future<void> _initAndListenSingleTrack(
+    dynamic tripId, {
+    ActiveTripModel? activeTrip,
+    int? childId,
+  }) async {
+    // 1. محاولة جلب المعلومات التأسيسية للرحلة (السائق، الوجهة، الأطفال) عبر الـ Repository
+    try {
+      _baseTrackData = await _repository.getTripTrack(tripId);
+    } catch (_) {
+      final parsedTripId = int.tryParse(tripId.toString()) ?? 0;
+      _baseTrackData = LiveTrackingModel(
+        tripId: parsedTripId,
+        status: 'active',
+        driverLat: 0.0,
+        driverLng: 0.0,
+        lastUpdated: 'الآن',
+      );
+    }
+
+    ActiveTripModel? matchedTrip = activeTrip;
+    if (matchedTrip == null && _allActiveTrips.isNotEmpty) {
+      try {
+        matchedTrip = _allActiveTrips.firstWhere((t) => t.tripId == tripId);
+      } catch (_) {}
+    }
+
+    final int parsedTripId = int.tryParse(tripId.toString()) ?? 0;
+
+    // 2. الاستماع للبث اللحظي القادم من الـ Repository
+    _singleTrackSubscription = _repository
+        .trackTripLive(parsedTripId, _baseTrackData!)
+        .listen(
+      (updatedModel) {
+        _baseTrackData = updatedModel;
+        emit(
+          TripTrackingSingleLoaded(
+            trackData: updatedModel,
+            activeTrip: matchedTrip,
+            selectedChildId: childId,
+            isOffline: false,
+          ),
+        );
+      },
+      onError: (error) {
+        if (state is TripTrackingSingleLoaded) {
+          final current = state as TripTrackingSingleLoaded;
+          emit(
+            TripTrackingSingleLoaded(
+              trackData: current.trackData,
+              activeTrip: current.activeTrip,
+              selectedChildId: current.selectedChildId,
+              isOffline: true,
+              offlineMessage: 'تعثر تحديث الموقع اللحظي من الفايربيز',
+            ),
+          );
+        } else {
+          emit(TripTrackingError('خطأ في البث اللحظي للفايربيز: $error'));
+        }
+      },
+    );
+  }
+
+  /// ─── 2. تتبع رحلات متعددة عبر الفايربيز (Clean Architecture) ───
   void startMultiTracking({List<ActiveTripModel>? activeTrips}) {
     _isMultiMode = true;
     _currentTripId = null;
     if (activeTrips != null && activeTrips.isNotEmpty) {
       _allActiveTrips = activeTrips;
     }
-    _stopTimer();
+    _stopSubscriptions();
 
     if (state is! TripTrackingMultiLoaded &&
         state is! TripTrackingSingleLoaded) {
       emit(TripTrackingLoading());
     }
 
-    _fetchMultiTrack(isSilent: false);
+    _listenMultiTrack();
+  }
 
-    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
-      _fetchMultiTrack(isSilent: true);
-    });
+  void _listenMultiTrack() {
+    _multiTrackSubscription = _repository.trackMultipleTripsLive().listen(
+      (tracks) {
+        emit(
+          TripTrackingMultiLoaded(
+            tracks: tracks,
+            activeTrips: _allActiveTrips,
+            isOffline: false,
+          ),
+        );
+      },
+      onError: (error) {
+        if (state is! TripTrackingMultiLoaded) {
+          emit(TripTrackingError('خطأ في تتبع الرحلات المتعددة: $error'));
+        }
+      },
+    );
   }
 
   Future<void> refresh() async {
     if (_isMultiMode) {
-      await _fetchMultiTrack(isSilent: false);
+      _listenMultiTrack();
     } else if (_currentTripId != null) {
-      await _fetchSingleTrack(_currentTripId, isSilent: false);
+      startTracking(_currentTripId);
     }
   }
 
-  Future<void> _fetchSingleTrack(
-    dynamic tripId, {
-    ActiveTripModel? activeTrip,
-    int? childId,
-    bool isSilent = false,
-  }) async {
-    try {
-      final trackData = await _repository.getTripTrack(tripId);
-
-      ActiveTripModel? matchedTrip = activeTrip;
-      if (matchedTrip == null && _allActiveTrips.isNotEmpty) {
-        try {
-          matchedTrip = _allActiveTrips.firstWhere((t) => t.tripId == tripId);
-        } catch (_) {}
-      }
-
-      bool isOffline = !trackData.isOnline;
-      String? offlineMsg;
-      if (isOffline) {
-        offlineMsg =
-            'انقطع الاتصال بالسائق. آخر تحديث: ${trackData.lastUpdated}';
-      }
-
-      emit(
-        TripTrackingSingleLoaded(
-          trackData: trackData,
-          activeTrip: matchedTrip,
-          selectedChildId: childId,
-          isOffline: isOffline,
-          offlineMessage: offlineMsg,
-        ),
-      );
-    } catch (e) {
-      if (state is TripTrackingSingleLoaded) {
-        final current = state as TripTrackingSingleLoaded;
-        emit(
-          TripTrackingSingleLoaded(
-            trackData: current.trackData,
-            activeTrip: current.activeTrip,
-            selectedChildId: current.selectedChildId,
-            isOffline: true,
-            offlineMessage: 'تعذر تحديث موقع الحافلة الآن (مشكلة اتصال)',
-          ),
-        );
-      } else if (!isSilent) {
-        final msg = (e is ApiException)
-            ? e.message
-            : e.toString().replaceAll('Exception:', '').trim();
-        emit(TripTrackingError(msg));
-      }
-    }
-  }
-
-  Future<void> _fetchMultiTrack({bool isSilent = false}) async {
-    try {
-      final tracks = await _repository.getMultipleActiveTracking();
-      emit(
-        TripTrackingMultiLoaded(tracks: tracks, activeTrips: _allActiveTrips),
-      );
-    } catch (e) {
-      if (state is TripTrackingMultiLoaded) {
-        final current = state as TripTrackingMultiLoaded;
-        emit(
-          TripTrackingMultiLoaded(
-            tracks: current.tracks,
-            activeTrips: current.activeTrips,
-            isOffline: true,
-          ),
-        );
-      } else if (!isSilent) {
-        final msg = (e is ApiException)
-            ? e.message
-            : e.toString().replaceAll('Exception:', '').trim();
-        emit(TripTrackingError(msg));
-      }
-    }
-  }
-
-  void _stopTimer() {
-    _timer?.cancel();
-    _timer = null;
+  void _stopSubscriptions() {
+    _singleTrackSubscription?.cancel();
+    _singleTrackSubscription = null;
+    _multiTrackSubscription?.cancel();
+    _multiTrackSubscription = null;
   }
 
   void stopTracking() {
-    _stopTimer();
+    _stopSubscriptions();
   }
 
   @override
   Future<void> close() {
-    _stopTimer();
+    _stopSubscriptions();
     return super.close();
   }
 }

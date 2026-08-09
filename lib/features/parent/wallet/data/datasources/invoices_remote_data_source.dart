@@ -15,9 +15,22 @@ class InvoicesRemoteDataSource {
     return {'Authorization': token ?? ''};
   }
 
-  Future<List<InvoiceModel>> getInvoices() async {
+  /// 6. GET /api/parent/invoices?status=paid&page=1
+  Future<List<InvoiceModel>> getInvoices({
+    String? status,
+    int? page,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (status != null && status.isNotEmpty) {
+      queryParams['status'] = status;
+    }
+    if (page != null) {
+      queryParams['page'] = page;
+    }
+
     final response = await _apiClient.get(
       ApiEndpoints.parentInvoices,
+      queryParameters: queryParams.isNotEmpty ? queryParams : null,
       headers: _authHeader,
     );
     final data = response.data;
@@ -32,6 +45,7 @@ class InvoicesRemoteDataSource {
     return list.map((e) => InvoiceModel.fromJson(e)).toList();
   }
 
+  /// 7. GET /api/parent/invoices/{id}
   Future<InvoiceDetailsModel> getInvoiceDetails(int id) async {
     final response = await _apiClient.get(
       ApiEndpoints.parentInvoiceDetail(id),

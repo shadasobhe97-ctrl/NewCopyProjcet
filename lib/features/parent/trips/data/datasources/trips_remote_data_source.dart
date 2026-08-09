@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
@@ -12,12 +13,102 @@ import '../models/child_trips_model.dart';
 
 class TripsRemoteDataSource {
   final ApiClient _apiClient;
+  final FirebaseFirestore _firestore;
 
-  TripsRemoteDataSource(this._apiClient);
+  TripsRemoteDataSource(
+    this._apiClient, {
+    FirebaseFirestore? firestore,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   Map<String, dynamic> get _authHeader {
     final token = StorageService.getAuthorizationHeader();
     return {'Authorization': token ?? ''};
+  }
+
+  /// 🌟 0. Stream Live Tracking from Firebase Firestore: trips_tracking/{tripId}
+  Stream<LiveTrackingModel> trackTripLiveStream(
+    int tripId,
+    LiveTrackingModel baseModel,
+  ) {
+    final String docId = tripId.toString();
+    return _firestore
+        .collection('trips_tracking')
+        .doc(docId)
+        .snapshots()
+        .map((snapshot) {
+      if (!snapshot.exists || snapshot.data() == null) {
+        return baseModel;
+      }
+
+      final data = snapshot.data() as Map<String, dynamic>;
+
+      final double driverLat = (data['driver_lat'] as num?)?.toDouble() ??
+          (data['lat'] as num?)?.toDouble() ??
+          baseModel.driverLat;
+      final double driverLng = (data['driver_lng'] as num?)?.toDouble() ??
+          (data['lng'] as num?)?.toDouble() ??
+          baseModel.driverLng;
+      final double heading = (data['heading'] as num?)?.toDouble() ??
+          (data['driver_heading'] as num?)?.toDouble() ??
+          (data['bearing'] as num?)?.toDouble() ??
+          baseModel.heading ??
+          0.0;
+      final double speed = (data['speed'] as num?)?.toDouble() ??
+          baseModel.speed ??
+          0.0;
+      final String status = data['status']?.toString() ?? baseModel.status;
+
+      print(
+        '🔥 [Firestore Tracking Update] Trip ID: $docId | '
+        'Lat: $driverLat | Lng: $driverLng | Heading: $heading° | Speed: $speed km/h',
+      );
+
+      return baseModel.copyWith(
+        driverLat: driverLat,
+        driverLng: driverLng,
+        heading: heading,
+        speed: speed,
+        status: status,
+        lastUpdated: 'الآن',
+        isOnline: true,
+      );
+    });
+  }
+
+  /// 🌟 Stream Multiple Active Trips Live Tracking from Firebase Firestore
+  Stream<List<LiveTrackingModel>> trackMultipleTripsLiveStream() {
+    return _firestore.collection('trips_tracking').snapshots().map((snapshot) {
+      final List<LiveTrackingModel> list = [];
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final parsedTripId =
+            int.tryParse(doc.id) ?? (data['trip_id'] as num?)?.toInt() ?? 0;
+        final double driverLat =
+            (data['driver_lat'] as num?)?.toDouble() ?? 0.0;
+        final double driverLng =
+            (data['driver_lng'] as num?)?.toDouble() ?? 0.0;
+        final double heading = (data['heading'] as num?)?.toDouble() ?? 0.0;
+
+        print(
+          '🔥 [Firestore Multi-Tracking Update] Trip ID: ${doc.id} | '
+          'Lat: $driverLat | Lng: $driverLng | Heading: $heading°',
+        );
+
+        list.add(
+          LiveTrackingModel(
+            tripId: parsedTripId,
+            status: data['status']?.toString() ?? 'active',
+            driverLat: driverLat,
+            driverLng: driverLng,
+            heading: heading,
+            speed: (data['speed'] as num?)?.toDouble(),
+            lastUpdated: 'الآن',
+            isOnline: true,
+          ),
+        );
+      }
+      return list;
+    });
   }
 
   /// 1. GET /api/parent/trips/active

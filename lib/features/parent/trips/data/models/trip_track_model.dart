@@ -35,6 +35,7 @@ class LiveTrackingModel {
   final double driverLat;
   final double driverLng;
   final double? speed;
+  final double? heading;
   final DestinationInfo? destination;
   final List<TrackingChildInfo> children;
   final String lastUpdated;
@@ -48,11 +49,42 @@ class LiveTrackingModel {
     required this.driverLat,
     required this.driverLng,
     this.speed,
+    this.heading,
     this.destination,
     this.children = const [],
     required this.lastUpdated,
     this.isOnline = true,
   });
+
+  LiveTrackingModel copyWith({
+    int? tripId,
+    int? driverId,
+    String? driverName,
+    String? status,
+    double? driverLat,
+    double? driverLng,
+    double? speed,
+    double? heading,
+    DestinationInfo? destination,
+    List<TrackingChildInfo>? children,
+    String? lastUpdated,
+    bool? isOnline,
+  }) {
+    return LiveTrackingModel(
+      tripId: tripId ?? this.tripId,
+      driverId: driverId ?? this.driverId,
+      driverName: driverName ?? this.driverName,
+      status: status ?? this.status,
+      driverLat: driverLat ?? this.driverLat,
+      driverLng: driverLng ?? this.driverLng,
+      speed: speed ?? this.speed,
+      heading: heading ?? this.heading,
+      destination: destination ?? this.destination,
+      children: children ?? this.children,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+      isOnline: isOnline ?? this.isOnline,
+    );
+  }
 
   factory LiveTrackingModel.fromJson(Map<String, dynamic> json) {
     double lat = 0.0;
@@ -66,6 +98,10 @@ class LiveTrackingModel {
       lat = (json['driver_lat'] as num?)?.toDouble() ?? (json['lat'] as num?)?.toDouble() ?? 0.0;
       lng = (json['driver_lng'] as num?)?.toDouble() ?? (json['lng'] as num?)?.toDouble() ?? 0.0;
     }
+
+    final double? headingVal = (json['heading'] as num?)?.toDouble() ??
+        (json['driver_heading'] as num?)?.toDouble() ??
+        (json['bearing'] as num?)?.toDouble();
 
     DestinationInfo? dest;
     if (json['destination'] is Map<String, dynamic>) {
@@ -87,6 +123,7 @@ class LiveTrackingModel {
       driverLat: lat,
       driverLng: lng,
       speed: (json['speed'] as num?)?.toDouble(),
+      heading: headingVal,
       destination: dest,
       children: childrenList,
       lastUpdated: json['last_updated']?.toString() ?? 'الآن',

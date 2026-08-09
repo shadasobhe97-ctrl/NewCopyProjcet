@@ -11,6 +11,7 @@ import 'package:kids_transport/features/driver/driver_preferences/logic/driver_p
 import 'package:kids_transport/features/driver/profile/data/data_sources/driver_profile_remote_data_source.dart';
 import 'package:kids_transport/features/driver/profile/data/repositories/driver_profile_repository.dart';
 import 'package:kids_transport/features/driver/profile/logic/cubit/driver_profile_cubit.dart';
+import 'package:kids_transport/features/driver/profile/logic/cubit/driver_legal_data_cubit.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 
 // Vehicles
@@ -84,13 +85,18 @@ void initDriverInjection() {
       () => DriverProfileCubit(driverSl<DriverProfileRepository>()),
     );
   }
+  if (!driverSl.isRegistered<DriverLegalDataCubit>()) {
+    driverSl.registerFactory<DriverLegalDataCubit>(
+      () => DriverLegalDataCubit(driverSl<DriverProfileRepository>()),
+    );
+  }
 
   // =========================================
   // 3. Vehicles Feature
   // =========================================
   if (!driverSl.isRegistered<VehicleRemoteDataSource>()) {
     driverSl.registerLazySingleton<VehicleRemoteDataSource>(
-      () => VehicleRemoteDataSource(driverSl<ApiClient>().dio),
+      () => VehicleRemoteDataSource(driverSl<ApiClient>()),
     );
   }
   if (!driverSl.isRegistered<VehicleRepository>()) {
