@@ -28,6 +28,7 @@ class AppEntryCubit extends Cubit<AppEntryState> {
     final currentUserId = _sessionRepository.getUserId();
     if (currentUserId != null && currentUserId.isNotEmpty) {
       NotificationService.saveTokenToFirestore(currentUserId);
+      NotificationService.syncDeviceTokenWithBackend();
     }
 
     final roleId = _sessionRepository.getRoleId();

@@ -1,3 +1,4 @@
+import 'package:kids_transport/core/routes/notification_navigation_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
@@ -31,8 +32,10 @@ class _SplashScreenState extends State<SplashScreen> {
           Navigator.pushReplacementNamed(context, AppRoutes.login);
         } else if (state is NavigateToDriverHome) {
           Navigator.pushReplacementNamed(context, AppRoutes.driverMainWrapper);
+          NotificationNavigationHandler.handlePendingNotification();
         } else if (state is NavigateToParentHome) {
           Navigator.pushReplacementNamed(context, AppRoutes.parentMainWrapper);
+          NotificationNavigationHandler.handlePendingNotification();
         } else if (state is NavigateToAdminHome) {
           Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
         } else if (state is NavigateToDriverWaiting) {

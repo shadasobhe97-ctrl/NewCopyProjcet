@@ -22,7 +22,7 @@ class AddChildStep2Screen extends StatefulWidget {
 }
 
 class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
-  String _subType = 'monthly';
+  String _subType = 'single_day';
   String _period = 'morning';
   String _serviceType = 'both';
   DateTime _startDate = DateTime.now();
@@ -37,7 +37,7 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
     final editingChild = context.read<AddChildCubit>().editingChild;
     if (editingChild != null) {
       final pref = editingChild.transportPref;
-      _subType = pref.subscriptionType;
+      _subType = (pref.subscriptionType == 'multi_day') ? 'multi_day' : 'single_day';
       _period = pref.period;
       _serviceType = pref.serviceType;
       _startDate = pref.startDate;
@@ -72,13 +72,70 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
     return '$hour:$minute';
   }
 
+  bool _isSameDay(DateTime d1, DateTime d2) {
+    return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
+  }
+
   void _submitFinal() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final startDateOnly = DateTime(_startDate.year, _startDate.month, _startDate.day);
+
+    if (startDateOnly.isBefore(today)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تاريخ بداية الخدمة لا يمكن أن يكون في الماضي.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    DateTime finalEndDate;
+    if (_subType == 'single_day') {
+      finalEndDate = _startDate;
+    } else {
+      if (_endDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('يرجى تحديد تاريخ نهاية الخدمة للاشتراك أكثر من يوم.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final endDateOnly = DateTime(_endDate!.year, _endDate!.month, _endDate!.day);
+
+      if (_isSameDay(startDateOnly, endDateOnly)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('في حالة الاشتراك لأكثر من يوم، لا يمكن أن يكون تاريخ البداية والنهاية نفس اليوم.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      if (endDateOnly.isBefore(startDateOnly)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تاريخ النهاية يجب أن يكون بعد تاريخ البداية.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      finalEndDate = _endDate!;
+    }
+
     final pref = TransportPrefModel(
       subscriptionType: _subType,
       period: _period,
       serviceType: _serviceType,
       startDate: _startDate,
-      endDate: _endDate,
+      endDate: finalEndDate,
       schoolStartTime: _formatTime24h(_schoolStartTime),
       schoolEndTime: _formatTime24h(_schoolEndTime),
     );
@@ -252,12 +309,18 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                             children: [
                               _buildSelectionRow(
                                 items: {
-                                  'monthly': 'شهري',
-                                  'weekly': 'أسبوعي',
-                                  'days': 'بالأيام',
+                                  'single_day': 'يوم واحد',
+                                  'multi_day': 'أكثر من يوم',
                                 },
                                 selectedValue: _subType,
-                                onChanged: (v) => setState(() => _subType = v),
+                                onChanged: (v) {
+                                  setState(() {
+                                    _subType = v;
+                                    if (_subType == 'single_day') {
+                                      _endDate = _startDate;
+                                    }
+                                  });
+                                },
                               ),
                             ],
                           ),
@@ -299,99 +362,132 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                           ),
                           SizedBox(height: 16.h),
 
-                          // ── تاريخ بدء الخدمة ──
-                          AddChildSectionCard(
-                            title: 'تاريخ بدء الخدمة',
-                            icon: Icons.date_range_outlined,
-                            children: [
-                              InkWell(
-                                borderRadius: AppTheme.radius(10.r),
-                                onTap: () async {
-                                  final date = await showDatePicker(
-                                    context: context,
-                                    initialDate: _startDate,
-                                    firstDate: DateTime(2000),
-                                    lastDate: DateTime(2100),
-                                  );
-                                  if (date != null) {
-                                    setState(() => _startDate = date);
-                                  }
-                                },
-                                child: InputDecorator(
-                                  decoration: InputDecoration(
-                                    labelText: 'تاريخ البداية',
-                                    prefixIcon: Icon(
-                                      Icons.calendar_today_rounded,
-                                      size: 18.r,
+                          // ── تواريخ الخدمة ──
+                          if (_subType == 'single_day') ...[
+                            AddChildSectionCard(
+                              title: 'تاريخ الخدمة (اليوم)',
+                              icon: Icons.date_range_outlined,
+                              children: [
+                                InkWell(
+                                  borderRadius: AppTheme.radius(10.r),
+                                  onTap: () async {
+                                    final now = DateTime.now();
+                                    final today = DateTime(now.year, now.month, now.day);
+                                    final init = _startDate.isBefore(today) ? today : _startDate;
+                                    final date = await showDatePicker(
+                                      context: context,
+                                      initialDate: init,
+                                      firstDate: today,
+                                      lastDate: DateTime(2100),
+                                    );
+                                    if (date != null) {
+                                      setState(() {
+                                        _startDate = date;
+                                        _endDate = date;
+                                      });
+                                    }
+                                  },
+                                  child: InputDecorator(
+                                    decoration: InputDecoration(
+                                      labelText: 'تاريخ اليوم',
+                                      prefixIcon: Icon(
+                                        Icons.calendar_today_rounded,
+                                        size: 18.r,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: AppTheme.radius(10.r),
+                                      ),
                                     ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: AppTheme.radius(10.r),
+                                    child: Text(
+                                      intl.DateFormat('yyyy/MM/dd').format(_startDate),
+                                      style: AppTextStyles.style(fontSize: 14.sp),
                                     ),
-                                  ),
-                                  child: Text(
-                                    intl.DateFormat(
-                                      'yyyy/MM/dd',
-                                    ).format(_startDate),
-                                    style: AppTextStyles.style(fontSize: 14.sp),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 16.h),
-
-                          // ── تاريخ انتهاء الخدمة ──
-                          AddChildSectionCard(
-                            title: 'تاريخ انتهاء الخدمة (اختياري)',
-                            icon: Icons.date_range_outlined,
-                            children: [
-                              InkWell(
-                                borderRadius: AppTheme.radius(10.r),
-                                onTap: () async {
-                                  final date = await showDatePicker(
-                                    context: context,
-                                    initialDate: _endDate ?? DateTime.now(),
-                                    firstDate: DateTime(2000),
-                                    lastDate: DateTime(2100),
-                                  );
-                                  if (date != null) {
-                                    setState(() => _endDate = date);
-                                  }
-                                },
-                                child: InputDecorator(
-                                  decoration: InputDecoration(
-                                    labelText: 'تاريخ الانتهاء',
-                                    prefixIcon: Icon(
-                                      Icons.calendar_today_rounded,
-                                      size: 18.r,
+                              ],
+                            ),
+                          ] else ...[
+                            AddChildSectionCard(
+                              title: 'تواريخ الخدمة (بداية ونهاية)',
+                              icon: Icons.date_range_outlined,
+                              children: [
+                                InkWell(
+                                  borderRadius: AppTheme.radius(10.r),
+                                  onTap: () async {
+                                    final now = DateTime.now();
+                                    final today = DateTime(now.year, now.month, now.day);
+                                    final init = _startDate.isBefore(today) ? today : _startDate;
+                                    final date = await showDatePicker(
+                                      context: context,
+                                      initialDate: init,
+                                      firstDate: today,
+                                      lastDate: DateTime(2100),
+                                    );
+                                    if (date != null) {
+                                      setState(() => _startDate = date);
+                                    }
+                                  },
+                                  child: InputDecorator(
+                                    decoration: InputDecoration(
+                                      labelText: 'تاريخ بداية الخدمة',
+                                      prefixIcon: Icon(
+                                        Icons.calendar_today_rounded,
+                                        size: 18.r,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: AppTheme.radius(10.r),
+                                      ),
                                     ),
-                                    suffixIcon: _endDate != null
-                                        ? GestureDetector(
-                                            onTap: () {
-                                              setState(() => _endDate = null);
-                                            },
-                                            child: const Icon(
-                                              Icons.clear_rounded,
-                                              size: 20,
-                                            ),
-                                          )
-                                        : null,
-                                    border: OutlineInputBorder(
-                                      borderRadius: AppTheme.radius(10.r),
+                                    child: Text(
+                                      intl.DateFormat('yyyy/MM/dd').format(_startDate),
+                                      style: AppTextStyles.style(fontSize: 14.sp),
                                     ),
-                                  ),
-                                  child: Text(
-                                    _endDate != null
-                                        ? intl.DateFormat(
-                                            'yyyy/MM/dd',
-                                          ).format(_endDate!)
-                                        : 'لم يتم التحديد',
-                                    style: AppTextStyles.style(fontSize: 14.sp),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
+                                SizedBox(height: 12.h),
+                                InkWell(
+                                  borderRadius: AppTheme.radius(10.r),
+                                  onTap: () async {
+                                    final now = DateTime.now();
+                                    final today = DateTime(now.year, now.month, now.day);
+                                    final init = (_endDate != null && _endDate!.isAfter(today))
+                                        ? _endDate!
+                                        : today.add(const Duration(days: 1));
+                                    final date = await showDatePicker(
+                                      context: context,
+                                      initialDate: init,
+                                      firstDate: today,
+                                      lastDate: DateTime(2100),
+                                    );
+                                    if (date != null) {
+                                      setState(() => _endDate = date);
+                                    }
+                                  },
+                                  child: InputDecorator(
+                                    decoration: InputDecoration(
+                                      labelText: 'تاريخ نهاية الخدمة',
+                                      prefixIcon: Icon(
+                                        Icons.calendar_month_rounded,
+                                        size: 18.r,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: AppTheme.radius(10.r),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      _endDate != null
+                                          ? intl.DateFormat('yyyy/MM/dd').format(_endDate!)
+                                          : 'اختر تاريخ النهاية',
+                                      style: AppTextStyles.style(
+                                        fontSize: 14.sp,
+                                        color: _endDate == null ? AppColors.grey400 : null,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                           SizedBox(height: 16.h),
 
                           // ── مواعيد الدوام ──

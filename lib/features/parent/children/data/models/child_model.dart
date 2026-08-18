@@ -53,19 +53,19 @@ class ChildModel {
            !url.endsWith('default-child.png');
   }
   int get gradeLevel {
+    final parsed = int.tryParse(grade);
+    if (parsed != null && parsed >= 0 && parsed <= 12) return parsed;
     switch (grade) {
       case 'روضة':
-        return 1;
+        return 0;
       case 'ابتدائي':
-        return 2;
-      case 'إعدادي':
-        return 3;
-      case 'ثانوي':
-        return 4;
-      default:
-        final parsed = int.tryParse(grade);
-        if (parsed != null && parsed >= 1) return parsed;
         return 1;
+      case 'إعدادي':
+        return 7;
+      case 'ثانوي':
+        return 10;
+      default:
+        return 0;
     }
   }
 
@@ -78,18 +78,32 @@ class ChildModel {
     final parsed = int.tryParse(grade);
     if (parsed != null) {
       switch (parsed) {
+        case 0:
+          return 'روضة';
         case 1:
-          return 'الصف الأول';
+          return 'الصف الأول الابتدائي';
         case 2:
-          return 'الصف الثاني';
+          return 'الصف الثاني الابتدائي';
         case 3:
-          return 'الصف الثالث';
+          return 'الصف الثالث الابتدائي';
         case 4:
-          return 'الصف الرابع';
+          return 'الصف الرابع الابتدائي';
         case 5:
-          return 'الصف الخامس';
+          return 'الصف الخامس الابتدائي';
         case 6:
-          return 'الصف السادس';
+          return 'الصف السادس الابتدائي';
+        case 7:
+          return 'الصف السابع الإعدادي';
+        case 8:
+          return 'الصف الثامن الإعدادي';
+        case 9:
+          return 'الصف التاسع الإعدادي';
+        case 10:
+          return 'أول ثانوي';
+        case 11:
+          return 'ثاني ثانوي';
+        case 12:
+          return 'ثالث ثانوي';
         default:
           return 'الصف $parsed';
       }

@@ -56,6 +56,11 @@ dependencies:
   firebase_storage: ^13.4.5
   record: ^5.2.1
   audioplayers: ^6.1.0
+  mobile_scanner: ^7.4.0
+  googleapis_auth: ^1.4.1
+  http: ^1.2.0
+  device_info_plus: ^13.2.0
+  package_info_plus: ^10.1.0
 
 dev_dependencies:
   flutter_test:

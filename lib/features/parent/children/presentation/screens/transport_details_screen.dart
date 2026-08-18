@@ -57,7 +57,20 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
     _fetchSubscription();
   }
 
-  String _translateSub(String val) => val == 'monthly' ? 'شهري' : val == 'weekly' ? 'أسبوعي' : 'عدد أيام';
+  String _translateSub(String val) {
+    switch (val) {
+      case 'single_day':
+        return 'يوم واحد';
+      case 'multi_day':
+        return 'أكثر من يوم';
+      case 'monthly':
+        return 'شهري';
+      case 'weekly':
+        return 'أسبوعي';
+      default:
+        return val;
+    }
+  }
   String _translatePeriod(String val) => val == 'morning' ? 'صباحية' : 'مسائية';
   String _translateService(String val) => val == 'both' ? 'ذهاب وعودة' : val == 'go' ? 'ذهاب فقط' : 'عودة فقط';
 

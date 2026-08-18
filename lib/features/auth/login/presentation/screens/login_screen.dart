@@ -176,20 +176,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 16.h),
-                    TextButton.icon(
-                      onPressed: () {
-                        Navigator.pushNamed(context, AppRoutes.adminLogin);
-                      },
-                      icon: Icon(
-                        Icons.admin_panel_settings_outlined,
-                        color: context.primaryColor,
-                      ),
-                      label: Text(
-                        'تسجيل دخول المسؤول (الأدمن)',
-                        style: AppTextStyles.style(color: context.primaryColor),
-                      ),
-                    ),
                   ],
                 ),
               ),

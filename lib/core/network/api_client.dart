@@ -189,4 +189,32 @@ class ApiClient {
       throw ApiException.fromDioException(error);
     }
   }
+
+  Future<Response<dynamic>> patch(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? headers,
+  }) async {
+    final fullUrl = '${_dio.options.baseUrl}$path';
+    debugPrint('--> HTTP PATCH $fullUrl');
+    final mergedHeaders = {..._dio.options.headers, ...?headers};
+    debugPrint('Headers: $mergedHeaders');
+    try {
+      final response = await _dio.patch(
+        path,
+        data: data,
+        options: Options(headers: headers),
+      );
+      debugPrint('<-- STATUS ${response.statusCode} ($path)');
+      debugPrint('Response Body: ${response.data}');
+      return response;
+    } on DioException catch (error) {
+      debugPrint('<!- ERROR ($path): ${error.message}');
+      if (error.response != null) {
+        debugPrint('Error Status: ${error.response?.statusCode}');
+        debugPrint('Error Response Body: ${error.response?.data}');
+      }
+      throw ApiException.fromDioException(error);
+    }
+  }
 }

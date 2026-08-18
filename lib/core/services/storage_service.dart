@@ -23,6 +23,13 @@ class StorageService {
   }
 
   static const String _fcmTokenKey = 'fcm_token';
+  static const String _deviceIdKey = 'device_id';
+
+  static Future<bool> saveDeviceId(String deviceId) {
+    return _prefs.setString(_deviceIdKey, deviceId);
+  }
+
+  static String? getDeviceId() => _prefs.getString(_deviceIdKey);
 
   static Future<bool> saveThemeMode(bool isDarkMode) {
     return _prefs.setBool(_themeKey, isDarkMode);

@@ -97,11 +97,7 @@ class AddChildCubit extends Cubit<AddChildState> {
 
     emit(AddChildSubmitting());
 
-    // 1: روضة، 2: ابتدائي، 3: إعدادي، 4: ثانوي
-    String gradeStr = 'روضة';
-    if (gradeLevel == 2) gradeStr = 'ابتدائي';
-    if (gradeLevel == 3) gradeStr = 'إعدادي';
-    if (gradeLevel == 4) gradeStr = 'ثانوي';
+    final gradeStr = (gradeLevel ?? 0).toString();
 
     debugPrint('📸 [AddChildCubit] imagePath: $imagePath');
     debugPrint('📸 [AddChildCubit] editingChild?.photoUrl: ${editingChild?.photoUrl}');

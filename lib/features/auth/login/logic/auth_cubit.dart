@@ -45,6 +45,7 @@ class AuthCubit extends Cubit<AuthState> {
 
       // Save FCM Token to Firestore users/{userId} upon successful login
       NotificationService.saveTokenToFirestore(response.user.id.toString());
+      NotificationService.syncDeviceTokenWithBackend();
 
       emit(
         AuthSuccess(
