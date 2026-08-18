@@ -4,7 +4,8 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
-import 'package:kids_transport/features/driver/finance/presentation/logic/finance_cubit.dart';
+import 'package:kids_transport/features/driver/finance/logic/cubit/finance_cubit.dart';
+import 'package:kids_transport/features/driver/finance/logic/state/finance_state.dart';
 import 'package:kids_transport/features/driver/finance/presentation/widgets/wallet_balance_card.dart';
 import 'package:kids_transport/features/driver/finance/presentation/widgets/finance_summary_card.dart';
 import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
@@ -77,133 +78,132 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
-              children: [
-                WalletBalanceCard(
-                  balance: state.wallet.balance,
-                  currency: state.wallet.currency,
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  decoration: AppTheme.boxDecoration(
-                    color: state.wallet.balance > 0
-                        ? (context.isDarkMode ? AppColors.surfaceDark : AppColors.maleBlueBg)
-                        : AppColors.grey100,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: state.wallet.balance > 0 ? AppColors.maleBlue : AppColors.grey300,
-                      width: 1.5,
-                    ),
-                    boxShadow: state.wallet.balance > 0
-                        ? [
-                            AppTheme.boxShadow(
-                              color: AppColors.maleBlue.withValues(alpha: 0.15),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: state.wallet.balance > 0 ? _openWithdrawalScreen : null,
-                      borderRadius: BorderRadius.circular(16),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.arrow_upward_rounded,
-                              color: state.wallet.balance > 0 ? AppColors.maleBlue : AppColors.grey500,
-                              size: 22,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'طلب سحب',
-                              style: AppTextStyles.style(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: state.wallet.balance > 0 ? AppColors.maleBlue : AppColors.grey500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    FinanceSummaryCard(
-                      title: 'طلبات السحب',
-                      value: '${state.withdrawals.length}',
-                      icon: Icons.vertical_distribute_rounded,
-                      iconColor: AppColors.pending,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BlocProvider(
-                            create: (_) => driverSl<FinanceCubit>(),
-                            child: const WithdrawalRequestsScreen(),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    FinanceSummaryCard(
-                      title: 'الفواتير',
-                      value: '${state.invoices.length}',
-                      icon: Icons.receipt_long_rounded,
-                      iconColor: AppColors.info,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BlocProvider(
-                            create: (_) => driverSl<FinanceCubit>(),
-                            child: const InvoicesScreen(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-        }
-        if (state is FinanceError) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
-                  const SizedBox(height: 16),
-                  Text(
-                    state.message,
-                    style: AppTextStyles.style(fontSize: 14, color: AppColors.textMuted),
-                    textAlign: TextAlign.center,
+                  WalletBalanceCard(
+                    balance: state.wallet.balance,
+                    currency: state.wallet.currency,
                   ),
                   const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () => context.read<FinanceCubit>().loadDashboard(),
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('إعادة المحاولة'),
+                  Container(
+                    width: double.infinity,
+                    decoration: AppTheme.boxDecoration(
+                      color: state.wallet.balance > 0
+                          ? (context.isDarkMode ? AppColors.surfaceDark : AppColors.maleBlueBg)
+                          : AppColors.grey100,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: state.wallet.balance > 0 ? AppColors.maleBlue : AppColors.grey300,
+                        width: 1.5,
+                      ),
+                      boxShadow: state.wallet.balance > 0
+                          ? [
+                              AppTheme.boxShadow(
+                                color: AppColors.maleBlue.withValues(alpha: 0.15),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : [],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: state.wallet.balance > 0 ? _openWithdrawalScreen : null,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.account_balance_wallet_outlined,
+                                color: state.wallet.balance > 0
+                                    ? AppColors.maleBlue
+                                    : AppColors.grey400,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'طلب سحب رصيد',
+                                style: AppTextStyles.style(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: state.wallet.balance > 0
+                                      ? AppColors.maleBlue
+                                      : AppColors.grey500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FinanceSummaryCard(
+                          title: 'طلبات السحب',
+                          count: state.withdrawals.length,
+                          icon: Icons.history,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => BlocProvider(
+                                  create: (_) => driverSl<FinanceCubit>(),
+                                  child: const WithdrawalRequestsScreen(),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FinanceSummaryCard(
+                          title: 'الفواتير',
+                          count: state.invoices.length,
+                          icon: Icons.receipt_long,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => BlocProvider(
+                                  create: (_) => driverSl<FinanceCubit>(),
+                                  child: const InvoicesScreen(),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
           );
         }
-        return const SizedBox.shrink();
+
+        if (state is FinanceError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(state.message),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => context.read<FinanceCubit>().loadDashboard(),
+                  child: const Text('إعادة المحاولة'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return const SizedBox();
       },
     );
   }
 }
-
-

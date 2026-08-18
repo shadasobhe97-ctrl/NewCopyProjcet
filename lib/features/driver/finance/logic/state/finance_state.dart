@@ -1,4 +1,7 @@
-part of 'finance_cubit.dart';
+import '../../data/models/wallet_model.dart';
+import '../../data/models/withdrawal_model.dart';
+import '../../data/models/invoice_model.dart';
+import '../../data/models/invoice_details_model.dart';
 
 abstract class FinanceState {}
 
@@ -25,12 +28,14 @@ class FinanceWithdrawalsLoaded extends FinanceState {
   final int currentPage;
   final int lastPage;
   final bool isLoadingMore;
+  final String? activeFilter;
 
   FinanceWithdrawalsLoaded({
     required this.withdrawals,
     required this.currentPage,
     required this.lastPage,
     this.isLoadingMore = false,
+    this.activeFilter,
   });
 
   bool get hasMore => currentPage < lastPage;
@@ -41,12 +46,14 @@ class FinanceInvoicesLoaded extends FinanceState {
   final int currentPage;
   final int lastPage;
   final bool isLoadingMore;
+  final String? activeFilter;
 
   FinanceInvoicesLoaded({
     required this.invoices,
     required this.currentPage,
     required this.lastPage,
     this.isLoadingMore = false,
+    this.activeFilter,
   });
 
   bool get hasMore => currentPage < lastPage;
@@ -60,7 +67,9 @@ class FinanceInvoiceDetailsLoaded extends FinanceState {
 
 class FinanceSuccess extends FinanceState {
   final String message;
-  FinanceSuccess(this.message);
+  final WithdrawalModel? withdrawal;
+
+  FinanceSuccess(this.message, {this.withdrawal});
 }
 
 class FinanceError extends FinanceState {

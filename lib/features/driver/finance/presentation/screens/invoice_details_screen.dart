@@ -4,7 +4,8 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
-import 'package:kids_transport/features/driver/finance/presentation/logic/finance_cubit.dart';
+import 'package:kids_transport/features/driver/finance/logic/cubit/finance_cubit.dart';
+import 'package:kids_transport/features/driver/finance/logic/state/finance_state.dart';
 import 'package:kids_transport/features/driver/finance/presentation/widgets/status_chip.dart';
 
 class InvoiceDetailsScreen extends StatefulWidget {
@@ -48,16 +49,20 @@ class _InvoiceDetailsScreenState extends State<InvoiceDetailsScreen> {
                     _InfoCard(
                       children: [
                         _InfoRow(label: 'رقم الفاتورة', value: '#${d.invoiceNumber}'),
-                        _InfoRow(label: 'ولي الأمر', value: d.parentName),
+                        if (d.parentName != null && d.parentName!.isNotEmpty)
+                          _InfoRow(label: 'ولي الأمر', value: d.parentName!),
                         _InfoRow(label: 'المبلغ', value: '${d.amount} د.ل'),
-                        _InfoRow(label: 'نوع الاشتراك', value: d.subscriptionType),
+                        _InfoRow(label: 'نوع الفاتورة', value: d.typeLabel),
+                        if (d.subscriptionType != null)
+                          _InfoRow(label: 'نوع الاشتراك', value: d.subscriptionTypeLabel),
                         _InfoRow(
                           label: 'الحالة',
                           valueWidget: StatusChip(status: d.statusLabel),
                         ),
-                        _InfoRow(label: 'تاريخ الاستحقاق', value: d.dueDate),
-                        if (d.paidDate != null)
-                          _InfoRow(label: 'تاريخ الدفع', value: d.paidDate!),
+                        if (d.dueDate != null && d.dueDate!.isNotEmpty)
+                          _InfoRow(label: 'تاريخ الاستحقاق', value: d.dueDate!),
+                        if (d.paidAt != null && d.paidAt!.isNotEmpty)
+                          _InfoRow(label: 'تاريخ الدفع', value: d.paidAt!),
                       ],
                     ),
                     const SizedBox(height: 16),

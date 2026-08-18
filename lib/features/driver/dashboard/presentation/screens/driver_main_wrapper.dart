@@ -10,7 +10,7 @@ import 'package:kids_transport/features/driver/requests/presentation/screens/dri
 import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
 import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 import 'package:kids_transport/features/driver/finance/presentation/screens/finance_dashboard_screen.dart';
-import 'package:kids_transport/features/driver/finance/presentation/logic/finance_cubit.dart';
+import 'package:kids_transport/features/driver/finance/logic/cubit/finance_cubit.dart';
 import 'package:kids_transport/features/driver/trips/logic/driver_trips_cubit/driver_trips_cubit.dart';
 import 'package:kids_transport/features/driver/trips/presentation/screens/driver_trips_screen.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';

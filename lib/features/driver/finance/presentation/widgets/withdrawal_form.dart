@@ -6,11 +6,13 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 
 class WithdrawalForm extends StatefulWidget {
   final bool isSubmitting;
+  final double? availableBalance;
   final Function(Map<String, dynamic> body) onSubmit;
 
   const WithdrawalForm({
     super.key,
     required this.isSubmitting,
+    this.availableBalance,
     required this.onSubmit,
   });
 
@@ -41,24 +43,25 @@ class _WithdrawalFormState extends State<WithdrawalForm> {
     if (!_formKey.currentState!.validate()) return;
 
     final amount = double.tryParse(_amountController.text) ?? 0;
-    if (amount <= 0) return;
+    if (amount < 50) return;
 
     final Map<String, dynamic> body;
     if (_method == 'bank') {
       body = {
         'amount': amount,
         'payment_method_details': {
-          'bank_name': _bankNameController.text,
-          'account_number': _accountNumberController.text,
-          'account_name': _accountNameController.text,
+          'bank_name': _bankNameController.text.trim(),
+          'account_number': _accountNumberController.text.trim(),
+          'account_name': _accountNameController.text.trim(),
         },
       };
     } else {
       body = {
         'amount': amount,
         'payment_method_details': {
-          'mobile_number': _mobileNumberController.text,
           'bank_name': 'ليبيانا',
+          'account_number': _mobileNumberController.text.trim(),
+          'account_name': 'رقم المحفظة',
         },
       };
     }
@@ -89,13 +92,23 @@ class _WithdrawalFormState extends State<WithdrawalForm> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'طلب سحب',
+                        'طلب سحب أرباح',
                         style: AppTextStyles.style(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: context.isDarkMode ? AppColors.white : AppColors.textDark,
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      if (widget.availableBalance != null)
+                        Text(
+                          'الرصيد المتاح للسحب: ${widget.availableBalance!.toStringAsFixed(2)} د.ل',
+                          style: AppTextStyles.style(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: context.primaryColor,
+                          ),
+                        ),
                       const SizedBox(height: 20),
                       Text(
                         'اختر طريقة السحب',
@@ -108,15 +121,19 @@ class _WithdrawalFormState extends State<WithdrawalForm> {
                       const SizedBox(height: 20),
                       TextFormField(
                         controller: _amountController,
-                        keyboardType: TextInputType.number,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         decoration: const InputDecoration(
-                          labelText: 'المبلغ',
-                          hintText: 'أدخل المبلغ',
+                          labelText: 'المبلغ (د.ل)',
+                          hintText: 'أدخل المبلغ (الحد الأدنى 50 د.ل)',
                         ),
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'المبلغ مطلوب';
-                          final amount = double.tryParse(v);
-                          if (amount == null || amount <= 0) return 'أدخل مبلغ صحيح';
+                          if (v == null || v.trim().isEmpty) return 'المبلغ مطلوب';
+                          final amount = double.tryParse(v.trim());
+                          if (amount == null) return 'أدخل مبلغ صحيح';
+                          if (amount < 50) return 'الحد الأدنى لطلب السحب هو 50 د.ل';
+                          if (widget.availableBalance != null && amount > widget.availableBalance!) {
+                            return 'المبلغ يتجاوز الرصيد المتاح للسحب';
+                          }
                           return null;
                         },
                       ),
@@ -126,59 +143,38 @@ class _WithdrawalFormState extends State<WithdrawalForm> {
                           controller: _bankNameController,
                           decoration: const InputDecoration(
                             labelText: 'اسم المصرف',
-                            hintText: 'أدخل اسم المصرف',
+                            hintText: 'مثال: المصرف التجاري الوطني',
                           ),
-                          validator: (v) => (v == null || v.isEmpty) ? 'اسم المصرف مطلوب' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty) ? 'اسم المصرف مطلوب' : null,
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _accountNameController,
                           decoration: const InputDecoration(
                             labelText: 'اسم صاحب الحساب',
-                            hintText: 'أدخل اسم صاحب الحساب',
+                            hintText: 'أدخل الاسم الثلاثي لصاحب الحساب',
                           ),
-                          validator: (v) => (v == null || v.isEmpty) ? 'اسم صاحب الحساب مطلوب' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty) ? 'اسم صاحب الحساب مطلوب' : null,
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _accountNumberController,
+                          keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
                             labelText: 'رقم الحساب',
-                            hintText: 'أدخل رقم الحساب',
+                            hintText: 'أدخل رقم الحساب المصرفي',
                           ),
-                          validator: (v) => (v == null || v.isEmpty) ? 'رقم الحساب مطلوب' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty) ? 'رقم الحساب مطلوب' : null,
                         ),
                       ] else ...[
                         TextFormField(
                           controller: _mobileNumberController,
                           keyboardType: TextInputType.phone,
                           decoration: const InputDecoration(
-                            labelText: 'رقم الهاتف',
-                            hintText: 'أدخل رقم الهاتف',
+                            labelText: 'رقم الهاتف (ليبيانا)',
+                            hintText: 'أدخل رقم الهاتف للحساب',
                           ),
-                          validator: (v) => (v == null || v.isEmpty) ? 'رقم الهاتف مطلوب' : null,
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                          decoration: AppTheme.boxDecoration(
-                            color: context.cardSurface,
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(color: AppColors.grey200),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.check_circle, color: AppColors.success, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                'ليبيانا',
-                                style: AppTextStyles.style(
-                                  fontSize: 16,
-                                  color: context.isDarkMode ? AppColors.white : AppColors.textDark,
-                                ),
-                              ),
-                            ],
-                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty) ? 'رقم الهاتف مطلوب' : null,
                         ),
                       ],
                       const SizedBox(height: 16),
@@ -199,7 +195,7 @@ class _WithdrawalFormState extends State<WithdrawalForm> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
                         )
-                      : const Text('إرسال الطلب'),
+                      : const Text('إرسال طلب السحب'),
                 ),
               ),
             ),

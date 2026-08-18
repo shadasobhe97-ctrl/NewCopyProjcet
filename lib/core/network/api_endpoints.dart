@@ -48,6 +48,11 @@ class ApiEndpoints {
   static const String driverPreferences = 'v1/driver/preferences';
   static const String driverProfile = 'v1/driver/profile';
   static const String driverProfileUpdate = 'v1/driver/profile/update';
+  // ================= Driver Wallet & Finance =================
+  static const String driverWalletBalance = 'v1/driver/wallet/balance';
+  static const String driverWithdrawals = 'v1/driver/withdrawals';
+  static const String driverInvoices = 'v1/driver/invoices';
+  static String driverInvoiceDetails(dynamic id) => 'v1/driver/invoices/$id';
 
   // ================= Driver Trips =================
   static const String driverTripsToday = 'v1/driver/trips/today';

@@ -4,12 +4,13 @@ import 'parsers.dart';
 class InvoiceDetailsModel {
   final int id;
   final String invoiceNumber;
-  final String parentName;
+  final String? parentName;
   final double amount;
-  final String subscriptionType;
-  final String dueDate;
+  final String type;
+  final String? subscriptionType;
+  final String? dueDate;
   final String status;
-  final String? paidDate;
+  final String? paidAt;
   final int totalTrips;
   final int completedTrips;
   final int driverAbsences;
@@ -19,12 +20,13 @@ class InvoiceDetailsModel {
   InvoiceDetailsModel({
     required this.id,
     required this.invoiceNumber,
-    required this.parentName,
+    this.parentName,
     required this.amount,
-    required this.subscriptionType,
-    required this.dueDate,
+    required this.type,
+    this.subscriptionType,
+    this.dueDate,
     required this.status,
-    this.paidDate,
+    this.paidAt,
     required this.totalTrips,
     required this.completedTrips,
     required this.driverAbsences,
@@ -39,12 +41,13 @@ class InvoiceDetailsModel {
     return InvoiceDetailsModel(
       id: parseInt(data['id']),
       invoiceNumber: data['invoice_number'] as String? ?? '',
-      parentName: parent?['name'] as String? ?? data['parent_name'] as String? ?? '',
+      parentName: parent?['name'] as String? ?? data['parent_name'] as String?,
       amount: parseDouble(data['amount']),
-      subscriptionType: data['subscription_type'] as String? ?? '',
-      dueDate: data['due_date'] as String? ?? '',
-      status: data['status'] as String? ?? '',
-      paidDate: data['paid_at'] as String? ?? data['paid_date'] as String?,
+      type: data['type'] as String? ?? 'final',
+      subscriptionType: data['subscription_type'] as String?,
+      dueDate: data['due_date'] as String?,
+      status: data['status'] as String? ?? 'pending',
+      paidAt: data['paid_at'] as String? ?? data['paid_date'] as String?,
       totalTrips: parseInt(data['total_trips']),
       completedTrips: parseInt(data['completed_trips']),
       driverAbsences: parseInt(data['driver_absences']),
@@ -63,6 +66,31 @@ class InvoiceDetailsModel {
         return 'متأخرة';
       default:
         return 'غير مدفوعة';
+    }
+  }
+
+  String get typeLabel {
+    switch (type.toLowerCase()) {
+      case 'final':
+        return 'نهائية';
+      case 'advance':
+        return 'مقدمة';
+      default:
+        return type;
+    }
+  }
+
+  String get subscriptionTypeLabel {
+    switch (subscriptionType?.toLowerCase()) {
+      case 'monthly':
+        return 'شهري';
+      case 'weekly':
+        return 'أسبوعي';
+      case 'term':
+      case 'semester':
+        return 'فصلي';
+      default:
+        return subscriptionType ?? 'غير محدد';
     }
   }
 }

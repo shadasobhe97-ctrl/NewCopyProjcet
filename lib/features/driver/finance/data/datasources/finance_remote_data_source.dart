@@ -26,37 +26,55 @@ class FinanceRemoteDataSource {
     return WalletModel.fromJson(data['data'] as Map<String, dynamic>);
   }
 
-  Future<PaginatedResponse<WithdrawalModel>> getWithdrawals(int page) async {
+  Future<PaginatedResponse<WithdrawalModel>> getWithdrawals({
+    String? status,
+    int page = 1,
+  }) async {
+    final queryParams = <String, dynamic>{'page': page};
+    if (status != null && status.isNotEmpty) {
+      queryParams['status'] = status;
+    }
+
     final response = await _apiClient.get(
       'v1/driver/withdrawals',
-      queryParameters: {'page': page},
+      queryParameters: queryParams,
       headers: _authHeader,
     );
     final data = _handleResponse(response.data);
     return _parsePaginated<WithdrawalModel>(
-      data['data'],
+      data,
       (e) => WithdrawalModel.fromJson(Map<String, dynamic>.from(e as Map)),
     );
   }
 
-  Future<Map<String, dynamic>> createWithdrawal(Map<String, dynamic> body) async {
+  Future<WithdrawalModel> createWithdrawal(Map<String, dynamic> body) async {
     final response = await _apiClient.post(
       'v1/driver/withdrawals',
       data: body,
       headers: _authHeader,
     );
-    return _handleResponse(response.data);
+    final data = _handleResponse(response.data);
+    final responseData = data['data'] as Map<String, dynamic>? ?? data;
+    return WithdrawalModel.fromJson(responseData);
   }
 
-  Future<PaginatedResponse<InvoiceModel>> getInvoices(int page) async {
+  Future<PaginatedResponse<InvoiceModel>> getInvoices({
+    String? status,
+    int page = 1,
+  }) async {
+    final queryParams = <String, dynamic>{'page': page};
+    if (status != null && status.isNotEmpty) {
+      queryParams['status'] = status;
+    }
+
     final response = await _apiClient.get(
       'v1/driver/invoices',
-      queryParameters: {'page': page},
+      queryParameters: queryParams,
       headers: _authHeader,
     );
     final data = _handleResponse(response.data);
     return _parsePaginated<InvoiceModel>(
-      data['data'],
+      data,
       (e) => InvoiceModel.fromJson(Map<String, dynamic>.from(e as Map)),
     );
   }
@@ -74,21 +92,33 @@ class FinanceRemoteDataSource {
     dynamic rawData,
     T Function(dynamic json) fromJson,
   ) {
-    List<dynamic> rawList;
+    List<dynamic> rawList = [];
     int currentPage = 1;
     int lastPage = 1;
-    int perPage = 10;
+    int perPage = 15;
 
-    if (rawData is List) {
-      rawList = rawData;
-    } else if (rawData is Map) {
+    if (rawData is Map) {
       final map = rawData as Map<String, dynamic>;
-      rawList = map['data'] as List<dynamic>? ?? [];
-      currentPage = map['current_page'] as int? ?? 1;
-      lastPage = map['last_page'] as int? ?? 1;
-      perPage = map['per_page'] as int? ?? 10;
-    } else {
-      rawList = [];
+      final dataField = map['data'];
+
+      if (dataField is List) {
+        rawList = dataField;
+      } else if (dataField is Map) {
+        rawList = (dataField['data'] as List<dynamic>?) ?? [];
+      }
+
+      final pagination = map['pagination'] as Map<String, dynamic>?;
+      if (pagination != null) {
+        currentPage = pagination['current_page'] as int? ?? 1;
+        lastPage = pagination['last_page'] as int? ?? 1;
+        perPage = pagination['per_page'] as int? ?? 15;
+      } else if (dataField is Map) {
+        currentPage = dataField['current_page'] as int? ?? 1;
+        lastPage = dataField['last_page'] as int? ?? 1;
+        perPage = dataField['per_page'] as int? ?? 15;
+      }
+    } else if (rawData is List) {
+      rawList = rawData;
     }
 
     return PaginatedResponse<T>(
