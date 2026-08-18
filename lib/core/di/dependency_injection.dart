@@ -1,3 +1,6 @@
+import 'package:kids_transport/core/network/notification_remote_datasource.dart';
+import 'package:kids_transport/core/network/notification_repository.dart';
+import 'package:kids_transport/core/logic/cubit/notification_cubit.dart';
 import 'package:get_it/get_it.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kids_transport/core/network/api_client.dart';
@@ -68,6 +71,23 @@ void setupDependencyInjection() {
   if (!getIt.isRegistered<ChatRoomCubit>()) {
     getIt.registerFactory<ChatRoomCubit>(
       () => ChatRoomCubit(getIt<ChatRepository>()),
+    );
+  }
+
+  // ================= Notifications Feature Registration =================
+  if (!getIt.isRegistered<NotificationRemoteDataSource>()) {
+    getIt.registerLazySingleton<NotificationRemoteDataSource>(
+      () => NotificationRemoteDataSource(getIt<ApiClient>()),
+    );
+  }
+  if (!getIt.isRegistered<NotificationRepository>()) {
+    getIt.registerLazySingleton<NotificationRepository>(
+      () => NotificationRepository(getIt<NotificationRemoteDataSource>()),
+    );
+  }
+  if (!getIt.isRegistered<NotificationCubit>()) {
+    getIt.registerFactory<NotificationCubit>(
+      () => NotificationCubit(getIt<NotificationRepository>()),
     );
   }
 }

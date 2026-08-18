@@ -9,19 +9,19 @@ class PaymentMethodModel {
   PaymentMethodModel({
     required this.id,
     required this.name,
-    required this.nameEn,
-    required this.description,
+    this.nameEn = '',
+    this.description = '',
     required this.requiresReference,
     required this.instructions,
   });
 
   factory PaymentMethodModel.fromJson(Map<String, dynamic> json) {
     return PaymentMethodModel(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      nameEn: json['name_en'] ?? '',
-      description: json['description'] ?? '',
-      requiresReference: json['requires_reference'] ?? false,
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      nameEn: json['name_en']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      requiresReference: json['requires_reference'] as bool? ?? false,
       instructions: (json['instructions'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??

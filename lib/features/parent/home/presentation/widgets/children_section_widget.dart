@@ -2,15 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step1_screen.dart';
 import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
 
-/// 👶 2) ChildrenSectionWidget - قسم الأطفال
-/// يحتوي على هيدر "أطفالي" و "عرض الكل".
-/// - hasChildren = true: قائمة أفقية لكروت الأطفال وآخر كارد هو كارد "إضافة طفل".
-/// - hasChildren = false: نص "لا يوجد أطفال" وتحته نفس كارد "إضافة طفل" الصغير فقط بدون مساحات فارغة كبيرة.
 class ChildrenSectionWidget extends StatelessWidget {
   final bool hasChildren;
   final List<Map<String, String>>? children;
@@ -63,7 +58,7 @@ class ChildrenSectionWidget extends StatelessWidget {
                   style: AppTextStyles.style(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.bold,
-                    color: context.textPrimary,
+                    color: isDark ? AppColors.white : AppColors.textDark,
                   ),
                 ),
                 if (!hasChildren) ...[
@@ -101,7 +96,7 @@ class ChildrenSectionWidget extends StatelessWidget {
         // 🟢 HAS CHILDREN: قائمة أفقية تحتوي على كروت الأطفال + كارد إضافة طفل في النهاية
         // ⚪ NO CHILDREN: عرض نفس كارد "إضافة طفل" الصغير فقط
         SizedBox(
-          height: 118.h,
+          height: 130.h, // تم زيادة الارتفاع هنا لمنع خطأ الـ Overflow
           child: ListView(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -144,7 +139,7 @@ class ChildrenSectionWidget extends StatelessWidget {
       margin: EdgeInsets.only(left: 10.w),
       padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 6.w),
       decoration: BoxDecoration(
-        color: isDark ? context.cardSurface : AppColors.white,
+        color: isDark ? AppColors.grey900 : AppColors.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
           color: isDark ? AppColors.grey800 : AppColors.grey200,
@@ -160,7 +155,10 @@ class ChildrenSectionWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          AppUserAvatar(imageUrl: photo, radius: 22.r),
+          AppUserAvatar(
+            imageUrl: photo,
+            radius: 22.r,
+          ),
           SizedBox(height: 6.h),
           Text(
             name,
@@ -169,7 +167,7 @@ class ChildrenSectionWidget extends StatelessWidget {
             style: AppTextStyles.style(
               fontSize: 11.sp,
               fontWeight: FontWeight.bold,
-              color: context.textPrimary,
+              color: isDark ? AppColors.white : AppColors.textDark,
             ),
           ),
           SizedBox(height: 3.h),
@@ -200,14 +198,9 @@ class ChildrenSectionWidget extends StatelessWidget {
   }
 
   // ➕ كارد "إضافة طفل" الموحد
-  Widget _buildAddChildCard(
-    BuildContext context,
-    bool isDark,
-    Color primaryColor,
-  ) {
+  Widget _buildAddChildCard(BuildContext context, bool isDark, Color primaryColor) {
     return InkWell(
-      onTap:
-          onAddChild ??
+      onTap: onAddChild ??
           () {
             Navigator.push(
               context,
@@ -222,7 +215,7 @@ class ChildrenSectionWidget extends StatelessWidget {
         margin: EdgeInsets.only(left: 10.w),
         padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 6.w),
         decoration: BoxDecoration(
-          color: isDark ? context.cardSurface : AppColors.white,
+          color: isDark ? AppColors.grey900 : AppColors.white,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
             color: primaryColor.withValues(alpha: 0.35),
@@ -245,7 +238,11 @@ class ChildrenSectionWidget extends StatelessWidget {
                 color: primaryColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.add_rounded, color: primaryColor, size: 22.r),
+              child: Icon(
+                Icons.add_rounded,
+                color: primaryColor,
+                size: 22.r,
+              ),
             ),
             SizedBox(height: 8.h),
             Text(

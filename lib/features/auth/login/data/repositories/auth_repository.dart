@@ -1,4 +1,5 @@
 import 'package:kids_transport/core/network/api_exception.dart';
+import 'package:kids_transport/core/services/notification_service.dart';
 import 'package:kids_transport/features/auth/login/data/models/auth_common_response_model.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 
@@ -49,6 +50,13 @@ class AuthRepository {
 
   Future<AuthCommonResponseModel> logout() async {
     final authorizationHeader = _sessionRepository.getAuthorizationHeader();
+
+    // Call device token removal to backend prior to clearing session
+    try {
+      await NotificationService.removeDeviceTokenFromBackend();
+    } catch (_) {
+      // Don't block local logout on API failure
+    }
 
     if (authorizationHeader == null) {
       await _sessionRepository.clearSession();

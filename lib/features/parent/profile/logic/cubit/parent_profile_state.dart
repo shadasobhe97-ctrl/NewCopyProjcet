@@ -1,3 +1,4 @@
+import 'package:kids_transport/core/models/email_verification_info.dart';
 import '../../data/models/parent_model.dart';
 
 abstract class ParentProfileState {}
@@ -19,7 +20,13 @@ class ParentProfileUpdateLoading extends ParentProfileState {
 class ParentProfileSuccess extends ParentProfileState {
   final ParentModel parent;
   final String message;
-  ParentProfileSuccess(this.parent, this.message);
+  final EmailVerificationInfo? emailVerification;
+
+  ParentProfileSuccess(
+    this.parent,
+    this.message, {
+    this.emailVerification,
+  });
 }
 
 class ParentProfileError extends ParentProfileState {

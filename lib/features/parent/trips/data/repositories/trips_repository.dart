@@ -20,6 +20,19 @@ class TripsRepository {
     return await _remoteDataSource.getTripTrack(tripId);
   }
 
+  /// Stream live tracking for a single trip via Remote DataSource (Firestore)
+  Stream<LiveTrackingModel> trackTripLive(
+    int tripId,
+    LiveTrackingModel baseModel,
+  ) {
+    return _remoteDataSource.trackTripLiveStream(tripId, baseModel);
+  }
+
+  /// Stream live tracking for multiple active trips via Remote DataSource (Firestore)
+  Stream<List<LiveTrackingModel>> trackMultipleTripsLive() {
+    return _remoteDataSource.trackMultipleTripsLiveStream();
+  }
+
   Future<List<LiveTrackingModel>> getMultipleActiveTracking() async {
     return await _remoteDataSource.getMultipleActiveTracking();
   }

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:kids_transport/core/models/email_verification_info.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import '../datasources/parent_profile_remote_data_source.dart';
 import '../models/parent_model.dart';
@@ -20,22 +21,30 @@ class ParentProfileRepository {
   }
 
   /// تحديث ملف ولي الأمر بالباك إند (مع صورة اختيارية) وحفظ التغيير محلياً
-  Future<ParentModel> updateParentProfile({
+  Future<ProfileUpdateResult<ParentModel>> updateParentProfile({
     required String fullName,
     required String phoneNumber,
     String? email,
     String? alternativePhone,
     File? avatarFile,
   }) async {
-    final parent = await remoteDataSource.updateParentProfile(
+    final result = await remoteDataSource.updateParentProfile(
       fullName: fullName,
       phoneNumber: phoneNumber,
       email: email,
       alternativePhone: alternativePhone,
       avatarFile: avatarFile,
     );
-    await _cacheParentProfile(parent);
-    return parent;
+    await _cacheParentProfile(result.profile);
+    return result;
+  }
+
+  Future<void> cancelEmailChange() async {
+    await remoteDataSource.cancelEmailChange();
+  }
+
+  Future<String> getEmailChangeStatus() async {
+    return await remoteDataSource.getEmailChangeStatus();
   }
 
   Future<void> _cacheParentProfile(ParentModel parent) async {

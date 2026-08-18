@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:firebase_core/firebase_core.dart';
@@ -7,8 +8,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:http/http.dart' as http;
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:kids_transport/firebase_options.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/core/network/notification_repository.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 
 /// الدالة المعزولة للتعامل مع الإشعارات أثناء إغلاق التطبيق كلياً (Terminated State)
@@ -85,6 +90,9 @@ class NotificationService {
         if (kDebugMode) {
           debugPrint('✅ Initialized FCM Token: $token');
         }
+        if (sessionRepo.hasValidSession()) {
+          await syncDeviceTokenWithBackend();
+        }
       }
     } catch (e) {
       if (kDebugMode) {
@@ -99,6 +107,9 @@ class NotificationService {
         await sessionRepo.saveFcmToken(newToken);
         if (kDebugMode) {
           debugPrint('🔄 FCM Token Refreshed: $newToken');
+        }
+        if (sessionRepo.hasValidSession()) {
+          await syncDeviceTokenWithBackend();
         }
       } catch (e) {
         if (kDebugMode) {
@@ -307,6 +318,105 @@ class NotificationService {
   static void _handleNotificationTap(Map<String, dynamic> data) {
     if (_onNotificationTapCallback != null) {
       _onNotificationTapCallback!(data);
+    }
+  }
+
+  /// Syncs the FCM token and device details with the Laravel Backend
+  static Future<void> syncDeviceTokenWithBackend() async {
+    try {
+      final sessionRepo = getIt<SessionRepository>();
+      if (!sessionRepo.hasValidSession()) {
+        if (kDebugMode) {
+          debugPrint('⚠️ [FCM Token Sync]: User not authenticated. Skipping.');
+        }
+        return;
+      }
+
+      final String? token = await getFcmToken();
+      if (token == null || token.isEmpty) return;
+
+      // Persist token in local storage first
+      await sessionRepo.saveFcmToken(token);
+
+      // Get Device ID
+      String? deviceId = StorageService.getDeviceId();
+      String deviceName = 'Unknown Device';
+      
+      final deviceInfo = DeviceInfoPlugin();
+      if (deviceId == null || deviceId.isEmpty) {
+        if (Platform.isAndroid) {
+          final androidInfo = await deviceInfo.androidInfo;
+          deviceId = androidInfo.id; // Unique hardware ID
+          deviceName = '${androidInfo.brand} ${androidInfo.model}';
+        } else if (Platform.isIOS) {
+          final iosInfo = await deviceInfo.iosInfo;
+          deviceId = iosInfo.identifierForVendor; // Unique iOS identifier
+          deviceName = iosInfo.name;
+        } else {
+          deviceId = 'unknown_${DateTime.now().millisecondsSinceEpoch}';
+        }
+        if (deviceId != null) {
+          await StorageService.saveDeviceId(deviceId);
+        }
+      } else {
+        // Just fetch device name
+        if (Platform.isAndroid) {
+          final androidInfo = await deviceInfo.androidInfo;
+          deviceName = '${androidInfo.brand} ${androidInfo.model}';
+        } else if (Platform.isIOS) {
+          final iosInfo = await deviceInfo.iosInfo;
+          deviceName = iosInfo.name;
+        }
+      }
+
+      // Get App Version
+      final packageInfo = await PackageInfo.fromPlatform();
+      final String appVersion = packageInfo.version;
+
+      final String platform = Platform.isAndroid ? 'android' : (Platform.isIOS ? 'ios' : 'unknown');
+
+      final body = {
+        'fcm_token': token,
+        'device_id': deviceId ?? 'unknown',
+        'device_name': deviceName,
+        'platform': platform,
+        'app_version': appVersion,
+      };
+
+      if (kDebugMode) {
+        debugPrint('🚀 [FCM Token Sync]: Sending details to Laravel backend: $body');
+      }
+
+      final notificationRepo = getIt<NotificationRepository>();
+      await notificationRepo.registerDeviceToken(body);
+
+      // Save to Firestore too if userId is available
+      final String? userId = sessionRepo.getUserId();
+      if (userId != null && userId.isNotEmpty) {
+        await saveTokenToFirestore(userId);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ [FCM Token Sync Error]: $e');
+      }
+    }
+  }
+
+  /// Remove device token on logout
+  static Future<void> removeDeviceTokenFromBackend() async {
+    try {
+      final String? deviceId = StorageService.getDeviceId();
+      if (deviceId != null && deviceId.isNotEmpty) {
+        if (kDebugMode) {
+          debugPrint('🗑️ [FCM Token Sync]: Removing device token for device: $deviceId');
+        }
+        final notificationRepo = getIt<NotificationRepository>();
+        await notificationRepo.removeDeviceToken(deviceId);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ [FCM Token Remove Error]: $e');
+      }
     }
   }
 

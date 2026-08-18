@@ -92,11 +92,11 @@ class DriverDrawer extends StatelessWidget {
                     },
                   ),
 
-                  // ── معلومات المركبة الرئيسية ──
+                  // ── إدارة المركبة والوثائق ──
                   AppDrawerItem(
                     icon: Icons.directions_car_filled_rounded,
                     iconColor: context.primaryColor,
-                    label: 'معلومات المركبة الرئيسية',
+                    label: 'إدارة المركبة والوثائق',
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.pushNamed(

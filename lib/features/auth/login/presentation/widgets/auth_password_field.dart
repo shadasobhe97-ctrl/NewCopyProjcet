@@ -55,13 +55,16 @@ class _AuthPasswordFieldState extends State<AuthPasswordField> {
             if (value == null || value.isEmpty) {
               return 'الرجاء إدخال كلمة المرور';
             }
-            if (value.length < 6) return 'كلمة المرور يجب أن لا تقل عن 6 خانات';
+            // تم إيقاف التحقق الإضافي مؤقتاً للتجربة
+            // final digitCount = RegExp(r'\d').allMatches(value).length;
+            // final hasLetter = RegExp(r'[a-zA-Z\u0600-\u06FF]').hasMatch(value);
 
-            final hasLetter = RegExp(r'[a-zA-Z]').hasMatch(value);
-            final hasDigit = RegExp(r'[0-9]').hasMatch(value);
-            if (!hasLetter || !hasDigit) {
-              return 'يجب أن تحتوي كلمة المرور على حروف وأرقام معاً';
-            }
+            // if (digitCount < 6) {
+            //   return 'كلمة المرور يجب أن تحتوي على 6 أرقام على الأقل';
+            // }
+            // if (!hasLetter) {
+            //   return 'كلمة المرور يجب أن تحتوي على حرف واحد على الأقل';
+            // }
             return null;
           },
     );

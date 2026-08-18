@@ -1,6 +1,8 @@
 import 'package:kids_transport/features/parent/wallet/data/datasources/wallet_remote_data_source.dart';
+import 'package:kids_transport/features/parent/wallet/data/models/hold_trip_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/payment_method_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/recharge_response_model.dart';
+import 'package:kids_transport/features/parent/wallet/data/models/trip_dispute_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/wallet_balance_model.dart';
 
 class WalletRepository {
@@ -25,6 +27,26 @@ class WalletRepository {
       amount: amount,
       paymentMethod: paymentMethod,
       referenceNumber: referenceNumber,
+    );
+  }
+
+  Future<HoldTripModel> holdTripAmount({
+    required dynamic tripId,
+    required double amount,
+  }) async {
+    return await _remoteDataSource.holdTripAmount(
+      tripId: tripId,
+      amount: amount,
+    );
+  }
+
+  Future<TripDisputeModel> createTripDispute({
+    required dynamic tripId,
+    required String reason,
+  }) async {
+    return await _remoteDataSource.createTripDispute(
+      tripId: tripId,
+      reason: reason,
     );
   }
 }

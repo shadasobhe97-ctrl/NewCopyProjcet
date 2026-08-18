@@ -4,7 +4,6 @@ import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/driver/requests/data/models/accept_request_response_model.dart';
 import 'package:kids_transport/features/driver/requests/data/models/driver_request_model.dart';
 
-
 class DriverRequestsRemoteDataSource {
   final ApiClient _apiClient;
 
@@ -128,12 +127,12 @@ class DriverRequestsRemoteDataSource {
         throw ApiException(msg ?? 'تعذر قبول الطلب.');
       }
       return AcceptRequestResponseModel.fromJson(
-          Map<String, dynamic>.from(data));
+        Map<String, dynamic>.from(data),
+      );
     }
 
     throw const ApiException('تعذر معالجة استجابة قبول الطلب.');
   }
-
 
   Future<void> rejectRequest(int requestId, {required String reason}) async {
     await _apiClient.put(
@@ -142,5 +141,4 @@ class DriverRequestsRemoteDataSource {
       headers: _authHeader,
     );
   }
-
 }

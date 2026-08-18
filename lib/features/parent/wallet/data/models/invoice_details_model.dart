@@ -14,7 +14,7 @@ class InvoiceDetailsModel {
   final String? actionTaken;
   final String? paidAt;
   final String createdAt;
-  
+
   // Contract info
   final String? contractNumber;
   final String? contractStatus;
@@ -29,16 +29,16 @@ class InvoiceDetailsModel {
     required this.amount,
     required this.type,
     required this.status,
-    required this.dueDate,
+    this.dueDate = '',
     this.subscriptionType,
     required this.totalTrips,
     required this.completedTrips,
     required this.driverAbsences,
     required this.studentAbsences,
-    required this.calculatedAmount,
+    this.calculatedAmount = 0.0,
     this.actionTaken,
     this.paidAt,
-    required this.createdAt,
+    this.createdAt = '',
     this.contractNumber,
     this.contractStatus,
     this.driverName,
@@ -50,7 +50,7 @@ class InvoiceDetailsModel {
     if (json['driver'] != null && json['driver'] is Map) {
       final user = json['driver']['user'];
       if (user != null && user is Map) {
-        dName = user['full_name'];
+        dName = user['full_name']?.toString();
       }
     }
 
@@ -58,33 +58,33 @@ class InvoiceDetailsModel {
     if (json['parent'] != null && json['parent'] is Map) {
       final user = json['parent']['user'];
       if (user != null && user is Map) {
-        pName = user['full_name'];
+        pName = user['full_name']?.toString();
       }
     }
 
     String? cNumber;
     String? cStatus;
     if (json['contract'] != null && json['contract'] is Map) {
-      cNumber = json['contract']['contract_number'];
-      cStatus = json['contract']['status'];
+      cNumber = json['contract']['contract_number']?.toString();
+      cStatus = json['contract']['status']?.toString();
     }
 
     return InvoiceDetailsModel(
       id: json['id'] ?? 0,
-      invoiceNumber: json['invoice_number'] ?? '',
-      amount: (json['amount'] ?? 0).toDouble(),
-      type: json['type'] ?? '',
-      status: json['status'] ?? '',
-      dueDate: json['due_date'] ?? '',
-      subscriptionType: json['subscription_type'],
-      totalTrips: json['total_trips'] ?? 0,
-      completedTrips: json['completed_trips'] ?? 0,
-      driverAbsences: json['driver_absences'] ?? 0,
-      studentAbsences: json['student_absences'] ?? 0,
-      calculatedAmount: (json['calculated_amount'] ?? 0).toDouble(),
-      actionTaken: json['action_taken'],
-      paidAt: json['paid_at'],
-      createdAt: json['created_at'] ?? '',
+      invoiceNumber: json['invoice_number']?.toString() ?? '',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      type: json['type']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      dueDate: json['due_date']?.toString() ?? '',
+      subscriptionType: json['subscription_type']?.toString(),
+      totalTrips: (json['total_trips'] as num?)?.toInt() ?? 0,
+      completedTrips: (json['completed_trips'] as num?)?.toInt() ?? 0,
+      driverAbsences: (json['driver_absences'] as num?)?.toInt() ?? 0,
+      studentAbsences: (json['student_absences'] as num?)?.toInt() ?? 0,
+      calculatedAmount: (json['calculated_amount'] as num?)?.toDouble() ?? (json['amount'] as num?)?.toDouble() ?? 0.0,
+      actionTaken: json['action_taken']?.toString(),
+      paidAt: json['paid_at']?.toString(),
+      createdAt: json['created_at']?.toString() ?? '',
       contractNumber: cNumber,
       contractStatus: cStatus,
       driverName: dName,

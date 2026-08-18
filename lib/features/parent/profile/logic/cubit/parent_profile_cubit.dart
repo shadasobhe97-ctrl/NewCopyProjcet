@@ -39,7 +39,7 @@ class ParentProfileCubit extends Cubit<ParentProfileState> {
       emit(ParentProfileUpdateLoading(_currentParent!));
     }
     try {
-      await repository.updateParentProfile(
+      final result = await repository.updateParentProfile(
         fullName: fullName,
         phoneNumber: phoneNumber,
         email: email,
@@ -55,11 +55,43 @@ class ParentProfileCubit extends Cubit<ParentProfileState> {
         '✅ [ParentProfileCubit] تحديث ورفرش ناجح من الباك إند — avatarUrl: ${freshParent.avatarUrl}, '
         'emailChangePending: ${freshParent.emailChangePending}',
       );
-      emit(ParentProfileSuccess(freshParent, 'تم تحديث الملف الشخصي بنجاح'));
+      emit(
+        ParentProfileSuccess(
+          freshParent,
+          result.message,
+          emailVerification: result.emailVerification,
+        ),
+      );
       emit(ParentProfileLoaded(freshParent));
     } catch (e) {
       debugPrint('❌ [ParentProfileCubit] updateProfile: $e');
       emit(ParentProfileError(e.toString().replaceAll('Exception:', '')));
+    }
+  }
+
+  Future<void> cancelEmailChange() async {
+    try {
+      await repository.cancelEmailChange();
+      await fetchProfile();
+    } catch (e) {
+      debugPrint('❌ [ParentProfileCubit] cancelEmailChange: $e');
+      emit(ParentProfileError(e.toString().replaceAll('Exception:', '')));
+      rethrow;
+    }
+  }
+
+  Future<String> checkEmailChangeStatus() async {
+    try {
+      final status = await repository.getEmailChangeStatus();
+      debugPrint('📥 [ParentProfileCubit] checkEmailChangeStatus status => $status');
+      if (status == 'verified' || status == 'rejected' || status == 'expired') {
+        await fetchProfile();
+      }
+      return status;
+    } catch (e) {
+      debugPrint('❌ [ParentProfileCubit] checkEmailChangeStatus: $e');
+      emit(ParentProfileError(e.toString().replaceAll('Exception:', '')));
+      rethrow;
     }
   }
 

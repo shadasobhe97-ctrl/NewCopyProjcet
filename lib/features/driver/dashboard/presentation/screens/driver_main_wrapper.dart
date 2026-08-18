@@ -1,3 +1,6 @@
+import 'package:kids_transport/core/logic/cubit/notification_cubit.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
+import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
@@ -230,30 +233,57 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
                     );
                   },
                 ),
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Icons.notifications_none_rounded,
-                        color: context.primaryColor,
-                        size: 22,
-                      ),
-                      onPressed: () {},
-                    ),
-                    Positioned(
-                      right: 6,
-                      top: 6,
-                      child: Container(
-                        width: 7,
-                        height: 7,
-                        decoration: AppTheme.boxDecoration(
-                          color: context.errorColor,
-                          shape: BoxShape.circle,
+                BlocBuilder<NotificationCubit, NotificationState>(
+                  bloc: getIt<NotificationCubit>()..updateUnreadCount(),
+                  builder: (context, state) {
+                    int unreadCount = 0;
+                    if (state is NotificationLoaded) {
+                      unreadCount = state.unreadCount;
+                    }
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            Icons.notifications_none_rounded,
+                            color: context.primaryColor,
+                            size: 22,
+                          ),
+                          onPressed: () {
+                            Navigator.pushNamed(context, AppRoutes.notifications).then((_) {
+                              getIt<NotificationCubit>().updateUnreadCount();
+                            });
+                          },
                         ),
-                      ),
-                    ),
-                  ],
+                        if (unreadCount > 0)
+                          Positioned(
+                            right: 4,
+                            top: 4,
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                color: context.errorColor,
+                                shape: BoxShape.circle,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 14,
+                                minHeight: 14,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  unreadCount.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),

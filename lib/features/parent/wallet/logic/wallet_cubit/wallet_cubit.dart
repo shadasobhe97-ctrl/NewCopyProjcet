@@ -10,6 +10,7 @@ class WalletCubit extends Cubit<WalletState> {
 
   WalletCubit(this._repository) : super(WalletInitial());
 
+  /// 1 & 2. تحميل بيانات المحفظة (الرصيد + طرق الشحن)
   Future<void> loadWalletData() async {
     emit(WalletLoading());
     try {
@@ -24,16 +25,16 @@ class WalletCubit extends Cubit<WalletState> {
     }
   }
 
+  /// 3. تقديم طلب شحن رصيد جديد
   Future<void> rechargeWallet({
     required double amount,
     required String paymentMethod,
     String? referenceNumber,
   }) async {
-    // Preserve current loaded state if possible
     final currentState = state;
     WalletBalanceModel? cachedBalance;
     List<PaymentMethodModel>? cachedMethods;
-    
+
     if (currentState is WalletLoaded) {
       cachedBalance = currentState.balance;
       cachedMethods = currentState.paymentMethods;
@@ -46,10 +47,12 @@ class WalletCubit extends Cubit<WalletState> {
         paymentMethod: paymentMethod,
         referenceNumber: referenceNumber,
       );
-      
-      emit(WalletRechargeSuccess('تم تقديم طلب الشحن بنجاح. بانتظار تأكيد الإدارة.'));
-      
-      // Reload balance after success
+
+      emit(WalletRechargeSuccess(
+        'تم تقديم طلب الشحن عبر $paymentMethod بنجاح. بانتظار تأكيد الإدارة.',
+      ));
+
+      // إعادة تحميل الرصيد فور النجاح
       loadWalletData();
     } on DioException catch (e) {
       final msg = e.response?.data?['message'] ?? 'فشل في إرسال طلب الشحن';
@@ -62,6 +65,54 @@ class WalletCubit extends Cubit<WalletState> {
       if (cachedBalance != null && cachedMethods != null) {
         emit(WalletLoaded(cachedBalance, cachedMethods));
       }
+    }
+  }
+
+  /// 4. تجميد مبلغ رحلة يومية (Hold Amount)
+  Future<void> holdTripAmount({
+    required dynamic tripId,
+    required double amount,
+  }) async {
+    emit(WalletHolding());
+    try {
+      final result = await _repository.holdTripAmount(
+        tripId: tripId,
+        amount: amount,
+      );
+      emit(WalletHoldSuccess(
+        holdData: result,
+        message: 'تم حجز مبلغ الرحلة بنجاح في أمانات المحفظة.',
+      ));
+      // تحديث الرصيد بعد تجميد المبلغ
+      loadWalletData();
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? 'فشل حجز مبلغ الرحلة';
+      emit(WalletHoldError(msg.toString()));
+    } catch (e) {
+      emit(WalletHoldError(e.toString()));
+    }
+  }
+
+  /// 5. تقديم اعتراض/نزاع مالي على رحلة (24h Dispute)
+  Future<void> createTripDispute({
+    required dynamic tripId,
+    required String reason,
+  }) async {
+    emit(WalletDisputing());
+    try {
+      final result = await _repository.createTripDispute(
+        tripId: tripId,
+        reason: reason,
+      );
+      emit(WalletDisputeSuccess(
+        disputeData: result,
+        message: 'تم تقديم الاعتراض وتجميد مبلغ الرحلة لحين مراجعة الإدارة.',
+      ));
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? 'فشل تقديم الاعتراض على الرحلة';
+      emit(WalletDisputeError(msg.toString()));
+    } catch (e) {
+      emit(WalletDisputeError(e.toString()));
     }
   }
 }

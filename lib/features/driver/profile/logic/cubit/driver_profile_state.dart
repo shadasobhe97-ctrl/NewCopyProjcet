@@ -1,3 +1,4 @@
+import 'package:kids_transport/core/models/email_verification_info.dart';
 import '../../data/models/driver_model.dart';
 
 abstract class DriverProfileState {}
@@ -25,7 +26,14 @@ class DriverProfileSuccess extends DriverProfileState {
   final DriverModel driver;
   final String message;
   final bool isNameChanged;
-  DriverProfileSuccess(this.driver, this.message, {this.isNameChanged = false});
+  final EmailVerificationInfo? emailVerification;
+
+  DriverProfileSuccess(
+    this.driver,
+    this.message, {
+    this.isNameChanged = false,
+    this.emailVerification,
+  });
 }
 
 // حالة حدوث خطأ في الاتصال أو السيرفر

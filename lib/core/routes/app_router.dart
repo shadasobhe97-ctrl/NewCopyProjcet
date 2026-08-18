@@ -1,3 +1,4 @@
+import 'package:kids_transport/features/shared/notifications/presentation/screens/notifications_screen.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -109,6 +110,7 @@ class AppRoutes {
   static const String verifyOtp = '/verifyOtp';
   static const String resetPassword = '/resetPassword';
   static const String selectRole = '/selectRole';
+  static const String notifications = '/notifications';
 
   static const String adminLogin = '/adminLogin';
   static const String adminDashboard = '/admin/dashboard';
@@ -235,6 +237,8 @@ class AppRoutes {
         );
       case selectRole:
         return _route(settings, const SelectRoleScreen());
+      case notifications:
+        return _route(settings, const NotificationsScreen());
       default:
         return null;
     }

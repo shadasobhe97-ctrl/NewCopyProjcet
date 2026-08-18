@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'vehicle_state.dart';
 import '../data/repositories/vehicle_repository.dart';
@@ -7,7 +8,7 @@ class VehicleCubit extends Cubit<VehicleState> {
 
   VehicleCubit(this.repository) : super(VehicleInitial());
 
-  // 📥 دالة جلب بيانات المركبة تلقائياً من السيرفر عند فتح الشاشة
+  // 📥 1. دالة جلب بيانات المركبة تلقائياً من السيرفر GET /api/v1/driver/profile/vehicle
   Future<void> getVehicleProfile() async {
     emit(VehicleLoading());
     try {
@@ -18,26 +19,39 @@ class VehicleCubit extends Cubit<VehicleState> {
     }
   }
 
-  // 📤 دالة تحديث بيانات المركبة الأساسية
+  // 📤 2. دالة تحديث بيانات المركبة الأساسية POST /api/v1/driver/profile/vehicle/{vehicleId}
   Future<void> updateDetails({
     required int vehicleId,
-    required String brand,
-    required String model,
-    required int year,
-    required String plateNumber,
-    required int capacityManual,
+    String? brand,
+    String? model,
+    int? year,
+    String? plateNumber,
+    String? color,
+    String? type,
+    int? capacityManual,
+    bool? hasAc,
+    File? vehicleImage,
   }) async {
     emit(VehicleLoading());
     try {
-      final vehicle = await repository.updateVehicle(
+      final updatedVehicle = await repository.updateVehicle(
         vehicleId: vehicleId,
         brand: brand,
         model: model,
         year: year,
         plateNumber: plateNumber,
+        color: color,
+        type: type,
         capacityManual: capacityManual,
+        hasAc: hasAc,
+        vehicleImage: vehicleImage,
       );
-      emit(VehicleDetailsSuccess(vehicle));
+
+      // بث نجاح التحديث
+      emit(VehicleDetailsSuccess(updatedVehicle));
+
+      // 🌟 إعادة جلب بيانات المركبة فوراً من السيرفر (GET) لضمان تماثل البيانات
+      await getVehicleProfile();
     } catch (e) {
       emit(VehicleError(e.toString()));
     }

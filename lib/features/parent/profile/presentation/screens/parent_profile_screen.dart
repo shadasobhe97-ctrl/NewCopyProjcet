@@ -10,6 +10,7 @@ import 'package:kids_transport/core/widgets/app_bars.dart';
 import 'package:kids_transport/core/widgets/primary_button.dart';
 import 'package:kids_transport/features/parent/profile/presentation/widgets/profile_avatar_editor.dart';
 import 'package:kids_transport/features/parent/profile/presentation/widgets/profile_email_field.dart';
+import 'package:kids_transport/core/widgets/email_verification_dialog.dart';
 import '../../data/models/parent_model.dart';
 import '../../logic/cubit/parent_profile_cubit.dart';
 import '../../logic/cubit/parent_profile_state.dart';
@@ -36,7 +37,6 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   String _originalEmail = '';
   bool _isEmailVerified = true;
   bool _isEmailEdited = false;
-  bool _lastSavedEmailChanged = false;
   String? _avatarUrl;
 
   final _nameFocus = FocusNode();
@@ -132,7 +132,6 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     if (_formKey.currentState!.validate()) {
       final newEmail = _emailController.text.trim();
       final emailChanged = newEmail.isNotEmpty && newEmail != _originalEmail;
-      _lastSavedEmailChanged = emailChanged;
 
       context.read<ParentProfileCubit>().updateProfile(
         fullName: _nameController.text.trim(),
@@ -156,9 +155,6 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
             _avatarUrl = state.parent.avatarUrl;
           });
         } else if (state is ParentProfileSuccess) {
-          final wasEmailChanged = _lastSavedEmailChanged;
-          _lastSavedEmailChanged = false;
-
           setState(() {
             _fillFieldsFrom(state.parent);
             final url = state.parent.avatarUrl;
@@ -176,25 +172,52 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
             ),
           );
 
-          if (wasEmailChanged || (state.parent.emailChangePending == true)) {
-            showDialog(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                title: const Text('تفعيل البريد الإلكتروني'),
-                content: const Text(
-                  'ستصلك رسالة إلى بريدك الإلكتروني الجديد لتأكيد التغيير، يرجى فتح البريد والضغط على رابط التفعيل.',
-                  style: TextStyle(height: 1.5),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('حسناً'),
-                  ),
-                ],
-              ),
+          if (state.emailVerification != null) {
+            EmailVerificationDialog.show(
+              context,
+              onCancel: () async {
+                final cubit = context.read<ParentProfileCubit>();
+                await cubit.cancelEmailChange();
+              },
+              onCheckStatus: () async {
+                final cubit = context.read<ParentProfileCubit>();
+                final status = await cubit.checkEmailChangeStatus();
+                if (!mounted) return;
+
+                if (status == 'pending') {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'لم يتم تأكيد البريد الإلكتروني بعد، يرجى فتح الرابط الموجود في البريد.',
+                      ),
+                    ),
+                  );
+                } else if (status == 'verified') {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('تم تأكيد البريد الإلكتروني بنجاح.'),
+                      backgroundColor: context.successColor,
+                    ),
+                  );
+                } else if (status == 'rejected') {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('تم رفض طلب تغيير البريد الإلكتروني.'),
+                      backgroundColor: context.errorColor,
+                    ),
+                  );
+                } else if (status == 'expired') {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('انتهت صلاحية رابط تأكيد البريد الإلكتروني.'),
+                      backgroundColor: context.errorColor,
+                    ),
+                  );
+                }
+              },
             );
           }
         } else if (state is ParentProfileError) {

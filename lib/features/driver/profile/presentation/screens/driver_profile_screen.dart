@@ -7,6 +7,7 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/widgets/email_verification_dialog.dart';
 import '../../logic/cubit/driver_profile_cubit.dart';
 import '../../logic/cubit/driver_profile_state.dart';
 import '../../data/models/driver_model.dart';
@@ -32,17 +33,12 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
 
   // بيانات افتراضية يتم تحميلها من التخزين المحلي لتدعم العمل بدون إنترنت
   String _name = '';
-  final String _dob = '1985-04-12';
   String _phone = '';
   String _backupPhone = '';
   String _email = '';
-  final String _shift = 'صباحية';
-  final String _coveredAreas = 'حي الأندلس، سوق الجمعة';
-  final String _currentLocation = 'متوفر (دائم التحديث)';
 
   // Controllers للوضع التعديل
   late TextEditingController _nameController;
-  late TextEditingController _dobController;
   late TextEditingController _phoneController;
   late TextEditingController _backupPhoneController;
   late TextEditingController _emailController;
@@ -56,7 +52,6 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
 
     // إنشاء الكنترولرز مرة واحدة فقط لتفادي تسريب الذاكرة!
     _nameController = TextEditingController(text: _name);
-    _dobController = TextEditingController(text: _dob);
     _phoneController = TextEditingController(text: _phone);
     _backupPhoneController = TextEditingController(text: _backupPhone);
     _emailController = TextEditingController(text: _email);
@@ -70,7 +65,6 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _dobController.dispose();
     _phoneController.dispose();
     _backupPhoneController.dispose();
     _emailController.dispose();
@@ -282,6 +276,59 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           if (state.isNameChanged) {
             _showSensitiveDataNotice();
           }
+          if (state.emailVerification != null) {
+            EmailVerificationDialog.show(
+              context,
+              onCancel: () async {
+                final cubit = context.read<DriverProfileCubit>();
+                await cubit.cancelEmailChange();
+              },
+              onCheckStatus: () async {
+                final cubit = context.read<DriverProfileCubit>();
+                final messenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(context);
+                final successColor = context.successColor;
+                final errorColor = context.errorColor;
+
+                final status = await cubit.checkEmailChangeStatus();
+                if (!mounted) return;
+
+                if (status == 'pending') {
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'لم يتم تأكيد البريد الإلكتروني بعد، يرجى فتح الرابط الموجود في البريد.',
+                      ),
+                    ),
+                  );
+                } else if (status == 'verified') {
+                  navigator.pop();
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: const Text('تم تأكيد البريد الإلكتروني بنجاح.'),
+                      backgroundColor: successColor,
+                    ),
+                  );
+                } else if (status == 'rejected') {
+                  navigator.pop();
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: const Text('تم رفض طلب تغيير البريد الإلكتروني.'),
+                      backgroundColor: errorColor,
+                    ),
+                  );
+                } else if (status == 'expired') {
+                  navigator.pop();
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: const Text('انتهت صلاحية رابط تأكيد البريد الإلكتروني.'),
+                      backgroundColor: errorColor,
+                    ),
+                  );
+                }
+              },
+            );
+          }
         } else if (state is DriverProfileError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -446,48 +493,35 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                           isPending: isEmailPending,
                         ),
                         _buildField(
-                          label: 'تاريخ الميلاد',
-                          icon: Icons.calendar_today_outlined,
-                          value: _dob,
-                          controller: _dobController,
-                          isDark: isDark,
-                          readOnly: true, // يفضل جعله DatePicker مستقبلاً
-                        ),
-
-                        // ── بيانات غير قابلة للتعديل مباشرة (للعرض فقط) ──
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Divider(),
-                        ),
-                        Text(
-                          'بيانات العمل والتغطية',
-                          style: AppTextStyles.style(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                          label: 'الرقم الوطني',
+                          icon: Icons.badge_outlined,
+                          value: (driver != null && driver.nationalId.isNotEmpty)
+                              ? driver.nationalId
+                              : 'غير متوفر',
+                          controller: TextEditingController(
+                            text: (driver != null && driver.nationalId.isNotEmpty)
+                                ? driver.nationalId
+                                : 'غير متوفر',
                           ),
+                          isDark: isDark,
+                          readOnly: true,
                         ),
-                        const SizedBox(height: 16),
-
-                        _buildInfoRow(
-                          'فترة العمل',
-                          _shift,
-                          Icons.access_time_rounded,
-                          isDark,
-                        ),
-                        _buildInfoRow(
-                          'المناطق المغطاة',
-                          _coveredAreas,
-                          Icons.map_outlined,
-                          isDark,
-                        ),
-                        _buildInfoRow(
-                          'الموقع الجغرافي',
-                          _currentLocation,
-                          Icons.location_on_outlined,
-                          isDark,
+                        _buildField(
+                          label: 'حالة الحساب',
+                          icon: Icons.verified_user_outlined,
+                          value: driver != null && driver.accountStatus.isNotEmpty
+                              ? (driver.accountStatus == 'Approved' ? 'مُعتمد' : driver.accountStatus)
+                              : 'نشط',
+                          controller: TextEditingController(
+                            text: driver != null && driver.accountStatus.isNotEmpty
+                                ? (driver.accountStatus == 'Approved' ? 'مُعتمد' : driver.accountStatus)
+                                : 'نشط',
+                          ),
+                          isDark: isDark,
+                          readOnly: true,
                         ),
 
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 30),
 
                         // زر الحفظ يظهر فقط في وضع التعديل
                         if (_isEditing)
@@ -631,45 +665,5 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     );
   }
 
-  // ── بناء حقول العرض فقط (لبيانات العمل) ──
-  Widget _buildInfoRow(String label, String value, IconData icon, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: AppTheme.boxDecoration(
-              color: context.primaryColor.withValues(alpha: 0.1),
-              borderRadius: AppTheme.radius(10),
-            ),
-            child: Icon(icon, color: context.primaryColor, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: AppTextStyles.style(
-                    fontSize: 12,
-                    color: AppColors.grey500,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: AppTextStyles.style(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 }

@@ -1,32 +1,66 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+admin.initializeApp();
 
-const {setGlobalOptions} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/https");
-const logger = require("firebase-functions/logger");
+exports.sendChatNotification = functions.firestore
+  .document("chat_rooms/{chatRoomId}/messages/{messageId}")
+  .onCreate(async (snap, context) => {
+    const messageData = snap.data();
+    const chatRoomId = context.params.chatRoomId;
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+    // 1. تحديد من أرسل الرسالة
+    const senderId = messageData.sender_id || messageData.senderId;
+    const messageType = messageData.type || "text";
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+    // 2. صياغة نص الإشعار
+    let bodyText = messageData.message;
+    if (messageType === "image") bodyText = "📷 أرسل صورة";
+    if (messageType === "video") bodyText = "🎥 أرسل فيديو";
+    if (messageType === "audio") bodyText = "🎤 أرسل رسالة صوتية";
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+    // 3. جلب بيانات الغرفة
+    const roomSnap = await admin.firestore().collection("chat_rooms").doc(chatRoomId).get();
+    const roomData = roomSnap.data();
+
+    if (!roomData) return null;
+
+    let receiverId = "";
+    let senderName = "رسالة جديدة";
+
+    // تحديد الطرف المستقبل
+    if (senderId === roomData.parent_id) {
+       receiverId = roomData.driver_id;
+       senderName = roomData.parent_name || "ولي الأمر";
+    } else {
+       receiverId = roomData.parent_id;
+       senderName = roomData.driver_name || "السائق";
+    }
+
+    if (!receiverId) return null;
+
+    // 4. جلب الـ FCM Token الخاص بالمستقبل من الفايربيز
+    const userSnap = await admin.firestore().collection("users").doc(receiverId).get();
+    if (!userSnap.exists || !userSnap.data().fcm_token) {
+        console.log("لا يوجد توكن لهذا المستخدم:", receiverId);
+        return null;
+    }
+
+    const fcmToken = userSnap.data().fcm_token;
+
+    // 5. إرسال الإشعار
+    const payload = {
+      token: fcmToken,
+      notification: {
+        title: senderName,
+        body: bodyText,
+      },
+      data: {
+        type: "chat_message",
+        chat_room_id: chatRoomId,
+      }
+    };
+
+    return admin.messaging().send(payload)
+      .then((response) => console.log("تم إرسال الإشعار بنجاح:", response))
+      .catch((error) => console.error("خطأ في إرسال الإشعار:", error));
+  });

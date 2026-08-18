@@ -168,6 +168,15 @@ class ChildrenRemoteDataSource {
 
     dynamic requestData;
 
+    final startDateStr = (child.logistics?.startDate ?? child.transportPref.startDate)
+        .toIso8601String()
+        .split('T')
+        .first;
+    final endDateRaw = child.logistics?.endDate ?? child.transportPref.endDate;
+    final endDateStr = endDateRaw != null
+        ? endDateRaw.toIso8601String().split('T').first
+        : startDateStr;
+
     final flatPayload = <String, dynamic>{
       'parent_id': parentId,
       'school_id': child.schoolId,
@@ -175,33 +184,23 @@ class ChildrenRemoteDataSource {
       'full_name': child.fullName,
       'gender': child.gender,
       'birth_date': child.birthDate.toIso8601String().split('T').first,
-      'grade': child.gradeLevel,
+      'grade': int.tryParse(child.grade) ?? child.gradeLevel,
       'preferred_time_slot':
           child.logistics?.preferredTimeSlot ?? child.transportPref.period,
       'trip_direction':
           child.logistics?.tripDirection ?? child.transportPref.serviceType,
-      'start_date':
-          (child.logistics?.startDate ?? child.transportPref.startDate)
-              .toIso8601String()
-              .split('T')
-              .first,
-      'end_date':
-          (child.logistics?.endDate ?? child.transportPref.endDate)
-              ?.toIso8601String()
-              .split('T')
-              .first ??
-          '',
+      'start_date': startDateStr,
+      'end_date': endDateStr,
       'subscription_type':
           child.logistics?.subscriptionType ??
           child.transportPref.subscriptionType,
       if (child.medicalNotes != null && child.medicalNotes!.isNotEmpty)
         'medical_notes': child.medicalNotes,
-      if (child.notificationRadius != null)
-        'notification_radius': child.notificationRadius,
-      'pickup_time':
-          child.logistics?.pickupTime ?? child.transportPref.schoolStartTime,
-      'dropoff_time':
-          child.logistics?.dropoffTime ?? child.transportPref.schoolEndTime,
+      'notification_radius': child.notificationRadius?.toInt() ?? 500,
+      if ((child.logistics?.pickupTime ?? child.transportPref.schoolStartTime).isNotEmpty)
+        'pickup_time': child.logistics?.pickupTime ?? child.transportPref.schoolStartTime,
+      if ((child.logistics?.dropoffTime ?? child.transportPref.schoolEndTime).isNotEmpty)
+        'dropoff_time': child.logistics?.dropoffTime ?? child.transportPref.schoolEndTime,
       if (child.photoUrl != null && !_isLocalImagePath(child.photoUrl))
         'photo_url': child.photoUrl,
     };
@@ -268,6 +267,15 @@ class ChildrenRemoteDataSource {
 
     dynamic requestData;
 
+    final startDateStr = (child.logistics?.startDate ?? child.transportPref.startDate)
+        .toIso8601String()
+        .split('T')
+        .first;
+    final endDateRaw = child.logistics?.endDate ?? child.transportPref.endDate;
+    final endDateStr = endDateRaw != null
+        ? endDateRaw.toIso8601String().split('T').first
+        : startDateStr;
+
     final flatPayload = <String, dynamic>{
       'parent_id': parentId,
       'school_id': child.schoolId,
@@ -275,33 +283,23 @@ class ChildrenRemoteDataSource {
       'full_name': child.fullName,
       'gender': child.gender,
       'birth_date': child.birthDate.toIso8601String().split('T').first,
-      'grade': child.gradeLevel,
+      'grade': int.tryParse(child.grade) ?? child.gradeLevel,
       'preferred_time_slot':
           child.logistics?.preferredTimeSlot ?? child.transportPref.period,
       'trip_direction':
           child.logistics?.tripDirection ?? child.transportPref.serviceType,
-      'start_date':
-          (child.logistics?.startDate ?? child.transportPref.startDate)
-              .toIso8601String()
-              .split('T')
-              .first,
-      'end_date':
-          (child.logistics?.endDate ?? child.transportPref.endDate)
-              ?.toIso8601String()
-              .split('T')
-              .first ??
-          '',
+      'start_date': startDateStr,
+      'end_date': endDateStr,
       'subscription_type':
           child.logistics?.subscriptionType ??
           child.transportPref.subscriptionType,
       if (child.medicalNotes != null && child.medicalNotes!.isNotEmpty)
         'medical_notes': child.medicalNotes,
-      if (child.notificationRadius != null)
-        'notification_radius': child.notificationRadius,
-      'pickup_time':
-          child.logistics?.pickupTime ?? child.transportPref.schoolStartTime,
-      'dropoff_time':
-          child.logistics?.dropoffTime ?? child.transportPref.schoolEndTime,
+      'notification_radius': child.notificationRadius?.toInt() ?? 500,
+      if ((child.logistics?.pickupTime ?? child.transportPref.schoolStartTime).isNotEmpty)
+        'pickup_time': child.logistics?.pickupTime ?? child.transportPref.schoolStartTime,
+      if ((child.logistics?.dropoffTime ?? child.transportPref.schoolEndTime).isNotEmpty)
+        'dropoff_time': child.logistics?.dropoffTime ?? child.transportPref.schoolEndTime,
       if (child.photoUrl != null && !_isLocalImagePath(child.photoUrl))
         'photo_url': child.photoUrl,
     };

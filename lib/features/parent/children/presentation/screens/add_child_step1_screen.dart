@@ -30,6 +30,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
   final _medicalNotesController = TextEditingController();
 
   String _selectedGender = 'male';
+  int _selectedStageIndex = 1; // 0: روضة, 1: ابتدائي, 2: إعدادي, 3: ثانوي
   int _selectedGrade = 1;
   DateTime _selectedDate = DateTime(2015);
   File? _selectedImage;
@@ -50,17 +51,30 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
       _medicalNotesController.text = widget.child!.medicalNotes ?? '';
       _selectedGender = widget.child!.gender;
       _selectedGrade = widget.child!.gradeLevel;
+      if (_selectedGrade == 0) {
+        _selectedStageIndex = 0;
+      } else if (_selectedGrade >= 1 && _selectedGrade <= 6) {
+        _selectedStageIndex = 1;
+      } else if (_selectedGrade >= 7 && _selectedGrade <= 9) {
+        _selectedStageIndex = 2;
+      } else if (_selectedGrade >= 10 && _selectedGrade <= 12) {
+        _selectedStageIndex = 3;
+      } else {
+        _selectedStageIndex = 1;
+        _selectedGrade = 1;
+      }
       _selectedDate = widget.child!.birthDate;
       _selectedSchoolId = widget.child!.schoolId;
       _selectedSchoolName = widget.child!.schoolName;
 
-      // 👈 الحل هنا: التحويل الآمن للمعرّف لتجنب مشكلة الـ String و int
+      // 👈 التحويل الآمن للمعرّف
       _selectedAddressId = int.tryParse(widget.child!.addressId.toString());
-
       _selectedAddressName = widget.child!.addressName;
     } else {
       cubit.clear();
       _selectedDate = DateTime(2015);
+      _selectedStageIndex = 1;
+      _selectedGrade = 1;
     }
   }
 
@@ -179,19 +193,92 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
     }
   }
 
-  String _getGradeLabel(int g) {
-    switch (g) {
-      case 1:
-        return 'روضة';
-      case 2:
-        return 'ابتدائي';
-      case 3:
-        return 'إعدادي';
-      case 4:
-        return 'ثانوي';
-      default:
-        return '';
+  Widget _buildGradeOptionsForStage() {
+    if (_selectedStageIndex == 0) {
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 14.w),
+        decoration: BoxDecoration(
+          color: context.primaryColor.withValues(alpha: 0.08),
+          borderRadius: AppTheme.radius(8.r),
+          border: Border.all(color: context.primaryColor.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.child_care_rounded, size: 18.r, color: context.primaryColor),
+            SizedBox(width: 8.w),
+            Text(
+              'مرحلة الروضة (تم التحديد - الصف 0)',
+              style: AppTextStyles.style(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.bold,
+                color: context.primaryColor,
+              ),
+            ),
+          ],
+        ),
+      );
     }
+
+    List<Map<String, dynamic>> gradeOptions = [];
+    if (_selectedStageIndex == 1) {
+      gradeOptions = [
+        {'val': 1, 'label': 'الصف الأول'},
+        {'val': 2, 'label': 'الصف الثاني'},
+        {'val': 3, 'label': 'الصف الثالث'},
+        {'val': 4, 'label': 'الصف الرابع'},
+        {'val': 5, 'label': 'الصف الخامس'},
+        {'val': 6, 'label': 'الصف السادس'},
+      ];
+    } else if (_selectedStageIndex == 2) {
+      gradeOptions = [
+        {'val': 7, 'label': 'الصف السابع'},
+        {'val': 8, 'label': 'الصف الثامن'},
+        {'val': 9, 'label': 'الصف التاسع'},
+      ];
+    } else if (_selectedStageIndex == 3) {
+      gradeOptions = [
+        {'val': 10, 'label': 'أول ثانوي (10)'},
+        {'val': 11, 'label': 'ثاني ثانوي (11)'},
+        {'val': 12, 'label': 'ثالث ثانوي (12)'},
+      ];
+    }
+
+    return Wrap(
+      spacing: 6.w,
+      runSpacing: 8.h,
+      children: gradeOptions.map((opt) {
+        final val = opt['val'] as int;
+        final label = opt['label'] as String;
+        final isSelected = _selectedGrade == val;
+        return InkWell(
+          onTap: () => setState(() => _selectedGrade = val),
+          borderRadius: AppTheme.radius(8.r),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? context.primaryColor.withValues(alpha: 0.15)
+                  : Colors.transparent,
+              border: Border.all(
+                color: isSelected ? context.primaryColor : AppColors.grey300,
+                width: isSelected ? 1.5 : 1.0,
+              ),
+              borderRadius: AppTheme.radius(8.r),
+            ),
+            child: Text(
+              label,
+              style: AppTextStyles.style(
+                color: isSelected ? context.primaryColor : context.textMuted,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 12.sp,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
 
   @override
@@ -456,36 +543,49 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                             ),
                             SizedBox(height: 14.h),
 
-                            // الصف الدراسي
+                            // المرحلة والصف الدراسي
                             Text(
-                              'الصف الدراسي',
+                              'المرحلة والصف الدراسي',
                               style: AppTextStyles.style(
                                 fontSize: 13.sp,
                                 color: AppColors.grey500,
                               ),
                             ),
                             SizedBox(height: 8.h),
+                            // اختيار المرحلة (روضة, ابتدائية, إعدادية, ثانوية)
                             Row(
-                              children: [1, 2, 3, 4].map((g) {
-                                final isSelected = _selectedGrade == g;
+                              children: [
+                                {'label': 'روضة', 'idx': 0},
+                                {'label': 'ابتدائية', 'idx': 1},
+                                {'label': 'إعدادية', 'idx': 2},
+                                {'label': 'ثانوية', 'idx': 3},
+                              ].map((stage) {
+                                final idx = stage['idx'] as int;
+                                final isSelected = _selectedStageIndex == idx;
                                 return Expanded(
                                   child: GestureDetector(
-                                    onTap: () =>
-                                        setState(() => _selectedGrade = g),
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedStageIndex = idx;
+                                        if (idx == 0) {
+                                          _selectedGrade = 0;
+                                        } else if (idx == 1) {
+                                          if (_selectedGrade < 1 || _selectedGrade > 6) _selectedGrade = 1;
+                                        } else if (idx == 2) {
+                                          if (_selectedGrade < 7 || _selectedGrade > 9) _selectedGrade = 7;
+                                        } else if (idx == 3) {
+                                          if (_selectedGrade < 10 || _selectedGrade > 12) _selectedGrade = 10;
+                                        }
+                                      });
+                                    },
                                     child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 200,
-                                      ),
-                                      margin: EdgeInsets.symmetric(
-                                        horizontal: 3.w,
-                                      ),
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 11.h,
-                                      ),
+                                      duration: const Duration(milliseconds: 200),
+                                      margin: EdgeInsets.symmetric(horizontal: 2.w),
+                                      padding: EdgeInsets.symmetric(vertical: 10.h),
                                       decoration: BoxDecoration(
                                         color: isSelected
                                             ? context.primaryColor
-                                            : Colors.transparent,
+                                            : context.primaryColor.withValues(alpha: 0.05),
                                         border: Border.all(
                                           color: isSelected
                                               ? context.primaryColor
@@ -495,7 +595,7 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                       ),
                                       alignment: Alignment.center,
                                       child: Text(
-                                        _getGradeLabel(g),
+                                        stage['label'] as String,
                                         style: AppTextStyles.style(
                                           color: isSelected
                                               ? Colors.white
@@ -511,6 +611,9 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                 );
                               }).toList(),
                             ),
+                            SizedBox(height: 10.h),
+                            // خيارات الصف بناءً على المرحلة
+                            _buildGradeOptionsForStage(),
                             SizedBox(height: 14.h),
 
                             // المدرسة

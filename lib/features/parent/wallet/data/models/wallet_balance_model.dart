@@ -9,8 +9,8 @@ class WalletBalanceModel {
 
   factory WalletBalanceModel.fromJson(Map<String, dynamic> json) {
     return WalletBalanceModel(
-      balance: (json['balance'] ?? 0).toDouble(),
-      currency: json['currency'] ?? 'د.ل',
+      balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
+      currency: json['currency']?.toString() ?? 'د.ل',
     );
   }
 }

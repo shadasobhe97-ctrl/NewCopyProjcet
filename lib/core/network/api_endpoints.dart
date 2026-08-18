@@ -2,7 +2,7 @@ class ApiEndpoints {
   const ApiEndpoints._();
 
   // الرابط الأساسي للسيرفر (يحتوي على /api/)
-  static const String baseUrl = 'https://darby-app-api.loca.lt/api/';
+  static const String baseUrl = 'http://127.0.0.1:8000/api/';
 
   //=========================================
   // Auth Endpoints (مسارات المصادقة العامة)
@@ -48,11 +48,14 @@ class ApiEndpoints {
   static const String driverPreferences = 'v1/driver/preferences';
   static const String driverProfile = 'v1/driver/profile';
   static const String driverProfileUpdate = 'v1/driver/profile/update';
-  // ================= Driver Wallet & Finance =================
-  static const String driverWalletBalance = 'v1/driver/wallet/balance';
-  static const String driverWithdrawals = 'v1/driver/withdrawals';
-  static const String driverInvoices = 'v1/driver/invoices';
-  static String driverInvoiceDetails(dynamic id) => 'v1/driver/invoices/$id';
+  static const String driverCancelEmailChange =
+      'v1/driver/profile/email-change/cancel';
+  static const String driverEmailChangeStatus =
+      'v1/driver/profile/email-change/status';
+  static const String driverLegalData = 'v1/driver/profile/legal-data';
+  static const String driverVehicleProfile = 'v1/driver/profile/vehicle';
+  static String driverVehicleUpdate(dynamic vehicleId) =>
+      'v1/driver/profile/vehicle/$vehicleId';
 
   // ================= Driver Trips =================
   static const String driverTripsToday = 'v1/driver/trips/today';
@@ -90,6 +93,10 @@ class ApiEndpoints {
 
   static const String parentProfile = 'parent/profile';
   static const String parentProfileUpdate = 'parent/profile/update';
+  static const String parentCancelEmailChange =
+      'parent/profile/email-change/cancel';
+  static const String parentEmailChangeStatus =
+      'parent/profile/email-change/status';
 
   // Parent Subscriptions (تم التعديل)
   static const String parentRequests = 'parent/requests';
@@ -112,6 +119,9 @@ class ApiEndpoints {
   static const String parentWalletPaymentMethods =
       'parent/wallet/payment-methods';
   static const String parentWalletRecharge = 'parent/wallet/recharge';
+  static const String parentWalletHoldTrip = 'parent/wallet/hold-trip';
+  static String parentTripDispute(dynamic tripId) =>
+      'parent/trips/$tripId/dispute';
   static const String parentInvoices = 'parent/invoices';
   static String parentInvoiceDetail(int id) => 'parent/invoices/$id';
 
@@ -155,4 +165,15 @@ class ApiEndpoints {
       'parent/children/$childId/set-absence';
   static String childCancelAbsence(int childId) =>
       'parent/children/$childId/cancel-absence';
+
+  // ================= Notifications & Device Tokens =================
+  static const String registerDeviceToken = 'user/device-token';
+  static const String deleteDeviceToken = 'user/device-token';
+  static const String logoutAllDevices = 'user/device-token/logout-all';
+
+  static const String notifications = 'notifications';
+  static const String notificationsUnreadCount = 'notifications/unread-count';
+  static String markNotificationRead(String id) => 'notifications/$id/read';
+  static const String markAllNotificationsRead = 'notifications/read-all';
+  static String deleteNotification(String id) => 'notifications/$id';
 }

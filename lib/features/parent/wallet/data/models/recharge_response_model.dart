@@ -16,7 +16,7 @@ class RechargeResponseModel {
     this.referenceNumber,
     required this.status,
     this.notes,
-    required this.createdAt,
+    this.createdAt = '',
   });
 
   factory RechargeResponseModel.fromJson(Map<String, dynamic> json) {
@@ -24,11 +24,11 @@ class RechargeResponseModel {
       id: json['id'] ?? 0,
       parentId: json['parent_id'] ?? 0,
       amount: json['amount']?.toString() ?? '0.0',
-      paymentMethod: json['payment_method'] ?? '',
-      referenceNumber: json['reference_number'],
-      status: json['status'] ?? 'pending',
-      notes: json['notes'],
-      createdAt: json['created_at'] ?? '',
+      paymentMethod: json['payment_method']?.toString() ?? '',
+      referenceNumber: json['reference_number']?.toString(),
+      status: json['status']?.toString() ?? 'pending',
+      notes: json['notes']?.toString(),
+      createdAt: json['created_at']?.toString() ?? '',
     );
   }
 }
