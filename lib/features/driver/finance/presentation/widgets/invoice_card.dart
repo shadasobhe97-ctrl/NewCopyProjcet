@@ -51,10 +51,16 @@ class InvoiceCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    invoice.parentName,
-                    style: AppTextStyles.style(fontSize: 13, color: AppColors.textMuted),
-                  ),
+                  if (invoice.parentName != null && invoice.parentName!.isNotEmpty)
+                    Text(
+                      invoice.parentName!,
+                      style: AppTextStyles.style(fontSize: 13, color: AppColors.textMuted),
+                    )
+                  else
+                    Text(
+                      'نوع الفاتورة: ${invoice.typeLabel} • ${invoice.completedTrips} رحلات مكتملة',
+                      style: AppTextStyles.style(fontSize: 13, color: AppColors.textMuted),
+                    ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -67,10 +73,11 @@ class InvoiceCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        invoice.subscriptionType,
-                        style: AppTextStyles.style(fontSize: 12, color: AppColors.textMuted),
-                      ),
+                      if (invoice.dueDate.isNotEmpty)
+                        Text(
+                          'تاريخ الاستحقاق: ${invoice.dueDate}',
+                          style: AppTextStyles.style(fontSize: 12, color: AppColors.textMuted),
+                        ),
                     ],
                   ),
                 ],

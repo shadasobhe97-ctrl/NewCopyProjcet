@@ -4,7 +4,8 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
-import 'package:kids_transport/features/driver/finance/presentation/logic/finance_cubit.dart';
+import 'package:kids_transport/features/driver/finance/logic/cubit/finance_cubit.dart';
+import 'package:kids_transport/features/driver/finance/logic/state/finance_state.dart';
 
 class CreateWithdrawalScreen extends StatefulWidget {
   final double balance;
@@ -36,25 +37,26 @@ class _CreateWithdrawalScreenState extends State<CreateWithdrawalScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final amount = double.tryParse(_amountController.text) ?? 0;
-    if (amount <= 0) return;
+    final amount = double.tryParse(_amountController.text.trim()) ?? 0;
+    if (amount < 50 || amount > widget.balance) return;
 
     final Map<String, dynamic> body;
     if (_method == 'bank') {
       body = {
         'amount': amount,
         'payment_method_details': {
-          'bank_name': _bankNameController.text,
-          'account_number': _accountNumberController.text,
-          'account_name': _accountNameController.text,
+          'bank_name': _bankNameController.text.trim(),
+          'account_number': _accountNumberController.text.trim(),
+          'account_name': _accountNameController.text.trim(),
         },
       };
     } else {
       body = {
         'amount': amount,
         'payment_method_details': {
-          'mobile_number': _mobileNumberController.text,
           'bank_name': 'ليبيانا',
+          'account_number': _mobileNumberController.text.trim(),
+          'account_name': 'رقم المحفظة',
         },
       };
     }

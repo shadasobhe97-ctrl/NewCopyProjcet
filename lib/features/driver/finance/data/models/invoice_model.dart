@@ -3,9 +3,11 @@ import 'parsers.dart';
 class InvoiceModel {
   final int id;
   final String invoiceNumber;
-  final String parentName;
+  final String? parentName;
   final double amount;
-  final String subscriptionType;
+  final String type;
+  final String? subscriptionType;
+  final int completedTrips;
   final String dueDate;
   final String status;
   final String? paidDate;
@@ -13,9 +15,11 @@ class InvoiceModel {
   InvoiceModel({
     required this.id,
     required this.invoiceNumber,
-    required this.parentName,
+    this.parentName,
     required this.amount,
-    required this.subscriptionType,
+    required this.type,
+    this.subscriptionType,
+    required this.completedTrips,
     required this.dueDate,
     required this.status,
     this.paidDate,
@@ -27,11 +31,13 @@ class InvoiceModel {
     return InvoiceModel(
       id: parseInt(json['id']),
       invoiceNumber: json['invoice_number'] as String? ?? '',
-      parentName: parent?['name'] as String? ?? json['parent_name'] as String? ?? '',
+      parentName: parent?['name'] as String? ?? json['parent_name'] as String?,
       amount: parseDouble(json['amount']),
-      subscriptionType: json['subscription_type'] as String? ?? '',
+      type: json['type'] as String? ?? 'final',
+      subscriptionType: json['subscription_type'] as String?,
+      completedTrips: json['completed_trips'] != null ? parseInt(json['completed_trips']) : 0,
       dueDate: json['due_date'] as String? ?? '',
-      status: json['status'] as String? ?? '',
+      status: json['status'] as String? ?? 'pending',
       paidDate: json['paid_at'] as String? ?? json['paid_date'] as String?,
     );
   }
@@ -44,6 +50,17 @@ class InvoiceModel {
         return 'متأخرة';
       default:
         return 'غير مدفوعة';
+    }
+  }
+
+  String get typeLabel {
+    switch (type.toLowerCase()) {
+      case 'final':
+        return 'نهائية';
+      case 'advance':
+        return 'مقدمة';
+      default:
+        return type;
     }
   }
 }

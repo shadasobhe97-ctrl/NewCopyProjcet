@@ -25,6 +25,8 @@ class ApiException implements Exception {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
+      case DioExceptionType
+          .transformTimeout: // تم إضافة هذا السطر هنا لحل المشكلة
         return ApiException(
           'انتهت مهلة الاتصال بالخادم، يرجى المحاولة مرة أخرى.',
           statusCode: response?.statusCode,
@@ -52,9 +54,7 @@ class ApiException implements Exception {
         return const ApiException('تم إلغاء الطلب.');
       case DioExceptionType.badCertificate:
       case DioExceptionType.unknown:
-        return const ApiException(
-          'حدث خطأ غير متوقع أثناء الاتصال بالخادم.',
-        );
+        return const ApiException('حدث خطأ غير متوقع أثناء الاتصال بالخادم.');
     }
   }
 

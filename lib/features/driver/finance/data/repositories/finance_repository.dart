@@ -1,9 +1,9 @@
-import 'package:kids_transport/features/driver/finance/data/datasources/finance_remote_data_source.dart';
-import 'package:kids_transport/features/driver/finance/data/models/paginated_response.dart';
-import 'package:kids_transport/features/driver/finance/data/models/wallet_model.dart';
-import 'package:kids_transport/features/driver/finance/data/models/withdrawal_model.dart';
-import 'package:kids_transport/features/driver/finance/data/models/invoice_model.dart';
-import 'package:kids_transport/features/driver/finance/data/models/invoice_details_model.dart';
+import '../datasources/finance_remote_data_source.dart';
+import '../models/paginated_response.dart';
+import '../models/wallet_model.dart';
+import '../models/withdrawal_model.dart';
+import '../models/invoice_model.dart';
+import '../models/invoice_details_model.dart';
 
 class FinanceRepository {
   final FinanceRemoteDataSource _remoteDataSource;
@@ -13,15 +13,20 @@ class FinanceRepository {
   Future<WalletModel> getWalletBalance() =>
       _remoteDataSource.getWalletBalance();
 
-  Future<PaginatedResponse<WithdrawalModel>> getWithdrawals(int page) =>
-      _remoteDataSource.getWithdrawals(page);
+  Future<PaginatedResponse<WithdrawalModel>> getWithdrawals({
+    String? status,
+    int page = 1,
+  }) =>
+      _remoteDataSource.getWithdrawals(status: status, page: page);
 
-  Future<void> createWithdrawal(Map<String, dynamic> body) async {
-    await _remoteDataSource.createWithdrawal(body);
-  }
+  Future<WithdrawalModel> createWithdrawal(Map<String, dynamic> body) =>
+      _remoteDataSource.createWithdrawal(body);
 
-  Future<PaginatedResponse<InvoiceModel>> getInvoices(int page) =>
-      _remoteDataSource.getInvoices(page);
+  Future<PaginatedResponse<InvoiceModel>> getInvoices({
+    String? status,
+    int page = 1,
+  }) =>
+      _remoteDataSource.getInvoices(status: status, page: page);
 
   Future<InvoiceDetailsModel> getInvoiceDetails(int id) =>
       _remoteDataSource.getInvoiceDetails(id);

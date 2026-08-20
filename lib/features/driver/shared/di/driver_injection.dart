@@ -32,7 +32,7 @@ import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscr
 // Finance
 import 'package:kids_transport/features/driver/finance/data/datasources/finance_remote_data_source.dart';
 import 'package:kids_transport/features/driver/finance/data/repositories/finance_repository.dart';
-import 'package:kids_transport/features/driver/finance/presentation/logic/finance_cubit.dart';
+import 'package:kids_transport/features/driver/finance/logic/cubit/finance_cubit.dart';
 
 // Trips
 import 'package:kids_transport/features/driver/trips/data/datasources/driver_trips_remote_data_source.dart';
