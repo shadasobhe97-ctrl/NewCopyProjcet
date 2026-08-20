@@ -29,6 +29,7 @@ class DriverLegalDataCubit extends Cubit<DriverLegalDataState> {
     String? nationalId,
     String? licenseNumber,
     String? licenseExpiry,
+    String? insuranceExpiry,
     Map<String, File>? newFiles,
   }) async {
     final currentModel = _cachedLegalData;
@@ -43,6 +44,7 @@ class DriverLegalDataCubit extends Cubit<DriverLegalDataState> {
         nationalId: nationalId,
         licenseNumber: licenseNumber,
         licenseExpiry: licenseExpiry,
+        insuranceExpiry: insuranceExpiry,
         newFiles: newFiles,
       );
 

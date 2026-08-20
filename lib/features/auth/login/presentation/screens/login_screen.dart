@@ -19,12 +19,12 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -121,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: 25.h),
                     LoginFormFields(
-                      phoneController: _phoneController,
+                      emailController: _emailController,
                       passwordController: _passwordController,
                     ),
                     SizedBox(height: 10.h),
@@ -149,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
                           context.read<AuthCubit>().login(
-                            phone: _phoneController.text.trim(),
+                            email: _emailController.text.trim(),
                             password: _passwordController.text,
                           );
                         }

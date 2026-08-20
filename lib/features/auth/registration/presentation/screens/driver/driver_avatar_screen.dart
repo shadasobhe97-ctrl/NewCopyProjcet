@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../logic/register_cubit.dart';
+import '../../../logic/register_state.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -41,24 +42,15 @@ class _DriverAvatarScreenState extends State<DriverAvatarScreen> {
   }
 
   void _skipStep() {
-    context.read<RegisterCubit>().avatarFile = null;
-    Navigator.pushNamed(context, '/driverAlternativePhone');
+    final cubit = context.read<RegisterCubit>();
+    cubit.avatarFile = null;
+    cubit.registerDriverFirstStage();
   }
 
   void _submitNext() {
-    if (_imageFile == null && _imagePathWeb == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "الرجاء اختيار صورة الشخصية للمتابعة أو اضغط على 'تخطي'",
-          ),
-          backgroundColor: AppColors.orange,
-        ),
-      );
-      return;
-    }
-    context.read<RegisterCubit>().avatarFile = _imageFile;
-    Navigator.pushNamed(context, '/driverAlternativePhone');
+    final cubit = context.read<RegisterCubit>();
+    cubit.avatarFile = _imageFile;
+    cubit.registerDriverFirstStage();
   }
 
   @override
@@ -78,7 +70,7 @@ class _DriverAvatarScreenState extends State<DriverAvatarScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          // زر التخطي من فوق لأنها اختيارية بناءً على طلبكِ
+          // زر التخطي
           TextButton(
             onPressed: _skipStep,
             child: Text(
@@ -94,90 +86,119 @@ class _DriverAvatarScreenState extends State<DriverAvatarScreen> {
         ],
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 20),
-              Text(
-                "الصورة الشخصية للسائق",
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+        child: BlocConsumer<RegisterCubit, RegisterState>(
+          listener: (context, state) {
+            if (state is DriverRegisterFirstStageSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.green,
                 ),
-                textAlign: TextAlign.right,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "هل ترغب في إضافة صورة شخصية لحسابك؟ تزيد من موثوقية الحساب عند التعامل مع أولياء الأمور والطلاب.",
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColors.grey,
+              );
+              Navigator.pushNamed(context, '/driverOtp');
+            } else if (state is DriverRegisterFirstStageError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage),
+                  backgroundColor: AppColors.red,
                 ),
-                textAlign: TextAlign.right,
-              ),
-              Expanded(
-                child: Center(
-                  child: GestureDetector(
-                    onTap: _pickImage,
-                    child: Stack(
-                      alignment: Alignment.bottomRight,
-                      children: [
-                        CircleAvatar(
-                          radius: 110,
-                          backgroundColor: isDark
-                              ? AppColors.grey800
-                              : AppColors.grey200,
-                          backgroundImage: _imageFile != null
-                              ? FileImage(_imageFile!)
-                              : (_imagePathWeb != null
-                                  ? NetworkImage(_imagePathWeb!)
-                                  : null),
-                          child: (_imageFile == null && _imagePathWeb == null)
-                              ? Icon(
-                                  Icons.person_rounded,
-                                  size: 110,
-                                  color: isDark
-                                      ? AppColors.grey600
-                                      : AppColors.grey400,
-                                )
-                              : null,
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: AppTheme.boxDecoration(
-                            color: theme.primaryColor,
-                            shape: BoxShape.circle,
-                            border: AppTheme.border(
-                              color: isDark ? AppColors.black : AppColors.white,
-                              width: 2.5,
+              );
+            }
+          },
+          builder: (context, state) {
+            final isLoading = state is DriverRegisterFirstStageLoading;
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 20),
+                  Text(
+                    "الصورة الشخصية للسائق",
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "هل ترغب في إضافة صورة شخصية لحسابك؟ تزيد من موثوقية الحساب عند التعامل مع أولياء الأمور والطلاب.",
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.grey,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: GestureDetector(
+                        onTap: _pickImage,
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            CircleAvatar(
+                              radius: 110,
+                              backgroundColor: isDark
+                                  ? AppColors.grey800
+                                  : AppColors.grey200,
+                              backgroundImage: _imageFile != null
+                                  ? FileImage(_imageFile!)
+                                  : (_imagePathWeb != null
+                                      ? NetworkImage(_imagePathWeb!)
+                                      : null),
+                              child: (_imageFile == null && _imagePathWeb == null)
+                                  ? Icon(
+                                      Icons.person_rounded,
+                                      size: 110,
+                                      color: isDark
+                                          ? AppColors.grey600
+                                          : AppColors.grey400,
+                                    )
+                                  : null,
                             ),
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt_rounded,
-                            color: AppColors.white,
-                            size: 24,
-                          ),
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: AppTheme.boxDecoration(
+                                color: theme.primaryColor,
+                                shape: BoxShape.circle,
+                                border: AppTheme.border(
+                                  color: isDark ? AppColors.black : AppColors.white,
+                                  width: 2.5,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt_rounded,
+                                color: AppColors.white,
+                                size: 24,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
 
-              // زر التالي من الأسفل
-              ElevatedButton(
-                onPressed: _submitNext,
-                style: AppTheme.elevatedButtonStyle(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: Text(
-                  "التالي",
-                  style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                  // زر التالي مع إظهار الـ Loading أثناء الاتصال بالباك إند
+                  ElevatedButton(
+                    onPressed: isLoading ? null : _submitNext,
+                    style: AppTheme.elevatedButtonStyle(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: isLoading
+                        ? const CircularProgressIndicator(color: AppColors.white)
+                        : Text(
+                            "التالي وتأكيد التسجيل",
+                            style: AppTextStyles.style(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

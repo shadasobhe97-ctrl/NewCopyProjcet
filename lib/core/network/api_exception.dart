@@ -30,9 +30,19 @@ class ApiException implements Exception {
           statusCode: response?.statusCode,
         );
       case DioExceptionType.badResponse:
+        if (response?.statusCode == 403) {
+          return ApiException(
+            serverMessage ??
+                'الحساب قيد المراجعة بانتظار موافقة الإدارة، لا يمكنك الدخول حالياً.',
+            statusCode: 403,
+            errorCode: serverErrorCode,
+          );
+        }
         return ApiException(
-          'تعذر إكمال الطلب، يرجى التأكد من البيانات والمحاولة مرة أخرى.',
+          serverMessage ??
+              'تعذر إكمال الطلب، يرجى التأكد من البيانات والمحاولة مرة أخرى.',
           statusCode: response?.statusCode,
+          errorCode: serverErrorCode,
         );
       case DioExceptionType.connectionError:
         return const ApiException(

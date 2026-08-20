@@ -1,3 +1,5 @@
+import 'package:kids_transport/features/auth/registration/data/models/driver_status_response_model.dart';
+
 import '../data_sources/driver_remote_data_source.dart';
 import '../data_sources/parent_remote_data_source.dart';
 import '../models/driver_register_request.dart';
@@ -24,7 +26,8 @@ class DriverVerifyOtpResponse {
       status: _readBool(json['status']),
       message: json['message']?.toString() ?? '',
       userId: _readInt(json['user_id']),
-      accessToken: json['access_token']?.toString() ?? json['token']?.toString() ?? '',
+      accessToken:
+          json['access_token']?.toString() ?? json['token']?.toString() ?? '',
     );
   }
 }
@@ -33,14 +36,13 @@ class RegistrationRepository {
   final DriverRemoteDataSource _driverDataSource;
   final ParentRemoteDataSource _parentDataSource;
 
-  RegistrationRepository(
-    this._driverDataSource,
-    this._parentDataSource,
-  );
+  RegistrationRepository(this._driverDataSource, this._parentDataSource);
 
   // ==================== Driver ====================
 
-  Future<DriverRegisterResponse> registerDriver(DriverRegisterRequest request) async {
+  Future<DriverRegisterResponse> registerDriver(
+    DriverRegisterRequest request,
+  ) async {
     final responseData = await _driverDataSource.register(request);
     return DriverRegisterResponse.fromJson(responseData);
   }
@@ -49,8 +51,11 @@ class RegistrationRepository {
     return await _driverDataSource.resendOtp(email);
   }
 
-  Future<DriverVerifyOtpResponse> verifyDriverOtp(String email, String otpCode) async {
-    final responseData = await _driverDataSource.verifyOtp(email, otpCode);
+  Future<DriverVerifyOtpResponse> verifyDriverOtp(
+    DriverRegisterRequest request,
+    String otpCode,
+  ) async {
+    final responseData = await _driverDataSource.verifyOtp(request, otpCode);
     return DriverVerifyOtpResponse.fromJson(responseData);
   }
 
@@ -67,6 +72,11 @@ class RegistrationRepository {
     return DriverCompleteProfileResponse.fromJson(responseData);
   }
 
+  Future<DriverStatusResponseModel> checkDriverStatus(String token) async {
+    final responseData = await _driverDataSource.checkDriverStatus(token);
+    return DriverStatusResponseModel.fromJson(responseData);
+  }
+
   // ==================== Parent ====================
 
   Future<Map<String, dynamic>> sendParentOtp(String email) async {
@@ -78,7 +88,9 @@ class RegistrationRepository {
     return await _parentDataSource.sendOtp(email);
   }
 
-  Future<ParentRegisterResponse> registerParent(ParentRegisterRequest request) async {
+  Future<ParentRegisterResponse> registerParent(
+    ParentRegisterRequest request,
+  ) async {
     final responseData = await _parentDataSource.register(request);
     return ParentRegisterResponse.fromJson(responseData);
   }

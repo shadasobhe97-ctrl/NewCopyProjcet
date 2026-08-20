@@ -10,22 +10,22 @@ class AddressCard extends StatelessWidget {
     final lngStr = (lng is num) ? lng.toStringAsFixed(4) : '0.0000';
     return 'إحداثيات: ($latStr, $lngStr)';
   }
+
   final Map<String, dynamic> address;
-  final bool isPrimary;
-  final VoidCallback onSetDefault;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const AddressCard({
     super.key,
     required this.address,
-    required this.isPrimary,
-    required this.onSetDefault,
+    required this.onEdit,
     required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -33,8 +33,8 @@ class AddressCard extends StatelessWidget {
         color: isDark ? AppColors.darkCard : AppColors.white,
         borderRadius: AppTheme.radius(16),
         border: AppTheme.border(
-          color: isPrimary ? AppColors.primaryLight : AppColors.transparent,
-          width: 1.5,
+          color: AppColors.transparent,
+          width: 1,
         ),
         boxShadow: [
           AppTheme.boxShadow(
@@ -56,15 +56,10 @@ class AddressCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: isPrimary
-                        ? AppColors.primaryLight.withValues(alpha: 0.12)
-                        : AppColors.textMuted.withValues(alpha: 0.12),
+                    backgroundColor: primaryColor.withValues(alpha: 0.12),
                     child: Icon(
-                      isPrimary
-                          ? Icons.home_rounded
-                          : Icons.location_on_rounded,
-                      color:
-                          isPrimary ? AppColors.primaryLight : AppColors.textMuted,
+                      Icons.location_on_rounded,
+                      color: primaryColor,
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -79,7 +74,6 @@ class AddressCard extends StatelessWidget {
                             fontSize: 15,
                           ),
                         ),
-
                         const SizedBox(height: 4),
                         Text(
                           _formatCoords(
@@ -98,40 +92,26 @@ class AddressCard extends StatelessWidget {
               ),
             ),
             const Divider(height: 1),
-            // شريط التحكم
+            // شريط التحكم (تعديل + حذف)
             Container(
               color: isDark ? AppColors.black26 : AppColors.grey50,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  InkWell(
-                    onTap: onSetDefault,
-                    borderRadius: AppTheme.radius(10),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      child: Row(
-                        children: [
-                          Checkbox(
-                            value: isPrimary,
-                            activeColor: AppColors.primaryLight,
-                            shape: AppTheme.roundedRectangleBorder(
-                              borderRadius: AppTheme.radius(4),
-                            ),
-                            onChanged: (_) => onSetDefault(),
-                          ),
-                          Text(
-                            'العنوان الرئيسي',
-                            style: AppTextStyles.style(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                        ],
+                  TextButton.icon(
+                    onPressed: onEdit,
+                    icon: Icon(
+                      Icons.edit_outlined,
+                      size: 18,
+                      color: primaryColor,
+                    ),
+                    label: Text(
+                      'تعديل',
+                      style: AppTextStyles.style(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: primaryColor,
                       ),
                     ),
                   ),

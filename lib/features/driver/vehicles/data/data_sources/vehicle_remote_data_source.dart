@@ -72,19 +72,28 @@ class VehicleRemoteDataSource {
 
   /// POST /api/v1/driver/profile/legal-data
   Future<Response> updateLegalData({
-    required String nationalId,
-    required String licenseNumber,
-    required String licenseExpiry,
+    String? nationalId,
+    String? licenseNumber,
+    String? licenseExpiry,
+    String? insuranceExpiry,
     File? docLicense,
     File? docLogbook,
     File? docInsurance,
-    File? docCriminalRecord,
   }) async {
-    Map<String, dynamic> data = {
-      'national_id': nationalId,
-      'license_number': licenseNumber,
-      'license_expiry_date': licenseExpiry,
-    };
+    Map<String, dynamic> data = {};
+
+    if (nationalId != null && nationalId.isNotEmpty) {
+      data['national_id'] = nationalId;
+    }
+    if (licenseNumber != null && licenseNumber.isNotEmpty) {
+      data['license_number'] = licenseNumber;
+    }
+    if (licenseExpiry != null && licenseExpiry.isNotEmpty) {
+      data['license_expiry'] = licenseExpiry;
+    }
+    if (insuranceExpiry != null && insuranceExpiry.isNotEmpty) {
+      data['insurance_expiry'] = insuranceExpiry;
+    }
 
     if (docLicense != null) {
       data['doc_license'] = await MultipartFile.fromFile(docLicense.path);
@@ -94,11 +103,6 @@ class VehicleRemoteDataSource {
     }
     if (docInsurance != null) {
       data['doc_insurance'] = await MultipartFile.fromFile(docInsurance.path);
-    }
-    if (docCriminalRecord != null) {
-      data['doc_criminal_record'] = await MultipartFile.fromFile(
-        docCriminalRecord.path,
-      );
     }
 
     return await _apiClient.post(

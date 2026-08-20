@@ -14,7 +14,9 @@ class ChildModel {
   final String gender;
   final DateTime birthDate;
   final int? age;
-  final String grade; // e.g. "روضة", "ابتدائي", "إعدادي", "ثانوي" or numeric
+  final String grade; // e.g. "0" to "12" or string
+  final String? schoolStage;
+  final String? schoolStageLabel;
   final String? photoUrl;
   final String? medicalNotes;
   final double? notificationRadius;
@@ -33,6 +35,8 @@ class ChildModel {
     required this.birthDate,
     this.age,
     required this.grade,
+    this.schoolStage,
+    this.schoolStageLabel,
     this.photoUrl,
     this.medicalNotes,
     this.notificationRadius,
@@ -45,6 +49,18 @@ class ChildModel {
   // UI Getters for compatibility
   String get name => fullName;
   String? get image => photoUrl;
+
+  int get calculatedAge {
+    if (age != null && age! > 0) return age!;
+    final now = DateTime.now();
+    int yrs = now.year - birthDate.year;
+    if (now.month < birthDate.month ||
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      yrs--;
+    }
+    return yrs < 0 ? 0 : yrs;
+  }
+
   bool get hasRealPhoto {
     if (photoUrl == null || photoUrl!.isEmpty) return false;
     final url = photoUrl!.toLowerCase();
@@ -74,6 +90,15 @@ class ChildModel {
   String get qrToken => qrCodeToken ?? '';
   bool get hasActiveSubscription => logistics != null;
 
+  String get fullStageAndGradeDisplay {
+    final stageText = schoolStageLabel ?? '';
+    final gradeText = gradeDisplay;
+    if (stageText.isNotEmpty && !gradeText.contains(stageText)) {
+      return '$stageText - $gradeText';
+    }
+    return gradeText;
+  }
+
   String get gradeDisplay {
     final parsed = int.tryParse(grade);
     if (parsed != null) {
@@ -93,17 +118,17 @@ class ChildModel {
         case 6:
           return 'الصف السادس الابتدائي';
         case 7:
-          return 'الصف السابع الإعدادي';
+          return 'الصف السابع (إعدادي)';
         case 8:
-          return 'الصف الثامن الإعدادي';
+          return 'الصف الثامن (إعدادي)';
         case 9:
-          return 'الصف التاسع الإعدادي';
+          return 'الصف التاسع (إعدادي)';
         case 10:
-          return 'أول ثانوي';
+          return 'أول ثانوي (10)';
         case 11:
-          return 'ثاني ثانوي';
+          return 'ثاني ثانوي (11)';
         case 12:
-          return 'ثالث ثانوي';
+          return 'ثالث ثانوي (12)';
         default:
           return 'الصف $parsed';
       }
@@ -116,7 +141,7 @@ class ChildModel {
       return TransportPrefModel.fromLogistics(logistics!);
     }
     return TransportPrefModel(
-      subscriptionType: 'monthly',
+      subscriptionType: 'single_day',
       period: 'morning',
       serviceType: 'both',
       startDate: DateTime.now(),
@@ -167,8 +192,9 @@ class ChildModel {
           DateTime.now(),
       age: json['age'] is int ? json['age'] as int : int.tryParse(json['age']?.toString() ?? ''),
       grade: (json['grade'] ?? json['grade_level'] ?? 'روضة').toString(),
+      schoolStage: json['school_stage']?.toString(),
+      schoolStageLabel: json['school_stage_label']?.toString(),
       photoUrl: resolvedPhotoUrl,
-
       medicalNotes: json['medical_notes']?.toString(),
       notificationRadius: (json['notification_radius'] as num?)?.toDouble(),
       qrCodeToken:

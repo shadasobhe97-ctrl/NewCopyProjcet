@@ -29,7 +29,6 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
   final MapController _mapController = MapController();
   final _labelController = TextEditingController();
   late LatLng _currentCenter;
-  bool _isDefault = false;
   bool _isLoading = false;
 
   bool get _isEditMode => widget.initialAddress != null;
@@ -41,7 +40,6 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
     if (addr != null) {
       _labelController.text = addr.title;
       _currentCenter = LatLng(addr.latitude, addr.longitude);
-      _isDefault = addr.isDefault;
     } else {
       _currentCenter = const LatLng(32.8872, 13.1913);
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -223,16 +221,6 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
                     ),
                   ),
 
-                  const SizedBox(height: 10),
-                  CheckboxListTile(
-                    title: const Text('تعيين كعنوان رئيسي'),
-                    value: _isDefault,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    activeColor: AppColors.primaryLight,
-                    onChanged: _isLoading
-                        ? null
-                        : (val) => setState(() => _isDefault = val ?? false),
-                  ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _save,
@@ -310,7 +298,6 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
       label: labelText,
       lat: lat,
       lng: lng,
-      isDefault: _isDefault,
     );
 
     final errorMsg = await widget.onSave(address);

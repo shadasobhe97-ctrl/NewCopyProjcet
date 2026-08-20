@@ -45,7 +45,7 @@ class SharedOtpForm extends StatefulWidget {
 class _SharedOtpFormState extends State<SharedOtpForm> {
   final _otpController = TextEditingController();
   final FocusNode _otpFocusNode = FocusNode();
-  int _timerSeconds = 600; // 10 دقائق
+  int _timerSeconds = 300; // 5 دقائق
   Timer? _timer;
   bool _canResend = false;
   bool _resendLoading = false;
@@ -75,7 +75,7 @@ class _SharedOtpFormState extends State<SharedOtpForm> {
   void _startTimer() {
     if (!mounted) return;
     setState(() {
-      _timerSeconds = 600;
+      _timerSeconds = 300;
       _canResend = false;
     });
 

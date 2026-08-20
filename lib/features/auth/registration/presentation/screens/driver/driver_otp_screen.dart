@@ -38,7 +38,7 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
         child: BlocConsumer<RegisterCubit, RegisterState>(
           listener: (context, state) {
             if (state is DriverVerifyOtpSuccess) {
-              Navigator.pushNamed(context, '/driverNationalInfo');
+              Navigator.pushNamed(context, '/driverVehicleStage');
             } else if (state is DriverVerifyOtpError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -52,7 +52,7 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
             final isSubmitting = state is DriverVerifyOtpLoading;
 
             return SharedOtpForm(
-              identifier: cubit.phoneNumber ?? '',
+              identifier: cubit.email?.isNotEmpty == true ? cubit.email! : (cubit.phoneNumber ?? ''),
               submitButtonText: 'تأكيد الرمز',
               isSubmitting: isSubmitting,
               externalResendSuccess: _externalResendSuccess,

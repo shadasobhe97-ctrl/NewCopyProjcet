@@ -259,6 +259,10 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                         label: 'تاريخ الميلاد',
                         value: DateFormat('yyyy/MM/dd').format(activeChild.birthDate),
                       ),
+                      _buildField(
+                        label: 'العمر',
+                        value: '${activeChild.calculatedAge} سنة',
+                      ),
                     ],
                   ),
                   SizedBox(height: 16.h),
@@ -270,8 +274,8 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                     icon: Icons.school_outlined,
                     children: [
                       _buildField(
-                        label: 'الصف الدراسي',
-                        value: activeChild.gradeDisplay,
+                        label: 'المرحلة والصف الدراسي',
+                        value: activeChild.fullStageAndGradeDisplay,
                       ),
                       _buildField(
                         label: 'المدرسة',

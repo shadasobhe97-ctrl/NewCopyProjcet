@@ -6,6 +6,7 @@ class DriverPreferencesModel {
   final int driverId;
   final DriverShiftSlotsModel shiftSlots;
   final String subscriptionType;
+  final List<String> schoolStages;
   final SeatSlotModel seatSlots;
   final List<CoverageModel> coverage;
 
@@ -13,6 +14,7 @@ class DriverPreferencesModel {
     required this.driverId,
     required this.shiftSlots,
     required this.subscriptionType,
+    required this.schoolStages,
     required this.seatSlots,
     required this.coverage,
   });
@@ -36,10 +38,18 @@ class DriverPreferencesModel {
           .toList();
     }
 
+    List<String> parsedSchoolStages = [];
+    if (json['school_stages'] is List) {
+      parsedSchoolStages = (json['school_stages'] as List)
+          .map((e) => e.toString())
+          .toList();
+    }
+
     return DriverPreferencesModel(
       driverId: json['driver_id'] as int? ?? 0,
       shiftSlots: DriverShiftSlotsModel.fromJson(safeMap(json['shift_slots'])),
       subscriptionType: json['subscription_type'] as String? ?? '',
+      schoolStages: parsedSchoolStages,
       seatSlots: SeatSlotModel.fromJson(safeMap(json['seat_slots'])),
       coverage: parsedCoverage,
     );
@@ -50,6 +60,7 @@ class DriverPreferencesModel {
       'driver_id': driverId,
       'shift_slots': shiftSlots.toJson(),
       'subscription_type': subscriptionType,
+      'school_stages': schoolStages,
       'seat_slots': seatSlots.toJson(),
       'coverage': coverage.map((e) => e.toJson()).toList(),
     };

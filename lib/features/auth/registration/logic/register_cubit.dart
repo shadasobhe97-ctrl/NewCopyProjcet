@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import 'package:kids_transport/features/auth/registration/data/models/driver_register_request.dart';
+import 'package:kids_transport/features/auth/registration/data/models/driver_status_response_model.dart';
 import 'package:kids_transport/features/auth/registration/data/models/parent_register_request.dart';
 import 'package:kids_transport/features/auth/registration/data/repositories/registration_repository.dart';
 import 'register_state.dart';
@@ -266,11 +268,25 @@ class RegisterCubit extends Cubit<RegisterState> {
     return message;
   }
 
-  // 3. المرحلة الثانية للسائق (التحقق من OTP)
+  // 3. المرحلة الثانية للسائق (التحقق من OTP وإنشاء الحساب)
   Future<void> verifyDriverOtp(String otpCode) async {
     emit(DriverVerifyOtpLoading());
     try {
-      final response = await _repository.verifyDriverOtp(email ?? '', otpCode);
+      final fcmToken = StorageService.getFcmToken();
+      final request = DriverRegisterRequest(
+        fullName: fullName ?? '',
+        email: email ?? '',
+        phoneNumber: phoneNumber ?? '',
+        gender: gender ?? 'male',
+        password: password ?? '',
+        avatarFile: avatarFile,
+        deviceName: _deviceName,
+        platform: _platform,
+        fcmToken: fcmToken,
+        alternativePhone: alternativePhone,
+      );
+
+      final response = await _repository.verifyDriverOtp(request, otpCode);
 
       if (!response.status) {
         emit(
@@ -358,12 +374,56 @@ class RegisterCubit extends Cubit<RegisterState> {
     await completeDriverProfile({});
   }
 
+  // 5. فحص حالة السائق (GET /api/v1/driver/status)
+  Future<DriverStatusResponseModel?> checkDriverStatus() async {
+    final token = driverAccessToken ?? StorageService.getToken();
+    if (token == null || token.isEmpty) {
+      emit(DriverStatusCheckError('لا يوجد توكن محلي. يرجى تسجيل الدخول.'));
+      return null;
+    }
+
+    emit(DriverStatusCheckLoading());
+    try {
+      final statusData = await _repository.checkDriverStatus(token);
+
+      if (statusData.isApproved) {
+        final sessionRepo = SessionRepository();
+        final storedId = StorageService.getUserId();
+        final currentUserId =
+            int.tryParse(storedId?.toString() ?? '') ?? registeredUserId ?? 0;
+        await sessionRepo.saveUserSession(
+          token: token,
+          tokenType: 'Bearer',
+          roleId: 4,
+          roleName: 'driver',
+          userId: currentUserId,
+          fullName: fullName ?? StorageService.getFullName() ?? '',
+          phoneNumber: phoneNumber ?? StorageService.getPhoneNumber() ?? '',
+          isActive: true,
+        );
+      }
+
+      emit(DriverStatusCheckSuccess(statusData));
+      return statusData;
+    } on ApiException catch (e) {
+      emit(DriverStatusCheckError(e.message));
+      return null;
+    } catch (_) {
+      emit(
+        DriverStatusCheckError(
+          'فشل فحص حالة الحساب، يرجى المحاولة لاحقاً.',
+        ),
+      );
+      return null;
+    }
+  }
+
   // ==================== [Endpoint الموقع - ولي الأمر] ====================
   Future<void> saveLocation({
     required String label,
     required double lat,
     required double lng,
-    required bool isDefault,
+    bool isDefault = true,
   }) async {
     emit(LocationSaveLoading());
     try {

@@ -42,7 +42,7 @@ class _ParentAvatarScreenState extends State<ParentAvatarScreen> {
 
   void _skipStep() {
     context.read<RegisterCubit>().avatarFile = null;
-    Navigator.pushNamed(context, '/parentAlternativePhone');
+    Navigator.pushNamed(context, '/parentLocation');
   }
 
   void _submitNext() {
@@ -58,7 +58,7 @@ class _ParentAvatarScreenState extends State<ParentAvatarScreen> {
       return;
     }
     context.read<RegisterCubit>().avatarFile = _imageFile;
-    Navigator.pushNamed(context, '/parentAlternativePhone');
+    Navigator.pushNamed(context, '/parentLocation');
   }
 
   @override

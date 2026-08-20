@@ -54,7 +54,7 @@ class AppTextStyles {
       decorationStyle: decorationStyle,
       decorationThickness: decorationThickness,
       debugLabel: debugLabel,
-      fontFamily: fontFamily,
+      fontFamily: fontFamily ?? 'Tajawal',
       fontFamilyFallback: fontFamilyFallback,
       package: package,
       overflow: overflow,
@@ -63,6 +63,7 @@ class AppTextStyles {
 
   static TextStyle heading({required Color color}) {
     return TextStyle(
+      fontFamily: 'Tajawal',
       fontSize: 28,
       fontWeight: FontWeight.bold,
       color: color,
@@ -71,6 +72,7 @@ class AppTextStyles {
 
   static TextStyle body({required Color color}) {
     return TextStyle(
+      fontFamily: 'Tajawal',
       fontSize: 16,
       fontWeight: FontWeight.w500,
       color: color,
@@ -79,6 +81,7 @@ class AppTextStyles {
 
   static TextStyle button({required Color color}) {
     return TextStyle(
+      fontFamily: 'Tajawal',
       fontSize: 18,
       fontWeight: FontWeight.bold,
       color: color,
@@ -87,6 +90,7 @@ class AppTextStyles {
 
   static TextStyle inputTextStyle({required Color color}) {
     return TextStyle(
+      fontFamily: 'Tajawal',
       fontSize: 16,
       fontWeight: FontWeight.normal,
       color: color,
@@ -95,6 +99,7 @@ class AppTextStyles {
 
   static TextStyle hintTextStyle() {
     return TextStyle(
+      fontFamily: 'Tajawal',
       fontSize: 14,
       fontWeight: FontWeight.normal,
       color: AppColors.textMuted,

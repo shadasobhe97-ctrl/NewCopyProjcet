@@ -3,8 +3,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:kids_transport/features/admin/presentation/screens/admin_dashboard_screen.dart';
-import 'package:kids_transport/features/admin/presentation/screens/admin_login_screen.dart';
 import 'package:kids_transport/features/app_entry/presentation/screens/onboarding_screen.dart';
 import 'package:kids_transport/features/app_entry/presentation/screens/splash_screen.dart';
 import 'package:kids_transport/features/auth/login/presentation/screens/forgot_password_screen.dart';
@@ -13,17 +11,14 @@ import 'package:kids_transport/features/auth/login/presentation/screens/reset_pa
 import 'package:kids_transport/features/auth/login/presentation/screens/verify_otp_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/select_role_screen.dart';
 
-import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_alternative_phone_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_avatar_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_basic_info_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_docs_stage_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_location_screen.dart';
-import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_national_info_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_otp_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_vehicle_stage_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_waiting_screen.dart';
 
-import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_alternative_phone.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_avatar_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_basic_info_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_email_screen.dart';
@@ -55,8 +50,6 @@ import 'package:kids_transport/features/driver/trips/logic/driver_trips_cubit/dr
 import 'package:kids_transport/features/driver/trips/logic/live_trip_cubit/live_trip_cubit.dart';
 import 'package:kids_transport/features/driver/trips/logic/driver_trips_history_cubit/driver_trips_history_cubit.dart';
 import 'package:kids_transport/features/driver/trips/logic/driver_absence_cubit/driver_absence_cubit.dart';
-
-
 
 import 'package:kids_transport/features/parent/addresses/presentation/screens/saved_addresses_screen.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
@@ -136,7 +129,8 @@ class AppRoutes {
   static const String parentTripTracking = '/parent-trip-tracking';
   static const String parentTracking = '/parent-tracking';
   static const String parentChildTracking = '/parent-child-tracking';
-  static const String parentChildDetailsInTrip = '/parent-child-details-in-trip';
+  static const String parentChildDetailsInTrip =
+      '/parent-child-details-in-trip';
   static const String parentFullTrackingMap = '/parent-full-tracking-map';
   static const String parentUpcomingTrips = '/parent-upcoming-trips';
   static const String parentTripHistory = '/parent-trip-history';
@@ -204,9 +198,6 @@ class AppRoutes {
     final entryRoute = _buildEntryAndAuthRoutes(settings);
     if (entryRoute != null) return entryRoute;
 
-    final adminRoute = _buildAdminRoutes(settings);
-    if (adminRoute != null) return adminRoute;
-
     final parentRoute = _buildParentRoutes(settings);
     if (parentRoute != null) return parentRoute;
 
@@ -239,17 +230,6 @@ class AppRoutes {
         return _route(settings, const SelectRoleScreen());
       case notifications:
         return _route(settings, const NotificationsScreen());
-      default:
-        return null;
-    }
-  }
-
-  static Route<dynamic>? _buildAdminRoutes(RouteSettings settings) {
-    switch (settings.name) {
-      case adminLogin:
-        return _route(settings, const AdminLoginScreen());
-      case adminDashboard:
-        return _route(settings, const AdminDashboardScreen());
       default:
         return null;
     }
@@ -315,10 +295,7 @@ class AppRoutes {
         final walletCubit = settings.arguments as WalletCubit;
         return _route(
           settings,
-          BlocProvider.value(
-            value: walletCubit,
-            child: const RechargeScreen(),
-          ),
+          BlocProvider.value(value: walletCubit, child: const RechargeScreen()),
         );
       case parentInvoices:
         return _route(settings, const InvoicesScreen());
@@ -433,8 +410,6 @@ class AppRoutes {
         return _route(settings, const ParentBasicInfoScreen());
       case parentAvatar:
         return _route(settings, const ParentAvatarScreen());
-      case parentAlternativePhone:
-        return _route(settings, const ParentAlternativePhoneScreen());
       case parentLocation:
         return _route(settings, const ParentLocationScreen());
       default:
@@ -470,12 +445,9 @@ class AppRoutes {
         return _route(settings, const DriverBasicInfoScreen());
       case driverAvatar:
         return _route(settings, const DriverAvatarScreen());
-      case driverAlternativePhone:
-        return _route(settings, const DriverAlternativePhoneScreen());
+
       case driverOtp:
         return _route(settings, const DriverOtpScreen());
-      case driverNationalInfo:
-        return _route(settings, const DriverNationalInfoScreen());
       case driverVehicleStage:
         final args = settings.arguments as Map<String, dynamic>? ?? {};
         return _route(settings, DriverVehicleStageScreen(collectedData: args));
@@ -501,7 +473,9 @@ class AppRoutes {
           settings,
           BlocProvider(
             create: (_) => driverSl<DriverSubscriptionsCubit>(),
-            child: DriverSubscriptionDetailsScreen(subscriptionId: subscriptionId),
+            child: DriverSubscriptionDetailsScreen(
+              subscriptionId: subscriptionId,
+            ),
           ),
         );
       case driverTripDetails:
@@ -552,7 +526,6 @@ class AppRoutes {
         return null;
     }
   }
-
 
   static MaterialPageRoute<dynamic> _route(
     RouteSettings settings,

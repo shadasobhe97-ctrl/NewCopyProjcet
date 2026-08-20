@@ -22,14 +22,14 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> login({
-    required String phone,
+    required String email,
     required String password,
   }) async {
     emit(AuthLoading());
     try {
       final fcmToken = StorageService.getFcmToken();
       final request = LoginRequestModel(
-        phoneNumber: phone,
+        email: email,
         password: password,
         deviceName: _deviceName,
         platform: _platform,

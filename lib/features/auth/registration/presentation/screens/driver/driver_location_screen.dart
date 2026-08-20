@@ -22,7 +22,6 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
 
   // إحداثيات افتراضية لوسط طرابلس (ليبيا) كمثال للنسخة التجريبية
   LatLng _currentCenter = const LatLng(32.8872, 13.1913);
-  bool _isDefaultLocation = true;
 
   @override
   void dispose() {
@@ -37,7 +36,6 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
       label: _labelController.text.trim(),
       lat: _currentCenter.latitude,
       lng: _currentCenter.longitude,
-      isDefault: _isDefaultLocation,
     );
   }
 
@@ -182,26 +180,10 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
                         textAlign: TextAlign.right,
                         decoration: AppTheme.inputDecoration(context, 
                           labelText: "تسمية موقع الانطلاق",
-                          prefixIcon: Icon(Icons.pin_drop_outlined),
+                          prefixIcon: const Icon(Icons.pin_drop_outlined),
                         ),
                       ),
-                      const SizedBox(height: 12),
-
-                      // خيار الموقع الأساسي
-                      CheckboxListTile(
-                        title: Text(
-                          "تعيين هذا الموقع كموقع انطلاق أساسي لحافلتي",
-                        ),
-                        value: _isDefaultLocation,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        activeColor: theme.primaryColor,
-                        onChanged: (val) {
-                          setState(() {
-                            _isDefaultLocation = val ?? true;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
                       // زر حفظ الموقع
                       ElevatedButton(

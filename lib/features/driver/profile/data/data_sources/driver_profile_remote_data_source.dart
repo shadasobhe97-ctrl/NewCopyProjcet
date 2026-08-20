@@ -204,6 +204,7 @@ class DriverProfileRemoteDataSource {
     String? nationalId,
     String? licenseNumber,
     String? licenseExpiry,
+    String? insuranceExpiry,
     Map<String, File>? newFiles,
   }) async {
     try {
@@ -217,20 +218,26 @@ class DriverProfileRemoteDataSource {
       if (licenseExpiry != null && licenseExpiry.trim().isNotEmpty) {
         dataMap['license_expiry'] = licenseExpiry.trim();
       }
+      if (insuranceExpiry != null && insuranceExpiry.trim().isNotEmpty) {
+        dataMap['insurance_expiry'] = insuranceExpiry.trim();
+      }
 
       if (newFiles != null && newFiles.isNotEmpty) {
         for (final entry in newFiles.entries) {
-          final docTypeKey =
-              entry.key; // LICENSE, VEHICLE_LOGBOOK, INSURANCE, CRIMINAL_RECORD
           final file = entry.value;
           final fileName = file.path.split('/').last.split('\\').last;
           final multipartFile = await MultipartFile.fromFile(
             file.path,
             filename: fileName,
           );
-          // إرسال الملف باسم نوعه المعياري المطابق للباك إند
-          dataMap[docTypeKey] = multipartFile;
-          dataMap['files[$docTypeKey]'] = multipartFile;
+          
+          final docTypeKey = entry.key.toUpperCase();
+          String apiKey = entry.key;
+          if (docTypeKey == 'LICENSE') apiKey = 'doc_license';
+          if (docTypeKey == 'VEHICLE_LOGBOOK') apiKey = 'doc_logbook';
+          if (docTypeKey == 'INSURANCE') apiKey = 'doc_insurance';
+
+          dataMap[apiKey] = multipartFile;
         }
       }
 

@@ -11,6 +11,7 @@ import 'package:kids_transport/features/auth/login/presentation/widgets/auth_hea
 import 'package:kids_transport/features/auth/login/presentation/widgets/auth_password_field.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/utils/app_validators.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String email;
@@ -149,6 +150,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       controller: _confirmPasswordController,
                       hintText: 'تأكيد كلمة المرور الجديدة',
                       validator: (value) {
+                        final error = AppValidators.validatePassword(value);
+                        if (error != null) return error;
                         if (value != _passwordController.text) {
                           return 'كلمات المرور غير متطابقة';
                         }

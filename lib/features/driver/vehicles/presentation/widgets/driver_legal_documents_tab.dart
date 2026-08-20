@@ -30,8 +30,9 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
   late TextEditingController _nationalIdController;
   late TextEditingController _licenseNoController;
   late TextEditingController _licenseExpiryController;
+  late TextEditingController _insuranceExpiryController;
 
-  // الخريطة الاحتفاظ بالصور المعدلة حسب نوع الوثيقة (مثل LICENSE, VEHICLE_LOGBOOK, INSURANCE, CRIMINAL_RECORD)
+  // الخريطة الاحتفاظ بالصور المعدلة حسب نوع الوثيقة (مثل LICENSE, VEHICLE_LOGBOOK, INSURANCE)
   final Map<String, File> _newFilesMap = {};
 
   final ImagePicker _picker = ImagePicker();
@@ -42,6 +43,7 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     _nationalIdController = TextEditingController();
     _licenseNoController = TextEditingController();
     _licenseExpiryController = TextEditingController();
+    _insuranceExpiryController = TextEditingController();
 
     final cubit = context.read<DriverLegalDataCubit>();
     if (cubit.cachedLegalData != null) {
@@ -54,6 +56,7 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     _nationalIdController.text = model.nationalId;
     _licenseNoController.text = model.licenseNumber;
     _licenseExpiryController.text = model.licenseExpiry;
+    _insuranceExpiryController.text = model.insuranceExpiry ?? '';
   }
 
   @override
@@ -61,6 +64,7 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     _nationalIdController.dispose();
     _licenseNoController.dispose();
     _licenseExpiryController.dispose();
+    _insuranceExpiryController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -172,19 +176,23 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     final natId = _nationalIdController.text.trim();
     final licNo = _licenseNoController.text.trim();
     final expiry = _licenseExpiryController.text.trim();
+    final insExpiry = _insuranceExpiryController.text.trim();
 
     String? sendNatId;
     String? sendLicNo;
     String? sendExpiry;
+    String? sendInsExpiry;
 
     if (natId != currentData.nationalId) sendNatId = natId;
     if (licNo != currentData.licenseNumber) sendLicNo = licNo;
     if (expiry != currentData.licenseExpiry) sendExpiry = expiry;
+    if (insExpiry != currentData.insuranceExpiry) sendInsExpiry = insExpiry;
 
     context.read<DriverLegalDataCubit>().updateLegalData(
           nationalId: sendNatId,
           licenseNumber: sendLicNo,
           licenseExpiry: sendExpiry,
+          insuranceExpiry: sendInsExpiry,
           newFiles: _newFilesMap.isNotEmpty ? _newFilesMap : null,
         );
   }
@@ -404,6 +412,29 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                                 : null,
                             validator: (v) =>
                                 v == null || v.isEmpty ? 'الحقل مطلوب' : null,
+                          ),
+                          const SizedBox(height: 12),
+
+                          // تاريخ انتهاء وثيقة التأمين
+                          _buildTextField(
+                            label: 'تاريخ انتهاء التأمين (YYYY-MM-DD)',
+                            controller: _insuranceExpiryController,
+                            icon: Icons.event_available_outlined,
+                            isEditing: _isEditing,
+                            onTap: _isEditing
+                                ? () async {
+                                    final picked = await showDatePicker(
+                                      context: context,
+                                      initialDate: DateTime.now(),
+                                      firstDate: DateTime(2020),
+                                      lastDate: DateTime(2035),
+                                    );
+                                    if (picked != null) {
+                                      _insuranceExpiryController.text =
+                                          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                                    }
+                                  }
+                                : null,
                           ),
                         ],
                       ),

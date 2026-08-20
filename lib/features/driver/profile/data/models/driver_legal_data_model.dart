@@ -2,6 +2,7 @@ class DriverLegalDataModel {
   final String nationalId;
   final String licenseNumber;
   final String licenseExpiry;
+  final String? insuranceExpiry;
   final String driverStatus;
   final List<DriverUploadedFileModel> uploadedFiles;
 
@@ -9,6 +10,7 @@ class DriverLegalDataModel {
     required this.nationalId,
     required this.licenseNumber,
     required this.licenseExpiry,
+    this.insuranceExpiry,
     required this.driverStatus,
     required this.uploadedFiles,
   });
@@ -35,6 +37,9 @@ class DriverLegalDataModel {
           json['license_expiry']?.toString() ??
           json['license_expiry_date']?.toString() ??
           '',
+      insuranceExpiry:
+          json['insurance_expiry']?.toString() ??
+          json['insurance_expiry_date']?.toString(),
       driverStatus:
           json['driver_status']?.toString() ??
           json['account_status']?.toString() ??
@@ -48,6 +53,7 @@ class DriverLegalDataModel {
       'national_id': nationalId,
       'license_number': licenseNumber,
       'license_expiry': licenseExpiry,
+      if (insuranceExpiry != null) 'insurance_expiry': insuranceExpiry,
       'driver_status': driverStatus,
       'uploaded_files': uploadedFiles.map((e) => e.toJson()).toList(),
     };
@@ -80,13 +86,17 @@ class DriverUploadedFileModel {
       id: json['id'] is int
           ? json['id']
           : (int.tryParse(json['id']?.toString() ?? '') ?? 0),
-      type: json['type']?.toString().toUpperCase() ?? '',
+      type: json['doc_type']?.toString().toUpperCase() ??
+          json['type']?.toString().toUpperCase() ??
+          '',
       fileUrl:
           json['file_url']?.toString() ??
           json['url']?.toString() ??
           json['path']?.toString() ??
           '',
-      status: json['status']?.toString() ?? 'Pending',
+      status: json['document_status']?.toString() ??
+          json['status']?.toString() ??
+          'Pending',
       uploadedAt:
           json['uploaded_at']?.toString() ??
           json['created_at']?.toString() ??
@@ -102,9 +112,9 @@ class DriverUploadedFileModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'type': type,
+      'doc_type': type,
       'file_url': fileUrl,
-      'status': status,
+      'document_status': status,
       'uploaded_at': uploadedAt,
       if (licenseExpiryDate != null) 'license_expiry_date': licenseExpiryDate,
       if (insuranceExpiryDate != null)
@@ -118,11 +128,11 @@ class DriverUploadedFileModel {
       case 'LICENSE':
         return 'رخصة القيادة';
       case 'VEHICLE_LOGBOOK':
-        return 'ملكية / رخصة المركبة';
+        return 'دفتر المركبة';
       case 'INSURANCE':
-        return 'تأمين المركبة';
+        return 'وثيقة التأمين';
       case 'CRIMINAL_RECORD':
-        return 'صحيفة السوابق الجنائية';
+        return 'السجل الجنائي';
       default:
         return type.isNotEmpty ? type : 'وثيقة رسمية';
     }

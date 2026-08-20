@@ -200,8 +200,7 @@ class _SavedAddressesView extends StatelessWidget {
             final addr = addresses[index];
             return AddressCard(
               address: addr.toDisplayMap(),
-              isPrimary: addr.isDefault,
-              onSetDefault: isActionLoading || isFullLoading
+              onEdit: isActionLoading || isFullLoading
                   ? () {}
                   : () => _showAddSheet(context, address: addr),
               onDelete: isActionLoading || isFullLoading

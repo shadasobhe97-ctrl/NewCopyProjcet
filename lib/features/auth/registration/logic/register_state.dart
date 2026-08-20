@@ -1,3 +1,5 @@
+import '../data/models/driver_status_response_model.dart';
+
 abstract class RegisterState {}
 
 class RegisterInitial extends RegisterState {}
@@ -58,6 +60,17 @@ class DriverCompleteProfileError extends RegisterState {
   DriverCompleteProfileError(this.errorMessage);
 }
 
+// ==================== [حالة فحص الحساب للسائق] ====================
+class DriverStatusCheckLoading extends RegisterState {}
+class DriverStatusCheckSuccess extends RegisterState {
+  final DriverStatusResponseModel statusData;
+  DriverStatusCheckSuccess(this.statusData);
+}
+class DriverStatusCheckError extends RegisterState {
+  final String errorMessage;
+  DriverStatusCheckError(this.errorMessage);
+}
+
 // ==================== [حالة الموقع المشتركة] ====================
 class LocationSaveLoading extends RegisterState {}
 class LocationSaveSuccess extends RegisterState {
@@ -68,3 +81,4 @@ class LocationSaveError extends RegisterState {
   final String errorMessage;
   LocationSaveError(this.errorMessage);
 }
+

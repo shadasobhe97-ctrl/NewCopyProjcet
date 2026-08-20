@@ -22,7 +22,6 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
 
   // إحداثيات افتراضية لوسط طرابلس (ليبيا) كمثال للنسخة التجريبية
   LatLng _currentCenter = const LatLng(32.8872, 13.1913);
-  bool _isDefaultLocation = true;
 
   @override
   void initState() {
@@ -84,7 +83,6 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
       label: labelText,
       lat: _currentCenter.latitude,
       lng: _currentCenter.longitude,
-      isDefault: _isDefaultLocation,
     );
   }
 
@@ -228,24 +226,10 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
                         decoration: AppTheme.inputDecoration(
                           context,
                           labelText: "تسمية الموقع (مثال: منزلي، بيت الجدة)",
-                          prefixIcon: Icon(Icons.label_outline_rounded),
+                          prefixIcon: const Icon(Icons.label_outline_rounded),
                         ),
                       ),
-                      const SizedBox(height: 12),
-
-                      // خيار الموقع الأساسي
-                      CheckboxListTile(
-                        title: Text("تعيين هذا الموقع كموقع منزلي الأساسي"),
-                        value: _isDefaultLocation,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        activeColor: theme.primaryColor,
-                        onChanged: (val) {
-                          setState(() {
-                            _isDefaultLocation = val ?? true;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
                       // زر حفظ الموقع والارسال للباكيند
                       ElevatedButton(

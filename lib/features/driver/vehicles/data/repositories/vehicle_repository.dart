@@ -76,30 +76,49 @@ class VehicleRepository {
   }
 
   // 📤 تحديث المستندات والوثائق
-  Future<String> updateLegalDocuments({
-    required String nationalId,
-    required String licenseNumber,
-    required String licenseExpiry,
+  Future<String> updateLegalData({
+    String? nationalId,
+    String? licenseNumber,
+    String? licenseExpiry,
+    String? insuranceExpiry,
     File? docLicense,
     File? docLogbook,
     File? docInsurance,
-    File? docCriminalRecord,
   }) async {
     try {
       final response = await remoteDataSource.updateLegalData(
         nationalId: nationalId,
         licenseNumber: licenseNumber,
         licenseExpiry: licenseExpiry,
+        insuranceExpiry: insuranceExpiry,
         docLicense: docLicense,
         docLogbook: docLogbook,
         docInsurance: docInsurance,
-        docCriminalRecord: docCriminalRecord,
       );
       return response.data['message'] ?? 'تم تحديث الوثائق بنجاح';
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
   }
+
+  Future<String> updateLegalDocuments({
+    String? nationalId,
+    String? licenseNumber,
+    String? licenseExpiry,
+    String? insuranceExpiry,
+    File? docLicense,
+    File? docLogbook,
+    File? docInsurance,
+  }) =>
+      updateLegalData(
+        nationalId: nationalId,
+        licenseNumber: licenseNumber,
+        licenseExpiry: licenseExpiry,
+        insuranceExpiry: insuranceExpiry,
+        docLicense: docLicense,
+        docLogbook: docLogbook,
+        docInsurance: docInsurance,
+      );
 
   String _handleDioError(DioException e) {
     if (e.response?.data is Map && e.response?.data['message'] != null) {

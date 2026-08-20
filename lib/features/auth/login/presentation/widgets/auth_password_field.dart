@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/utils/app_validators.dart';
 
 class AuthPasswordField extends StatefulWidget {
   final TextEditingController controller;
@@ -49,24 +50,7 @@ class _AuthPasswordFieldState extends State<AuthPasswordField> {
           },
         ),
       ),
-      validator:
-          widget.validator ??
-          (value) {
-            if (value == null || value.isEmpty) {
-              return 'الرجاء إدخال كلمة المرور';
-            }
-            // تم إيقاف التحقق الإضافي مؤقتاً للتجربة
-            // final digitCount = RegExp(r'\d').allMatches(value).length;
-            // final hasLetter = RegExp(r'[a-zA-Z\u0600-\u06FF]').hasMatch(value);
-
-            // if (digitCount < 6) {
-            //   return 'كلمة المرور يجب أن تحتوي على 6 أرقام على الأقل';
-            // }
-            // if (!hasLetter) {
-            //   return 'كلمة المرور يجب أن تحتوي على حرف واحد على الأقل';
-            // }
-            return null;
-          },
+      validator: widget.validator ?? AppValidators.validatePassword,
     );
   }
 }

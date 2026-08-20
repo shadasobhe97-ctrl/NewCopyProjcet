@@ -81,12 +81,14 @@ class DriverProfileRepository {
     String? nationalId,
     String? licenseNumber,
     String? licenseExpiry,
+    String? insuranceExpiry,
     Map<String, File>? newFiles,
   }) async {
     return await remoteDataSource.updateLegalData(
       nationalId: nationalId,
       licenseNumber: licenseNumber,
       licenseExpiry: licenseExpiry,
+      insuranceExpiry: insuranceExpiry,
       newFiles: newFiles,
     );
   }
