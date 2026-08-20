@@ -11,8 +11,6 @@ import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/cubit/theme_cubit.dart';
-import 'package:kids_transport/features/admin/logic/admin_auth_cubit.dart';
-import 'package:kids_transport/features/admin/logic/admin_dashboard_cubit.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/auth_repository.dart';
@@ -31,15 +29,17 @@ import 'package:kids_transport/features/chat/presentation/screens/chat_room_scre
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void _setupNotificationDeepLink() {
-  NotificationService.setNotificationTapCallback((Map<String, dynamic> data) async {
+  NotificationService.setNotificationTapCallback((
+    Map<String, dynamic> data,
+  ) async {
     try {
       if (kDebugMode) {
         debugPrint('🔔 [Notification Tap Callback Triggered]: $data');
       }
 
       final String? type = data['type']?.toString();
-      final String? chatRoomId = data['chat_room_id']?.toString() ??
-          data['chatRoomId']?.toString();
+      final String? chatRoomId =
+          data['chat_room_id']?.toString() ?? data['chatRoomId']?.toString();
 
       if (type == 'chat_message' ||
           (chatRoomId != null && chatRoomId.isNotEmpty)) {
@@ -47,12 +47,14 @@ void _setupNotificationDeepLink() {
         final String? currentUserId = sessionRepo.getUserId();
         final String currentUserRole = sessionRepo.getRoleName() ?? '';
 
-        final String otherUserName = data['sender_name']?.toString() ??
+        final String otherUserName =
+            data['sender_name']?.toString() ??
             data['other_user_name']?.toString() ??
             data['title']?.toString() ??
             'محادثة جديدة';
 
-        final String? otherUserPhoto = data['sender_photo']?.toString() ??
+        final String? otherUserPhoto =
+            data['sender_photo']?.toString() ??
             data['other_user_photo']?.toString();
 
         if (currentUserId != null &&
@@ -85,9 +87,7 @@ void _setupNotificationDeepLink() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await StorageService.init();
   await HiveHelper.init(); // تهيئة قاعدة بيانات Hive
@@ -107,13 +107,7 @@ class TransportApp extends StatelessWidget {
       providers: [
         BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
         BlocProvider<AuthCubit>(create: (_) => getIt<AuthCubit>()),
-        BlocProvider<AdminAuthCubit>(
-          create: (_) => AdminAuthCubit(
-            getIt<AuthRepository>(),
-            getIt<SessionRepository>(),
-          ),
-        ),
-        BlocProvider<AdminDashboardCubit>(create: (_) => AdminDashboardCubit()),
+
         BlocProvider<AppEntryCubit>(
           create: (_) => getIt<AppEntryCubit>()..checkSession(),
         ),
