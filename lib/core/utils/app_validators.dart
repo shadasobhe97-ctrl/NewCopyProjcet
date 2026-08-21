@@ -62,7 +62,7 @@ class AppValidators {
   /// التحقق من رقم الهاتف الليبي (سواء كان أساسي أم اختياري):
   /// 1. 10 أرقام بالضبط
   /// 2. أرقام فقط
-  /// 3. يبدأ بـ 09 حصراً (مثل 091, 092, 094, 093, 095)
+  /// 3. يبدأ بإحدى البادئات المعتمدة حصراً (091, 092, 093, 094, 095)
   /// 4. عدم تطابق الهاتف الاختياري مع الهاتف الأساسي
   static String? validateLibyanPhone(
     String? value, {
@@ -76,7 +76,7 @@ class AppValidators {
       return null;
     }
     var trimmed = value.trim();
-    
+
     // معالجة البادئات الدولية والتسهيل على المستخدم (مثل +218 أو 00218 أو 218)
     if (trimmed.startsWith('+218')) {
       trimmed = '0${trimmed.substring(4)}';
@@ -84,7 +84,12 @@ class AppValidators {
       trimmed = '0${trimmed.substring(5)}';
     } else if (trimmed.startsWith('218') && trimmed.length == 12) {
       trimmed = '0${trimmed.substring(3)}';
-    } else if (trimmed.length == 9 && (trimmed.startsWith('91') || trimmed.startsWith('92') || trimmed.startsWith('94') || trimmed.startsWith('93') || trimmed.startsWith('95'))) {
+    } else if (trimmed.length == 9 &&
+        (trimmed.startsWith('91') ||
+            trimmed.startsWith('92') ||
+            trimmed.startsWith('94') ||
+            trimmed.startsWith('93') ||
+            trimmed.startsWith('95'))) {
       trimmed = '0$trimmed';
     }
 
@@ -95,16 +100,30 @@ class AppValidators {
     if (trimmed.length != 10) {
       return 'رقم الهاتف يجب أن يتكون من 10 أرقام بالضبط (مثال: 0912345678)';
     }
-    if (!trimmed.startsWith('09')) {
-      return 'رقم الهاتف الليبي يجب أن يبدأ بـ 09 (مثل: 091, 092, 094, 093, 095)';
+
+    // 🌟 فحص البادئات الليبية المسموحة حصراً: (091, 092, 093, 094, 095)
+    // مرفوض تماماً أي رقم يبدأ بـ 090, 096, 097, 098, 099 الخ.
+    final allowedPrefixes = ['091', '092', '093', '094', '095'];
+    final hasValidPrefix =
+        allowedPrefixes.any((prefix) => trimmed.startsWith(prefix));
+    if (!hasValidPrefix) {
+      return 'رقم الهاتف يجب أن يبدأ بـ 091 أو 092 أو 093 أو 094 أو 095';
     }
-    
+
     if (primaryPhone != null && primaryPhone.trim().isNotEmpty) {
       var cleanPrimary = primaryPhone.trim();
-      if (cleanPrimary.startsWith('+218')) cleanPrimary = '0${cleanPrimary.substring(4)}';
-      if (cleanPrimary.startsWith('00218')) cleanPrimary = '0${cleanPrimary.substring(5)}';
-      if (cleanPrimary.startsWith('218') && cleanPrimary.length == 12) cleanPrimary = '0${cleanPrimary.substring(3)}';
-      if (cleanPrimary.length == 9 && (cleanPrimary.startsWith('91') || cleanPrimary.startsWith('92') || cleanPrimary.startsWith('94') || cleanPrimary.startsWith('93') || cleanPrimary.startsWith('95'))) {
+      if (cleanPrimary.startsWith('+218')) {
+        cleanPrimary = '0${cleanPrimary.substring(4)}';
+      } else if (cleanPrimary.startsWith('00218')) {
+        cleanPrimary = '0${cleanPrimary.substring(5)}';
+      } else if (cleanPrimary.startsWith('218') && cleanPrimary.length == 12) {
+        cleanPrimary = '0${cleanPrimary.substring(3)}';
+      } else if (cleanPrimary.length == 9 &&
+          (cleanPrimary.startsWith('91') ||
+              cleanPrimary.startsWith('92') ||
+              cleanPrimary.startsWith('94') ||
+              cleanPrimary.startsWith('93') ||
+              cleanPrimary.startsWith('95'))) {
         cleanPrimary = '0$cleanPrimary';
       }
 
