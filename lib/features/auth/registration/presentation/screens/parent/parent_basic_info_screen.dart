@@ -318,15 +318,8 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                         hintText: "091XXXXXXX",
                         prefixIcon: const Icon(Icons.phone_android_outlined),
                       ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return "الرجاء إدخال رقم الهاتف";
-                        }
-                        if (value.trim().length < 7) {
-                          return "يجب ألا يقل رقم الهاتف عن 7 أرقام";
-                        }
-                        return null;
-                      },
+                      validator: (value) =>
+                          AppValidators.validateLibyanPhone(value, isRequired: true),
                     ),
                     const SizedBox(height: 16),
 

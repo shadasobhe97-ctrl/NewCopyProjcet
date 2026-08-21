@@ -300,9 +300,11 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                                     hintText: 'أدخل رقم الهاتف الأساسي',
                                     icon: Icons.phone_rounded,
                                   ),
-                                  validator: (val) => val == null || val.isEmpty
-                                      ? 'يرجى إدخال رقم الهاتف'
-                                      : null,
+                                  validator: (val) =>
+                                      AppValidators.validateLibyanPhone(
+                                    val,
+                                    isRequired: true,
+                                  ),
                                 ),
                               ],
                             ),

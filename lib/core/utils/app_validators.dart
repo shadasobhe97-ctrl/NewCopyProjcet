@@ -22,16 +22,13 @@ class AppValidators {
     if (value == null || value.isEmpty) {
       return 'الرجاء إدخال كلمة المرور';
     }
-
     final hasMinLength = value.length >= 6;
     final hasEnglishLetter = RegExp(r'[a-zA-Z]').hasMatch(value);
     final hasDigit = RegExp(r'[0-9]').hasMatch(value);
 
     if (!hasMinLength || !hasEnglishLetter || !hasDigit) {
-      return 'كلمة المرور يجب أن تتكون من 6 خانات على الأقل،\n'
-          'وتحتوي على حرف إنجليزي ورقم على الأقل';
+      return 'كلمة المرور يجب أن تتكون من 6 خانات على الأقل، وتحتوي على حرف إنجليزي ورقم على الأقل';
     }
-
     return null;
   }
 
@@ -78,7 +75,19 @@ class AppValidators {
       }
       return null;
     }
-    final trimmed = value.trim();
+    var trimmed = value.trim();
+    
+    // معالجة البادئات الدولية والتسهيل على المستخدم (مثل +218 أو 00218 أو 218)
+    if (trimmed.startsWith('+218')) {
+      trimmed = '0${trimmed.substring(4)}';
+    } else if (trimmed.startsWith('00218')) {
+      trimmed = '0${trimmed.substring(5)}';
+    } else if (trimmed.startsWith('218') && trimmed.length == 12) {
+      trimmed = '0${trimmed.substring(3)}';
+    } else if (trimmed.length == 9 && (trimmed.startsWith('91') || trimmed.startsWith('92') || trimmed.startsWith('94') || trimmed.startsWith('93') || trimmed.startsWith('95'))) {
+      trimmed = '0$trimmed';
+    }
+
     final isDigitsOnly = RegExp(r'^[0-9]+$').hasMatch(trimmed);
     if (!isDigitsOnly) {
       return 'رقم الهاتف يجب أن يحتوي على أرقام فقط';
@@ -87,10 +96,19 @@ class AppValidators {
       return 'رقم الهاتف يجب أن يتكون من 10 أرقام بالضبط (مثال: 0912345678)';
     }
     if (!trimmed.startsWith('09')) {
-      return 'رقم الهاتف الليبي يجب أن يبدأ بـ 09 (مثل: 091, 092, 094)';
+      return 'رقم الهاتف الليبي يجب أن يبدأ بـ 09 (مثل: 091, 092, 094, 093, 095)';
     }
+    
     if (primaryPhone != null && primaryPhone.trim().isNotEmpty) {
-      if (trimmed == primaryPhone.trim()) {
+      var cleanPrimary = primaryPhone.trim();
+      if (cleanPrimary.startsWith('+218')) cleanPrimary = '0${cleanPrimary.substring(4)}';
+      if (cleanPrimary.startsWith('00218')) cleanPrimary = '0${cleanPrimary.substring(5)}';
+      if (cleanPrimary.startsWith('218') && cleanPrimary.length == 12) cleanPrimary = '0${cleanPrimary.substring(3)}';
+      if (cleanPrimary.length == 9 && (cleanPrimary.startsWith('91') || cleanPrimary.startsWith('92') || cleanPrimary.startsWith('94') || cleanPrimary.startsWith('93') || cleanPrimary.startsWith('95'))) {
+        cleanPrimary = '0$cleanPrimary';
+      }
+
+      if (trimmed == cleanPrimary) {
         return 'لا يمكن أن يكون رقم الهاتف الاحتياطي نفس رقم الهاتف الأساسي';
       }
     }

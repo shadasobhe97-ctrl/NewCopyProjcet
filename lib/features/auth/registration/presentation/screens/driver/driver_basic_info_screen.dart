@@ -298,18 +298,8 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                         hintText: "09XXXXXXXX",
                         prefixIcon: const Icon(Icons.phone_android),
                       ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) {
-                          return "رقم الهاتف إجباري";
-                        }
-                        if (v.trim().length != 10) {
-                          return "يجب أن يتكون الرقم من 10 أرقام بالضبط";
-                        }
-                        if (!v.trim().startsWith("09")) {
-                          return "يجب أن يبدأ الرقم بـ 09 حصراً";
-                        }
-                        return null;
-                      },
+                      validator: (v) =>
+                          AppValidators.validateLibyanPhone(v, isRequired: true),
                     ),
                     const SizedBox(height: 16),
 

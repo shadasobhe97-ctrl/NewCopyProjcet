@@ -464,7 +464,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                           isDark: isDark,
                           isPending: isPhonePending,
                           validator: (val) =>
-                              val == null || val.isEmpty ? 'مطلوب' : null,
+                              AppValidators.validateLibyanPhone(val, isRequired: true),
                         ),
                         _buildField(
                           label: 'رقم هاتف احتياطي',
