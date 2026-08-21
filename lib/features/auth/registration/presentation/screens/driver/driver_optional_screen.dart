@@ -7,6 +7,7 @@ import '../../../logic/register_state.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/utils/app_validators.dart';
 
 class DriverOptionalScreen extends StatefulWidget {
   const DriverOptionalScreen({super.key});
@@ -30,6 +31,7 @@ class _DriverOptionalScreenState extends State<DriverOptionalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cubit = context.read<RegisterCubit>();
     return Scaffold(
       appBar: AppBar(backgroundColor: AppColors.transparent, elevation: 0),
       body: BlocConsumer<RegisterCubit, RegisterState>(
@@ -82,6 +84,11 @@ class _DriverOptionalScreenState extends State<DriverOptionalScreen> {
                   decoration: AppTheme.inputDecoration(
                     context,
                     labelText: "رقم هاتف احتياطي (اختياري)",
+                  ),
+                  validator: (value) => AppValidators.validateLibyanPhone(
+                    value,
+                    isRequired: false,
+                    primaryPhone: cubit.phoneNumber,
                   ),
                 ),
                 const Spacer(),

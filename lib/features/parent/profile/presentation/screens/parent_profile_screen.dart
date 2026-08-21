@@ -11,6 +11,7 @@ import 'package:kids_transport/core/widgets/primary_button.dart';
 import 'package:kids_transport/features/parent/profile/presentation/widgets/profile_avatar_editor.dart';
 import 'package:kids_transport/features/parent/profile/presentation/widgets/profile_email_field.dart';
 import 'package:kids_transport/core/widgets/email_verification_dialog.dart';
+import 'package:kids_transport/core/utils/app_validators.dart';
 import '../../data/models/parent_model.dart';
 import '../../logic/cubit/parent_profile_cubit.dart';
 import '../../logic/cubit/parent_profile_state.dart';
@@ -322,6 +323,11 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                                   decoration: _buildInputDecoration(
                                     hintText: 'أدخل رقم هاتف الاحتياط',
                                     icon: Icons.phone_android_rounded,
+                                  ),
+                                  validator: (v) => AppValidators.validateLibyanPhone(
+                                    v,
+                                    isRequired: false,
+                                    primaryPhone: _phoneController.text,
                                   ),
                                 ),
                               ],

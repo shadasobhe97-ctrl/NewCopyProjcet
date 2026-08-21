@@ -17,20 +17,17 @@ class AppValidators {
   /// 1. 6 خانات على الأقل
   /// 2. تحتوي على حرف إنجليزي واحد على الأقل (A-Z أو a-z)
   /// 3. تحتوي على رقم واحد على الأقل (0-9)
+  /// يظهر خطأ كامل فوري يشمل كافة الشروط معاً عند المخالفة.
   static String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'الرجاء إدخال كلمة المرور';
     }
-    if (value.length < 6) {
-      return 'كلمة المرور يجب أن تتكون من 6 خانات على الأقل';
-    }
+    final hasMinLength = value.length >= 6;
     final hasEnglishLetter = RegExp(r'[a-zA-Z]').hasMatch(value);
-    if (!hasEnglishLetter) {
-      return 'يجب أن تحتوي كلمة المرور على حرف إنجليزي واحد على الأقل (A-Z أو a-z)';
-    }
     final hasDigit = RegExp(r'[0-9]').hasMatch(value);
-    if (!hasDigit) {
-      return 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل (0-9)';
+
+    if (!hasMinLength || !hasEnglishLetter || !hasDigit) {
+      return 'كلمة المرور يجب أن تتكون من 6 خانات على الأقل، وتحتوي على حرف إنجليزي ورقم على الأقل';
     }
     return null;
   }
@@ -66,7 +63,12 @@ class AppValidators {
   /// 1. 10 أرقام بالضبط
   /// 2. أرقام فقط
   /// 3. يبدأ بـ 09 حصراً (مثل 091, 092, 094, 093, 095)
-  static String? validateLibyanPhone(String? value, {bool isRequired = true}) {
+  /// 4. عدم تطابق الهاتف الاختياري مع الهاتف الأساسي
+  static String? validateLibyanPhone(
+    String? value, {
+    bool isRequired = true,
+    String? primaryPhone,
+  }) {
     if (value == null || value.trim().isEmpty) {
       if (isRequired) {
         return 'الرجاء إدخال رقم الهاتف';
@@ -83,6 +85,11 @@ class AppValidators {
     }
     if (!trimmed.startsWith('09')) {
       return 'رقم الهاتف الليبي يجب أن يبدأ بـ 09 (مثل: 091, 092, 094)';
+    }
+    if (primaryPhone != null && primaryPhone.trim().isNotEmpty) {
+      if (trimmed == primaryPhone.trim()) {
+        return 'لا يمكن أن يكون رقم الهاتف الاحتياطي نفس رقم الهاتف الأساسي';
+      }
     }
     return null;
   }

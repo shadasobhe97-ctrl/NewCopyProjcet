@@ -342,6 +342,11 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                         hintText: "092XXXXXXX",
                         prefixIcon: const Icon(Icons.phone_outlined),
                       ),
+                      validator: (value) => AppValidators.validateLibyanPhone(
+                        value,
+                        isRequired: false,
+                        primaryPhone: _phoneController.text,
+                      ),
                     ),
                     const SizedBox(height: 16),
 

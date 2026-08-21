@@ -65,7 +65,7 @@ class VehicleCubit extends Cubit<VehicleState> {
   }) async {
     emit(VehicleLoading());
     try {
-      final message = await repository.updateLegalDocuments(
+      final message = await repository.updateLegalData(
         nationalId: nationalId,
         licenseNumber: licenseNumber,
         licenseExpiry: licenseExpiry,

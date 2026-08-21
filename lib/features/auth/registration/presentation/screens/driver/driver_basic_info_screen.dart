@@ -56,9 +56,9 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('فشل اختيار الصورة: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('فشل اختيار الصورة: $e')));
     }
   }
 
@@ -96,7 +96,10 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
               ListTile(
                 leading: CircleAvatar(
                   backgroundColor: primaryColor.withValues(alpha: 0.1),
-                  child: Icon(Icons.photo_library_outlined, color: primaryColor),
+                  child: Icon(
+                    Icons.photo_library_outlined,
+                    color: primaryColor,
+                  ),
                 ),
                 title: const Text("اختيار من معرض الصور"),
                 onTap: () {
@@ -191,23 +194,7 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 10),
-                    Text(
-                      "بيانات السائق الأساسية",
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.right,
-                    ),
                     const SizedBox(height: 8),
-                    Text(
-                      "يرجى إدخال بياناتك الشخصية الحقيقية لطلب الانضمام ككابتن سائق.",
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.grey,
-                      ),
-                      textAlign: TextAlign.right,
-                    ),
-                    const SizedBox(height: 24),
 
                     // 🌟 مختار الصورة الشخصية العصري (Circular Avatar Picker)
                     Center(
@@ -311,10 +298,18 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                         hintText: "09XXXXXXXX",
                         prefixIcon: const Icon(Icons.phone_android),
                       ),
-                      validator: (v) => AppValidators.validateLibyanPhone(
-                        v,
-                        isRequired: true,
-                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) {
+                          return "رقم الهاتف إجباري";
+                        }
+                        if (v.trim().length != 10) {
+                          return "يجب أن يتكون الرقم من 10 أرقام بالضبط";
+                        }
+                        if (!v.trim().startsWith("09")) {
+                          return "يجب أن يبدأ الرقم بـ 09 حصراً";
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -333,6 +328,7 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                       validator: (v) => AppValidators.validateLibyanPhone(
                         v,
                         isRequired: false,
+                        primaryPhone: _phoneController.text,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -350,7 +346,7 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                       children: [
                         Expanded(
                           child: ChoiceChip(
-                            label: const Center(child: Text("ذكر (Captain)")),
+                            label: const Center(child: Text("ذكر ")),
                             selected: _selectedGender == 'male',
                             onSelected: (selected) {
                               if (selected) {
@@ -362,7 +358,7 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: ChoiceChip(
-                            label: const Center(child: Text("أنثى (Captain)")),
+                            label: const Center(child: Text("أنثى ")),
                             selected: _selectedGender == 'female',
                             onSelected: (selected) {
                               if (selected) {

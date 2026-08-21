@@ -8,6 +8,7 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/widgets/email_verification_dialog.dart';
+import 'package:kids_transport/core/utils/app_validators.dart';
 import '../../logic/cubit/driver_profile_cubit.dart';
 import '../../logic/cubit/driver_profile_state.dart';
 import '../../data/models/driver_model.dart';
@@ -472,16 +473,11 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                           controller: _backupPhoneController,
                           keyboardType: TextInputType.phone,
                           isDark: isDark,
-                          validator: (val) {
-                            if (val != null && val.trim().isNotEmpty) {
-                              final cleanVal = val.trim();
-                              if (cleanVal.length != 10 ||
-                                  !RegExp(r'^\d{10}$').hasMatch(cleanVal)) {
-                                return 'رقم الهاتف الاحتياطي يجب أن يتكون من 10 أرقام';
-                              }
-                            }
-                            return null;
-                          },
+                          validator: (val) => AppValidators.validateLibyanPhone(
+                            val,
+                            isRequired: false,
+                            primaryPhone: _phoneController.text,
+                          ),
                         ),
                         _buildField(
                           label: 'البريد الإلكتروني',
