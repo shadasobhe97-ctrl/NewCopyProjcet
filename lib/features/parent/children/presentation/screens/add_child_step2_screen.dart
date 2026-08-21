@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:kids_transport/features/parent/children/presentation/widgets/address_selection_bottom_sheet.dart';
+import 'package:kids_transport/features/parent/children/presentation/widgets/school_search_bottom_sheet.dart';
 import 'package:kids_transport/features/parent/children/presentation/widgets/add_child_shared_widgets.dart';
 import '../../../../../core/routes/app_router.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -31,10 +33,16 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
   TimeOfDay _schoolStartTime = const TimeOfDay(hour: 8, minute: 0);
   TimeOfDay _schoolEndTime = const TimeOfDay(hour: 13, minute: 30);
 
+  int? _selectedSchoolId;
+  String? _selectedSchoolName;
+  int? _selectedAddressId;
+  String? _selectedAddressName;
+
   @override
   void initState() {
     super.initState();
-    final editingChild = context.read<AddChildCubit>().editingChild;
+    final cubit = context.read<AddChildCubit>();
+    final editingChild = cubit.editingChild;
     if (editingChild != null) {
       final pref = editingChild.transportPref;
       _subType = (pref.subscriptionType == 'multi_day') ? 'multi_day' : 'single_day';
@@ -44,6 +52,15 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
       _endDate = pref.endDate;
       _schoolStartTime = _parseTimeOfDay(pref.schoolStartTime);
       _schoolEndTime = _parseTimeOfDay(pref.schoolEndTime);
+      _selectedSchoolId = editingChild.schoolId;
+      _selectedSchoolName = editingChild.schoolName;
+      _selectedAddressId = int.tryParse(editingChild.addressId.toString());
+      _selectedAddressName = editingChild.addressName;
+    } else {
+      _selectedSchoolId = cubit.schoolId;
+      _selectedSchoolName = cubit.schoolName;
+      _selectedAddressId = int.tryParse(cubit.addressId?.toString() ?? '');
+      _selectedAddressName = cubit.addressName;
     }
   }
 
@@ -130,6 +147,16 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
       finalEndDate = _endDate!;
     }
 
+    if (_selectedSchoolId == null || _selectedAddressId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('الرجاء اختيار المدرسة وعنوان المنزل.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     final pref = TransportPrefModel(
       subscriptionType: _subType,
       period: _period,
@@ -139,7 +166,13 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
       schoolStartTime: _formatTime24h(_schoolStartTime),
       schoolEndTime: _formatTime24h(_schoolEndTime),
     );
-    context.read<AddChildCubit>().submitStep2(transportPref: pref);
+    context.read<AddChildCubit>().submitStep2(
+      transportPref: pref,
+      sId: _selectedSchoolId,
+      sName: _selectedSchoolName,
+      aId: _selectedAddressId?.toString(),
+      aName: _selectedAddressName,
+    );
   }
 
   Widget _buildSelectionRow({
@@ -301,6 +334,98 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                             ),
                           ),
                           SizedBox(height: 20.h),
+
+                          // ── المدرسة وعنوان المنزل ──
+                          AddChildSectionCard(
+                            title: 'المدرسة والعنوان',
+                            icon: Icons.school_outlined,
+                            children: [
+                              // المدرسة
+                              InkWell(
+                                borderRadius: AppTheme.radius(10.r),
+                                onTap: () async {
+                                  final school =
+                                      await SchoolSearchBottomSheet.show(
+                                        context,
+                                        context.read<AddChildCubit>(),
+                                      );
+                                  if (school != null) {
+                                    setState(() {
+                                      _selectedSchoolId = school.id;
+                                      _selectedSchoolName = school.name;
+                                    });
+                                  }
+                                },
+                                child: InputDecorator(
+                                  decoration: InputDecoration(
+                                    labelText: 'المدرسة',
+                                    prefixIcon: const Icon(
+                                      Icons.school_rounded,
+                                    ),
+                                    suffixIcon: const Icon(
+                                      Icons.search_rounded,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: AppTheme.radius(10.r),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _selectedSchoolName ??
+                                        'اضغط للبحث عن مدرسة',
+                                    style: TextStyle(
+                                      color: _selectedSchoolName == null
+                                          ? AppColors.grey400
+                                          : null,
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 14.h),
+
+                              // العنوان
+                              InkWell(
+                                borderRadius: AppTheme.radius(10.r),
+                                onTap: () async {
+                                  final address =
+                                      await AddressSelectionBottomSheet.show(
+                                        context,
+                                      );
+                                  if (address != null) {
+                                    setState(() {
+                                      _selectedAddressId = int.tryParse(
+                                        address.id ?? '',
+                                      );
+                                      _selectedAddressName = address.title;
+                                    });
+                                  }
+                                },
+                                child: InputDecorator(
+                                  decoration: InputDecoration(
+                                    labelText: 'عنوان المنزل',
+                                    prefixIcon: const Icon(Icons.home_rounded),
+                                    suffixIcon: const Icon(
+                                      Icons.arrow_drop_down_rounded,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: AppTheme.radius(10.r),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _selectedAddressName ??
+                                        'اضغط لاختيار العنوان',
+                                    style: TextStyle(
+                                      color: _selectedAddressName == null
+                                          ? AppColors.grey400
+                                          : null,
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 16.h),
 
                           // ── نوع الاشتراك ──
                           AddChildSectionCard(

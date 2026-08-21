@@ -17,6 +17,17 @@ class LogisticsModel {
     required this.subscriptionType,
   });
 
+  factory LogisticsModel.empty() {
+    return LogisticsModel(
+      preferredTimeSlot: 'morning',
+      tripDirection: 'both',
+      startDate: DateTime.now(),
+      subscriptionType: 'single_day',
+      pickupTime: '08:00',
+      dropoffTime: '13:30',
+    );
+  }
+
   factory LogisticsModel.fromJson(Map<String, dynamic> json) {
     return LogisticsModel(
       preferredTimeSlot: json['preferred_time_slot'] as String? ?? 'morning',

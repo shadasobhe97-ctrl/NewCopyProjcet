@@ -5,8 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:kids_transport/features/parent/children/presentation/widgets/address_selection_bottom_sheet.dart';
-import 'package:kids_transport/features/parent/children/presentation/widgets/school_search_bottom_sheet.dart';
 import 'package:kids_transport/features/parent/children/presentation/widgets/add_child_shared_widgets.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
@@ -36,11 +34,6 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
   File? _selectedImage;
   String? _imagePathWeb;
 
-  int? _selectedSchoolId;
-  String? _selectedSchoolName;
-  int? _selectedAddressId;
-  String? _selectedAddressName;
-
   @override
   void initState() {
     super.initState();
@@ -64,12 +57,6 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
         _selectedGrade = 1;
       }
       _selectedDate = widget.child!.birthDate;
-      _selectedSchoolId = widget.child!.schoolId;
-      _selectedSchoolName = widget.child!.schoolName;
-
-      // 👈 التحويل الآمن للمعرّف
-      _selectedAddressId = int.tryParse(widget.child!.addressId.toString());
-      _selectedAddressName = widget.child!.addressName;
     } else {
       cubit.clear();
       _selectedDate = DateTime(2015);
@@ -163,24 +150,12 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
 
   void _submitStep1() {
     if (_formKey.currentState!.validate()) {
-      if (_selectedSchoolId == null || _selectedAddressId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('الرجاء اختيار المدرسة وعنوان المنزل')),
-        );
-        return;
-      }
-
       context.read<AddChildCubit>().submitStep1(
         img: context.read<AddChildCubit>().imagePath,
         name: _nameController.text.trim(),
         gen: _selectedGender,
         dob: _selectedDate,
         grade: _selectedGrade,
-        sId: _selectedSchoolId!,
-        sName: _selectedSchoolName!,
-        // 👈 التعديل الآمن هنا
-        aId: _selectedAddressId?.toString() ?? '',
-        aName: _selectedAddressName!,
         notes: _medicalNotesController.text.trim().isNotEmpty
             ? _medicalNotesController.text.trim()
             : null,
@@ -614,86 +589,6 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                             SizedBox(height: 10.h),
                             // خيارات الصف بناءً على المرحلة
                             _buildGradeOptionsForStage(),
-                            SizedBox(height: 14.h),
-
-                            // المدرسة
-                            InkWell(
-                              borderRadius: AppTheme.radius(10.r),
-                              onTap: () async {
-                                final school =
-                                    await SchoolSearchBottomSheet.show(
-                                      context,
-                                      context.read<AddChildCubit>(),
-                                    );
-                                if (school != null) {
-                                  setState(() {
-                                    _selectedSchoolId = school.id;
-                                    _selectedSchoolName = school.name;
-                                  });
-                                }
-                              },
-                              child: InputDecorator(
-                                decoration: InputDecoration(
-                                  labelText: 'المدرسة',
-                                  prefixIcon: const Icon(Icons.school_rounded),
-                                  suffixIcon: const Icon(Icons.search_rounded),
-                                  border: OutlineInputBorder(
-                                    borderRadius: AppTheme.radius(10.r),
-                                  ),
-                                ),
-                                child: Text(
-                                  _selectedSchoolName ?? 'اضغط للبحث عن مدرسة',
-                                  style: TextStyle(
-                                    color: _selectedSchoolName == null
-                                        ? AppColors.grey400
-                                        : null,
-                                    fontSize: 14.sp,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 14.h),
-
-                            // العنوان
-                            InkWell(
-                              borderRadius: AppTheme.radius(10.r),
-                              onTap: () async {
-                                final address =
-                                    await AddressSelectionBottomSheet.show(
-                                      context,
-                                    );
-                                if (address != null) {
-                                  setState(() {
-                                    _selectedAddressId = int.tryParse(
-                                      address.id ?? '',
-                                    );
-                                    _selectedAddressName = address.title;
-                                  });
-                                }
-                              },
-                              child: InputDecorator(
-                                decoration: InputDecoration(
-                                  labelText: 'عنوان المنزل',
-                                  prefixIcon: const Icon(Icons.home_rounded),
-                                  suffixIcon: const Icon(
-                                    Icons.arrow_drop_down_rounded,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: AppTheme.radius(10.r),
-                                  ),
-                                ),
-                                child: Text(
-                                  _selectedAddressName ??
-                                      'اضغط لاختيار العنوان',
-                                  style: TextStyle(
-                                    color: _selectedAddressName == null
-                                        ? AppColors.grey400
-                                        : null,
-                                    fontSize: 14.sp,
-                                  ),
-                                ),
-                              ),
-                            ),
                             SizedBox(height: 14.h),
 
                             // الملاحظات الطبية

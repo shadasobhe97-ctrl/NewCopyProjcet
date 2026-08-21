@@ -33,7 +33,7 @@ class AppValidators {
     return null;
   }
 
-  /// التحقق من أن الاسم باللغة العربية وثلاثي على الأقل
+  /// التحقق من أن الاسم باللغة العربية وثلاثي على الأقل (3 أسماء)
   static String? validateArabicTripleName(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'الرجاء إدخال الاسم الكامل';
@@ -42,12 +42,18 @@ class AppValidators {
     // التحقق من الحروف العربية فقط (مع السماح بالمسافات)
     final isArabic = RegExp(r'^[\u0600-\u06FF\s]+$').hasMatch(trimmed);
     if (!isArabic) {
-      return 'يجب كتابة الاسم باللغة العربية فقط';
+      return 'يجب كتابة الاسم باللغة العربية فقط (أحرف عربية)';
     }
     // التجزئة بالمسافات للتحقق من أنه اسم ثلاثي على الأقل
-    final nameParts = trimmed.split(RegExp(r'\s+'));
+    final nameParts =
+        trimmed.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
     if (nameParts.length < 3) {
       return 'يرجى إدخال الاسم ثلاثياً على الأقل (مثال: أحمد محمد علي)';
+    }
+    for (final part in nameParts) {
+      if (part.length < 2) {
+        return 'يرجى كتابة أجزاء الاسم الثلاثي بشكل صحيح (كل اسم حرفين على الأقل)';
+      }
     }
     return null;
   }
