@@ -6,25 +6,25 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 
 class SharedOtpForm extends StatefulWidget {
-  /// النص أو الرقم الذي يتم عرض رسالة "تم إرسال الرمز إلى..." له.
+  /// النص أو البريد الذي يتم عرض رسالة "تم إرسال الرمز إلى..." له.
   final String identifier;
-  
+
   /// يتم استدعاؤها عندما يكتمل إدخال الـ 6 أرقام.
   final void Function(String code) onCompleted;
-  
-  /// يتم استدعاؤها عند الضغط على زر إعادة الإرسال. يجب أن تكون دالة غير متزامنة (Future).
+
+  /// يتم استدعاؤها عند الضغط على زر إعادة الإرسال.
   final Future<void> Function() onResend;
-  
-  /// يتم استدعاؤها عند الضغط على الزر الرئيسي (تأكيد / إنشاء حساب / إلخ).
+
+  /// يتم استدعاؤها عند الضغط على الزر الرئيسي.
   final void Function(String code) onSubmit;
-  
+
   /// عنوان الزر الرئيسي أسفل الشاشة.
   final String submitButtonText;
-  
+
   /// حالة التحميل للزر الرئيسي.
   final bool isSubmitting;
-  
-  /// لتفعيل حالة نجاح إعادة الإرسال من خارج المكون (لو كان مطلوباً، لكن غالباً نعالجه داخلياً).
+
+  /// لتفعيل حالة نجاح إعادة الإرسال من خارج المكون.
   final bool externalResendSuccess;
 
   const SharedOtpForm({
@@ -45,16 +45,22 @@ class SharedOtpForm extends StatefulWidget {
 class _SharedOtpFormState extends State<SharedOtpForm> {
   final _otpController = TextEditingController();
   final FocusNode _otpFocusNode = FocusNode();
-  int _timerSeconds = 300; // 5 دقائق
-  Timer? _timer;
-  bool _canResend = false;
+
+  int _expirySeconds = 300; // 5 دقائق صلاحية الرمز
+  int _cooldownSeconds = 60; // 60 ثانية مهلة إعادة الإرسال
+  int _resendCount = 0; // عدد محاولات إعادة الإرسال (حتى 3 محاولات)
+  static const int _maxResendAttempts = 3;
+
+  Timer? _expiryTimer;
+  Timer? _cooldownTimer;
+
   bool _resendLoading = false;
   bool _resendSucceeded = false;
 
   @override
   void initState() {
     super.initState();
-    _startTimer();
+    _startTimers();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) {
@@ -72,31 +78,56 @@ class _SharedOtpFormState extends State<SharedOtpForm> {
     }
   }
 
-  void _startTimer() {
-    if (!mounted) return;
-    setState(() {
-      _timerSeconds = 300;
-      _canResend = false;
-    });
+  void _startTimers() {
+    _startExpiryTimer();
+    _startCooldownTimer();
+  }
 
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+  void _startExpiryTimer() {
+    _expiryTimer?.cancel();
+    setState(() => _expirySeconds = 300);
+    _expiryTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
-      if (_timerSeconds == 0) {
-        setState(() {
-          _canResend = true;
-          _timer?.cancel();
-        });
+      if (_expirySeconds > 0) {
+        setState(() => _expirySeconds--);
       } else {
-        setState(() => _timerSeconds--);
+        timer.cancel();
+      }
+    });
+  }
+
+  void _startCooldownTimer() {
+    _cooldownTimer?.cancel();
+    setState(() => _cooldownSeconds = 60);
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_cooldownSeconds > 0) {
+        setState(() => _cooldownSeconds--);
+      } else {
+        timer.cancel();
       }
     });
   }
 
   Future<void> _handleResend() async {
+    if (_resendCount >= _maxResendAttempts) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'تم استنفاذ الحد الأقصى لمحاولات إعادة الإرسال (3 محاولات).',
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _resendLoading = true;
       _resendSucceeded = false;
@@ -104,6 +135,7 @@ class _SharedOtpFormState extends State<SharedOtpForm> {
 
     try {
       await widget.onResend();
+      if (!mounted) return;
       _handleResendSuccess();
     } catch (_) {
       if (!mounted) return;
@@ -116,21 +148,23 @@ class _SharedOtpFormState extends State<SharedOtpForm> {
   void _handleResendSuccess() {
     if (!mounted) return;
     setState(() {
+      _resendCount++;
       _resendLoading = false;
       _resendSucceeded = true;
-      _canResend = false;
     });
+
+    _startTimers();
 
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
       setState(() => _resendSucceeded = false);
-      _startTimer();
     });
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _expiryTimer?.cancel();
+    _cooldownTimer?.cancel();
     _otpController.dispose();
     _otpFocusNode.dispose();
     super.dispose();
@@ -168,7 +202,47 @@ class _SharedOtpFormState extends State<SharedOtpForm> {
             ),
             textAlign: TextAlign.right,
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 20),
+
+          // ── شريط التوقيت وصلاحية الرمز (5 دقائق) ──
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.timer_outlined,
+                    size: 18,
+                    color: _expirySeconds > 0
+                        ? theme.primaryColor
+                        : AppColors.error,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _expirySeconds > 0
+                        ? "ينتهي الرمز خلال: ${_formatTime(_expirySeconds)}"
+                        : "انتهت صلاحية الرمز!",
+                    style: AppTextStyles.style(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: _expirySeconds > 0
+                          ? theme.primaryColor
+                          : AppColors.error,
+                    ),
+                  ),
+                ],
+              ),
+              if (_resendCount > 0)
+                Text(
+                  "المحاولات: $_resendCount/$_maxResendAttempts",
+                  style: AppTextStyles.style(
+                    fontSize: 12,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 24),
 
           Directionality(
             textDirection: TextDirection.ltr,
@@ -187,7 +261,9 @@ class _SharedOtpFormState extends State<SharedOtpForm> {
                 fieldHeight: 54,
                 fieldWidth: 44,
                 activeFillColor: isDark ? AppColors.grey900 : AppColors.white,
-                inactiveFillColor: isDark ? AppColors.grey900 : AppColors.grey100,
+                inactiveFillColor: isDark
+                    ? AppColors.grey900
+                    : AppColors.grey100,
                 selectedFillColor: isDark ? AppColors.grey900 : AppColors.white,
                 activeColor: theme.primaryColor,
                 selectedColor: theme.primaryColor,
@@ -207,29 +283,38 @@ class _SharedOtpFormState extends State<SharedOtpForm> {
           const SizedBox(height: 30),
 
           Center(
-            child: _canResend
-                ? _buildResendButton(theme)
-                : Column(
-                    children: [
-                      Text(
-                        "إعادة الإرسال بعد",
-                        style: AppTextStyles.style(
-                          color: AppColors.textMuted,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _formatTime(_timerSeconds),
-                        style: AppTextStyles.style(
-                          color: theme.primaryColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          letterSpacing: 2,
-                        ),
-                      ),
-                    ],
-                  ),
+            child: _resendCount >= _maxResendAttempts
+                ? Text(
+                    "تم استنفاذ الحد الأقصى لمحاولات إعادة الإرسال (3/3)",
+                    style: AppTextStyles.style(
+                      color: AppColors.error,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : (_cooldownSeconds == 0
+                      ? _buildResendButton(theme)
+                      : Column(
+                          children: [
+                            Text(
+                              "يمكنك طلب رمز جديد بعد",
+                              style: AppTextStyles.style(
+                                color: AppColors.textMuted,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "00:${_cooldownSeconds.toString().padLeft(2, '0')}",
+                              style: AppTextStyles.style(
+                                color: theme.primaryColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ],
+                        )),
           ),
 
           const Spacer(),
@@ -243,7 +328,9 @@ class _SharedOtpFormState extends State<SharedOtpForm> {
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text("الرجاء إدخال الرمز كاملاً المكون من 6 أرقام"),
+                          content: Text(
+                            "الرجاء إدخال الرمز كاملاً المكون من 6 أرقام",
+                          ),
                           backgroundColor: AppColors.error,
                         ),
                       );
@@ -300,7 +387,7 @@ class _SharedOtpFormState extends State<SharedOtpForm> {
     return TextButton(
       onPressed: _handleResend,
       child: Text(
-        "إعادة إرسال رمز التحقق",
+        "إعادة إرسال رمز التحقق (المحاولة ${_resendCount + 1} من $_maxResendAttempts)",
         style: AppTextStyles.style(
           color: theme.primaryColor,
           fontWeight: FontWeight.bold,

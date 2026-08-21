@@ -11,10 +11,9 @@ class AppValidators {
     return null;
   }
 
-  /// التحقق من صحة كلمة المرور:
-  /// التحقق من صحة كلمة المرور:
+  /// التحقق من صحة كلمة المرور بحسب الشروط المطلوبة:
   /// 1. 6 خانات على الأقل
-  /// 2. تحتوي على حرف واحد على الأقل (عربي أو إنجليزي)
+  /// 2. تحتوي على حرف إنجليزي واحد على الأقل (A-Z أو a-z)
   /// 3. تحتوي على رقم واحد على الأقل (0-9)
   static String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
@@ -23,13 +22,13 @@ class AppValidators {
     if (value.length < 6) {
       return 'كلمة المرور يجب أن تتكون من 6 خانات على الأقل';
     }
-    final hasLetter = RegExp(r'[a-zA-Z\u0600-\u06FF]').hasMatch(value);
-    if (!hasLetter) {
-      return 'كلمة المرور يجب أن تحتوي على حرف واحد على الأقل';
+    final hasEnglishLetter = RegExp(r'[a-zA-Z]').hasMatch(value);
+    if (!hasEnglishLetter) {
+      return 'يجب أن تحتوي كلمة المرور على حرف إنجليزي واحد على الأقل (A-Z أو a-z)';
     }
     final hasDigit = RegExp(r'[0-9]').hasMatch(value);
     if (!hasDigit) {
-      return 'كلمة المرور يجب أن تحتوي على رقم واحد على الأقل';
+      return 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل (0-9)';
     }
     return null;
   }
