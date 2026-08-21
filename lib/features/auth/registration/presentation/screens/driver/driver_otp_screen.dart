@@ -52,7 +52,9 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
             final isSubmitting = state is DriverVerifyOtpLoading;
 
             return SharedOtpForm(
-              identifier: cubit.email?.isNotEmpty == true ? cubit.email! : (cubit.phoneNumber ?? ''),
+              identifier: cubit.email?.isNotEmpty == true
+                  ? cubit.email!
+                  : (cubit.phoneNumber ?? ''),
               submitButtonText: 'تأكيد الرمز',
               isSubmitting: isSubmitting,
               externalResendSuccess: _externalResendSuccess,
@@ -91,7 +93,9 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
                   if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('فشل إعادة إرسال الرمز، يرجى المحاولة مرة أخرى.'),
+                      content: Text(
+                        'فشل إعادة إرسال الرمز، يرجى المحاولة مرة أخرى.',
+                      ),
                       backgroundColor: AppColors.error,
                     ),
                   );

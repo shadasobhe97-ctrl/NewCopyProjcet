@@ -46,7 +46,10 @@ class _DriverOptionalScreenState extends State<DriverOptionalScreen> {
               children: [
                 Text(
                   "الصورة والهاتف البديل",
-                  style: AppTextStyles.style(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: AppTextStyles.style(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.right,
                 ),
                 const SizedBox(height: 40),
@@ -76,7 +79,8 @@ class _DriverOptionalScreenState extends State<DriverOptionalScreen> {
                 TextFormField(
                   controller: _altPhoneController,
                   keyboardType: TextInputType.phone,
-                  decoration: AppTheme.inputDecoration(context, 
+                  decoration: AppTheme.inputDecoration(
+                    context,
                     labelText: "رقم هاتف احتياطي (اختياري)",
                   ),
                 ),

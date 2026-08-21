@@ -103,7 +103,8 @@ class _ParentAlternativePhoneScreenState
                   keyboardType: TextInputType.phone,
                   textDirection: TextDirection.ltr,
                   textAlign: TextAlign.left,
-                  decoration: AppTheme.inputDecoration(context, 
+                  decoration: AppTheme.inputDecoration(
+                    context,
                     hintText: "09XXXXXXXX",
                     prefixIcon: Icon(Icons.phone_enabled_outlined),
                   ),
@@ -125,7 +126,9 @@ class _ParentAlternativePhoneScreenState
                     if (phone.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('الرجاء إدخال رقم الهاتف البديل أو اضغط "تخطي"'),
+                          content: Text(
+                            'الرجاء إدخال رقم الهاتف البديل أو اضغط "تخطي"',
+                          ),
                           backgroundColor: AppColors.orange,
                         ),
                       );
@@ -140,7 +143,10 @@ class _ParentAlternativePhoneScreenState
                   ),
                   child: Text(
                     "التالي",
-                    style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: AppTextStyles.style(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),

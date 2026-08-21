@@ -55,9 +55,9 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('فشل اختيار الصورة: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('فشل اختيار الصورة: $e')));
     }
   }
 
@@ -95,7 +95,10 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
               ListTile(
                 leading: CircleAvatar(
                   backgroundColor: primaryColor.withValues(alpha: 0.1),
-                  child: Icon(Icons.photo_library_outlined, color: primaryColor),
+                  child: Icon(
+                    Icons.photo_library_outlined,
+                    color: primaryColor,
+                  ),
                 ),
                 title: const Text("اختيار من معرض الصور"),
                 onTap: () {

@@ -4,7 +4,9 @@ class AppValidators {
     if (value == null || value.trim().isEmpty) {
       return 'الرجاء إدخال البريد الإلكتروني';
     }
-    final emailRegExp = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final emailRegExp = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
     if (!emailRegExp.hasMatch(value.trim())) {
       return 'صيغة البريد الإلكتروني غير صحيحة';
     }
@@ -45,8 +47,10 @@ class AppValidators {
       return 'يجب كتابة الاسم باللغة العربية فقط (أحرف عربية)';
     }
     // التجزئة بالمسافات للتحقق من أنه اسم ثلاثي على الأقل
-    final nameParts =
-        trimmed.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final nameParts = trimmed
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (nameParts.length < 3) {
       return 'يرجى إدخال الاسم ثلاثياً على الأقل (مثال: أحمد محمد علي)';
     }
@@ -54,6 +58,31 @@ class AppValidators {
       if (part.length < 2) {
         return 'يرجى كتابة أجزاء الاسم الثلاثي بشكل صحيح (كل اسم حرفين على الأقل)';
       }
+    }
+    return null;
+  }
+
+  /// التحقق من رقم الهاتف الليبي (سواء كان أساسي أم اختياري):
+  /// 1. 10 أرقام بالضبط
+  /// 2. أرقام فقط
+  /// 3. يبدأ بـ 09 حصراً (مثل 091, 092, 094, 093, 095)
+  static String? validateLibyanPhone(String? value, {bool isRequired = true}) {
+    if (value == null || value.trim().isEmpty) {
+      if (isRequired) {
+        return 'الرجاء إدخال رقم الهاتف';
+      }
+      return null;
+    }
+    final trimmed = value.trim();
+    final isDigitsOnly = RegExp(r'^[0-9]+$').hasMatch(trimmed);
+    if (!isDigitsOnly) {
+      return 'رقم الهاتف يجب أن يحتوي على أرقام فقط';
+    }
+    if (trimmed.length != 10) {
+      return 'رقم الهاتف يجب أن يتكون من 10 أرقام بالضبط (مثال: 0912345678)';
+    }
+    if (!trimmed.startsWith('09')) {
+      return 'رقم الهاتف الليبي يجب أن يبدأ بـ 09 (مثل: 091, 092, 094)';
     }
     return null;
   }
