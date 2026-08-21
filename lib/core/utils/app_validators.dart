@@ -22,13 +22,16 @@ class AppValidators {
     if (value == null || value.isEmpty) {
       return 'الرجاء إدخال كلمة المرور';
     }
+
     final hasMinLength = value.length >= 6;
     final hasEnglishLetter = RegExp(r'[a-zA-Z]').hasMatch(value);
     final hasDigit = RegExp(r'[0-9]').hasMatch(value);
 
     if (!hasMinLength || !hasEnglishLetter || !hasDigit) {
-      return 'كلمة المرور يجب أن تتكون من 6 خانات على الأقل، وتحتوي على حرف إنجليزي ورقم على الأقل';
+      return 'كلمة المرور يجب أن تتكون من 6 خانات على الأقل،\n'
+          'وتحتوي على حرف إنجليزي ورقم على الأقل';
     }
+
     return null;
   }
 
