@@ -305,25 +305,30 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                           const SizedBox(height: 12),
 
                           DocumentUploadTile(
-                            title: widget.finalData['license_doc'] != null
+                            title: (widget.finalData['license_doc'] != null ||
+                                    widget.finalData['doc_license'] != null)
                                 ? "تم إرفاق رخصة القيادة ✓"
                                 : "رخصة القيادة",
-                            description: widget.finalData['license_doc'] != null
-                                ? "اضغط لتغيير الصورة"
-                                : "صورة واضحة للرخصة الشخصية السارية",
-                            icon: widget.finalData['license_doc'] != null
+                            description:
+                                (widget.finalData['license_doc'] != null ||
+                                        widget.finalData['doc_license'] != null)
+                                    ? "اضغط لتغيير الصورة"
+                                    : "صورة واضحة للرخصة الشخصية السارية",
+                            icon: (widget.finalData['license_doc'] != null ||
+                                    widget.finalData['doc_license'] != null)
                                 ? Icons.check_circle_outline
                                 : Icons.assignment_ind_outlined,
                             onImagePicked: (selectedFile) {
                               if (selectedFile != null) {
                                 setState(() {
-                                  widget.finalData['license_doc'] =
-                                      selectedFile;
+                                  widget.finalData['license_doc'] = selectedFile;
+                                  widget.finalData['doc_license'] = selectedFile;
                                 });
                               }
                             },
                           ),
-                          if (widget.finalData['license_doc'] != null) ...[
+                          if (widget.finalData['license_doc'] != null ||
+                              widget.finalData['doc_license'] != null) ...[
                             const SizedBox(height: 6),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(10),
@@ -331,7 +336,8 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                                 height: 140,
                                 width: double.infinity,
                                 child: AppImageWidget(
-                                  image: widget.finalData['license_doc'],
+                                  image: widget.finalData['doc_license'] ??
+                                      widget.finalData['license_doc'],
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -339,25 +345,30 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                             const SizedBox(height: 8),
                           ],
                           DocumentUploadTile(
-                            title: widget.finalData['logbook_doc'] != null
+                            title: (widget.finalData['logbook_doc'] != null ||
+                                    widget.finalData['doc_logbook'] != null)
                                 ? "تم إرفاق كتيب المركبة ✓"
                                 : "كتيب/دفتر المركبة",
-                            description: widget.finalData['logbook_doc'] != null
-                                ? "اضغط لتغيير الصورة"
-                                : "صورة لإثبات ملكية وبيانات السيارة",
-                            icon: widget.finalData['logbook_doc'] != null
+                            description:
+                                (widget.finalData['logbook_doc'] != null ||
+                                        widget.finalData['doc_logbook'] != null)
+                                    ? "اضغط لتغيير الصورة"
+                                    : "صورة لإثبات ملكية وبيانات السيارة",
+                            icon: (widget.finalData['logbook_doc'] != null ||
+                                    widget.finalData['doc_logbook'] != null)
                                 ? Icons.check_circle_outline
                                 : Icons.directions_car_filled_outlined,
                             onImagePicked: (selectedFile) {
                               if (selectedFile != null) {
                                 setState(() {
-                                  widget.finalData['logbook_doc'] =
-                                      selectedFile;
+                                  widget.finalData['logbook_doc'] = selectedFile;
+                                  widget.finalData['doc_logbook'] = selectedFile;
                                 });
                               }
                             },
                           ),
-                          if (widget.finalData['logbook_doc'] != null) ...[
+                          if (widget.finalData['logbook_doc'] != null ||
+                              widget.finalData['doc_logbook'] != null) ...[
                             const SizedBox(height: 6),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(10),
@@ -365,7 +376,8 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                                 height: 140,
                                 width: double.infinity,
                                 child: AppImageWidget(
-                                  image: widget.finalData['logbook_doc'],
+                                  image: widget.finalData['doc_logbook'] ??
+                                      widget.finalData['logbook_doc'],
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -373,26 +385,30 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                             const SizedBox(height: 8),
                           ],
                           DocumentUploadTile(
-                            title: widget.finalData['insurance_doc'] != null
+                            title: (widget.finalData['insurance_doc'] != null ||
+                                    widget.finalData['doc_insurance'] != null)
                                 ? "تم إرفاق وثيقة التأمين ✓"
                                 : "وثيقة التأمين",
                             description:
-                                widget.finalData['insurance_doc'] != null
+                                (widget.finalData['insurance_doc'] != null ||
+                                        widget.finalData['doc_insurance'] != null)
                                     ? "اضغط لتغيير الصورة"
                                     : "وثيقة التأمين الإجباري للمركبة",
-                            icon: widget.finalData['insurance_doc'] != null
+                            icon: (widget.finalData['insurance_doc'] != null ||
+                                    widget.finalData['doc_insurance'] != null)
                                 ? Icons.check_circle_outline
                                 : Icons.security_outlined,
                             onImagePicked: (selectedFile) {
                               if (selectedFile != null) {
                                 setState(() {
-                                  widget.finalData['insurance_doc'] =
-                                      selectedFile;
+                                  widget.finalData['insurance_doc'] = selectedFile;
+                                  widget.finalData['doc_insurance'] = selectedFile;
                                 });
                               }
                             },
                           ),
-                          if (widget.finalData['insurance_doc'] != null) ...[
+                          if (widget.finalData['insurance_doc'] != null ||
+                              widget.finalData['doc_insurance'] != null) ...[
                             const SizedBox(height: 6),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(10),
@@ -400,7 +416,8 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                                 height: 140,
                                 width: double.infinity,
                                 child: AppImageWidget(
-                                  image: widget.finalData['insurance_doc'],
+                                  image: widget.finalData['doc_insurance'] ??
+                                      widget.finalData['insurance_doc'],
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -422,13 +439,16 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
 
                               // التحقق من وجود الملفات الإلزامية قبل الإرسال
                               final missingDocs = <String>[];
-                              if (widget.finalData['license_doc'] == null) {
+                              if (widget.finalData['license_doc'] == null &&
+                                  widget.finalData['doc_license'] == null) {
                                 missingDocs.add('رخصة القيادة');
                               }
-                              if (widget.finalData['logbook_doc'] == null) {
+                              if (widget.finalData['logbook_doc'] == null &&
+                                  widget.finalData['doc_logbook'] == null) {
                                 missingDocs.add('كتيب المركبة');
                               }
-                              if (widget.finalData['insurance_doc'] == null) {
+                              if (widget.finalData['insurance_doc'] == null &&
+                                  widget.finalData['doc_insurance'] == null) {
                                 missingDocs.add('وثيقة التأمين');
                               }
 

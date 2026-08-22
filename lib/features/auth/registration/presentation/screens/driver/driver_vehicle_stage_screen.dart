@@ -34,11 +34,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
   dynamic _selectedVehicleImage;
 
   final List<Map<String, String>> _vehicleTypes = [
-    {'en': 'Car', 'ar': 'سيارة صغيرة (Car)'},
-    {'en': 'Van', 'ar': 'فان (Van)'},
-    {'en': 'Bus', 'ar': 'باص متوسط (Bus)'},
-    {'en': 'Coach', 'ar': 'حافلة كبيرة (Coach)'},
-    {'en': 'Other', 'ar': 'أخرى / نوع آخر'},
+    {'en': 'Sedan', 'ar': 'سيارة صالون (Sedan)'},
+    {'en': 'Van', 'ar': 'سيارة عائلية / فان (Van)'},
+    {'en': 'Bus', 'ar': 'حافلة نقل / باص (Bus)'},
   ];
 
   String _selectedTypeEnglish = 'Bus';
@@ -72,7 +70,14 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
           widget.collectedData['capacity_manual'].toString();
     }
     if (widget.collectedData['type'] != null) {
-      _selectedTypeEnglish = widget.collectedData['type'].toString();
+      final rawType = widget.collectedData['type'].toString().trim();
+      if (rawType.toLowerCase() == 'car' || rawType.toLowerCase() == 'sedan') {
+        _selectedTypeEnglish = 'Sedan';
+      } else if (rawType.toLowerCase() == 'van') {
+        _selectedTypeEnglish = 'Van';
+      } else {
+        _selectedTypeEnglish = 'Bus';
+      }
     }
     if (widget.collectedData['has_ac'] != null) {
       _hasAc = (widget.collectedData['has_ac'] == 1 ||
@@ -550,7 +555,10 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                     widget.collectedData['has_ac'] = _hasAc ? 1 : 0;
                     widget.collectedData['vehicle_image_file'] =
                         _selectedVehicleImage ??
-                            widget.collectedData['vehicle_image_file'];
+                            widget.collectedData['vehicle_image_file'] ??
+                            widget.collectedData['vehicle_image'];
+                    widget.collectedData['vehicle_image'] =
+                        widget.collectedData['vehicle_image_file'];
 
                     StorageService.saveDriverRegStage('docs');
                     StorageService.saveDriverRegDraft(widget.collectedData);

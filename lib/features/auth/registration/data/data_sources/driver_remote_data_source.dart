@@ -83,7 +83,16 @@ class DriverRemoteDataSource {
     formFields['model'] = data['model'] ?? '';
     formFields['year'] = data['year'] ?? 2023;
     formFields['color'] = data['color'] ?? '';
-    formFields['type'] = data['type'] ?? 'Van';
+    final rawType = data['type']?.toString().trim() ?? 'Bus';
+    String normalizedType = 'Bus';
+    if (rawType.toLowerCase() == 'sedan' || rawType.toLowerCase() == 'car') {
+      normalizedType = 'Sedan';
+    } else if (rawType.toLowerCase() == 'van') {
+      normalizedType = 'Van';
+    } else if (rawType.toLowerCase() == 'bus' || rawType.toLowerCase() == 'coach') {
+      normalizedType = 'Bus';
+    }
+    formFields['type'] = normalizedType;
     formFields['capacity_manual'] = data['capacity_manual'] ?? 14;
     formFields['has_ac'] =
         (data['has_ac'] == true || data['has_ac'] == 1) ? 1 : 0;

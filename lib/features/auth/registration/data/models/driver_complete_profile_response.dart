@@ -6,10 +6,27 @@ class DriverCompleteProfileResponse {
   DriverCompleteProfileResponse({required this.status, required this.message, this.data});
 
   factory DriverCompleteProfileResponse.fromJson(Map<String, dynamic> json) {
+    String msg = json['message']?.toString() ?? '';
+    if (json['errors'] is Map) {
+      final errMap = json['errors'] as Map;
+      final errList = <String>[];
+      errMap.forEach((key, value) {
+        if (value is List) {
+          errList.addAll(value.map((e) => e.toString()));
+        } else if (value != null) {
+          errList.add(value.toString());
+        }
+      });
+      if (errList.isNotEmpty) {
+        msg = msg.isNotEmpty ? '$msg\n${errList.join('\n')}' : errList.join('\n');
+      }
+    }
     return DriverCompleteProfileResponse(
       status: _readBool(json['status']),
-      message: json['message']?.toString() ?? '',
-      data: json['data'] is Map ? DriverProfileData.fromJson(Map<String, dynamic>.from(json['data'])) : null,
+      message: msg.trim(),
+      data: json['data'] is Map
+          ? DriverProfileData.fromJson(Map<String, dynamic>.from(json['data']))
+          : null,
     );
   }
 }

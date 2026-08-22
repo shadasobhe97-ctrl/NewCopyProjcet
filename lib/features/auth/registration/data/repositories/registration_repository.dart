@@ -12,12 +12,14 @@ class DriverVerifyOtpResponse {
   final bool status;
   final String message;
   final int userId;
+  final int driverId;
   final String accessToken;
 
   DriverVerifyOtpResponse({
     required this.status,
     required this.message,
     required this.userId,
+    required this.driverId,
     required this.accessToken,
   });
 
@@ -26,6 +28,7 @@ class DriverVerifyOtpResponse {
       status: _readBool(json['status']),
       message: json['message']?.toString() ?? '',
       userId: _readInt(json['user_id']),
+      driverId: _readInt(json['driver_id']),
       accessToken:
           json['access_token']?.toString() ?? json['token']?.toString() ?? '',
     );

@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:kids_transport/core/services/hive_helper.dart';
 
 class StorageService {
   static late SharedPreferences _prefs;
@@ -140,7 +142,11 @@ class StorageService {
       _prefs.remove(_isPreferencesSetKey),
       _prefs.remove(_parentIdKey),
       _prefs.remove(_driverIdKey),
+      _prefs.remove(_fcmTokenKey),
+      _prefs.remove(_driverRegStageKey),
+      _prefs.remove(_driverRegDraftKey),
     ]);
+    await HiveHelper.clearAllCache();
   }
 
   static Future<void> setFirstTimeComplete() async {
@@ -176,6 +182,11 @@ class StorageService {
         cleanMap[key] = value;
       } else if (value is File) {
         cleanMap['${key}_path'] = value.path;
+      } else if (value is XFile) {
+        // على الويب مسار الـ XFile هو blob مؤقت لا يصلح للاستعادة بعد إعادة تحميل الصفحة
+        if (!kIsWeb) {
+          cleanMap['${key}_path'] = value.path;
+        }
       }
     });
     return _prefs.setString(_driverRegDraftKey, jsonEncode(cleanMap));
@@ -188,7 +199,7 @@ class StorageService {
       final decoded = jsonDecode(raw);
       if (decoded is Map) {
         final resultMap = Map<String, dynamic>.from(decoded);
-        final fileEntries = <String, File>{};
+        final fileEntries = <String, XFile>{};
         resultMap.forEach((key, value) {
           if (key.endsWith('_path') && value is String) {
             try {
@@ -196,7 +207,7 @@ class StorageService {
                 final file = File(value);
                 if (file.existsSync()) {
                   final originalKey = key.substring(0, key.length - 5);
-                  fileEntries[originalKey] = file;
+                  fileEntries[originalKey] = XFile(value);
                 }
               }
             } catch (_) {}

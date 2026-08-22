@@ -8,6 +8,7 @@ import 'package:kids_transport/core/theme/cubit/theme_cubit.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_cubit.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_state.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
+import 'package:kids_transport/main.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -83,16 +84,17 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
+                // 🌟 نبني المكدس دايماً بشاشة المركبة أولاً ثم الوثائق فوقها،
+                // حتى زر الرجوع من شاشة الوثائق يرجع لشاشة المركبة (وليس السبلاش)
+                // والبيانات المحفوظة تفضل موجودة بالشاشتين.
+                Navigator.pushReplacementNamed(
+                  context,
+                  '/driverVehicleStage',
+                  arguments: state.draftData,
+                );
                 if (state.stage == 'docs') {
-                  Navigator.pushReplacementNamed(
-                    context,
+                  navigatorKey.currentState?.pushNamed(
                     '/driverDocsStage',
-                    arguments: state.draftData,
-                  );
-                } else {
-                  Navigator.pushReplacementNamed(
-                    context,
-                    '/driverVehicleStage',
                     arguments: state.draftData,
                   );
                 }
