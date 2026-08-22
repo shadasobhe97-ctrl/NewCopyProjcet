@@ -23,3 +23,14 @@ class NavigateToDriverWaiting extends AppEntryState {}
 
 // حالة التوجيه لشاشة تفضيلات السائق الإجبارية
 class NavigateToDriverPreferencesRequired extends AppEntryState {}
+
+// حالة التوجيه لاستئناف تسجيل السائق مع البيانات المحفوظة
+class NavigateToResumeDriverRegistration extends AppEntryState {
+  final String stage; // 'vehicle' أو 'docs'
+  final Map<String, dynamic> draftData;
+
+  NavigateToResumeDriverRegistration({
+    required this.stage,
+    required this.draftData,
+  });
+}

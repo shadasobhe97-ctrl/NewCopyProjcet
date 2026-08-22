@@ -1,12 +1,10 @@
-import 'dart:io';
-
 class DriverRegisterRequest {
   final String fullName;
   final String email;
   final String phoneNumber;
   final String gender; // male أو female
   final String password;
-  final File? avatarFile; // ملف الصورة الشخصية الاختياري
+  final dynamic avatarFile; // ملف الصورة الشخصية الاختياري (File, XFile, Uint8List, etc.)
   final String deviceName;
   final String platform; // ios, android, web
   final String? fcmToken;

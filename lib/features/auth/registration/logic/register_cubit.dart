@@ -25,7 +25,7 @@ class RegisterCubit extends Cubit<RegisterState> {
   String? phoneNumber;
   String? password;
   String? alternativePhone;
-  File? avatarFile;
+  dynamic avatarFile;
   String? gender;
 
   // بيانات الجهاز والمنصة (تتولد تلقائياً)
@@ -302,6 +302,17 @@ class RegisterCubit extends Cubit<RegisterState> {
       if (response.userId > 0) registeredUserId = response.userId;
       driverAccessToken = response.accessToken;
 
+      // حفظ السيشن محلياً مباشرة بعد نجاح OTP حتى لا تضيع الجلسة عند إغلاق التطبيق
+      await StorageService.saveUserSession(
+        token: response.accessToken,
+        roleId: 4,
+        roleName: 'driver',
+        userId: response.userId,
+        fullName: fullName ?? '',
+        phoneNumber: phoneNumber ?? '',
+        isActive: false,
+      );
+
       emit(DriverVerifyOtpSuccess(response.message));
     } on ApiException catch (e) {
       emit(DriverVerifyOtpError(e.message));
@@ -372,6 +383,35 @@ class RegisterCubit extends Cubit<RegisterState> {
 
   Future<void> submitDriverCompleteProfile() async {
     await completeDriverProfile({});
+  }
+
+  // إلغاء التسجيل واستدعاء الـ API وحذف البيانات المحلية وإرجاع الرسالة القادمة من الباك إند
+  Future<String> cancelDriverRegistration() async {
+    final rawUserId = registeredUserId ?? StorageService.getUserId();
+    final userId = int.tryParse(rawUserId?.toString() ?? '') ?? 0;
+    final token = driverAccessToken ?? StorageService.getToken();
+
+    String message = 'تم إلغاء طلب التسجيل.';
+
+    if (userId > 0 && token != null && token.isNotEmpty) {
+      try {
+        final res = await _repository.cancelDriverRegistration(
+          userId: userId,
+          token: token,
+        );
+        if (res['message'] != null && res['message'].toString().isNotEmpty) {
+          message = res['message'].toString();
+        }
+      } catch (e) {
+        if (e is ApiException) {
+          message = e.message;
+        }
+      }
+    }
+
+    await StorageService.clearDriverRegDraft();
+    await StorageService.clearSession();
+    return message;
   }
 
   // 5. فحص حالة السائق (GET /api/v1/driver/status)

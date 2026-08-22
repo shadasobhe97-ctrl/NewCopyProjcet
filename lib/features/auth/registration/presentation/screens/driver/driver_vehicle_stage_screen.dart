@@ -1,7 +1,11 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/widgets/app_image_widget.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../logic/register_cubit.dart';
 import '../../widgets/document_upload_tile.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -27,7 +31,7 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
   final _colorController = TextEditingController();
   final _capacityController = TextEditingController();
 
-  File? _selectedVehicleImage;
+  dynamic _selectedVehicleImage;
 
   final List<Map<String, String>> _vehicleTypes = [
     {'en': 'Car', 'ar': 'سيارة صغيرة (Car)'},
@@ -41,61 +45,201 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
   bool _hasAc = true;
 
   @override
+  void initState() {
+    super.initState();
+    StorageService.saveDriverRegStage('vehicle');
+    final draft = StorageService.getDriverRegDraft();
+    widget.collectedData.addAll({...draft, ...widget.collectedData});
+
+    if (widget.collectedData['brand'] != null) {
+      _brandController.text = widget.collectedData['brand'].toString();
+    }
+    if (widget.collectedData['model'] != null) {
+      _modelController.text = widget.collectedData['model'].toString();
+    }
+    if (widget.collectedData['year'] != null) {
+      _yearController.text = widget.collectedData['year'].toString();
+    }
+    if (widget.collectedData['plate_number'] != null) {
+      _plateNumberController.text =
+          widget.collectedData['plate_number'].toString();
+    }
+    if (widget.collectedData['color'] != null) {
+      _colorController.text = widget.collectedData['color'].toString();
+    }
+    if (widget.collectedData['capacity_manual'] != null) {
+      _capacityController.text =
+          widget.collectedData['capacity_manual'].toString();
+    }
+    if (widget.collectedData['type'] != null) {
+      _selectedTypeEnglish = widget.collectedData['type'].toString();
+    }
+    if (widget.collectedData['has_ac'] != null) {
+      _hasAc = (widget.collectedData['has_ac'] == 1 ||
+          widget.collectedData['has_ac'] == true);
+    }
+    if (widget.collectedData['vehicle_image_file'] != null) {
+      _selectedVehicleImage = widget.collectedData['vehicle_image_file'];
+    } else if (widget.collectedData['vehicle_image'] != null) {
+      _selectedVehicleImage = widget.collectedData['vehicle_image'];
+    }
+
+    _brandController.addListener(_saveCurrentDraft);
+    _modelController.addListener(_saveCurrentDraft);
+    _yearController.addListener(_saveCurrentDraft);
+    _plateNumberController.addListener(_saveCurrentDraft);
+    _colorController.addListener(_saveCurrentDraft);
+    _capacityController.addListener(_saveCurrentDraft);
+
+    _saveCurrentDraft();
+  }
+
+  void _saveCurrentDraft() {
+    final draft = Map<String, dynamic>.from(widget.collectedData);
+    if (_brandController.text.trim().isNotEmpty) {
+      draft['brand'] = _brandController.text.trim();
+    }
+    if (_modelController.text.trim().isNotEmpty) {
+      draft['model'] = _modelController.text.trim();
+    }
+    if (_yearController.text.trim().isNotEmpty) {
+      draft['year'] = int.tryParse(_yearController.text.trim());
+    }
+    if (_plateNumberController.text.trim().isNotEmpty) {
+      draft['plate_number'] = _plateNumberController.text.trim();
+    }
+    if (_colorController.text.trim().isNotEmpty) {
+      draft['color'] = _colorController.text.trim();
+    }
+    if (_capacityController.text.trim().isNotEmpty) {
+      draft['capacity_manual'] = int.tryParse(_capacityController.text.trim());
+    }
+    draft['type'] = _selectedTypeEnglish;
+    draft['has_ac'] = _hasAc ? 1 : 0;
+    if (_selectedVehicleImage != null) {
+      draft['vehicle_image_file'] = _selectedVehicleImage;
+    }
+
+    StorageService.saveDriverRegStage('vehicle');
+    StorageService.saveDriverRegDraft(draft);
+  }
+
+  Future<void> _showExitRegistrationDialog() async {
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: AppColors.orange),
+              SizedBox(width: 8),
+              Text(
+                'إلغاء التسجيل',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ],
+          ),
+          content: const Text(
+            'هل أنت تأكد من إلغاء عملية تسجيل حساب السائق والعودة لشاشة تسجيل الدخول؟\nسوف تفقد البيانات المدخلة.',
+            style: TextStyle(fontSize: 15, height: 1.4),
+          ),
+          actionsAlignment: MainAxisAlignment.spaceBetween,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text(
+                'متابعة التسجيل',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text(
+                'إلغاء التسجيل والخروج',
+                style: TextStyle(
+                  color: AppColors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldExit == true) {
+      final msg =
+          await context.read<RegisterCubit>().cancelDriverRegistration();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.login,
+        (route) => false,
+      );
+    }
+  }
+
+  @override
   void dispose() {
-    _plateNumberController.dispose();
     _brandController.dispose();
     _modelController.dispose();
     _yearController.dispose();
+    _plateNumberController.dispose();
     _colorController.dispose();
     _capacityController.dispose();
     super.dispose();
   }
 
-  // 📸 دالة تظهر خيارات للمستخدم (استوديو أو كاميرا)
   void _showImageSourceOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       shape: AppTheme.roundedRectangleBorder(
         borderRadius: AppTheme.verticalRadius(top: AppTheme.cornerRadius(16)),
       ),
       builder: (BuildContext bc) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: SafeArea(
-            child: Wrap(
-              children: <Widget>[
-                ListTile(
-                  leading: const Icon(
-                    Icons.photo_library,
-                    color: AppColors.blue,
-                  ),
-                  title: const Text(
-                    'اختيار من معرض الصور (الاستوديو)',
-                    textAlign: TextAlign.right,
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _pickImage(ImageSource.gallery);
-                  },
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: AppColors.blue),
+                title: const Text(
+                  'اختيار من معرض الصور (الاستوديو)',
+                  textAlign: TextAlign.right,
                 ),
-                const Divider(),
-                ListTile(
-                  leading: const Icon(
-                    Icons.photo_camera,
-                    color: AppColors.green,
-                  ),
-                  title: const Text(
-                    'التقاط صورة بالكاميرا',
-                    textAlign: TextAlign.right,
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _pickImage(ImageSource.camera);
-                  },
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.photo_camera, color: AppColors.green),
+                title: const Text(
+                  'التقاط صورة بالكاميرا',
+                  textAlign: TextAlign.right,
                 ),
-              ],
-            ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+            ],
           ),
         );
       },
@@ -106,12 +250,14 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
+        maxWidth: 1280,
+        maxHeight: 1280,
         imageQuality: 60,
       );
 
       if (pickedFile != null) {
         setState(() {
-          _selectedVehicleImage = File(pickedFile.path);
+          _selectedVehicleImage = pickedFile;
           widget.collectedData['vehicle_image_file'] = _selectedVehicleImage;
         });
       }
@@ -125,19 +271,25 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            color: isDark ? AppColors.white : AppColors.black,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _showExitRegistrationDialog();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: AppColors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new,
+              color: isDark ? AppColors.white : AppColors.black,
+            ),
+            onPressed: _showExitRegistrationDialog,
           ),
-          onPressed: () => Navigator.pop(context),
         ),
-      ),
-      body: SafeArea(
+        body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -345,6 +497,20 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                     ),
                   ),
                 ),
+                if (_selectedVehicleImage != null) ...[
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      height: 180,
+                      width: double.infinity,
+                      child: AppImageWidget(
+                        image: _selectedVehicleImage,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 35),
 
                 ElevatedButton(
@@ -386,6 +552,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                         _selectedVehicleImage ??
                             widget.collectedData['vehicle_image_file'];
 
+                    StorageService.saveDriverRegStage('docs');
+                    StorageService.saveDriverRegDraft(widget.collectedData);
+
                     Navigator.pushNamed(
                       context,
                       '/driverDocsStage',
@@ -412,8 +581,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSectionCard(
     ThemeData theme, {

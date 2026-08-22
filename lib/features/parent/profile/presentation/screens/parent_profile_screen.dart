@@ -31,8 +31,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   late TextEditingController _backupPhoneController;
   late TextEditingController _emailController;
 
-  File? _avatarImage;
-  Uint8List? _webImageBytes;
+  dynamic _avatarImage;
   final ImagePicker _picker = ImagePicker();
 
   String _originalEmail = '';
@@ -95,22 +94,16 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 85,
+        maxWidth: 1280,
+        maxHeight: 1280,
+        imageQuality: 60,
       );
       if (image == null) return;
       if (!mounted) return;
 
-      if (kIsWeb) {
-        final bytes = await image.readAsBytes();
-        setState(() {
-          _webImageBytes = bytes;
-          _avatarImage = File(image.path);
-        });
-      } else {
-        setState(() {
-          _avatarImage = File(image.path);
-        });
-      }
+      setState(() {
+        _avatarImage = image;
+      });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -163,7 +156,6 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                 ? null
                 : '$url?v=${DateTime.now().millisecondsSinceEpoch}';
             _avatarImage = null;
-            _webImageBytes = null;
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -385,7 +377,6 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
       children: [
         ProfileAvatarEditor(
           avatarImage: _avatarImage,
-          webImageBytes: _webImageBytes,
           avatarUrl: _avatarUrl,
           onTap: _pickImage,
         ),

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'vehicle_state.dart';
 import '../data/repositories/vehicle_repository.dart';
@@ -30,7 +29,7 @@ class VehicleCubit extends Cubit<VehicleState> {
     String? type,
     int? capacityManual,
     bool? hasAc,
-    File? vehicleImage,
+    dynamic vehicleImage,
   }) async {
     emit(VehicleLoading());
     try {

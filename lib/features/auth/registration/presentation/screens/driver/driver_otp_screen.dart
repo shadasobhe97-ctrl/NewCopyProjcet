@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/widgets/shared_otp_form.dart';
 import '../../../logic/register_cubit.dart';
@@ -38,7 +39,8 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
         child: BlocConsumer<RegisterCubit, RegisterState>(
           listener: (context, state) {
             if (state is DriverVerifyOtpSuccess) {
-              Navigator.pushNamed(context, '/driverVehicleStage');
+              StorageService.saveDriverRegStage('vehicle');
+              Navigator.pushReplacementNamed(context, '/driverVehicleStage');
             } else if (state is DriverVerifyOtpError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

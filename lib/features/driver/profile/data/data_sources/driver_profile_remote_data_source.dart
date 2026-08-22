@@ -1,9 +1,9 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:kids_transport/core/models/email_verification_info.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import '../models/driver_model.dart';
 import '../models/driver_legal_data_model.dart';
 
@@ -42,7 +42,7 @@ class DriverProfileRemoteDataSource {
     String? phoneNumber,
     String? alternativePhone,
     String? email,
-    File? avatarFile,
+    dynamic avatarFile,
   }) async {
     try {
       final Map<String, dynamic> dataMap = {};
@@ -60,11 +60,11 @@ class DriverProfileRemoteDataSource {
       }
 
       if (avatarFile != null) {
-        final fileName = avatarFile.path.split('/').last;
-        dataMap['avatar'] = await MultipartFile.fromFile(
-          avatarFile.path,
-          filename: fileName,
+        final multipart = await AppImageHelper.createMultipartFile(
+          avatarFile,
+          defaultFilename: 'avatar.jpg',
         );
+        if (multipart != null) dataMap['avatar'] = multipart;
       }
 
       final formData = FormData.fromMap(dataMap);
@@ -205,7 +205,7 @@ class DriverProfileRemoteDataSource {
     String? licenseNumber,
     String? licenseExpiry,
     String? insuranceExpiry,
-    Map<String, File>? newFiles,
+    Map<String, dynamic>? newFiles,
   }) async {
     try {
       final Map<String, dynamic> dataMap = {};
@@ -224,20 +224,21 @@ class DriverProfileRemoteDataSource {
 
       if (newFiles != null && newFiles.isNotEmpty) {
         for (final entry in newFiles.entries) {
-          final file = entry.value;
-          final fileName = file.path.split('/').last.split('\\').last;
-          final multipartFile = await MultipartFile.fromFile(
-            file.path,
-            filename: fileName,
+          final fileInput = entry.value;
+          final multipartFile = await AppImageHelper.createMultipartFile(
+            fileInput,
+            defaultFilename: '${entry.key.toLowerCase()}.jpg',
           );
           
-          final docTypeKey = entry.key.toUpperCase();
-          String apiKey = entry.key;
-          if (docTypeKey == 'LICENSE') apiKey = 'doc_license';
-          if (docTypeKey == 'VEHICLE_LOGBOOK') apiKey = 'doc_logbook';
-          if (docTypeKey == 'INSURANCE') apiKey = 'doc_insurance';
+          if (multipartFile != null) {
+            final docTypeKey = entry.key.toUpperCase();
+            String apiKey = entry.key;
+            if (docTypeKey == 'LICENSE') apiKey = 'doc_license';
+            if (docTypeKey == 'VEHICLE_LOGBOOK') apiKey = 'doc_logbook';
+            if (docTypeKey == 'INSURANCE') apiKey = 'doc_insurance';
 
-          dataMap[apiKey] = multipartFile;
+            dataMap[apiKey] = multipartFile;
+          }
         }
       }
 

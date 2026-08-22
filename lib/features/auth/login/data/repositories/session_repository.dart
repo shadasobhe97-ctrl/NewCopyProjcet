@@ -25,6 +25,15 @@ class SessionRepository {
   Future<bool> saveFcmToken(String token) => StorageService.saveFcmToken(token);
   String? getFcmToken() => StorageService.getFcmToken();
 
+  String? getDriverRegStage() => StorageService.getDriverRegStage();
+  Future<bool> saveDriverRegStage(String stage) =>
+      StorageService.saveDriverRegStage(stage);
+  Map<String, dynamic> getDriverRegDraft() =>
+      StorageService.getDriverRegDraft();
+  Future<bool> saveDriverRegDraft(Map<String, dynamic> data) =>
+      StorageService.saveDriverRegDraft(data);
+  Future<void> clearDriverRegDraft() => StorageService.clearDriverRegDraft();
+
   Future<void> saveUserSession({
     required String token,
     required String tokenType,

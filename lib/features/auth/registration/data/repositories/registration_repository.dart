@@ -77,6 +77,20 @@ class RegistrationRepository {
     return DriverStatusResponseModel.fromJson(responseData);
   }
 
+  Future<Map<String, dynamic>> cancelDriverRegistration({
+    required int userId,
+    required String token,
+  }) async {
+    try {
+      return await _driverDataSource.cancelRegistration(
+        userId: userId,
+        token: token,
+      );
+    } catch (_) {
+      return {'status': false, 'message': 'تم إلغاء التسجيل محلياً.'};
+    }
+  }
+
   // ==================== Parent ====================
 
   Future<Map<String, dynamic>> sendParentOtp(String email) async {

@@ -27,7 +27,8 @@ class AppValidators {
     final hasDigit = RegExp(r'[0-9]').hasMatch(value);
 
     if (!hasMinLength || !hasEnglishLetter || !hasDigit) {
-      return 'كلمة المرور يجب أن تتكون من 6 خانات على الأقل، وتحتوي على حرف إنجليزي ورقم على الأقل';
+      return 'كلمة المرور يجب أن تتكون من 6 خانات على الأقل،\n'
+          'وتحتوي على حرف إنجليزي ورقم على الأقل';
     }
     return null;
   }
@@ -104,8 +105,9 @@ class AppValidators {
     // 🌟 فحص البادئات الليبية المسموحة حصراً: (091, 092, 093, 094, 095)
     // مرفوض تماماً أي رقم يبدأ بـ 090, 096, 097, 098, 099 الخ.
     final allowedPrefixes = ['091', '092', '093', '094', '095'];
-    final hasValidPrefix =
-        allowedPrefixes.any((prefix) => trimmed.startsWith(prefix));
+    final hasValidPrefix = allowedPrefixes.any(
+      (prefix) => trimmed.startsWith(prefix),
+    );
     if (!hasValidPrefix) {
       return 'رقم الهاتف يجب أن يبدأ بـ 091 أو 092 أو 093 أو 094 أو 095';
     }

@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
@@ -17,6 +20,9 @@ class StorageService {
   static const String _isPreferencesSetKey = 'is_preferences_set';
   static const String _parentIdKey = 'parent_id';
   static const String _driverIdKey = 'driver_id';
+
+  static const String _driverRegStageKey = 'driver_reg_stage';
+  static const String _driverRegDraftKey = 'driver_reg_draft';
 
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
@@ -155,4 +161,58 @@ class StorageService {
   }
 
   static String? getFcmToken() => _prefs.getString(_fcmTokenKey);
+
+  // --- [إدارة المسودة وحالة تسجيل السائق] ---
+  static Future<bool> saveDriverRegStage(String stage) {
+    return _prefs.setString(_driverRegStageKey, stage);
+  }
+
+  static String? getDriverRegStage() => _prefs.getString(_driverRegStageKey);
+
+  static Future<bool> saveDriverRegDraft(Map<String, dynamic> data) {
+    final cleanMap = <String, dynamic>{};
+    data.forEach((key, value) {
+      if (value is String || value is num || value is bool) {
+        cleanMap[key] = value;
+      } else if (value is File) {
+        cleanMap['${key}_path'] = value.path;
+      }
+    });
+    return _prefs.setString(_driverRegDraftKey, jsonEncode(cleanMap));
+  }
+
+  static Map<String, dynamic> getDriverRegDraft() {
+    final raw = _prefs.getString(_driverRegDraftKey);
+    if (raw == null || raw.isEmpty) return {};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        final resultMap = Map<String, dynamic>.from(decoded);
+        final fileEntries = <String, File>{};
+        resultMap.forEach((key, value) {
+          if (key.endsWith('_path') && value is String) {
+            try {
+              if (!kIsWeb) {
+                final file = File(value);
+                if (file.existsSync()) {
+                  final originalKey = key.substring(0, key.length - 5);
+                  fileEntries[originalKey] = file;
+                }
+              }
+            } catch (_) {}
+          }
+        });
+        resultMap.addAll(fileEntries);
+        return resultMap;
+      }
+    } catch (_) {}
+    return {};
+  }
+
+  static Future<void> clearDriverRegDraft() async {
+    await Future.wait([
+      _prefs.remove(_driverRegStageKey),
+      _prefs.remove(_driverRegDraftKey),
+    ]);
+  }
 }

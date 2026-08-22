@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,6 +5,7 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/widgets/app_image_widget.dart';
 import 'package:kids_transport/core/widgets/email_verification_dialog.dart';
 import 'package:kids_transport/core/utils/app_validators.dart';
 import '../../logic/cubit/driver_profile_cubit.dart';
@@ -28,7 +27,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   bool _isEditing = false;
   final _formKey = GlobalKey<FormState>();
 
-  File? _avatarImage;
+  dynamic _avatarImage;
   final ImagePicker _picker = ImagePicker();
   String? _avatarUrl;
 
@@ -134,10 +133,15 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   Future<void> _pickImage(ImageSource source) async {
     Navigator.pop(context);
     try {
-      final XFile? image = await _picker.pickImage(source: source);
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 1280,
+        maxHeight: 1280,
+        imageQuality: 60,
+      );
       if (image != null) {
         setState(() {
-          _avatarImage = File(image.path);
+          _avatarImage = image;
         });
       }
     } catch (e) {
@@ -395,29 +399,27 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                                     width: 4,
                                   ),
                                 ),
-                                child: CircleAvatar(
-                                  radius: 50,
-                                  backgroundColor: isDark
-                                      ? AppColors.grey800
-                                      : AppColors.grey200,
-                                  backgroundImage: _avatarImage != null
-                                      ? FileImage(_avatarImage!)
-                                      : (_avatarUrl != null &&
-                                                _avatarUrl!.isNotEmpty
-                                            ? CachedNetworkImageProvider(
-                                                _avatarUrl!,
-                                              )
-                                            : null),
-                                  child:
-                                      (_avatarImage == null &&
-                                          (_avatarUrl == null ||
-                                              _avatarUrl!.isEmpty))
-                                      ? const Icon(
+                                child: ClipOval(
+                                  child: SizedBox(
+                                    width: 100,
+                                    height: 100,
+                                    child: AppImageWidget(
+                                      image: _avatarImage ?? _avatarUrl,
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.cover,
+                                      errorWidget: Container(
+                                        color: isDark
+                                            ? AppColors.grey800
+                                            : AppColors.grey200,
+                                        child: const Icon(
                                           Icons.person,
                                           size: 50,
                                           color: AppColors.grey,
-                                        )
-                                      : null,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                               if (_isEditing)
