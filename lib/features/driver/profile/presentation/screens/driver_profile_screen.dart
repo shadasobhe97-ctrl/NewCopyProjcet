@@ -36,6 +36,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   String _phone = '';
   String _backupPhone = '';
   String _email = '';
+  String _gender = 'male';
 
   // Controllers للوضع التعديل
   late TextEditingController _nameController;
@@ -83,6 +84,11 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     _email = (driver.hasPendingChanges && driver.pendingEmail != null)
         ? driver.pendingEmail!
         : driver.email;
+
+    if (driver.gender.isNotEmpty) {
+      final gLower = driver.gender.toLowerCase().trim();
+      _gender = (gLower == 'female' || gLower == 'أنثى') ? 'female' : 'male';
+    }
 
     if (driver.avatarUrl != null && driver.avatarUrl!.isNotEmpty) {
       _avatarUrl =
@@ -224,6 +230,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           email: _emailController.text.trim().isNotEmpty
               ? _emailController.text.trim()
               : null,
+          gender: _gender,
           avatarFile: _avatarImage,
         );
       } catch (_) {}
@@ -490,20 +497,90 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                           isDark: isDark,
                           isPending: isEmailPending,
                         ),
-                        _buildField(
-                          label: 'الرقم الوطني',
-                          icon: Icons.badge_outlined,
-                          value: (driver != null && driver.nationalId.isNotEmpty)
-                              ? driver.nationalId
-                              : 'غير متوفر',
-                          controller: TextEditingController(
-                            text: (driver != null && driver.nationalId.isNotEmpty)
-                                ? driver.nationalId
-                                : 'غير متوفر',
+
+                        // ── الجنس ──
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            child: _isEditing
+                                ? DropdownButtonFormField<String>(
+                                    initialValue: _gender,
+                                    decoration: AppTheme.inputDecoration(
+                                      context,
+                                      labelText: 'الجنس',
+                                      prefixIcon: Icon(
+                                        Icons.wc_outlined,
+                                        color: context.primaryColor,
+                                      ),
+                                    ),
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 'male',
+                                        child: Text('ذكر'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'female',
+                                        child: Text('أنثى'),
+                                      ),
+                                    ],
+                                    onChanged: (val) {
+                                      if (val != null) {
+                                        setState(() {
+                                          _gender = val;
+                                        });
+                                      }
+                                    },
+                                  )
+                                : Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: AppTheme.boxDecoration(
+                                      color: context.darkSurface,
+                                      borderRadius: AppTheme.radius(16),
+                                      border: AppTheme.border(
+                                        color: isDark
+                                            ? AppColors.grey800
+                                            : AppColors.grey200,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.wc_outlined,
+                                          color: context.primaryColor,
+                                          size: 22,
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'الجنس',
+                                              style: AppTextStyles.style(
+                                                fontSize: 12,
+                                                color: AppColors.grey500,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              _gender == 'female'
+                                                  ? 'أنثى'
+                                                  : 'ذكر',
+                                              style: AppTextStyles.style(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                           ),
-                          isDark: isDark,
-                          readOnly: true,
                         ),
+
                         _buildField(
                           label: 'حالة الحساب',
                           icon: Icons.verified_user_outlined,
