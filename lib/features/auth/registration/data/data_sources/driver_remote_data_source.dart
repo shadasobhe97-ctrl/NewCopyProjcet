@@ -78,6 +78,9 @@ class DriverRemoteDataSource {
     formFields['license_number'] = data['license_number'] ?? '';
     formFields['license_expiry'] = data['license_expiry'] ?? '';
     formFields['insurance_expiry'] = data['insurance_expiry'] ?? '';
+    formFields['stamp_expiry'] = data['stamp_expiry'] ?? '';
+    formFields['technical_inspection_expiry'] =
+        data['technical_inspection_expiry'] ?? data['inspection_expiry'] ?? '';
     formFields['plate_number'] = data['plate_number'] ?? '';
     formFields['brand'] = data['brand'] ?? '';
     formFields['model'] = data['model'] ?? '';
@@ -120,7 +123,10 @@ class DriverRemoteDataSource {
     }
 
     // 3. doc_logbook
-    final logbookImg = data['doc_logbook'] ?? data['logbook_doc'];
+    final logbookImg = data['doc_logbook'] ??
+        data['logbook_doc'] ??
+        data['doc_logbook_vehicle'] ??
+        data['logbook_vehicle_doc'];
     if (logbookImg != null) {
       final multipart = await AppImageHelper.createMultipartFile(
         logbookImg,
@@ -129,7 +135,29 @@ class DriverRemoteDataSource {
       if (multipart != null) filesMap['doc_logbook'] = multipart;
     }
 
-    // 4. doc_insurance
+    // 4. doc_booklet_page (صورة بيانات الكتيب الشخصية - جديد)
+    final bookletPageImg = data['doc_booklet_page'] ??
+        data['doc_logbook_owner'] ??
+        data['logbook_owner_doc'];
+    if (bookletPageImg != null) {
+      final multipart = await AppImageHelper.createMultipartFile(
+        bookletPageImg,
+        defaultFilename: 'booklet_page.jpg',
+      );
+      if (multipart != null) filesMap['doc_booklet_page'] = multipart;
+    }
+
+    // 5. doc_stamp (صورة الدمغة - جديد)
+    final stampImg = data['doc_stamp'] ?? data['stamp_doc'];
+    if (stampImg != null) {
+      final multipart = await AppImageHelper.createMultipartFile(
+        stampImg,
+        defaultFilename: 'stamp.jpg',
+      );
+      if (multipart != null) filesMap['doc_stamp'] = multipart;
+    }
+
+    // 6. doc_insurance (صورة وثيقة التأمين)
     final insuranceImg = data['doc_insurance'] ?? data['insurance_doc'];
     if (insuranceImg != null) {
       final multipart = await AppImageHelper.createMultipartFile(
@@ -137,6 +165,20 @@ class DriverRemoteDataSource {
         defaultFilename: 'insurance.jpg',
       );
       if (multipart != null) filesMap['doc_insurance'] = multipart;
+    }
+
+    // 7. doc_technical_inspection (صورة الفحص الفني - جديد)
+    final inspectionImg = data['doc_technical_inspection'] ??
+        data['doc_inspection'] ??
+        data['inspection_doc'];
+    if (inspectionImg != null) {
+      final multipart = await AppImageHelper.createMultipartFile(
+        inspectionImg,
+        defaultFilename: 'technical_inspection.jpg',
+      );
+      if (multipart != null) {
+        filesMap['doc_technical_inspection'] = multipart;
+      }
     }
 
     final formData = FormData.fromMap({

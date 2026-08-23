@@ -42,6 +42,7 @@ class DriverProfileRemoteDataSource {
     String? phoneNumber,
     String? alternativePhone,
     String? email,
+    String? gender,
     dynamic avatarFile,
   }) async {
     try {
@@ -57,6 +58,9 @@ class DriverProfileRemoteDataSource {
       }
       if (email != null && email.trim().isNotEmpty) {
         dataMap['email'] = email.trim();
+      }
+      if (gender != null && gender.trim().isNotEmpty) {
+        dataMap['gender'] = gender.trim();
       }
 
       if (avatarFile != null) {

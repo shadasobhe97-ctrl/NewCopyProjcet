@@ -12,6 +12,9 @@ class NavigateToLogin extends AppEntryState {}
 // حالة التوجيه لشاشة ولي الأمر الرئيسية
 class NavigateToParentHome extends AppEntryState {}
 
+// حالة التوجيه لشاشة تحديد موقع ولي الأمر عند استئناف التسجيل
+class NavigateToParentLocationRequired extends AppEntryState {}
+
 // حالة التوجيه لشاشة السائق الرئيسية
 class NavigateToDriverHome extends AppEntryState {}
 

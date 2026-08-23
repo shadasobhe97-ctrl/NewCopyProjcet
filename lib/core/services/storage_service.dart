@@ -25,6 +25,7 @@ class StorageService {
 
   static const String _driverRegStageKey = 'driver_reg_stage';
   static const String _driverRegDraftKey = 'driver_reg_draft';
+  static const String _parentRegStageKey = 'parent_reg_stage';
 
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
@@ -145,6 +146,7 @@ class StorageService {
       _prefs.remove(_fcmTokenKey),
       _prefs.remove(_driverRegStageKey),
       _prefs.remove(_driverRegDraftKey),
+      _prefs.remove(_parentRegStageKey),
     ]);
     await HiveHelper.clearAllCache();
   }
@@ -225,5 +227,16 @@ class StorageService {
       _prefs.remove(_driverRegStageKey),
       _prefs.remove(_driverRegDraftKey),
     ]);
+  }
+
+  // --- [إدارة مرحلة تسجيل ولي الأمر] ---
+  static Future<bool> saveParentRegStage(String stage) {
+    return _prefs.setString(_parentRegStageKey, stage);
+  }
+
+  static String? getParentRegStage() => _prefs.getString(_parentRegStageKey);
+
+  static Future<void> clearParentRegStage() async {
+    await _prefs.remove(_parentRegStageKey);
   }
 }

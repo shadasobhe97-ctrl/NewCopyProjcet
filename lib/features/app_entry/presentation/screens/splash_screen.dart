@@ -47,65 +47,91 @@ class _SplashScreenState extends State<SplashScreen> {
             ],
           ),
           content: const Text(
-            'تنبيه: لديك عملية تسجيل حساب سائق غير مكتملة.\n\nهل ترغب في إكمال أدخال البيانات وإنشاء الحساب الآن، أم ترغب في إلغاء عملية التسجيل؟',
+            'هل ترغب في إكمال التسجيل وإدخال البيانات الآن، أم ترغب في إلغاء التسجيل والخروج؟',
             style: TextStyle(fontSize: 15, height: 1.4),
           ),
-          actionsAlignment: MainAxisAlignment.spaceBetween,
+          actionsPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           actions: [
-            TextButton(
-              onPressed: () async {
-                Navigator.of(dialogContext).pop();
-                final msg = await context
-                    .read<RegisterCubit>()
-                    .cancelDriverRegistration();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(msg),
-                    backgroundColor: AppColors.orange,
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.red),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () async {
+                      Navigator.of(dialogContext).pop();
+                      final msg = await context
+                          .read<RegisterCubit>()
+                          .cancelDriverRegistration();
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(msg),
+                          backgroundColor: AppColors.orange,
+                        ),
+                      );
+                      Navigator.pushReplacementNamed(context, AppRoutes.login);
+                    },
+                    child: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'إلغاء التسجيل والخروج',
+                        style: TextStyle(
+                          color: AppColors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
                   ),
-                );
-                Navigator.pushReplacementNamed(context, AppRoutes.login);
-              },
-              child: const Text(
-                'إلغاء التسجيل والخروج',
-                style: TextStyle(
-                  color: AppColors.red,
-                  fontWeight: FontWeight.bold,
                 ),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      if (state.stage == 'docs') {
+                        // 🌟 يبقيه فوراً في شاشة الوثائق دون السماح بالرجوع لشاشة المركبة
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/driverDocsStage',
+                          arguments: state.draftData,
+                        );
+                      } else {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/driverVehicleStage',
+                          arguments: state.draftData,
+                        );
+                      }
+                    },
+                    child: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'متابعة التسجيل',
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                // 🌟 نبني المكدس دايماً بشاشة المركبة أولاً ثم الوثائق فوقها،
-                // حتى زر الرجوع من شاشة الوثائق يرجع لشاشة المركبة (وليس السبلاش)
-                // والبيانات المحفوظة تفضل موجودة بالشاشتين.
-                Navigator.pushReplacementNamed(
-                  context,
-                  '/driverVehicleStage',
-                  arguments: state.draftData,
-                );
-                if (state.stage == 'docs') {
-                  navigatorKey.currentState?.pushNamed(
-                    '/driverDocsStage',
-                    arguments: state.draftData,
-                  );
-                }
-              },
-              child: const Text(
-                'نعم، إكمال التسجيل',
-                style: TextStyle(
-                  color: AppColors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              ],
             ),
           ],
         );
@@ -129,8 +155,16 @@ class _SplashScreenState extends State<SplashScreen> {
         } else if (state is NavigateToParentHome) {
           Navigator.pushReplacementNamed(context, AppRoutes.parentMainWrapper);
           NotificationNavigationHandler.handlePendingNotification();
+        } else if (state is NavigateToParentLocationRequired) {
+          Navigator.pushReplacementNamed(context, '/parentLocation');
         } else if (state is NavigateToDriverWaiting) {
           Navigator.pushReplacementNamed(context, '/driverWaiting');
+        } else if (state is NavigateToDriverPreferencesRequired) {
+          Navigator.pushReplacementNamed(
+            context,
+            AppRoutes.driverPreferences,
+            arguments: true, // isMandatory = true
+          );
         } else if (state is NavigateToResumeDriverRegistration) {
           _showResumeRegistrationDialog(context, state);
         }

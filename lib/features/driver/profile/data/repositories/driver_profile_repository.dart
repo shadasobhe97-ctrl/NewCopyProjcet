@@ -39,6 +39,7 @@ class DriverProfileRepository {
     String? phoneNumber,
     String? alternativePhone,
     String? email,
+    String? gender,
     dynamic avatarFile,
   }) async {
     final result = await remoteDataSource.updateDriverProfile(
@@ -46,6 +47,7 @@ class DriverProfileRepository {
       phoneNumber: phoneNumber,
       alternativePhone: alternativePhone,
       email: email,
+      gender: gender,
       avatarFile: avatarFile,
     );
 
