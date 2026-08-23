@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_state.dart';
 import 'package:kids_transport/features/auth/registration/data/models/driver_status_response_model.dart';
@@ -17,7 +18,6 @@ class DriverWaitingScreen extends StatefulWidget {
 
 class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
   Timer? _pollingTimer;
-  DriverStatusResponseModel? _currentStatus;
 
   @override
   void initState() {
@@ -27,7 +27,7 @@ class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
       _checkStatus();
     });
 
-    // 🌟 فحص تلقائي دائم كل 15 ثانية (Polling Every 15 Seconds)
+    // 🌟 فحص تلقائي صامت خلف الكواليس كل 15 ثانية دون إظهاره للسائق
     _pollingTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
       if (mounted) {
         _checkStatus();
@@ -46,28 +46,58 @@ class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
   }
 
   void _onStatusReceived(DriverStatusResponseModel statusData) {
-    setState(() {
-      _currentStatus = statusData;
-    });
-
-    // ✅ حالة الموافقة (Approved): التوجيه الفوري للشاشة الرئيسية
+    // ✅ حالة الموافقة (Approved): التوجيه الفوري لشاشة التفضيلات الإجبارية أولاً
     if (statusData.isApproved) {
       _pollingTimer?.cancel();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('تهانينا! تم موافقة الإدارة وتفعيل حسابك بنجاح 🎉'),
+          content: Text(
+            'تهانينا! تم موافقة الإدارة وتفعيل حسابك بنجاح 🎉 يرجى تعبئة تفضيلات العمل للبدء.',
+          ),
           backgroundColor: AppColors.green,
-          duration: Duration(seconds: 3),
+          duration: Duration(seconds: 4),
         ),
       );
 
       Navigator.pushNamedAndRemoveUntil(
         context,
-        '/driverMainWrapper',
+        AppRoutes.driverPreferences,
         (route) => false,
+        arguments: true, // isMandatory = true
       );
     }
+  }
+
+  // 📞 دالة الاتصال الهاتفي بمركز الشركة
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: phoneNumber,
+    );
+    try {
+      if (await canLaunchUrl(launchUri)) {
+        await launchUrl(launchUri);
+      } else {
+        await launchUrl(Uri.parse('tel:$phoneNumber'));
+      }
+    } catch (_) {}
+  }
+
+  // 📍 دالة فتح موقع مركز الشركة في خرائط جوجل (Google Maps)
+  Future<void> _openGoogleMapsLocation() async {
+    const double lat = 32.8872;
+    const double lng = 13.1913;
+    final Uri googleMapsUri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+    );
+    try {
+      if (await canLaunchUrl(googleMapsUri)) {
+        await launchUrl(googleMapsUri, mode: LaunchMode.externalApplication);
+      } else {
+        await launchUrl(googleMapsUri);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -75,202 +105,164 @@ class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: "فحص حالة التفعيل الآن",
-            onPressed: _checkStatus,
-          ),
-        ],
-      ),
-      body: BlocListener<RegisterCubit, RegisterState>(
-        listener: (context, state) {
-          if (state is DriverStatusCheckSuccess) {
-            _onStatusReceived(state.statusData);
-          } else if (state is DriverStatusCheckError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage),
-                backgroundColor: AppColors.red,
+    return PopScope(
+      canPop: false, // 🛑 إلغاء إمكانية الرجوع للخلف تماماً
+      child: Scaffold(
+        body: BlocListener<RegisterCubit, RegisterState>(
+          listener: (context, state) {
+            if (state is DriverStatusCheckSuccess) {
+              _onStatusReceived(state.statusData);
+            }
+          },
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 20.0,
               ),
-            );
-          }
-        },
-        child: BlocBuilder<RegisterCubit, RegisterState>(
-          builder: (context, state) {
-            final isLoading = state is DriverStatusCheckLoading;
-            final isRejected = _currentStatus?.isRejected ?? false;
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 20),
 
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // الأيقونة العلوية حسب الحالة
-                    Icon(
-                      isRejected
-                          ? Icons.cancel_rounded
-                          : Icons.hourglass_top_rounded,
-                      size: 90,
-                      color: isRejected ? AppColors.red : AppColors.orange,
+                  // أيقونة الانتظار والمراجعة
+                  const Icon(
+                    Icons.hourglass_top_rounded,
+                    size: 80,
+                    color: AppColors.orange,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // العنوان الرئيسي
+                  Text(
+                    "طلبك قيد المراجعة والتدقيق",
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? AppColors.white : AppColors.black,
                     ),
-                    const SizedBox(height: 24),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
 
-                    // العنوان
-                    Text(
-                      isRejected
-                          ? "تم رفض الطلب أو التعديل"
-                          : "طلبك قيد المراجعة والتدقيق",
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? AppColors.white : AppColors.black,
-                      ),
-                      textAlign: TextAlign.center,
+                  // النص التوضيحي
+                  Text(
+                    "سيتم مراجعة بياناتك، ويجب عليك التوجه إلى مركز الشركة لإتمام إجراءات تفعيل حسابك.",
+                    style: AppTextStyles.style(
+                      color: AppColors.grey,
+                      fontSize: 14,
+                      height: 1.5,
                     ),
-                    const SizedBox(height: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 28),
 
-                    // الوصف
-                    Text(
-                      isRejected
-                          ? "تم مراجعة وثائقك من قِبل الإدارة ويرجى تعديل الوثائق المرفوضة لإعادة التدقيق."
-                          : "يمكنك متابعة حالة الطلب أونلاين تلقائياً، أو زيارة مقر الشركة لإتمام المراجعة والتوثيق.",
-                      style: AppTextStyles.style(
-                        color: AppColors.grey,
-                        fontSize: 14,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // ⚠️ صندوق سبب الرفض إن وجد (Rejection Reason Box)
-                    if (isRejected &&
-                        _currentStatus?.rejectionReason != null &&
-                        _currentStatus!.rejectionReason!.trim().isNotEmpty) ...[
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.red.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.red.withValues(alpha: 0.4),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.error_outline_rounded,
-                                  color: AppColors.red,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  "سبب الرفض من الإدارة:",
-                                  style: AppTextStyles.style(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.red,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              _currentStatus!.rejectionReason!,
-                              style: AppTextStyles.style(
-                                color: isDark
-                                    ? AppColors.white
-                                    : AppColors.black87,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-
-                    // مؤشر التحديث الدائم الخفيف
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (isLoading)
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.orange,
-                            ),
-                          )
-                        else
-                          const Icon(
-                            Icons.sync_rounded,
-                            size: 16,
-                            color: AppColors.grey,
-                          ),
-                        const SizedBox(width: 8),
-                        Text(
-                          isLoading
-                              ? "جاري فحص حالة التفعيل..."
-                              : "يتم الفحص التلقائي كل 15 ثانية",
-                          style: AppTextStyles.style(
-                            fontSize: 12,
-                            color: AppColors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-
-                    // زر الفحص اليدوي المباشر
-                    ElevatedButton.icon(
-                      onPressed: isLoading ? null : _checkStatus,
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: const Text("تحديث وفحص حالة التفعيل الآن"),
+                  // 📍 قسم: زيارة مركز الشركة
+                  _buildCardSection(
+                    theme: theme,
+                    isDark: isDark,
+                    icon: Icons.location_on_outlined,
+                    title: "📍 زيارة مركز الشركة",
+                    description:
+                        "يرجى التوجه إلى مركز الشركة لإتمام إجراءات التفعيل والتدقيق.",
+                    actionButton: ElevatedButton.icon(
+                      onPressed: _openGoogleMapsLocation,
+                      icon: const Icon(Icons.map_outlined),
+                      label: const Text("📍 عرض موقع مركز الشركة"),
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.primaryColor,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                  ),
+                  const SizedBox(height: 16),
 
-                    // زر الاتصال بالدعم
-                    OutlinedButton.icon(
-                      onPressed: () {}, // إجراء مكالمة هاتفية حقيقية للدعم
-                      icon: const Icon(Icons.phone_outlined),
-                      label: const Text("اتصل بالدعم الفني والمراجعة"),
-                    ),
-                    const SizedBox(height: 12),
+                  // 🕐 قسم: مواعيد العمل
+                  _buildCardSection(
+                    theme: theme,
+                    isDark: isDark,
+                    icon: Icons.access_time_rounded,
+                    title: "🕐 مواعيد العمل",
+                    description: "السبت – الخميس\n9:00 صباحًا – 3:00 مساءً",
+                  ),
+                  const SizedBox(height: 16),
 
-                    // زر تسجيل الخروج والتراجع
-                    TextButton(
-                      onPressed: () {
-                        _pollingTimer?.cancel();
-                        context.read<AuthCubit>().logout();
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          '/login',
-                          (route) => false,
-                        );
-                      },
-                      child: Text(
-                        "تسجيل الخروج والتراجع",
-                        style: AppTextStyles.style(color: AppColors.red),
+                  // 📞 قسم: التواصل مع الشركة
+                  _buildCardSection(
+                    theme: theme,
+                    isDark: isDark,
+                    icon: Icons.phone_in_talk_outlined,
+                    title: "📞 التواصل مع الشركة",
+                    description: "للاستفسار أو التواصل مع الشركة",
+                    actionButton: ElevatedButton.icon(
+                      onPressed: () => _makePhoneCall('0912946277'),
+                      icon: const Icon(Icons.phone_enabled_rounded),
+                      label: const Text("📞 0912946277 — اتصل بمركز الشركة"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.green,
+                        foregroundColor: AppColors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
-            );
-          },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCardSection({
+    required ThemeData theme,
+    required bool isDark,
+    required IconData icon,
+    required String title,
+    required String description,
+    Widget? actionButton,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      color: isDark ? AppColors.grey900 : AppColors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(18.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: theme.primaryColor, size: 24),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              description,
+              style: AppTextStyles.style(
+                color: isDark ? AppColors.grey300 : AppColors.grey700,
+                fontSize: 14,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.right,
+            ),
+            if (actionButton != null) ...[
+              const SizedBox(height: 14),
+              actionButton,
+            ],
+          ],
         ),
       ),
     );
