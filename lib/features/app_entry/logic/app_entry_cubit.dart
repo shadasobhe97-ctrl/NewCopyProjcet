@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/services/notification_service.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import 'package:kids_transport/features/driver/driver_preferences/data/repositories/driver_preferences_repository.dart';
 import 'app_entry_state.dart';
@@ -87,6 +88,11 @@ class AppEntryCubit extends Cubit<AppEntryState> {
         emit(NavigateToDriverWaiting());
       }
     } else if (isParent) {
+      final parentStage = StorageService.getParentRegStage();
+      if (parentStage == 'location') {
+        emit(NavigateToParentLocationRequired());
+        return;
+      }
       emit(NavigateToParentHome());
     } else {
       await _sessionRepository.clearSession();

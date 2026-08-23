@@ -46,7 +46,11 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
                   backgroundColor: AppColors.success,
                 ),
               );
-              Navigator.pushNamed(context, '/parentLocation');
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/parentLocation',
+                (route) => false,
+              );
             } else if (state is ParentRegisterError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

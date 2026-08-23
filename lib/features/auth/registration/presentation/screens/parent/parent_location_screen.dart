@@ -9,6 +9,8 @@ import 'package:kids_transport/features/auth/registration/logic/register_cubit.d
 import 'package:kids_transport/features/auth/registration/logic/register_state.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'package:kids_transport/core/services/storage_service.dart';
+
 class ParentLocationScreen extends StatefulWidget {
   const ParentLocationScreen({super.key});
 
@@ -26,6 +28,7 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
   @override
   void initState() {
     super.initState();
+    StorageService.saveParentRegStage('location');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _determinePosition();
     });
@@ -87,6 +90,7 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
   }
 
   void _navigateToHome() {
+    StorageService.clearParentRegStage();
     Navigator.pushNamedAndRemoveUntil(
       context,
       '/parentMainWrapper',
@@ -99,28 +103,31 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("تحديد موقع المنزل"),
-        centerTitle: true,
-        backgroundColor: AppColors.transparent,
-        elevation: 0,
-        actions: [
-          // زر تخطي من فوق لأن الإدخال اختياري
-          TextButton(
-            onPressed: _navigateToHome,
-            child: Text(
-              "تخطي",
-              style: AppTextStyles.style(
-                color: theme.primaryColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+    return PopScope(
+      canPop: false, // 🛑 منع الرجوع إلى الخلف تماماً من شاشة اللوكيشن
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("تحديد موقع المنزل"),
+          centerTitle: true,
+          automaticallyImplyLeading: false, // 🛑 إخفاء زر العودة في الـ AppBar
+          backgroundColor: AppColors.transparent,
+          elevation: 0,
+          actions: [
+            // زر تخطي من فوق لأن الإدخال اختياري
+            TextButton(
+              onPressed: _navigateToHome,
+              child: Text(
+                "تخطي",
+                style: AppTextStyles.style(
+                  color: theme.primaryColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
+            const SizedBox(width: 12),
+          ],
+        ),
       body: SafeArea(
         child: BlocConsumer<RegisterCubit, RegisterState>(
           listener: (context, state) {
@@ -264,6 +271,7 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
           },
         ),
       ),
+    ),
     );
   }
 }

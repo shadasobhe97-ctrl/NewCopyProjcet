@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/routes/app_router.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -12,16 +12,28 @@ import '../../../../../core/utils/theme_context.dart';
 import '../../../../../core/widgets/app_bars.dart';
 import '../../data/models/child_model.dart';
 import '../../logic/children_cubit/children_cubit.dart';
-import '../../../dashboard/presentation/screens/parent_main_wrapper.dart';
+import '../../../../../core/utils/qr_download_helper.dart';
 
 class ChildPassScreen extends StatelessWidget {
   final ChildModel child;
 
   const ChildPassScreen({super.key, required this.child});
 
-  void _sharePass() {
-    Share.share(
-      'بطاقة الصعود الخاصة بـ ${child.name} لتطبيق دربي.\nالرمز: ${child.qrToken}',
+  void _sharePass(BuildContext context) {
+    final qrData = child.qrCodeToken ?? child.qrToken;
+    if (qrData.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('الرمز غير متاح حالياً.'),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+    QrDownloadHelper.downloadOrShareQr(
+      qrData: qrData,
+      childName: child.name,
+      context: context,
     );
   }
 
@@ -189,7 +201,7 @@ class ChildPassScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: _sharePass,
+                      onPressed: () => _sharePass(context),
                       icon: const Icon(Icons.share_rounded),
                       label: const Text('مشاركة البطاقة'),
                       style: OutlinedButton.styleFrom(
@@ -208,11 +220,20 @@ class ChildPassScreen extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        // TODO: Implement PDF / Image Save using screenshot package
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('جاري حفظ البطاقة في المعرض...'),
-                          ),
+                        final qrData = child.qrCodeToken ?? child.qrToken;
+                        if (qrData.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('الرمز غير متاح حالياً.'),
+                              backgroundColor: AppColors.orange,
+                            ),
+                          );
+                          return;
+                        }
+                        QrDownloadHelper.downloadOrShareQr(
+                          qrData: qrData,
+                          childName: child.name,
+                          context: context,
                         );
                       },
                       icon: const Icon(

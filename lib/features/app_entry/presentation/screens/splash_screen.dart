@@ -155,6 +155,8 @@ class _SplashScreenState extends State<SplashScreen> {
         } else if (state is NavigateToParentHome) {
           Navigator.pushReplacementNamed(context, AppRoutes.parentMainWrapper);
           NotificationNavigationHandler.handlePendingNotification();
+        } else if (state is NavigateToParentLocationRequired) {
+          Navigator.pushReplacementNamed(context, '/parentLocation');
         } else if (state is NavigateToDriverWaiting) {
           Navigator.pushReplacementNamed(context, '/driverWaiting');
         } else if (state is NavigateToDriverPreferencesRequired) {
