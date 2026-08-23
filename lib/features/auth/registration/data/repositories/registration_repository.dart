@@ -12,12 +12,14 @@ class DriverVerifyOtpResponse {
   final bool status;
   final String message;
   final int userId;
+  final int driverId;
   final String accessToken;
 
   DriverVerifyOtpResponse({
     required this.status,
     required this.message,
     required this.userId,
+    required this.driverId,
     required this.accessToken,
   });
 
@@ -26,6 +28,7 @@ class DriverVerifyOtpResponse {
       status: _readBool(json['status']),
       message: json['message']?.toString() ?? '',
       userId: _readInt(json['user_id']),
+      driverId: _readInt(json['driver_id']),
       accessToken:
           json['access_token']?.toString() ?? json['token']?.toString() ?? '',
     );
@@ -75,6 +78,20 @@ class RegistrationRepository {
   Future<DriverStatusResponseModel> checkDriverStatus(String token) async {
     final responseData = await _driverDataSource.checkDriverStatus(token);
     return DriverStatusResponseModel.fromJson(responseData);
+  }
+
+  Future<Map<String, dynamic>> cancelDriverRegistration({
+    required int userId,
+    required String token,
+  }) async {
+    try {
+      return await _driverDataSource.cancelRegistration(
+        userId: userId,
+        token: token,
+      );
+    } catch (_) {
+      return {'status': false, 'message': 'تم إلغاء التسجيل محلياً.'};
+    }
   }
 
   // ==================== Parent ====================

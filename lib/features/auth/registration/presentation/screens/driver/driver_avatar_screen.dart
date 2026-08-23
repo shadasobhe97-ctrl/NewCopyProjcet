@@ -1,8 +1,7 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:kids_transport/core/widgets/app_image_widget.dart';
 import '../../../logic/register_cubit.dart';
 import '../../../logic/register_state.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -17,23 +16,20 @@ class DriverAvatarScreen extends StatefulWidget {
 }
 
 class _DriverAvatarScreenState extends State<DriverAvatarScreen> {
-  File? _imageFile;
-  String? _imagePathWeb;
+  XFile? _pickedXFile;
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage() async {
     try {
       final pickedFile = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 70,
+        maxWidth: 1280,
+        maxHeight: 1280,
+        imageQuality: 60,
       );
       if (pickedFile != null) {
         setState(() {
-          if (kIsWeb) {
-            _imagePathWeb = pickedFile.path;
-          } else {
-            _imageFile = File(pickedFile.path);
-          }
+          _pickedXFile = pickedFile;
         });
       }
     } catch (e) {
@@ -49,7 +45,7 @@ class _DriverAvatarScreenState extends State<DriverAvatarScreen> {
 
   void _submitNext() {
     final cubit = context.read<RegisterCubit>();
-    cubit.avatarFile = _imageFile;
+    cubit.avatarFile = _pickedXFile;
     cubit.registerDriverFirstStage();
   }
 
@@ -136,25 +132,30 @@ class _DriverAvatarScreenState extends State<DriverAvatarScreen> {
                         child: Stack(
                           alignment: Alignment.bottomRight,
                           children: [
-                            CircleAvatar(
-                              radius: 110,
-                              backgroundColor: isDark
-                                  ? AppColors.grey800
-                                  : AppColors.grey200,
-                              backgroundImage: _imageFile != null
-                                  ? FileImage(_imageFile!)
-                                  : (_imagePathWeb != null
-                                      ? NetworkImage(_imagePathWeb!)
-                                      : null),
-                              child: (_imageFile == null && _imagePathWeb == null)
-                                  ? Icon(
-                                      Icons.person_rounded,
-                                      size: 110,
-                                      color: isDark
-                                          ? AppColors.grey600
-                                          : AppColors.grey400,
-                                    )
-                                  : null,
+                            ClipOval(
+                              child: SizedBox(
+                                width: 220,
+                                height: 220,
+                                child: _pickedXFile != null
+                                    ? AppImageWidget(
+                                        image: _pickedXFile,
+                                        width: 220,
+                                        height: 220,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Container(
+                                        color: isDark
+                                            ? AppColors.grey800
+                                            : AppColors.grey200,
+                                        child: Icon(
+                                          Icons.person_rounded,
+                                          size: 110,
+                                          color: isDark
+                                              ? AppColors.grey600
+                                              : AppColors.grey400,
+                                        ),
+                                      ),
+                              ),
                             ),
                             Container(
                               padding: const EdgeInsets.all(10),

@@ -47,6 +47,23 @@ class AppEntryCubit extends Cubit<AppEntryState> {
         roleName == '3';
 
     if (isDriver) {
+      final regStage = _sessionRepository.getDriverRegStage();
+      if (regStage == 'vehicle' || regStage == 'docs') {
+        final draftData = _sessionRepository.getDriverRegDraft();
+        emit(
+          NavigateToResumeDriverRegistration(
+            stage: regStage!,
+            draftData: draftData,
+          ),
+        );
+        return;
+      }
+
+      if (regStage == 'waiting') {
+        emit(NavigateToDriverWaiting());
+        return;
+      }
+
       final isActive = _sessionRepository.getIsActive() ?? false;
       if (isActive) {
         if (_sessionRepository.getIsPreferencesSet()) {
@@ -71,8 +88,6 @@ class AppEntryCubit extends Cubit<AppEntryState> {
       }
     } else if (isParent) {
       emit(NavigateToParentHome());
-    } else if (roleId != null && !isDriver && !isParent) {
-      emit(NavigateToAdminHome());
     } else {
       await _sessionRepository.clearSession();
       emit(NavigateToLogin());

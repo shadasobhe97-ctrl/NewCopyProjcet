@@ -109,7 +109,7 @@ class TransportApp extends StatelessWidget {
         BlocProvider<AuthCubit>(create: (_) => getIt<AuthCubit>()),
 
         BlocProvider<AppEntryCubit>(
-          create: (_) => getIt<AppEntryCubit>()..checkSession(),
+          create: (_) => getIt<AppEntryCubit>(),
         ),
         BlocProvider<RegisterCubit>(create: (_) => getIt<RegisterCubit>()),
         BlocProvider<ChildrenCubit>(create: (_) => getIt<ChildrenCubit>()),

@@ -62,10 +62,6 @@ class AddChildCubit extends Cubit<AddChildState> {
     required String gen,
     required DateTime dob,
     required int grade,
-    required int sId,
-    required String sName,
-    required String aId,
-    required String aName,
     String? notes,
   }) {
     imagePath = img;
@@ -73,25 +69,45 @@ class AddChildCubit extends Cubit<AddChildState> {
     gender = gen;
     birthDate = dob;
     gradeLevel = grade;
-    schoolId = sId;
-    schoolName = sName;
-    addressId = aId;
-    addressName = aName;
     medicalNotes = notes;
 
     emit(AddChildStep1Valid());
   }
 
-  Future<void> submitStep2({required TransportPrefModel transportPref}) async {
+  void setStep2LocationAndSchool({
+    required int sId,
+    required String sName,
+    required String aId,
+    required String aName,
+  }) {
+    schoolId = sId;
+    schoolName = sName;
+    addressId = aId;
+    addressName = aName;
+  }
+
+  Future<void> submitStep2({
+    required TransportPrefModel transportPref,
+    int? sId,
+    String? sName,
+    String? aId,
+    String? aName,
+  }) async {
+    if (sId != null) schoolId = sId;
+    if (sName != null) schoolName = sName;
+    if (aId != null) addressId = aId;
+    if (aName != null) addressName = aName;
+
     if (fullName == null ||
         gender == null ||
         birthDate == null ||
-        gradeLevel == null ||
-        schoolId == null ||
-        schoolName == null ||
-        addressId == null ||
-        addressName == null) {
-      emit(AddChildError('بيانات الخطوة الأولى غير مكتملة.'));
+        gradeLevel == null) {
+      emit(AddChildError('الرجاء استكمال بيانات الطفل الأساسية أولاً.'));
+      return;
+    }
+
+    if (schoolId == null || addressId == null) {
+      emit(AddChildError('الرجاء اختيار المدرسة وعنوان المنزل.'));
       return;
     }
 

@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 
 class VehicleRemoteDataSource {
   final ApiClient _apiClient;
@@ -44,7 +44,7 @@ class VehicleRemoteDataSource {
     String? type,
     int? capacityManual,
     bool? hasAc,
-    File? vehicleImage,
+    dynamic vehicleImage,
   }) async {
     final Map<String, dynamic> data = {};
     if (brand != null && brand.isNotEmpty) data['brand'] = brand;
@@ -57,10 +57,14 @@ class VehicleRemoteDataSource {
     if (hasAc != null) data['has_ac'] = hasAc;
 
     if (vehicleImage != null) {
-      data['vehicle_image_path'] = await MultipartFile.fromFile(
-        vehicleImage.path,
-        filename: vehicleImage.path.split('/').last.split('\\').last,
+      final multipart = await AppImageHelper.createMultipartFile(
+        vehicleImage,
+        defaultFilename: 'vehicle.jpg',
       );
+      if (multipart != null) {
+        data['vehicle_image_path'] = multipart;
+        data['vehicle_image'] = multipart;
+      }
     }
 
     return await _apiClient.post(
@@ -76,9 +80,9 @@ class VehicleRemoteDataSource {
     String? licenseNumber,
     String? licenseExpiry,
     String? insuranceExpiry,
-    File? docLicense,
-    File? docLogbook,
-    File? docInsurance,
+    dynamic docLicense,
+    dynamic docLogbook,
+    dynamic docInsurance,
   }) async {
     Map<String, dynamic> data = {};
 
@@ -96,13 +100,25 @@ class VehicleRemoteDataSource {
     }
 
     if (docLicense != null) {
-      data['doc_license'] = await MultipartFile.fromFile(docLicense.path);
+      final multipart = await AppImageHelper.createMultipartFile(
+        docLicense,
+        defaultFilename: 'license.jpg',
+      );
+      if (multipart != null) data['doc_license'] = multipart;
     }
     if (docLogbook != null) {
-      data['doc_logbook'] = await MultipartFile.fromFile(docLogbook.path);
+      final multipart = await AppImageHelper.createMultipartFile(
+        docLogbook,
+        defaultFilename: 'logbook.jpg',
+      );
+      if (multipart != null) data['doc_logbook'] = multipart;
     }
     if (docInsurance != null) {
-      data['doc_insurance'] = await MultipartFile.fromFile(docInsurance.path);
+      final multipart = await AppImageHelper.createMultipartFile(
+        docInsurance,
+        defaultFilename: 'insurance.jpg',
+      );
+      if (multipart != null) data['doc_insurance'] = multipart;
     }
 
     return await _apiClient.post(

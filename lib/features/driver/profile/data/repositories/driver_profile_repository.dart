@@ -39,7 +39,7 @@ class DriverProfileRepository {
     String? phoneNumber,
     String? alternativePhone,
     String? email,
-    File? avatarFile,
+    dynamic avatarFile,
   }) async {
     final result = await remoteDataSource.updateDriverProfile(
       fullName: fullName,
@@ -82,7 +82,7 @@ class DriverProfileRepository {
     String? licenseNumber,
     String? licenseExpiry,
     String? insuranceExpiry,
-    Map<String, File>? newFiles,
+    Map<String, dynamic>? newFiles,
   }) async {
     return await remoteDataSource.updateLegalData(
       nationalId: nationalId,

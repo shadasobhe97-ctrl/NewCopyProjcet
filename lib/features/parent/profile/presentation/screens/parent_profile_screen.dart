@@ -11,6 +11,7 @@ import 'package:kids_transport/core/widgets/primary_button.dart';
 import 'package:kids_transport/features/parent/profile/presentation/widgets/profile_avatar_editor.dart';
 import 'package:kids_transport/features/parent/profile/presentation/widgets/profile_email_field.dart';
 import 'package:kids_transport/core/widgets/email_verification_dialog.dart';
+import 'package:kids_transport/core/utils/app_validators.dart';
 import '../../data/models/parent_model.dart';
 import '../../logic/cubit/parent_profile_cubit.dart';
 import '../../logic/cubit/parent_profile_state.dart';
@@ -30,8 +31,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   late TextEditingController _backupPhoneController;
   late TextEditingController _emailController;
 
-  File? _avatarImage;
-  Uint8List? _webImageBytes;
+  dynamic _avatarImage;
   final ImagePicker _picker = ImagePicker();
 
   String _originalEmail = '';
@@ -94,22 +94,16 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 85,
+        maxWidth: 1280,
+        maxHeight: 1280,
+        imageQuality: 60,
       );
       if (image == null) return;
       if (!mounted) return;
 
-      if (kIsWeb) {
-        final bytes = await image.readAsBytes();
-        setState(() {
-          _webImageBytes = bytes;
-          _avatarImage = File(image.path);
-        });
-      } else {
-        setState(() {
-          _avatarImage = File(image.path);
-        });
-      }
+      setState(() {
+        _avatarImage = image;
+      });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -162,7 +156,6 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                 ? null
                 : '$url?v=${DateTime.now().millisecondsSinceEpoch}';
             _avatarImage = null;
-            _webImageBytes = null;
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -299,9 +292,11 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                                     hintText: 'أدخل رقم الهاتف الأساسي',
                                     icon: Icons.phone_rounded,
                                   ),
-                                  validator: (val) => val == null || val.isEmpty
-                                      ? 'يرجى إدخال رقم الهاتف'
-                                      : null,
+                                  validator: (val) =>
+                                      AppValidators.validateLibyanPhone(
+                                    val,
+                                    isRequired: true,
+                                  ),
                                 ),
                               ],
                             ),
@@ -322,6 +317,11 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                                   decoration: _buildInputDecoration(
                                     hintText: 'أدخل رقم هاتف الاحتياط',
                                     icon: Icons.phone_android_rounded,
+                                  ),
+                                  validator: (v) => AppValidators.validateLibyanPhone(
+                                    v,
+                                    isRequired: false,
+                                    primaryPhone: _phoneController.text,
                                   ),
                                 ),
                               ],
@@ -377,7 +377,6 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
       children: [
         ProfileAvatarEditor(
           avatarImage: _avatarImage,
-          webImageBytes: _webImageBytes,
           avatarUrl: _avatarUrl,
           onTap: _pickImage,
         ),

@@ -1,5 +1,4 @@
 import 'package:kids_transport/features/shared/notifications/presentation/screens/notifications_screen.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -188,9 +187,6 @@ class AppRoutes {
   static const String driverAbsence = '/driverAbsence';
 
   static String getInitialRoute() {
-    if (kIsWeb) {
-      return adminLogin;
-    }
     return splash;
   }
 

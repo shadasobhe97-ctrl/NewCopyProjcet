@@ -277,24 +277,6 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                         label: 'المرحلة والصف الدراسي',
                         value: activeChild.fullStageAndGradeDisplay,
                       ),
-                      _buildField(
-                        label: 'المدرسة',
-                        value: activeChild.schoolName,
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16.h),
-
-                  // ── العنوان ──
-                  _buildSectionCard(
-                    context: context,
-                    title: 'عنوان المنزل',
-                    icon: Icons.location_on_outlined,
-                    children: [
-                      _buildField(
-                        label: 'العنوان',
-                        value: activeChild.addressName,
-                      ),
                     ],
                   ),
                   SizedBox(height: 16.h),

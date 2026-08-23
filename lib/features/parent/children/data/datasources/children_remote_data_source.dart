@@ -127,20 +127,36 @@ class ChildrenRemoteDataSource {
   }
 
   Future<LogisticsModel> getChildSubscription(String id) async {
-    final response = await _client.get(
-      '${ApiEndpoints.parentChildById(id)}/subscription',
-      headers: _authHeader,
-    );
-    final data = response.data;
-    if (data is Map) {
-      final success = data['success'];
-      if (success == false) {
-        final serverMessage = ApiException.extractMessage(data);
-        throw ApiException(serverMessage ?? 'تعذر جلب بيانات الاشتراك.');
+    try {
+      final response = await _client.get(
+        ApiEndpoints.parentChildById(id),
+        headers: _authHeader,
+      );
+      final data = response.data;
+      if (data is Map) {
+        final success = data['success'];
+        if (success == false) {
+          final serverMessage = ApiException.extractMessage(data);
+          throw ApiException(serverMessage ?? 'تعذر جلب بيانات الاشتراك.');
+        }
       }
+      final childData = data['data'] ?? data;
+      if (childData is Map<String, dynamic>) {
+        if (childData['logistics'] is Map) {
+          return LogisticsModel.fromJson(
+            childData['logistics'] as Map<String, dynamic>,
+          );
+        }
+        final child = ChildModel.fromJson(childData);
+        if (child.logistics != null) {
+          return child.logistics!;
+        }
+        return LogisticsModel.fromJson(childData);
+      }
+    } catch (e) {
+      debugPrint('⚠️ getChildSubscription error: $e');
     }
-    final childData = data['data'] ?? data;
-    return LogisticsModel.fromJson(childData as Map<String, dynamic>);
+    return LogisticsModel.empty();
   }
 
   Future<File> _imageFileFromPath(String path) async {

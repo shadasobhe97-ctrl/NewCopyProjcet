@@ -3,6 +3,7 @@ import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import '../models/parent_register_request.dart';
 
 class ParentRemoteDataSource {
@@ -28,12 +29,13 @@ class ParentRemoteDataSource {
     final hasAvatar = request.avatar != null;
 
     if (hasAvatar) {
+      final multipart = await AppImageHelper.createMultipartFile(
+        request.avatar,
+        defaultFilename: 'avatar.jpg',
+      );
       data = FormData.fromMap({
         ...request.toJson(),
-        'avatar': await MultipartFile.fromFile(
-          request.avatar!.path,
-          filename: request.avatar!.path.split('/').last.split('\\').last,
-        ),
+        if (multipart != null) 'avatar': multipart,
       });
     } else {
       data = request.toJson();

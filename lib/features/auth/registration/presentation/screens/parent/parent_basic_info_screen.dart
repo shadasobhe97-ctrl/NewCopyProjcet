@@ -55,9 +55,9 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('فشل اختيار الصورة: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('فشل اختيار الصورة: $e')));
     }
   }
 
@@ -95,7 +95,10 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
               ListTile(
                 leading: CircleAvatar(
                   backgroundColor: primaryColor.withValues(alpha: 0.1),
-                  child: Icon(Icons.photo_library_outlined, color: primaryColor),
+                  child: Icon(
+                    Icons.photo_library_outlined,
+                    color: primaryColor,
+                  ),
                 ),
                 title: const Text("اختيار من معرض الصور"),
                 onTap: () {
@@ -315,15 +318,8 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                         hintText: "091XXXXXXX",
                         prefixIcon: const Icon(Icons.phone_android_outlined),
                       ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return "الرجاء إدخال رقم الهاتف";
-                        }
-                        if (value.trim().length < 7) {
-                          return "يجب ألا يقل رقم الهاتف عن 7 أرقام";
-                        }
-                        return null;
-                      },
+                      validator: (value) =>
+                          AppValidators.validateLibyanPhone(value, isRequired: true),
                     ),
                     const SizedBox(height: 16),
 
@@ -338,6 +334,11 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                         labelText: "رقم الهاتف الاحتياطي (اختياري)",
                         hintText: "092XXXXXXX",
                         prefixIcon: const Icon(Icons.phone_outlined),
+                      ),
+                      validator: (value) => AppValidators.validateLibyanPhone(
+                        value,
+                        isRequired: false,
+                        primaryPhone: _phoneController.text,
                       ),
                     ),
                     const SizedBox(height: 16),

@@ -25,7 +25,7 @@ class RegisterCubit extends Cubit<RegisterState> {
   String? phoneNumber;
   String? password;
   String? alternativePhone;
-  File? avatarFile;
+  dynamic avatarFile;
   String? gender;
 
   // بيانات الجهاز والمنصة (تتولد تلقائياً)
@@ -47,13 +47,11 @@ class RegisterCubit extends Cubit<RegisterState> {
 
   // بيانات تم استلامها من السيرفر ونحتاجوها للمراحل الجاية
   int? registeredUserId;
+  int? registeredDriverId;
   String? driverAccessToken;
   String? parentAccessToken; // التوكن المستلم بعد تسجيل ولي الأمر
 
   // مخزن مؤقت إضافي لبيانات السائق
-  String? driverNationalId;
-  String? driverLicenseNumber;
-  String? driverLicenseExpiry;
   String? driverBrand;
   String? driverModel;
   String? driverPlateNumber;
@@ -302,6 +300,23 @@ class RegisterCubit extends Cubit<RegisterState> {
       if (response.userId > 0) registeredUserId = response.userId;
       driverAccessToken = response.accessToken;
 
+      // حفظ السيشن محلياً مباشرة بعد نجاح OTP حتى لا تضيع الجلسة عند إغلاق التطبيق
+      await StorageService.saveUserSession(
+        token: response.accessToken,
+        roleId: 4,
+        roleName: 'driver',
+        userId: response.userId,
+        fullName: fullName ?? '',
+        phoneNumber: phoneNumber ?? '',
+        isActive: false,
+      );
+
+      // 🌟 الباك إند صار يُنشئ سجل السائق مباشرة عند التحقق من OTP ويرجّع driver_id
+      if (response.driverId > 0) {
+        registeredDriverId = response.driverId;
+        await StorageService.saveDriverId(response.driverId);
+      }
+
       emit(DriverVerifyOtpSuccess(response.message));
     } on ApiException catch (e) {
       emit(DriverVerifyOtpError(e.message));
@@ -318,17 +333,33 @@ class RegisterCubit extends Cubit<RegisterState> {
   ) async {
     emit(DriverCompleteProfileLoading());
     try {
+      // 🌟 عند استئناف التسجيل بعد إغلاق التطبيق، تكون هذه الحقول فارغة
+      // (كيوبت جديد لم يمر بمرحلة verifyOtp) فنسترجعها من الجلسة المحفوظة
+      final resolvedUserId = registeredUserId ?? StorageService.getUserId();
+      final resolvedToken = driverAccessToken ?? StorageService.getToken();
+
+      if (resolvedUserId == null || resolvedUserId <= 0 ||
+          resolvedToken == null || resolvedToken.isEmpty) {
+        emit(
+          DriverCompleteProfileError(
+            'تعذر التعرف على الحساب، يرجى تسجيل الدخول من جديد.',
+          ),
+        );
+        return;
+      }
+
+      registeredUserId = resolvedUserId;
+      driverAccessToken = resolvedToken;
+      registeredDriverId ??= StorageService.getDriverId();
+
       final combinedData = {
         ...vehicleAndDocsData,
-        'national_id': driverNationalId ?? '',
-        'license_number': driverLicenseNumber ?? '',
-        'license_expiry': driverLicenseExpiry ?? '',
         if (alternativePhone != null) 'alternative_phone': alternativePhone,
       };
 
       final response = await _repository.completeDriverProfile(
-        userId: registeredUserId ?? 0,
-        token: driverAccessToken ?? '',
+        userId: resolvedUserId,
+        token: resolvedToken,
         data: combinedData,
       );
 
@@ -344,19 +375,21 @@ class RegisterCubit extends Cubit<RegisterState> {
       // حفظ جلسة السائق بعد إكمال الملف
       final driverData = response.data;
       await StorageService.saveUserSession(
-        token: driverAccessToken ?? '',
+        token: resolvedToken,
         tokenType: 'Bearer',
         roleId: 4, // driver
         roleName: 'driver',
-        userId: driverData?.id ?? registeredUserId,
+        userId: driverData?.id ?? resolvedUserId,
         fullName: driverData?.fullName,
         phoneNumber: null,
         isActive: true,
       );
 
       // حفظ driver_id لاستخدامه في المهام الخاصة بالسائق
-      final rawDriverId = driverData?.driverId ?? driverData?.id ?? 0;
+      final rawDriverId =
+          driverData?.driverId ?? driverData?.id ?? registeredDriverId ?? 0;
       if (rawDriverId > 0) {
+        registeredDriverId = rawDriverId;
         await StorageService.saveDriverId(rawDriverId);
       }
 
@@ -372,6 +405,35 @@ class RegisterCubit extends Cubit<RegisterState> {
 
   Future<void> submitDriverCompleteProfile() async {
     await completeDriverProfile({});
+  }
+
+  // إلغاء التسجيل واستدعاء الـ API وحذف البيانات المحلية وإرجاع الرسالة القادمة من الباك إند
+  Future<String> cancelDriverRegistration() async {
+    final rawUserId = registeredUserId ?? StorageService.getUserId();
+    final userId = int.tryParse(rawUserId?.toString() ?? '') ?? 0;
+    final token = driverAccessToken ?? StorageService.getToken();
+
+    String message = 'تم إلغاء طلب التسجيل.';
+
+    if (userId > 0 && token != null && token.isNotEmpty) {
+      try {
+        final res = await _repository.cancelDriverRegistration(
+          userId: userId,
+          token: token,
+        );
+        if (res['message'] != null && res['message'].toString().isNotEmpty) {
+          message = res['message'].toString();
+        }
+      } catch (e) {
+        if (e is ApiException) {
+          message = e.message;
+        }
+      }
+    }
+
+    await StorageService.clearDriverRegDraft();
+    await StorageService.clearSession();
+    return message;
   }
 
   // 5. فحص حالة السائق (GET /api/v1/driver/status)

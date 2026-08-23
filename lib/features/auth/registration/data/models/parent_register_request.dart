@@ -1,5 +1,3 @@
-import 'dart:io';
-
 class ParentRegisterRequest {
   final String fullName;
   final String email;
@@ -11,7 +9,7 @@ class ParentRegisterRequest {
   final String? deviceName;
   final String? platform;
   final String? fcmToken;
-  final File? avatar;
+  final dynamic avatar;
 
   ParentRegisterRequest({
     required this.fullName,

@@ -99,7 +99,9 @@ class _ParentOtpScreenState extends State<ParentOtpScreen> {
                   if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('فشل إعادة إرسال الرمز، يرجى المحاولة مرة أخرى.'),
+                      content: Text(
+                        'فشل إعادة إرسال الرمز، يرجى المحاولة مرة أخرى.',
+                      ),
                       backgroundColor: AppColors.error,
                     ),
                   );

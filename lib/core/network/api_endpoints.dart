@@ -2,7 +2,7 @@ class ApiEndpoints {
   const ApiEndpoints._();
 
   // الرابط الأساسي للسيرفر (يحتوي على /api/)
-  static const String baseUrl = 'https://darby-app-api.loca.lt/api/';
+  static const String baseUrl = 'https://stupid-cobra-33.loca.lt/api/';
 
   //=========================================
   // Auth Endpoints (مسارات المصادقة العامة)
@@ -22,6 +22,8 @@ class ApiEndpoints {
   static const String driverVerifyOtp = 'v1/driver/verify-otp';
   static const String driverCompleteProfile = 'v1/driver/complete-profile';
   static const String driverStatus = 'v1/driver/status';
+  static const String driverAbandonRegistration =
+      'v1/driver/abandon-registration';
 
   //=========================================
   // Parent Registration endpoints (أولياء الأمور)

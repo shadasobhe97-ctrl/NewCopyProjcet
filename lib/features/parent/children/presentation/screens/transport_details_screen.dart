@@ -126,6 +126,16 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
             children: [
               _buildSection(
                 context: context,
+                title: 'المدرسة والعنوان',
+                icon: Icons.school_rounded,
+                content: [
+                  _buildDataRow('المدرسة', activeChild.schoolName),
+                  _buildDataRow('عنوان المنزل', activeChild.addressName),
+                ],
+              ),
+              SizedBox(height: 20.h),
+              _buildSection(
+                context: context,
                 title: 'تفضيلات الاشتراك',
                 icon: Icons.assignment_rounded,
                 content: [
@@ -137,7 +147,7 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
               SizedBox(height: 20.h),
               _buildSection(
                 context: context,
-                title: 'مواعيد الدوام والمدرسة',
+                title: 'مواعيد الدوام والمشاوير',
                 icon: Icons.access_time_rounded,
                 content: [
                   _buildDataRow('تاريخ بداية الخدمة', intl.DateFormat('yyyy/MM/dd').format(startDate)),

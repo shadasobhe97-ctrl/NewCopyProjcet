@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kids_transport/core/models/email_verification_info.dart';
@@ -6,6 +5,7 @@ import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import '../models/parent_model.dart';
 
 class ParentProfileRemoteDataSource {
@@ -56,11 +56,11 @@ class ParentProfileRemoteDataSource {
     required String phoneNumber,
     String? email,
     String? alternativePhone,
-    File? avatarFile,
+    dynamic avatarFile,
   }) async {
     debugPrint(
       '📤 [ProfileAPI] تحديث الملف: name=$fullName phone=$phoneNumber '
-      'email=$email avatar=${avatarFile?.path}',
+      'email=$email avatar=$avatarFile',
     );
 
     // الحقول الاختيارية نرسلها فقط إذا رغب المستخدم في تعديلها
@@ -74,13 +74,13 @@ class ParentProfileRemoteDataSource {
 
     final dynamic requestBody;
     if (avatarFile != null) {
+      final multipart = await AppImageHelper.createMultipartFile(
+        avatarFile,
+        defaultFilename: 'avatar.jpg',
+      );
       requestBody = FormData.fromMap({
         ...fields,
-        // مطابقة الحقل مع الباك إند ليكون 'avatar'
-        'avatar': await MultipartFile.fromFile(
-          avatarFile.path,
-          filename: avatarFile.path.split(Platform.pathSeparator).last,
-        ),
+        if (multipart != null) 'avatar': multipart,
       });
     } else {
       requestBody = fields;

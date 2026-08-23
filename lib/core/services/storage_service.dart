@@ -1,4 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:kids_transport/core/services/hive_helper.dart';
 
 class StorageService {
   static late SharedPreferences _prefs;
@@ -17,6 +22,9 @@ class StorageService {
   static const String _isPreferencesSetKey = 'is_preferences_set';
   static const String _parentIdKey = 'parent_id';
   static const String _driverIdKey = 'driver_id';
+
+  static const String _driverRegStageKey = 'driver_reg_stage';
+  static const String _driverRegDraftKey = 'driver_reg_draft';
 
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
@@ -134,7 +142,11 @@ class StorageService {
       _prefs.remove(_isPreferencesSetKey),
       _prefs.remove(_parentIdKey),
       _prefs.remove(_driverIdKey),
+      _prefs.remove(_fcmTokenKey),
+      _prefs.remove(_driverRegStageKey),
+      _prefs.remove(_driverRegDraftKey),
     ]);
+    await HiveHelper.clearAllCache();
   }
 
   static Future<void> setFirstTimeComplete() async {
@@ -155,4 +167,63 @@ class StorageService {
   }
 
   static String? getFcmToken() => _prefs.getString(_fcmTokenKey);
+
+  // --- [إدارة المسودة وحالة تسجيل السائق] ---
+  static Future<bool> saveDriverRegStage(String stage) {
+    return _prefs.setString(_driverRegStageKey, stage);
+  }
+
+  static String? getDriverRegStage() => _prefs.getString(_driverRegStageKey);
+
+  static Future<bool> saveDriverRegDraft(Map<String, dynamic> data) {
+    final cleanMap = <String, dynamic>{};
+    data.forEach((key, value) {
+      if (value is String || value is num || value is bool) {
+        cleanMap[key] = value;
+      } else if (value is File) {
+        cleanMap['${key}_path'] = value.path;
+      } else if (value is XFile) {
+        // على الويب مسار الـ XFile هو blob مؤقت لا يصلح للاستعادة بعد إعادة تحميل الصفحة
+        if (!kIsWeb) {
+          cleanMap['${key}_path'] = value.path;
+        }
+      }
+    });
+    return _prefs.setString(_driverRegDraftKey, jsonEncode(cleanMap));
+  }
+
+  static Map<String, dynamic> getDriverRegDraft() {
+    final raw = _prefs.getString(_driverRegDraftKey);
+    if (raw == null || raw.isEmpty) return {};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        final resultMap = Map<String, dynamic>.from(decoded);
+        final fileEntries = <String, XFile>{};
+        resultMap.forEach((key, value) {
+          if (key.endsWith('_path') && value is String) {
+            try {
+              if (!kIsWeb) {
+                final file = File(value);
+                if (file.existsSync()) {
+                  final originalKey = key.substring(0, key.length - 5);
+                  fileEntries[originalKey] = XFile(value);
+                }
+              }
+            } catch (_) {}
+          }
+        });
+        resultMap.addAll(fileEntries);
+        return resultMap;
+      }
+    } catch (_) {}
+    return {};
+  }
+
+  static Future<void> clearDriverRegDraft() async {
+    await Future.wait([
+      _prefs.remove(_driverRegStageKey),
+      _prefs.remove(_driverRegDraftKey),
+    ]);
+  }
 }

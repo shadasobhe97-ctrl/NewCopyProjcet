@@ -4,6 +4,7 @@ import 'package:kids_transport/features/auth/registration/logic/register_cubit.d
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
+import 'package:kids_transport/core/utils/app_validators.dart';
 
 class ParentAlternativePhoneScreen extends StatefulWidget {
   const ParentAlternativePhoneScreen({super.key});
@@ -38,6 +39,7 @@ class _ParentAlternativePhoneScreenState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final cubit = context.read<RegisterCubit>();
 
     return Scaffold(
       appBar: AppBar(
@@ -103,18 +105,16 @@ class _ParentAlternativePhoneScreenState
                   keyboardType: TextInputType.phone,
                   textDirection: TextDirection.ltr,
                   textAlign: TextAlign.left,
-                  decoration: AppTheme.inputDecoration(context, 
+                  decoration: AppTheme.inputDecoration(
+                    context,
                     hintText: "09XXXXXXXX",
                     prefixIcon: Icon(Icons.phone_enabled_outlined),
                   ),
-                  validator: (value) {
-                    if (value != null &&
-                        value.trim().isNotEmpty &&
-                        value.trim().length < 7) {
-                      return "يجب ألا يقل رقم الهاتف عن 7 أرقام";
-                    }
-                    return null;
-                  },
+                  validator: (value) => AppValidators.validateLibyanPhone(
+                    value,
+                    isRequired: false,
+                    primaryPhone: cubit.phoneNumber,
+                  ),
                 ),
 
                 const Spacer(),
@@ -125,7 +125,9 @@ class _ParentAlternativePhoneScreenState
                     if (phone.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('الرجاء إدخال رقم الهاتف البديل أو اضغط "تخطي"'),
+                          content: Text(
+                            'الرجاء إدخال رقم الهاتف البديل أو اضغط "تخطي"',
+                          ),
                           backgroundColor: AppColors.orange,
                         ),
                       );
@@ -140,7 +142,10 @@ class _ParentAlternativePhoneScreenState
                   ),
                   child: Text(
                     "التالي",
-                    style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: AppTextStyles.style(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),

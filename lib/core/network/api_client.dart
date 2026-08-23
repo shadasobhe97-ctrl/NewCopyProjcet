@@ -166,6 +166,7 @@ class ApiClient {
 
   Future<Response<dynamic>> delete(
     String path, {
+    dynamic data,
     Map<String, dynamic>? headers,
   }) async {
     final fullUrl = '${_dio.options.baseUrl}$path';
@@ -175,6 +176,7 @@ class ApiClient {
     try {
       final response = await _dio.delete(
         path,
+        data: data,
         options: Options(headers: headers),
       );
       debugPrint('<-- STATUS ${response.statusCode} ($path)');

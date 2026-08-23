@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import '../data_sources/vehicle_remote_data_source.dart';
 import '../models/vehicle_model.dart';
@@ -49,7 +48,7 @@ class VehicleRepository {
     String? type,
     int? capacityManual,
     bool? hasAc,
-    File? vehicleImage,
+    dynamic vehicleImage,
   }) async {
     try {
       final response = await remoteDataSource.updateVehicleDetails(
@@ -81,9 +80,9 @@ class VehicleRepository {
     String? licenseNumber,
     String? licenseExpiry,
     String? insuranceExpiry,
-    File? docLicense,
-    File? docLogbook,
-    File? docInsurance,
+    dynamic docLicense,
+    dynamic docLogbook,
+    dynamic docInsurance,
   }) async {
     try {
       final response = await remoteDataSource.updateLegalData(
@@ -106,9 +105,9 @@ class VehicleRepository {
     String? licenseNumber,
     String? licenseExpiry,
     String? insuranceExpiry,
-    File? docLicense,
-    File? docLogbook,
-    File? docInsurance,
+    dynamic docLicense,
+    dynamic docLogbook,
+    dynamic docInsurance,
   }) =>
       updateLegalData(
         nationalId: nationalId,

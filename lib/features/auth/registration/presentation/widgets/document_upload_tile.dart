@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -8,7 +7,7 @@ class DocumentUploadTile extends StatefulWidget {
   final String title;
   final String description;
   final IconData icon;
-  final Function(File?) onImagePicked;
+  final Function(dynamic) onImagePicked;
 
   const DocumentUploadTile({
     super.key,
@@ -23,7 +22,7 @@ class DocumentUploadTile extends StatefulWidget {
 }
 
 class _DocumentUploadTileState extends State<DocumentUploadTile> {
-  File? _pickedFile;
+  XFile? _pickedXFile;
   final ImagePicker _picker = ImagePicker();
 
   // 📸 دالة الخيارات السفلية المدمجة لمنع التخطي المفاجئ والكراش
@@ -72,15 +71,17 @@ class _DocumentUploadTileState extends State<DocumentUploadTile> {
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
-        imageQuality: 60, // ضغط الصورة لحماية الذاكرة وسرعة الرفع
+        maxWidth: 1280,
+        maxHeight: 1280,
+        imageQuality: 60, // ضغط ممتاز لحجم صغير وقراءة واضحة للوثائق
       );
 
       if (image != null) {
         setState(() {
-          _pickedFile = File(image.path);
+          _pickedXFile = image;
         });
         // تمرير الملف المختار للـ Screen الأساسية لتجميعه
-        widget.onImagePicked(_pickedFile);
+        widget.onImagePicked(_pickedXFile);
       }
     } catch (e) {
       debugPrint("خطأ أثناء التقاط صورة المستند: $e");
@@ -91,7 +92,7 @@ class _DocumentUploadTileState extends State<DocumentUploadTile> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isUploaded = _pickedFile != null;
+    final isUploaded = _pickedXFile != null;
 
     return InkWell(
       onTap: _showSourceOptions, // عند الضغط على الـ Tile بالكامل تظهر الخيارات

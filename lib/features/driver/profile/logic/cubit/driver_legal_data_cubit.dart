@@ -30,7 +30,7 @@ class DriverLegalDataCubit extends Cubit<DriverLegalDataState> {
     String? licenseNumber,
     String? licenseExpiry,
     String? insuranceExpiry,
-    Map<String, File>? newFiles,
+    Map<String, dynamic>? newFiles,
   }) async {
     final currentModel = _cachedLegalData;
     if (currentModel != null) {

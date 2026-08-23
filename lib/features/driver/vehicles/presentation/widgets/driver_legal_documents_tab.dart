@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/widgets/app_image_widget.dart';
 import 'package:kids_transport/core/widgets/fullscreen_image_viewer.dart';
 import 'package:kids_transport/features/driver/profile/data/models/driver_legal_data_model.dart';
 import 'package:kids_transport/features/driver/profile/logic/cubit/driver_legal_data_cubit.dart';
@@ -33,7 +33,7 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
   late TextEditingController _insuranceExpiryController;
 
   // الخريطة الاحتفاظ بالصور المعدلة حسب نوع الوثيقة (مثل LICENSE, VEHICLE_LOGBOOK, INSURANCE)
-  final Map<String, File> _newFilesMap = {};
+  final Map<String, dynamic> _newFilesMap = {};
 
   final ImagePicker _picker = ImagePicker();
 
@@ -73,11 +73,13 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
-        imageQuality: 85,
+        maxWidth: 1280,
+        maxHeight: 1280,
+        imageQuality: 60,
       );
       if (image != null) {
         setState(() {
-          _newFilesMap[typeKey] = File(image.path);
+          _newFilesMap[typeKey] = image;
         });
       }
     } catch (e) {
@@ -677,20 +679,10 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                       height: 180,
                       width: double.infinity,
                       color: isDark ? AppColors.grey800 : AppColors.grey100,
-                      child: newFile != null
-                          ? Image.file(newFile, fit: BoxFit.cover)
-                          : fileModel.fileUrl.isNotEmpty
-                              ? Image.network(
-                                  fileModel.fileUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Center(
-                                    child: Icon(Icons.broken_image, size: 48),
-                                  ),
-                                )
-                              : const Center(
-                                  child: Text('لا توجد صورة معروضة'),
-                                ),
+                      child: AppImageWidget(
+                        image: newFile ?? fileModel.fileUrl,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     Positioned(
                       bottom: 8,

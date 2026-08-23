@@ -1,11 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/widgets/app_image_widget.dart';
 
 class FullscreenImageViewer extends StatelessWidget {
   final String? imageUrl;
-  final File? imageFile;
+  final dynamic imageFile;
   final String title;
 
   const FullscreenImageViewer({
@@ -21,7 +20,7 @@ class FullscreenImageViewer extends StatelessWidget {
   static void show(
     BuildContext context, {
     String? imageUrl,
-    File? imageFile,
+    dynamic imageFile,
     String title = 'معاينة الصورة',
   }) {
     Navigator.of(context).push(
@@ -59,40 +58,11 @@ class FullscreenImageViewer extends StatelessWidget {
           minScale: 0.5,
           maxScale: 4.0,
           child: Hero(
-            tag: imageUrl ?? imageFile?.path ?? 'fullscreen_image',
-            child: imageFile != null
-                ? Image.file(imageFile!, fit: BoxFit.contain)
-                : Image.network(
-                    imageUrl!,
-                    fit: BoxFit.contain,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                              : null,
-                          color: AppColors.primaryLight,
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) => Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.broken_image_rounded,
-                          size: 64,
-                          color: Colors.white54,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'تعذر تحميل الصورة',
-                          style: AppTextStyles.style(color: Colors.white70),
-                        ),
-                      ],
-                    ),
-                  ),
+            tag: imageUrl ?? imageFile?.toString() ?? 'fullscreen_image',
+            child: AppImageWidget(
+              image: imageFile ?? imageUrl,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       ),
