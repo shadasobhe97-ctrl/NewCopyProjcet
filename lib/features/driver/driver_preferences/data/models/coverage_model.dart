@@ -12,13 +12,29 @@ class CoverageModel {
   });
 
   factory CoverageModel.fromJson(Map<String, dynamic> json) {
+    final mName = json['municipality_name']?.toString() ??
+        json['municipality']?['name']?.toString() ??
+        json['name']?.toString() ??
+        '';
+    final subName = json['sub_municipality_name']?.toString() ??
+        json['sub_municipality']?['name']?.toString() ??
+        json['name']?.toString() ??
+        '';
+
+    final List<ZoneModel> parsedZones = [];
+    final rawZones = json['zones'];
+    if (rawZones is List) {
+      for (final item in rawZones) {
+        if (item is Map) {
+          parsedZones.add(ZoneModel.fromJson(Map<String, dynamic>.from(item)));
+        }
+      }
+    }
+
     return CoverageModel(
-      municipalityName: json['municipality_name'] as String? ?? '',
-      subMunicipalityName: json['sub_municipality_name'] as String? ?? '',
-      zones: (json['zones'] as List<dynamic>?)
-              ?.map((e) => ZoneModel.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+      municipalityName: mName,
+      subMunicipalityName: subName,
+      zones: parsedZones,
     );
   }
 

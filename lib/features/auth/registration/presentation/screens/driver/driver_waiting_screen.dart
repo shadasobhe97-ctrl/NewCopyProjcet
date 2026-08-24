@@ -71,10 +71,7 @@ class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
 
   // 📞 دالة الاتصال الهاتفي بمركز الشركة
   Future<void> _makePhoneCall(String phoneNumber) async {
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: phoneNumber,
-    );
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
     try {
       if (await canLaunchUrl(launchUri)) {
         await launchUrl(launchUri);
@@ -115,97 +112,120 @@ class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
             }
           },
           child: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 20.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 20),
-
-                  // أيقونة الانتظار والمراجعة
-                  const Icon(
-                    Icons.hourglass_top_rounded,
-                    size: 80,
-                    color: AppColors.orange,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // العنوان الرئيسي
-                  Text(
-                    "طلبك قيد المراجعة والتدقيق",
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppColors.white : AppColors.black,
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 24.0,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // أيقونة الانتظار
+                    const Icon(
+                      Icons.hourglass_top_rounded,
+                      size: 72,
+                      color: AppColors.orange,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 16),
 
-                  // النص التوضيحي
-                  Text(
-                    "سيتم مراجعة بياناتك، ويجب عليك التوجه إلى مركز الشركة لإتمام إجراءات تفعيل حسابك.",
-                    style: AppTextStyles.style(
-                      color: AppColors.grey,
-                      fontSize: 14,
-                      height: 1.5,
+                    // العنوان الرئيسي
+                    Text(
+                      "طلبك قيد المراجعة",
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppColors.white : AppColors.black,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 28),
+                    const SizedBox(height: 8),
 
-                  // 📍 قسم: زيارة مركز الشركة
-                  _buildCardSection(
-                    theme: theme,
-                    isDark: isDark,
-                    icon: Icons.location_on_outlined,
-                    title: "📍 زيارة مركز الشركة",
-                    description:
-                        "يرجى التوجه إلى مركز الشركة لإتمام إجراءات التفعيل والتدقيق.",
-                    actionButton: ElevatedButton.icon(
-                      onPressed: _openGoogleMapsLocation,
-                      icon: const Icon(Icons.map_outlined),
-                      label: const Text("📍 عرض موقع مركز الشركة"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.primaryColor,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                    // النص التوضيحي البسيط جداً
+                    Text(
+                      "يرجى زيارة مركز الشركة لإتمام إجراءات التفعيل والتدقيق.",
+                      style: AppTextStyles.style(
+                        color: AppColors.grey,
+                        fontSize: 14,
+                        height: 1.4,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // 📍 قسم: موقع مركز الشركة
+                    _buildCardSection(
+                      theme: theme,
+                      isDark: isDark,
+                      icon: Icons.location_on_outlined,
+                      title: "موقع مركز الشركة",
+                      actionButton: ElevatedButton(
+                        onPressed: _openGoogleMapsLocation,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          "عرض الموقع على الخريطة",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
-                  // 🕐 قسم: مواعيد العمل
-                  _buildCardSection(
-                    theme: theme,
-                    isDark: isDark,
-                    icon: Icons.access_time_rounded,
-                    title: "🕐 مواعيد العمل",
-                    description: "السبت – الخميس\n9:00 صباحًا – 3:00 مساءً",
-                  ),
-                  const SizedBox(height: 16),
+                    // 🕐 قسم: مواعيد العمل
+                    _buildCardSection(
+                      theme: theme,
+                      isDark: isDark,
+                      icon: Icons.access_time_rounded,
+                      title: "مواعيد العمل",
+                      description: "السبت – الخميس (9:00 صباحاً – 3:00 مساءً)",
+                    ),
+                    const SizedBox(height: 12),
 
-                  // 📞 قسم: التواصل مع الشركة
-                  _buildCardSection(
-                    theme: theme,
-                    isDark: isDark,
-                    icon: Icons.phone_in_talk_outlined,
-                    title: "📞 التواصل مع الشركة",
-                    description: "للاستفسار أو التواصل مع الشركة",
-                    actionButton: ElevatedButton.icon(
-                      onPressed: () => _makePhoneCall('0912946277'),
-                      icon: const Icon(Icons.phone_enabled_rounded),
-                      label: const Text("📞 0912946277 — اتصل بمركز الشركة"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.green,
-                        foregroundColor: AppColors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                    // 📞 قسم: التواصل والتلفون
+                    _buildCardSection(
+                      theme: theme,
+                      isDark: isDark,
+                      icon: Icons.phone_in_talk_outlined,
+                      title: "التواصل والدعم",
+                      actionButton: OutlinedButton.icon(
+                        onPressed: () => _makePhoneCall('0912946277'),
+                        icon: Icon(
+                          Icons.phone_enabled_rounded,
+                          size: 20,
+                          color: theme.primaryColor,
+                        ),
+                        label: Text(
+                          "الاتصال بمركز الشركة 0912946277",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: theme.primaryColor,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: isDark
+                              ? AppColors.grey900
+                              : Colors.white,
+                          foregroundColor: theme.primaryColor,
+                          side: BorderSide(
+                            color: theme.primaryColor,
+                            width: 1.5,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
             ),
           ),
@@ -219,47 +239,48 @@ class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
     required bool isDark,
     required IconData icon,
     required String title,
-    required String description,
+    String? description,
     Widget? actionButton,
   }) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       color: isDark ? AppColors.grey900 : AppColors.white,
       child: Padding(
-        padding: const EdgeInsets.all(18.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               children: [
-                Icon(icon, color: theme.primaryColor, size: 24),
+                Icon(icon, color: theme.primaryColor, size: 22),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     title,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
+                      fontSize: 15,
                     ),
                     textAlign: TextAlign.right,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            Text(
-              description,
-              style: AppTextStyles.style(
-                color: isDark ? AppColors.grey300 : AppColors.grey700,
-                fontSize: 14,
-                height: 1.5,
+            if (description != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                description,
+                style: AppTextStyles.style(
+                  color: isDark ? AppColors.grey300 : AppColors.grey700,
+                  fontSize: 13.5,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.right,
               ),
-              textAlign: TextAlign.right,
-            ),
+            ],
             if (actionButton != null) ...[
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               actionButton,
             ],
           ],

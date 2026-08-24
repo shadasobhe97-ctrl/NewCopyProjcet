@@ -9,7 +9,6 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/primary_button.dart';
 import '../../data/models/coverage_model.dart';
 import '../../data/models/zone_model.dart';
-import '../../data/models/seat_slot_model.dart';
 import '../../logic/driver_preferences_cubit.dart';
 import '../../logic/driver_preferences_state.dart';
 
@@ -33,14 +32,15 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
     'afternoon_return': false,
   };
 
+  bool _isMorningExpanded = true;
+  bool _isAfternoonExpanded = true;
+
   String? _selectedSubtype;
   final Set<String> _selectedSchoolStages = {};
-  
-  // 🎯 المتغيرات الخاصة بالبلدية الفرعية والمناطق
+
   String? _selectedSubMunicipalityKey;
   final Set<int> _selectedZones = {};
 
-  // قائمة المراحل الدراسية المتاحة بالنظام
   final List<Map<String, String>> _availableSchoolStages = const [
     {'value': 'kindergarten', 'label': 'روضة'},
     {'value': 'primary', 'label': 'ابتدائي'},
@@ -64,7 +64,6 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
 
     setState(() {
       _selectedSubMunicipalityKey = key;
-      // 🎯 مسح التحديدات القديمة وإخفاء مناطق البلدية الفرعية السابقة
       _selectedZones.clear();
     });
   }
@@ -92,7 +91,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
   void _onSave() {
     final hasAnyShift = _selectedShifts.values.any((isSelected) => isSelected);
     if (!hasAnyShift) {
-      _showErrorDialog('يجب اختيار فترة عمل واحدة على الأقل.');
+      _showErrorDialog('يجب اختيار فترة نقل واحدة على الأقل.');
       return;
     }
 
@@ -122,6 +121,55 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
     };
 
     context.read<DriverPreferencesCubit>().updatePreferences(payload);
+  }
+
+  void _showSuccessDialog() {
+    final isDark = context.isDarkMode;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        backgroundColor:
+            isDark ? AppColors.surfaceDark : AppColors.white,
+        title: Text(
+          'تم حفظ إعدادات النقل',
+          style: AppTextStyles.style(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
+            color: isDark ? AppColors.white : AppColors.textDark,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          'بناءً على إعدادات النقل التي تم إدخالها، ستتلقى طلبات الرحلات المطابقة لتفضيلاتك ومواصفات حافلتك (عدد المقاعد وتكييف الهواء).\n\nنتمنى لك رحلات آمنة وموفقة!',
+          style: AppTextStyles.style(
+            fontSize: 14.sp,
+            height: 1.5,
+            color: isDark ? AppColors.white70 : AppColors.textDark,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: PrimaryButton(
+              label: 'حسناً',
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.driverMainWrapper,
+                  (route) => false,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showErrorDialog(String message) {
@@ -172,7 +220,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
         backgroundColor: context.backgroundSurface,
         appBar: AppBar(
           title: Text(
-            'تفضيلات العمل',
+            'إعدادات النقل',
             style: AppTextStyles.style(
               fontSize: 18.sp,
               fontWeight: FontWeight.bold,
@@ -195,42 +243,11 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
         body: BlocConsumer<DriverPreferencesCubit, DriverPreferencesState>(
           listener: (context, state) {
             if (state is UpdatePreferencesSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'تم تحديث تفضيلاتك بنجاح.',
-                    style: AppTextStyles.style(color: AppColors.white),
-                  ),
-                  backgroundColor: context.successColor,
-                ),
-              );
-              if (widget.isMandatory) {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  AppRoutes.driverMainWrapper,
-                  (route) => false,
-                );
-              }
+              _showSuccessDialog();
             } else if (state is UpdatePreferencesError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    state.message,
-                    style: AppTextStyles.style(color: AppColors.white),
-                  ),
-                  backgroundColor: context.errorColor,
-                ),
-              );
+              _showErrorDialog(state.message);
             } else if (state is PreferenceDefaultsError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    state.message,
-                    style: AppTextStyles.style(color: AppColors.white),
-                  ),
-                  backgroundColor: context.errorColor,
-                ),
-              );
+              _showErrorDialog(state.message);
             }
           },
           builder: (context, state) {
@@ -254,17 +271,14 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
               _selectedShifts['afternoon_go'] = prefs.shiftSlots.afternoonGo;
               _selectedShifts['afternoon_return'] = prefs.shiftSlots.afternoonReturn;
 
-              // معالجة نوع الاشتراك الحالي ليتطابق مع (single_day, multi_day, both)
               String rawType = prefs.subscriptionType.toLowerCase();
               if (rawType == 'daily') rawType = 'single_day';
               if (rawType == 'monthly') rawType = 'multi_day';
               _selectedSubtype = rawType.isNotEmpty ? rawType : null;
 
-              // قراءة المراحل الدراسية الحالية
               _selectedSchoolStages.clear();
               _selectedSchoolStages.addAll(prefs.schoolStages);
 
-              // قراءة التغطية والمناطق المحفوظة
               _selectedZones.clear();
               if (prefs.coverage.isNotEmpty) {
                 final firstCoverage = prefs.coverage.first;
@@ -279,8 +293,6 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
               _isInitialized = true;
             }
 
-            final seatSlots = cubit.preferences?.seatSlots;
-
             return SafeArea(
               child: Column(
                 children: [
@@ -293,53 +305,40 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (widget.isMandatory) ...[
-                            _buildWelcomeHeader(),
-                            SizedBox(height: 24.h),
-                          ],
-                          _buildSectionTitle(
-                            'أوقات العمل المتاحة',
-                            'قم بتفعيل الفترات التي ترغب بالعمل فيها',
-                          ),
-                          SizedBox(height: 12.h),
-                          _buildShiftSelection(defaults.availableShiftSlots),
-                          SizedBox(height: 28.h),
+                          _buildHeaderBanner(),
+                          SizedBox(height: 20.h),
 
                           _buildSectionTitle(
-                            'المراحل الدراسية المحددة',
-                            'اختر المراحل الدراسية للطلاب الذين يمكنك نقلهم',
+                            'فترات النقل',
+                            'حدد الفترات والرحلات التي تناسب جدولك',
                           ),
-                          SizedBox(height: 12.h),
+                          SizedBox(height: 10.h),
+                          _buildCollapsibleShifts(),
+                          SizedBox(height: 24.h),
+
+                          _buildSectionTitle(
+                            'المراحل الدراسية',
+                            'اختر المراحل الدراسية للطلاب المقبول نقلهم',
+                          ),
+                          SizedBox(height: 10.h),
                           _buildSchoolStagesSelection(),
-                          SizedBox(height: 28.h),
-
-                          if (seatSlots != null) ...[
-                            _buildSectionTitle(
-                              'معلومات المقاعد',
-                              'تفاصيل المقاعد الحالية (للقراءة فقط)',
-                            ),
-                            SizedBox(height: 12.h),
-                            _buildSeatInformation(seatSlots),
-                            SizedBox(height: 28.h),
-                          ],
+                          SizedBox(height: 24.h),
 
                           _buildSectionTitle(
                             'نوع الاشتراك المفضل',
-                            'اختر طبيعة الرحلات التي تفضل العمل بها',
+                            'حدد طبيعة الاشتراكات التي تفضل استلام رحلاتها',
                           ),
-                          SizedBox(height: 12.h),
-                          _buildSubscriptionTypeSelection(
-                            defaults.availableSubscriptionTypes,
-                          ),
-                          SizedBox(height: 28.h),
+                          SizedBox(height: 10.h),
+                          _buildSubscriptionDropdown(),
+                          SizedBox(height: 24.h),
 
                           _buildSectionTitle(
                             'مناطق الخدمة والتغطية',
-                            'اختر بلدية فرعية واحدة لعرض وتحديد مناطق عملك بها',
+                            'اختر البلدية الفرعية ثم حدد مناطق عملك بها',
                           ),
-                          SizedBox(height: 12.h),
-                          _buildGeographyTreeSelection(defaults.geographyTree),
-                          SizedBox(height: 28.h),
+                          SizedBox(height: 10.h),
+                          _buildGeographySelection(defaults.geographyTree),
+                          SizedBox(height: 24.h),
                         ],
                       ),
                     ),
@@ -365,18 +364,18 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
             Icon(
               Icons.error_outline_rounded,
               color: context.errorColor,
-              size: 60.r,
+              size: 56.r,
             ),
             SizedBox(height: 16.h),
             Text(
               message,
               style: AppTextStyles.style(
-                fontSize: 16.sp,
+                fontSize: 15.sp,
                 color: isDark ? AppColors.white : AppColors.textDark,
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 24.h),
+            SizedBox(height: 20.h),
             ElevatedButton(
               onPressed: _loadData,
               child: const Text('إعادة المحاولة'),
@@ -387,46 +386,21 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
     );
   }
 
-  Widget _buildWelcomeHeader() {
+  Widget _buildHeaderBanner() {
     final isDark = context.isDarkMode;
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(14.w),
       decoration: AppTheme.boxDecoration(
         color: isDark ? AppColors.darkCard : AppColors.primaryContainerLight,
-        borderRadius: AppTheme.radius(16.r),
+        borderRadius: AppTheme.radius(12.r),
       ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.info_outline_rounded,
-            color: context.primaryColor,
-            size: 28.r,
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'أهلاً بك في دربي!',
-                  style: AppTextStyles.style(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.white : AppColors.textDark,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  'يرجى إكمال تفضيلات العمل لتتمكن من الانتقال للرئيسية وتلقي طلبات الرحلات.',
-                  style: AppTextStyles.style(
-                    fontSize: 13.sp,
-                    color: isDark ? AppColors.grey400 : AppColors.grey700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+      child: Text(
+        'اختر إعدادات النقل بعناية، حيث سيتم إرسال طلبات الرحلات إليك بناءً على هذه الإعدادات ومواصفات حافلتك.',
+        style: AppTextStyles.style(
+          fontSize: 13.sp,
+          height: 1.4,
+          color: isDark ? AppColors.white70 : AppColors.grey800,
+        ),
       ),
     );
   }
@@ -439,7 +413,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
         Text(
           title,
           style: AppTextStyles.style(
-            fontSize: 16.sp,
+            fontSize: 15.sp,
             fontWeight: FontWeight.bold,
             color: isDark ? AppColors.white : AppColors.textDark,
           ),
@@ -453,247 +427,244 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
     );
   }
 
-  Widget _buildShiftSelection(List<Map<String, dynamic>> availableShiftSlots) {
+  Widget _buildCollapsibleShifts() {
     final isDark = context.isDarkMode;
-    return Column(
-      children: availableShiftSlots.map((item) {
-        final key = item['key'].toString();
-        final title = item['label'].toString();
-        final isSelected = _selectedShifts[key] ?? false;
 
-        return Card(
-          margin: EdgeInsets.only(bottom: 8.h),
-          color: isDark ? AppColors.darkCard : AppColors.white,
-          shape: AppTheme.roundedRectangleBorder(
-            radius: 12.r,
-            side: BorderSide(
-              color: isSelected ? context.primaryColor : Colors.transparent,
-              width: 1.5,
-            ),
-          ),
-          child: SwitchListTile(
-            title: Text(
-              title,
-              style: AppTextStyles.style(
-                fontSize: 14.sp,
-                color: isDark ? AppColors.white : AppColors.textDark,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-            value: isSelected,
-            activeTrackColor: context.primaryColor.withValues(alpha: 0.5),
-            activeThumbColor: context.primaryColor,
-            onChanged: (bool value) {
-              setState(() {
-                _selectedShifts[key] = value;
-              });
-            },
-          ),
-        );
-      }).toList(),
-    );
-  }
+    final morningActive = (_selectedShifts['morning_go'] ?? false) ||
+        (_selectedShifts['morning_return'] ?? false);
+    final afternoonActive = (_selectedShifts['afternoon_go'] ?? false) ||
+        (_selectedShifts['afternoon_return'] ?? false);
 
-  // 🎯 ويدجت اختيار المراحل الدراسية (روضة، ابتدائي، إعدادي، ثانوي)
-  Widget _buildSchoolStagesSelection() {
-    final isDark = context.isDarkMode;
-    return Wrap(
-      spacing: 10.w,
-      runSpacing: 10.h,
-      children: _availableSchoolStages.map((stage) {
-        final value = stage['value']!;
-        final label = stage['label']!;
-        final isSelected = _selectedSchoolStages.contains(value);
-
-        return FilterChip(
-          label: Text(label),
-          selected: isSelected,
-          selectedColor: context.primaryColor.withValues(alpha: 0.2),
-          checkmarkColor: context.primaryColor,
-          labelStyle: AppTextStyles.style(
-            fontSize: 13.sp,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected
-                ? context.primaryColor
-                : (isDark ? AppColors.white70 : AppColors.textDark),
-          ),
-          backgroundColor: isDark ? AppColors.darkCard : AppColors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10.r),
-            side: BorderSide(
-              color: isSelected
-                  ? context.primaryColor
-                  : (isDark ? AppColors.grey800 : AppColors.grey300),
-              width: isSelected ? 1.5 : 1,
-            ),
-          ),
-          onSelected: (_) => _onSchoolStageTapped(value),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildSeatInformation(SeatSlotModel seatSlots) {
-    final isDark = context.isDarkMode;
-    return Card(
-      margin: EdgeInsets.zero,
-      color: isDark ? AppColors.darkCard : AppColors.white,
-      shape: AppTheme.roundedRectangleBorder(
-        radius: 12.r,
-        side: BorderSide(color: isDark ? AppColors.grey800 : AppColors.grey200),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildSeatItem(
-              'الإجمالي',
-              seatSlots.totalSeats.toString(),
-              Icons.event_seat_rounded,
-              Colors.blue,
-            ),
-            _buildSeatItem(
-              'المحجوز',
-              seatSlots.reservedSeats.toString(),
-              Icons.event_seat_rounded,
-              Colors.orange,
-            ),
-            _buildSeatItem(
-              'المتبقي',
-              seatSlots.availableSeats.toString(),
-              Icons.event_seat_rounded,
-              Colors.green,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSeatItem(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    final isDark = context.isDarkMode;
     return Column(
       children: [
-        Icon(icon, color: color, size: 24.r),
-        SizedBox(height: 8.h),
-        Text(
-          value,
-          style: AppTextStyles.style(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-            color: isDark ? AppColors.white : AppColors.textDark,
+        // الفترة الصباحية
+        Card(
+          margin: EdgeInsets.only(bottom: 10.h),
+          color: isDark ? AppColors.darkCard : AppColors.white,
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
+            side: BorderSide(
+              color: morningActive
+                  ? context.primaryColor
+                  : (isDark ? AppColors.grey800 : AppColors.grey200),
+              width: morningActive ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              ListTile(
+                title: Text(
+                  'فترة الصباح',
+                  style: AppTextStyles.style(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.white : AppColors.textDark,
+                  ),
+                ),
+                trailing: Icon(
+                  _isMorningExpanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  color: context.primaryColor,
+                ),
+                onTap: () {
+                  setState(() => _isMorningExpanded = !_isMorningExpanded);
+                },
+              ),
+              if (_isMorningExpanded) ...[
+                Divider(height: 1, color: isDark ? AppColors.grey800 : AppColors.grey200),
+                CheckboxListTile(
+                  title: Text(
+                    'ذهاب صباحي',
+                    style: AppTextStyles.style(fontSize: 13.5.sp),
+                  ),
+                  value: _selectedShifts['morning_go'] ?? false,
+                  activeColor: context.primaryColor,
+                  onChanged: (val) {
+                    setState(() => _selectedShifts['morning_go'] = val ?? false);
+                  },
+                ),
+                CheckboxListTile(
+                  title: Text(
+                    'عودة صباحية',
+                    style: AppTextStyles.style(fontSize: 13.5.sp),
+                  ),
+                  value: _selectedShifts['morning_return'] ?? false,
+                  activeColor: context.primaryColor,
+                  onChanged: (val) {
+                    setState(() => _selectedShifts['morning_return'] = val ?? false);
+                  },
+                ),
+              ],
+            ],
           ),
         ),
-        SizedBox(height: 4.h),
-        Text(
-          label,
-          style: AppTextStyles.style(fontSize: 12.sp, color: AppColors.grey500),
+
+        // فترة الظهر والمساء
+        Card(
+          margin: EdgeInsets.zero,
+          color: isDark ? AppColors.darkCard : AppColors.white,
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
+            side: BorderSide(
+              color: afternoonActive
+                  ? context.primaryColor
+                  : (isDark ? AppColors.grey800 : AppColors.grey200),
+              width: afternoonActive ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              ListTile(
+                title: Text(
+                  'فترة الظهر والمساء',
+                  style: AppTextStyles.style(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.white : AppColors.textDark,
+                  ),
+                ),
+                trailing: Icon(
+                  _isAfternoonExpanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  color: context.primaryColor,
+                ),
+                onTap: () {
+                  setState(() => _isAfternoonExpanded = !_isAfternoonExpanded);
+                },
+              ),
+              if (_isAfternoonExpanded) ...[
+                Divider(height: 1, color: isDark ? AppColors.grey800 : AppColors.grey200),
+                CheckboxListTile(
+                  title: Text(
+                    'ذهاب مسائي / ظهر',
+                    style: AppTextStyles.style(fontSize: 13.5.sp),
+                  ),
+                  value: _selectedShifts['afternoon_go'] ?? false,
+                  activeColor: context.primaryColor,
+                  onChanged: (val) {
+                    setState(() => _selectedShifts['afternoon_go'] = val ?? false);
+                  },
+                ),
+                CheckboxListTile(
+                  title: Text(
+                    'عودة مسائية / ظهر',
+                    style: AppTextStyles.style(fontSize: 13.5.sp),
+                  ),
+                  value: _selectedShifts['afternoon_return'] ?? false,
+                  activeColor: context.primaryColor,
+                  onChanged: (val) {
+                    setState(() => _selectedShifts['afternoon_return'] = val ?? false);
+                  },
+                ),
+              ],
+            ],
+          ),
         ),
       ],
     );
   }
 
-  // 🎯 اختيار نوع الاشتراك (single_day, multi_day, both)
-  Widget _buildSubscriptionTypeSelection(
-    List<Map<String, dynamic>> availableSubscriptionTypes,
-  ) {
-    // قائمة الخيارات بالقيم المحدثة
-    final items = [
-      {'value': 'single_day', 'label': 'يوم واحد (يومي)'},
-      {'value': 'multi_day', 'label': 'أكثر من يوم (متعدد الأيام)'},
-      {'value': 'both', 'label': 'كلاهما (جميع الأنواع)'},
-    ];
+  Widget _buildSchoolStagesSelection() {
+    final isDark = context.isDarkMode;
+    return Wrap(
+      spacing: 8.w,
+      runSpacing: 8.h,
+      children: _availableSchoolStages.map((stage) {
+        final value = stage['value']!;
+        final label = stage['label']!;
+        final isSelected = _selectedSchoolStages.contains(value);
 
-    return Column(
-      children: items.map((item) {
-        final key = item['value']!;
-        final title = item['label']!;
-
-        IconData icon = Icons.today_rounded;
-        Color color = Colors.blue;
-        if (key == 'multi_day') {
-          icon = Icons.date_range_rounded;
-          color = Colors.purple;
-        } else if (key == 'both') {
-          icon = Icons.all_inclusive_rounded;
-          color = Colors.green;
-        }
-
-        return Padding(
-          padding: EdgeInsets.only(bottom: 8.h),
-          child: _buildSubtypeCard(key, title, icon, color),
+        return InkWell(
+          onTap: () => _onSchoolStageTapped(value),
+          borderRadius: BorderRadius.circular(10.r),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? context.primaryColor.withValues(alpha: isDark ? 0.2 : 0.08)
+                  : (isDark ? AppColors.darkCard : AppColors.white),
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(
+                color: isSelected
+                    ? context.primaryColor
+                    : (isDark ? AppColors.grey800 : AppColors.grey300),
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            child: Text(
+              label,
+              style: AppTextStyles.style(
+                fontSize: 13.sp,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected
+                    ? context.primaryColor
+                    : (isDark ? AppColors.white70 : AppColors.textDark),
+              ),
+            ),
+          ),
         );
       }).toList(),
     );
   }
 
-  Widget _buildSubtypeCard(
-    String value,
-    String title,
-    IconData icon,
-    Color iconColor,
-  ) {
-    final isSelected = _selectedSubtype == value;
+  Widget _buildSubscriptionDropdown() {
     final isDark = context.isDarkMode;
-
-    return GestureDetector(
-      onTap: () => setState(() => _selectedSubtype = value),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
-        decoration: AppTheme.boxDecoration(
-          color: isSelected
-              ? context.primaryColor.withValues(alpha: isDark ? 0.15 : 0.08)
-              : (isDark ? AppColors.darkCard : AppColors.white),
-          borderRadius: AppTheme.radius(12.r),
-          border: Border.all(
-            color: isSelected
-                ? context.primaryColor
-                : (isDark ? AppColors.grey800 : AppColors.grey200),
-            width: isSelected ? 2 : 1.5,
-          ),
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: _selectedSubtype != null
+              ? context.primaryColor
+              : (isDark ? AppColors.grey800 : AppColors.grey300),
+          width: _selectedSubtype != null ? 1.5 : 1,
         ),
-        child: Row(
-          children: [
-            Icon(icon, color: iconColor, size: 26.r),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Text(
-                title,
-                style: AppTextStyles.style(
-                  fontSize: 14.sp,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected
-                      ? context.primaryColor
-                      : (isDark ? AppColors.white70 : AppColors.textDark),
-                ),
-              ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedSubtype,
+          isExpanded: true,
+          hint: Text(
+            'اختر نوع الاشتراك المفضل',
+            style: AppTextStyles.style(
+              fontSize: 13.5.sp,
+              color: AppColors.grey500,
             ),
-            if (isSelected)
-              Icon(
-                Icons.check_circle_rounded,
-                color: context.primaryColor,
-                size: 22.r,
-              ),
+          ),
+          dropdownColor: isDark ? AppColors.surfaceDark : AppColors.white,
+          items: const [
+            DropdownMenuItem(
+              value: 'single_day',
+              child: Text('يوم واحد (يومي)'),
+            ),
+            DropdownMenuItem(
+              value: 'multi_day',
+              child: Text('أكثر من يوم (متعدد الأيام)'),
+            ),
+            DropdownMenuItem(
+              value: 'both',
+              child: Text('جميع الأنواع (كلاهما)'),
+            ),
           ],
+          onChanged: (val) {
+            setState(() => _selectedSubtype = val);
+          },
         ),
       ),
     );
   }
 
-  // 🎯 ويدجت اختيار البلدية الفرعية الواحدة والمناطق التابعة لها
-  Widget _buildGeographyTreeSelection(List<CoverageModel> geographyTree) {
+  Widget _buildGeographySelection(List<CoverageModel> geographyTree) {
     final isDark = context.isDarkMode;
 
     if (geographyTree.isEmpty) {
       return Container(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(14.w),
         decoration: AppTheme.boxDecoration(
           color: isDark ? AppColors.darkCard : AppColors.white,
           borderRadius: BorderRadius.circular(12.r),
@@ -701,14 +672,13 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
         child: Text(
           'لا توجد مناطق جغرافية متاحة حالياً.',
           style: AppTextStyles.style(
-            fontSize: 14.sp,
-            color: isDark ? AppColors.grey400 : AppColors.grey600,
+            fontSize: 13.sp,
+            color: AppColors.grey500,
           ),
         ),
       );
     }
 
-    // البحث عن البلدية الفرعية المختارة حالياً
     CoverageModel? activeCoverage;
     if (_selectedSubMunicipalityKey != null) {
       for (var coverage in geographyTree) {
@@ -724,16 +694,15 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '1. اختر البلدية الفرعية (تتيح لك تحديد مناطقها فقط):',
+          '1. اختر المحلة / البلدية الفرعية:',
           style: AppTextStyles.style(
             fontSize: 13.sp,
             fontWeight: FontWeight.w600,
             color: isDark ? AppColors.white70 : AppColors.grey700,
           ),
         ),
-        SizedBox(height: 10.h),
-        
-        // عرض قائمة البلديات الفرعية للاختيار (واحدة فقط تكون محددة)
+        SizedBox(height: 8.h),
+
         Column(
           children: geographyTree.map((coverage) {
             final key = '${coverage.municipalityName}_${coverage.subMunicipalityName}';
@@ -747,30 +716,33 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
               margin: EdgeInsets.only(bottom: 8.h),
               child: InkWell(
                 onTap: () => _onSubMunicipalitySelected(coverage),
-                borderRadius: BorderRadius.circular(12.r),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                  decoration: AppTheme.boxDecoration(
+                borderRadius: BorderRadius.circular(10.r),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                  decoration: BoxDecoration(
                     color: isSelected
                         ? context.primaryColor.withValues(alpha: isDark ? 0.2 : 0.08)
                         : (isDark ? AppColors.darkCard : AppColors.white),
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(10.r),
                     border: Border.all(
                       color: isSelected
                           ? context.primaryColor
                           : (isDark ? AppColors.grey800 : AppColors.grey200),
-                      width: isSelected ? 2 : 1,
+                      width: isSelected ? 1.5 : 1,
                     ),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                        color: isSelected ? context.primaryColor : AppColors.grey400,
-                        size: 22.r,
+                        isSelected
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_off,
+                        color: isSelected
+                            ? context.primaryColor
+                            : AppColors.grey400,
+                        size: 20.r,
                       ),
-                      SizedBox(width: 12.w),
+                      SizedBox(width: 10.w),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -778,8 +750,10 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                             Text(
                               subName,
                               style: AppTextStyles.style(
-                                fontSize: 14.sp,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                fontSize: 13.5.sp,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                                 color: isSelected
                                     ? context.primaryColor
                                     : (isDark ? AppColors.white : AppColors.textDark),
@@ -796,20 +770,11 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                           ],
                         ),
                       ),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? context.primaryColor.withValues(alpha: 0.15)
-                              : (isDark ? AppColors.grey800 : AppColors.grey100),
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Text(
-                          '${coverage.zones.length} مناطق',
-                          style: AppTextStyles.style(
-                            fontSize: 11.sp,
-                            color: isSelected ? context.primaryColor : AppColors.grey500,
-                          ),
+                      Text(
+                        '${coverage.zones.length} مناطق',
+                        style: AppTextStyles.style(
+                          fontSize: 11.sp,
+                          color: isSelected ? context.primaryColor : AppColors.grey500,
                         ),
                       ),
                     ],
@@ -820,14 +785,13 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
           }).toList(),
         ),
 
-        // 🎯 2. عرض المناطق الخاصة بالبلدية الفرعية المختارة فقط
         if (activeCoverage != null) ...[
-          SizedBox(height: 16.h),
+          SizedBox(height: 14.h),
           Container(
-            padding: EdgeInsets.all(14.w),
-            decoration: AppTheme.boxDecoration(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
               color: isDark ? AppColors.darkCard : AppColors.white,
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
                 color: context.primaryColor.withValues(alpha: 0.3),
                 width: 1.5,
@@ -836,27 +800,15 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.map_rounded,
-                      color: context.primaryColor,
-                      size: 20.r,
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Text(
-                        'مناطق الخدمة في (${activeCoverage.subMunicipalityName}):',
-                        style: AppTextStyles.style(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? AppColors.white : AppColors.textDark,
-                        ),
-                      ),
-                    ),
-                  ],
+                Text(
+                  'مناطق الخدمة المتاحة في (${activeCoverage.subMunicipalityName}):',
+                  style: AppTextStyles.style(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.white : AppColors.textDark,
+                  ),
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: 10.h),
                 Wrap(
                   spacing: 8.w,
                   runSpacing: 8.h,
@@ -866,16 +818,20 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                     return FilterChip(
                       label: Text(zone.name),
                       selected: isZoneSelected,
-                      selectedColor: context.primaryColor.withValues(alpha: 0.2),
+                      selectedColor:
+                          context.primaryColor.withValues(alpha: 0.2),
                       checkmarkColor: context.primaryColor,
                       labelStyle: AppTextStyles.style(
                         fontSize: 12.sp,
-                        fontWeight: isZoneSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: isZoneSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         color: isZoneSelected
                             ? context.primaryColor
                             : (isDark ? AppColors.white70 : AppColors.textDark),
                       ),
-                      backgroundColor: isDark ? AppColors.surfaceDark : AppColors.grey100,
+                      backgroundColor:
+                          isDark ? AppColors.surfaceDark : AppColors.grey100,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.r),
                         side: BorderSide(
@@ -893,10 +849,10 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
             ),
           ),
         ] else ...[
-          SizedBox(height: 12.h),
+          SizedBox(height: 10.h),
           Center(
             child: Text(
-              'يرجى النقر على بلدية فرعية لعرض مناطقها وتحديد مناطق خدمتك.',
+              'يرجى النقر على محلة / بلدية فرعية لعرض مناطقها وتحديدها.',
               style: AppTextStyles.style(
                 fontSize: 12.sp,
                 color: AppColors.grey500,
@@ -923,8 +879,8 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
       decoration: AppTheme.boxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24.r),
-          topRight: Radius.circular(24.r),
+          topLeft: Radius.circular(20.r),
+          topRight: Radius.circular(20.r),
         ),
         boxShadow: [
           BoxShadow(
@@ -937,7 +893,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
         ],
       ),
       child: PrimaryButton(
-        label: 'حفظ تفضيلات العمل',
+        label: 'حفظ إعدادات النقل',
         isLoading: isSaving,
         onPressed: isFormIncomplete ? null : _onSave,
       ),

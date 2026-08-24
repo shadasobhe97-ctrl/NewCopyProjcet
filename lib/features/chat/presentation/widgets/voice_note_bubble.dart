@@ -3,19 +3,20 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 
 class VoiceNoteBubble extends StatefulWidget {
   final String audioUrl;
   final int? durationSeconds;
   final bool isMe;
+  final bool isDark;
 
   const VoiceNoteBubble({
     super.key,
     required this.audioUrl,
     this.durationSeconds,
     required this.isMe,
+    this.isDark = false,
   });
 
   @override
@@ -101,6 +102,16 @@ class _VoiceNoteBubbleState extends State<VoiceNoteBubble> {
 
     final primaryColor = Theme.of(context).colorScheme.primary;
 
+    final Color accentColor = widget.isDark
+        ? const Color(0xFF38BDF8)
+        : primaryColor;
+    final Color inactiveTrackColor = widget.isDark
+        ? const Color(0xFF475569)
+        : const Color(0xFFCBD5E1);
+    final Color durationTextColor = widget.isDark
+        ? const Color(0xFF94A3B8)
+        : const Color(0xFF64748B);
+
     return Container(
       width: 210.w,
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
@@ -114,7 +125,7 @@ class _VoiceNoteBubbleState extends State<VoiceNoteBubble> {
                   ? Icons.pause_circle_filled_rounded
                   : Icons.play_circle_fill_rounded,
               size: 34.r,
-              color: widget.isMe ? Colors.white : primaryColor,
+              color: accentColor,
             ),
             onPressed: _togglePlay,
           ),
@@ -129,11 +140,9 @@ class _VoiceNoteBubbleState extends State<VoiceNoteBubble> {
                     thumbShape: RoundSliderThumbShape(enabledThumbRadius: 5.r),
                     overlayShape: RoundSliderOverlayShape(overlayRadius: 8.r),
                     trackHeight: 3.h,
-                    activeTrackColor:
-                        widget.isMe ? Colors.white : primaryColor,
-                    inactiveTrackColor:
-                        widget.isMe ? Colors.white38 : AppColors.grey300,
-                    thumbColor: widget.isMe ? Colors.white : primaryColor,
+                    activeTrackColor: accentColor,
+                    inactiveTrackColor: inactiveTrackColor,
+                    thumbColor: accentColor,
                   ),
                   child: Slider(
                     value: currentSec,
@@ -150,8 +159,7 @@ class _VoiceNoteBubbleState extends State<VoiceNoteBubble> {
                         _position.inSeconds > 0 ? _position : _duration),
                     style: AppTextStyles.style(
                       fontSize: 10.sp,
-                      color:
-                          widget.isMe ? Colors.white70 : AppColors.textMuted,
+                      color: durationTextColor,
                     ),
                   ),
                 ),

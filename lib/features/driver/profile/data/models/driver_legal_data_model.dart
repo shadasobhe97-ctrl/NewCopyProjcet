@@ -3,6 +3,8 @@ class DriverLegalDataModel {
   final String licenseNumber;
   final String licenseExpiry;
   final String? insuranceExpiry;
+  final String? stampExpiry;
+  final String? technicalInspectionExpiry;
   final String driverStatus;
   final List<DriverUploadedFileModel> uploadedFiles;
 
@@ -11,6 +13,8 @@ class DriverLegalDataModel {
     required this.licenseNumber,
     required this.licenseExpiry,
     this.insuranceExpiry,
+    this.stampExpiry,
+    this.technicalInspectionExpiry,
     required this.driverStatus,
     required this.uploadedFiles,
   });
@@ -40,6 +44,13 @@ class DriverLegalDataModel {
       insuranceExpiry:
           json['insurance_expiry']?.toString() ??
           json['insurance_expiry_date']?.toString(),
+      stampExpiry:
+          json['stamp_expiry']?.toString() ??
+          json['stamp_expiry_date']?.toString(),
+      technicalInspectionExpiry:
+          json['technical_inspection_expiry']?.toString() ??
+          json['technical_inspection_expiry_date']?.toString() ??
+          json['inspection_expiry']?.toString(),
       driverStatus:
           json['driver_status']?.toString() ??
           json['account_status']?.toString() ??
@@ -54,6 +65,9 @@ class DriverLegalDataModel {
       'license_number': licenseNumber,
       'license_expiry': licenseExpiry,
       if (insuranceExpiry != null) 'insurance_expiry': insuranceExpiry,
+      if (stampExpiry != null) 'stamp_expiry': stampExpiry,
+      if (technicalInspectionExpiry != null)
+        'technical_inspection_expiry': technicalInspectionExpiry,
       'driver_status': driverStatus,
       'uploaded_files': uploadedFiles.map((e) => e.toJson()).toList(),
     };
@@ -68,6 +82,8 @@ class DriverUploadedFileModel {
   final String uploadedAt;
   final String? licenseExpiryDate;
   final String? insuranceExpiryDate;
+  final String? stampExpiryDate;
+  final String? technicalInspectionExpiryDate;
   final String? feedback;
 
   const DriverUploadedFileModel({
@@ -78,6 +94,8 @@ class DriverUploadedFileModel {
     required this.uploadedAt,
     this.licenseExpiryDate,
     this.insuranceExpiryDate,
+    this.stampExpiryDate,
+    this.technicalInspectionExpiryDate,
     this.feedback,
   });
 
@@ -103,6 +121,9 @@ class DriverUploadedFileModel {
           '',
       licenseExpiryDate: json['license_expiry_date']?.toString(),
       insuranceExpiryDate: json['insurance_expiry_date']?.toString(),
+      stampExpiryDate: json['stamp_expiry_date']?.toString(),
+      technicalInspectionExpiryDate:
+          json['technical_inspection_expiry_date']?.toString(),
       feedback:
           json['feedback']?.toString() ??
           json['rejection_reason']?.toString(),
@@ -119,6 +140,9 @@ class DriverUploadedFileModel {
       if (licenseExpiryDate != null) 'license_expiry_date': licenseExpiryDate,
       if (insuranceExpiryDate != null)
         'insurance_expiry_date': insuranceExpiryDate,
+      if (stampExpiryDate != null) 'stamp_expiry_date': stampExpiryDate,
+      if (technicalInspectionExpiryDate != null)
+        'technical_inspection_expiry_date': technicalInspectionExpiryDate,
       if (feedback != null) 'feedback': feedback,
     };
   }
@@ -126,11 +150,18 @@ class DriverUploadedFileModel {
   String get typeArabicTitle {
     switch (type.toUpperCase()) {
       case 'LICENSE':
-        return 'رخصة القيادة';
-      case 'VEHICLE_LOGBOOK':
-        return 'دفتر المركبة';
+        return 'رخصة القيادة الشخصية';
       case 'INSURANCE':
-        return 'وثيقة التأمين';
+        return 'وثيقة التأمين الإجباري';
+      case 'STAMP':
+        return 'الدمغ (ختم التجديد السنوي)';
+      case 'TECHNICAL_INSPECTION':
+        return 'الفحص الفني للمركبة';
+      case 'BOOKLET_PERSONAL_PAGE':
+      case 'BOOKLET_PAGE':
+        return 'صفحة البيانات الشخصية في الكتيب';
+      case 'VEHICLE_LOGBOOK':
+        return 'دفتر المركبة (مواصفات الحافلة)';
       case 'CRIMINAL_RECORD':
         return 'السجل الجنائي';
       default:

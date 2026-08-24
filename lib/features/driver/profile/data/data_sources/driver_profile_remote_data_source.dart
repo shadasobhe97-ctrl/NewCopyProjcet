@@ -209,6 +209,8 @@ class DriverProfileRemoteDataSource {
     String? licenseNumber,
     String? licenseExpiry,
     String? insuranceExpiry,
+    String? stampExpiry,
+    String? technicalInspectionExpiry,
     Map<String, dynamic>? newFiles,
   }) async {
     try {
@@ -225,6 +227,14 @@ class DriverProfileRemoteDataSource {
       if (insuranceExpiry != null && insuranceExpiry.trim().isNotEmpty) {
         dataMap['insurance_expiry'] = insuranceExpiry.trim();
       }
+      if (stampExpiry != null && stampExpiry.trim().isNotEmpty) {
+        dataMap['stamp_expiry'] = stampExpiry.trim();
+      }
+      if (technicalInspectionExpiry != null &&
+          technicalInspectionExpiry.trim().isNotEmpty) {
+        dataMap['technical_inspection_expiry'] =
+            technicalInspectionExpiry.trim();
+      }
 
       if (newFiles != null && newFiles.isNotEmpty) {
         for (final entry in newFiles.entries) {
@@ -233,13 +243,21 @@ class DriverProfileRemoteDataSource {
             fileInput,
             defaultFilename: '${entry.key.toLowerCase()}.jpg',
           );
-          
+
           if (multipartFile != null) {
             final docTypeKey = entry.key.toUpperCase();
             String apiKey = entry.key;
             if (docTypeKey == 'LICENSE') apiKey = 'doc_license';
             if (docTypeKey == 'VEHICLE_LOGBOOK') apiKey = 'doc_logbook';
             if (docTypeKey == 'INSURANCE') apiKey = 'doc_insurance';
+            if (docTypeKey == 'STAMP') apiKey = 'doc_stamp';
+            if (docTypeKey == 'TECHNICAL_INSPECTION') {
+              apiKey = 'doc_technical_inspection';
+            }
+            if (docTypeKey == 'BOOKLET_PERSONAL_PAGE' ||
+                docTypeKey == 'BOOKLET_PAGE') {
+              apiKey = 'doc_booklet_page';
+            }
 
             dataMap[apiKey] = multipartFile;
           }

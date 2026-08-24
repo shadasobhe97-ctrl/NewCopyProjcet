@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/features/driver/profile/data/models/driver_legal_data_model.dart';
 import 'package:kids_transport/features/driver/profile/data/repositories/driver_profile_repository.dart';
@@ -30,6 +29,8 @@ class DriverLegalDataCubit extends Cubit<DriverLegalDataState> {
     String? licenseNumber,
     String? licenseExpiry,
     String? insuranceExpiry,
+    String? stampExpiry,
+    String? technicalInspectionExpiry,
     Map<String, dynamic>? newFiles,
   }) async {
     final currentModel = _cachedLegalData;
@@ -45,6 +46,8 @@ class DriverLegalDataCubit extends Cubit<DriverLegalDataState> {
         licenseNumber: licenseNumber,
         licenseExpiry: licenseExpiry,
         insuranceExpiry: insuranceExpiry,
+        stampExpiry: stampExpiry,
+        technicalInspectionExpiry: technicalInspectionExpiry,
         newFiles: newFiles,
       );
 

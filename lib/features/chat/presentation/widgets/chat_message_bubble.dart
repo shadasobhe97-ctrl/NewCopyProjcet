@@ -143,6 +143,59 @@ class ChatMessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+
+    // تحديد ألوان الخلفية والحدود بدقة متناهية لتوافق التيم الفاتح والداكن
+    final Color bubbleBg;
+    final Border? bubbleBorder;
+    final Color textColor;
+    final Color timeColor;
+    final Color readCheckmarkColor;
+
+    if (isMe) {
+      if (isDark) {
+        bubbleBg = const Color(0xFF1E293B);
+        bubbleBorder = Border.all(
+          color: primaryColor.withValues(alpha: 0.4),
+          width: 1,
+        );
+        textColor = const Color(0xFFF8FAFC);
+        timeColor = const Color(0xFF94A3B8);
+        readCheckmarkColor = message.isRead
+            ? const Color(0xFF38BDF8) // أزرق سماوي مضيء وواضح في التيم الداكن
+            : const Color(0xFF64748B);
+      } else {
+        bubbleBg = const Color(0xFFEBF3FE); // درجة ناعمة وخفيفة من لون الهوية
+        bubbleBorder = Border.all(
+          color: primaryColor.withValues(alpha: 0.3),
+          width: 1,
+        );
+        textColor = const Color(0xFF0F172A);
+        timeColor = const Color(0xFF64748B);
+        readCheckmarkColor = message.isRead
+            ? const Color(0xFF0284C7) // أزرق غامق بارز وواضح جداً في التيم الفاتح
+            : const Color(0xFF94A3B8);
+      }
+    } else {
+      if (isDark) {
+        bubbleBg = const Color(0xFF0F172A);
+        bubbleBorder = Border.all(
+          color: const Color(0xFF334155),
+          width: 1,
+        );
+        textColor = const Color(0xFFF1F5F9);
+        timeColor = const Color(0xFF94A3B8);
+      } else {
+        bubbleBg = Colors.white;
+        bubbleBorder = Border.all(
+          color: const Color(0xFFE2E8F0),
+          width: 1,
+        );
+        textColor = const Color(0xFF0F172A);
+        timeColor = const Color(0xFF64748B);
+      }
+      readCheckmarkColor = Colors.transparent;
+    }
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -156,9 +209,8 @@ class ChatMessageBubble extends StatelessWidget {
           ),
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
           decoration: BoxDecoration(
-            color: isMe
-                ? theme.colorScheme.primary
-                : (isDark ? AppColors.surfaceDark : AppColors.white),
+            color: bubbleBg,
+            border: bubbleBorder,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(16.r),
               topRight: Radius.circular(16.r),
@@ -167,8 +219,8 @@ class ChatMessageBubble extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 4,
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -177,7 +229,7 @@ class ChatMessageBubble extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildContent(context),
+              _buildContent(context, textColor: textColor, timeColor: timeColor),
               SizedBox(height: 4.h),
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -187,19 +239,15 @@ class ChatMessageBubble extends StatelessWidget {
                     _formatTime(message.timestamp),
                     style: AppTextStyles.style(
                       fontSize: 10.sp,
-                      color: isMe
-                          ? Colors.white70
-                          : (isDark ? AppColors.grey400 : AppColors.textMuted),
+                      color: timeColor,
                     ),
                   ),
                   if (isMe) ...[
                     SizedBox(width: 4.w),
                     Icon(
                       Icons.done_all_rounded,
-                      size: 15.r,
-                      color: message.isRead
-                          ? const Color(0xFF60A5FA)
-                          : Colors.white70,
+                      size: 16.r,
+                      color: readCheckmarkColor,
                     ),
                   ],
                 ],
@@ -211,7 +259,11 @@ class ChatMessageBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context) {
+  Widget _buildContent(
+    BuildContext context, {
+    required Color textColor,
+    required Color timeColor,
+  }) {
     if (message.isDeletedForEveryone) {
       return Row(
         mainAxisSize: MainAxisSize.min,
@@ -219,9 +271,7 @@ class ChatMessageBubble extends StatelessWidget {
           Icon(
             Icons.block_rounded,
             size: 16.r,
-            color: isMe
-                ? Colors.white70
-                : (isDark ? AppColors.grey400 : AppColors.textMuted),
+            color: timeColor,
           ),
           SizedBox(width: 6.w),
           Text(
@@ -229,9 +279,7 @@ class ChatMessageBubble extends StatelessWidget {
             style: AppTextStyles.style(
               fontSize: 13.sp,
               fontStyle: FontStyle.italic,
-              color: isMe
-                  ? Colors.white70
-                  : (isDark ? AppColors.grey400 : AppColors.textMuted),
+              color: timeColor,
             ),
           ),
         ],
@@ -261,7 +309,7 @@ class ChatMessageBubble extends StatelessWidget {
                 ),
                 errorWidget: (context, url, error) => Icon(
                   Icons.broken_image_rounded,
-                  color: isMe ? Colors.white : AppColors.grey600,
+                  color: textColor,
                   size: 40.r,
                 ),
               ),
@@ -272,9 +320,7 @@ class ChatMessageBubble extends StatelessWidget {
                 message.message,
                 style: AppTextStyles.style(
                   fontSize: 13.5.sp,
-                  color: isMe
-                      ? Colors.white
-                      : (isDark ? AppColors.white : AppColors.textDark),
+                  color: textColor,
                 ),
               ),
             ],
@@ -340,9 +386,7 @@ class ChatMessageBubble extends StatelessWidget {
                 message.message,
                 style: AppTextStyles.style(
                   fontSize: 13.5.sp,
-                  color: isMe
-                      ? Colors.white
-                      : (isDark ? AppColors.white : AppColors.textDark),
+                  color: textColor,
                 ),
               ),
             ],
@@ -358,6 +402,7 @@ class ChatMessageBubble extends StatelessWidget {
         audioUrl: message.mediaUrl!,
         durationSeconds: message.audioDuration,
         isMe: isMe,
+        isDark: isDark,
       );
     }
 
@@ -366,9 +411,7 @@ class ChatMessageBubble extends StatelessWidget {
       message.message,
       style: AppTextStyles.style(
         fontSize: 13.5.sp,
-        color: isMe
-            ? Colors.white
-            : (isDark ? AppColors.white : AppColors.textDark),
+        color: textColor,
       ),
     );
   }
