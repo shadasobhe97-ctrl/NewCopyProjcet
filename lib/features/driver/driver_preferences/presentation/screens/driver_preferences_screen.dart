@@ -132,8 +132,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16.r),
         ),
-        backgroundColor:
-            isDark ? AppColors.surfaceDark : AppColors.white,
+        backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
         title: Text(
           'تم حفظ إعدادات النقل',
           style: AppTextStyles.style(
@@ -144,7 +143,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
           textAlign: TextAlign.center,
         ),
         content: Text(
-          'بناءً على إعدادات النقل التي تم إدخالها، ستتلقى طلبات الرحلات المطابقة لتفضيلاتك ومواصفات حافلتك (عدد المقاعد وتكييف الهواء).\n\nنتمنى لك رحلات آمنة وموفقة!',
+          'بناءً على إعدادات النقل التي تم إدخالها، ستتلقى طلبات الرحلات المطابقة لاعدادات ك ومواصفات حافلتك (عدد المقاعد وتكييف الهواء).\n\nنتمنى لك رحلات آمنة وموفقة!',
           style: AppTextStyles.style(
             fontSize: 14.sp,
             height: 1.5,
@@ -267,9 +266,11 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
             if (!_isInitialized && cubit.preferences != null) {
               final prefs = cubit.preferences!;
               _selectedShifts['morning_go'] = prefs.shiftSlots.morningGo;
-              _selectedShifts['morning_return'] = prefs.shiftSlots.morningReturn;
+              _selectedShifts['morning_return'] =
+                  prefs.shiftSlots.morningReturn;
               _selectedShifts['afternoon_go'] = prefs.shiftSlots.afternoonGo;
-              _selectedShifts['afternoon_return'] = prefs.shiftSlots.afternoonReturn;
+              _selectedShifts['afternoon_return'] =
+                  prefs.shiftSlots.afternoonReturn;
 
               String rawType = prefs.subscriptionType.toLowerCase();
               if (rawType == 'daily') rawType = 'single_day';
@@ -430,9 +431,11 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
   Widget _buildCollapsibleShifts() {
     final isDark = context.isDarkMode;
 
-    final morningActive = (_selectedShifts['morning_go'] ?? false) ||
+    final morningActive =
+        (_selectedShifts['morning_go'] ?? false) ||
         (_selectedShifts['morning_return'] ?? false);
-    final afternoonActive = (_selectedShifts['afternoon_go'] ?? false) ||
+    final afternoonActive =
+        (_selectedShifts['afternoon_go'] ?? false) ||
         (_selectedShifts['afternoon_return'] ?? false);
 
     return Column(
@@ -473,7 +476,10 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                 },
               ),
               if (_isMorningExpanded) ...[
-                Divider(height: 1, color: isDark ? AppColors.grey800 : AppColors.grey200),
+                Divider(
+                  height: 1,
+                  color: isDark ? AppColors.grey800 : AppColors.grey200,
+                ),
                 CheckboxListTile(
                   title: Text(
                     'ذهاب صباحي',
@@ -482,7 +488,9 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                   value: _selectedShifts['morning_go'] ?? false,
                   activeColor: context.primaryColor,
                   onChanged: (val) {
-                    setState(() => _selectedShifts['morning_go'] = val ?? false);
+                    setState(
+                      () => _selectedShifts['morning_go'] = val ?? false,
+                    );
                   },
                 ),
                 CheckboxListTile(
@@ -493,7 +501,9 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                   value: _selectedShifts['morning_return'] ?? false,
                   activeColor: context.primaryColor,
                   onChanged: (val) {
-                    setState(() => _selectedShifts['morning_return'] = val ?? false);
+                    setState(
+                      () => _selectedShifts['morning_return'] = val ?? false,
+                    );
                   },
                 ),
               ],
@@ -537,7 +547,10 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                 },
               ),
               if (_isAfternoonExpanded) ...[
-                Divider(height: 1, color: isDark ? AppColors.grey800 : AppColors.grey200),
+                Divider(
+                  height: 1,
+                  color: isDark ? AppColors.grey800 : AppColors.grey200,
+                ),
                 CheckboxListTile(
                   title: Text(
                     'ذهاب مسائي / ظهر',
@@ -546,7 +559,9 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                   value: _selectedShifts['afternoon_go'] ?? false,
                   activeColor: context.primaryColor,
                   onChanged: (val) {
-                    setState(() => _selectedShifts['afternoon_go'] = val ?? false);
+                    setState(
+                      () => _selectedShifts['afternoon_go'] = val ?? false,
+                    );
                   },
                 ),
                 CheckboxListTile(
@@ -557,7 +572,9 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                   value: _selectedShifts['afternoon_return'] ?? false,
                   activeColor: context.primaryColor,
                   onChanged: (val) {
-                    setState(() => _selectedShifts['afternoon_return'] = val ?? false);
+                    setState(
+                      () => _selectedShifts['afternoon_return'] = val ?? false,
+                    );
                   },
                 ),
               ],
@@ -671,10 +688,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
         ),
         child: Text(
           'لا توجد مناطق جغرافية متاحة حالياً.',
-          style: AppTextStyles.style(
-            fontSize: 13.sp,
-            color: AppColors.grey500,
-          ),
+          style: AppTextStyles.style(fontSize: 13.sp, color: AppColors.grey500),
         ),
       );
     }
@@ -682,7 +696,8 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
     CoverageModel? activeCoverage;
     if (_selectedSubMunicipalityKey != null) {
       for (var coverage in geographyTree) {
-        final key = '${coverage.municipalityName}_${coverage.subMunicipalityName}';
+        final key =
+            '${coverage.municipalityName}_${coverage.subMunicipalityName}';
         if (key == _selectedSubMunicipalityKey) {
           activeCoverage = coverage;
           break;
@@ -705,7 +720,8 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
 
         Column(
           children: geographyTree.map((coverage) {
-            final key = '${coverage.municipalityName}_${coverage.subMunicipalityName}';
+            final key =
+                '${coverage.municipalityName}_${coverage.subMunicipalityName}';
             final isSelected = _selectedSubMunicipalityKey == key;
             final subName = coverage.subMunicipalityName.isNotEmpty
                 ? coverage.subMunicipalityName
@@ -718,10 +734,15 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                 onTap: () => _onSubMunicipalitySelected(coverage),
                 borderRadius: BorderRadius.circular(10.r),
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 12.h,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? context.primaryColor.withValues(alpha: isDark ? 0.2 : 0.08)
+                        ? context.primaryColor.withValues(
+                            alpha: isDark ? 0.2 : 0.08,
+                          )
                         : (isDark ? AppColors.darkCard : AppColors.white),
                     borderRadius: BorderRadius.circular(10.r),
                     border: Border.all(
@@ -756,7 +777,9 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                                     : FontWeight.normal,
                                 color: isSelected
                                     ? context.primaryColor
-                                    : (isDark ? AppColors.white : AppColors.textDark),
+                                    : (isDark
+                                          ? AppColors.white
+                                          : AppColors.textDark),
                               ),
                             ),
                             if (muniName.isNotEmpty && muniName != subName)
@@ -774,7 +797,9 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                         '${coverage.zones.length} مناطق',
                         style: AppTextStyles.style(
                           fontSize: 11.sp,
-                          color: isSelected ? context.primaryColor : AppColors.grey500,
+                          color: isSelected
+                              ? context.primaryColor
+                              : AppColors.grey500,
                         ),
                       ),
                     ],
@@ -818,8 +843,9 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                     return FilterChip(
                       label: Text(zone.name),
                       selected: isZoneSelected,
-                      selectedColor:
-                          context.primaryColor.withValues(alpha: 0.2),
+                      selectedColor: context.primaryColor.withValues(
+                        alpha: 0.2,
+                      ),
                       checkmarkColor: context.primaryColor,
                       labelStyle: AppTextStyles.style(
                         fontSize: 12.sp,
@@ -830,8 +856,9 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                             ? context.primaryColor
                             : (isDark ? AppColors.white70 : AppColors.textDark),
                       ),
-                      backgroundColor:
-                          isDark ? AppColors.surfaceDark : AppColors.grey100,
+                      backgroundColor: isDark
+                          ? AppColors.surfaceDark
+                          : AppColors.grey100,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.r),
                         side: BorderSide(
@@ -869,7 +896,8 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
     final isSaving = state is UpdatingPreferences;
 
     final hasAnyShift = _selectedShifts.values.any((isSelected) => isSelected);
-    final isFormIncomplete = _selectedSubtype == null ||
+    final isFormIncomplete =
+        _selectedSubtype == null ||
         _selectedSchoolStages.isEmpty ||
         _selectedZones.isEmpty ||
         !hasAnyShift;

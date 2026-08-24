@@ -20,7 +20,8 @@ import 'package:kids_transport/core/enums/user_role.dart';
 import 'package:kids_transport/features/chat/presentation/screens/chat_list_screen.dart';
 
 class ParentMainWrapper extends StatefulWidget {
-  const ParentMainWrapper({super.key});
+  final int initialIndex;
+  const ParentMainWrapper({super.key, this.initialIndex = 0});
 
   // دالة ستاتيكية للتحكم في تغيير التبويبات من الشاشات الداخلية
   static late Function(int) changeTab;
@@ -48,7 +49,7 @@ class _KeepAliveWrapperState extends State<_KeepAliveWrapper>
 }
 
 class _ParentMainWrapperState extends State<ParentMainWrapper> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
 
   // قراءة الاسم ديناميكياً من Cubit
   String get userName {
@@ -79,8 +80,11 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialIndex;
     ParentMainWrapper.changeTab = (index) {
-      setState(() => _selectedIndex = index);
+      if (mounted) {
+        setState(() => _selectedIndex = index);
+      }
     };
     _screens = [
       const ParentHomeScreen(),

@@ -1,3 +1,17 @@
+import 'package:kids_transport/core/network/api_endpoints.dart';
+
+String? _resolveMediaUrl(String? rawUrl) {
+  if (rawUrl == null || rawUrl.isEmpty) return rawUrl;
+  if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+    return rawUrl;
+  }
+  if (rawUrl.startsWith('//')) return 'https:$rawUrl';
+
+  final serverRoot = ApiEndpoints.baseUrl.replaceAll(RegExp(r'/?api/?$'), '');
+  final path = rawUrl.startsWith('/') ? rawUrl : '/$rawUrl';
+  return '$serverRoot$path';
+}
+
 class VehicleModel {
   final int id;
   final String brand;
@@ -72,9 +86,11 @@ class VehicleModel {
       capacityAi: (json['capacity_ai'] as num?)?.toInt(),
       isVerified: json['is_verified'] as bool?,
       hasAc: parsedAc,
-      vehicleImageUrl: json['vehicle_image_url']?.toString() ??
-          json['vehicle_image_path']?.toString() ??
-          json['vehicle_image']?.toString(),
+      vehicleImageUrl: _resolveMediaUrl(
+        json['vehicle_image_url']?.toString() ??
+            json['vehicle_image_path']?.toString() ??
+            json['vehicle_image']?.toString(),
+      ),
       status: json['status']?.toString(),
       nationalId: json['national_id']?.toString(),
       licenseNumber: json['license_number']?.toString(),

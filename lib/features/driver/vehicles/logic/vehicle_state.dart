@@ -11,6 +11,12 @@ class VehicleDetailsSuccess extends VehicleState {
   VehicleDetailsSuccess(this.vehicle);
 }
 
+class VehicleUpdateSuccess extends VehicleState {
+  final String message;
+  final VehicleModel vehicle;
+  VehicleUpdateSuccess(this.message, this.vehicle);
+}
+
 class VehicleDocumentsSuccess extends VehicleState {
   final String message;
   VehicleDocumentsSuccess(this.message);

@@ -169,6 +169,15 @@ class _DriverPrimaryVehicleScreenState
                   if (state is VehicleDetailsSuccess) {
                     _initControllers(state.vehicle);
                   }
+                  if (state is VehicleUpdateSuccess) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.message),
+                        backgroundColor: Colors.green,
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                  }
                   if (state is VehicleDocumentsSuccess) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(state.message)),
@@ -178,7 +187,8 @@ class _DriverPrimaryVehicleScreenState
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(state.error),
-                        backgroundColor: theme.colorScheme.error,
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 5),
                       ),
                     );
                   }

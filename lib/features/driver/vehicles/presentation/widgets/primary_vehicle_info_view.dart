@@ -90,19 +90,42 @@ class PrimaryVehicleInfoView extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx), // إلغاء عدم الإرسال
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              onSave();
-            },
-            style: AppTheme.elevatedButtonStyle(
-              backgroundColor: primaryColor,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('إلغاء'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      onSave();
+                    },
+                    style: AppTheme.elevatedButtonStyle(
+                      backgroundColor: primaryColor,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      'موافق وإرسال',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            child: const Text('موافق وإرسال الطلب'),
           ),
         ],
       ),
@@ -320,6 +343,10 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                         controller: brandController,
                         enabled: isEditing,
                         icon: Icons.minor_crash,
+                        customValidator: (v) {
+                          if (v!.length > 50) return 'أقصى طول 50 حرفاً';
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 12),
 
@@ -329,6 +356,10 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                         controller: modelController,
                         enabled: isEditing,
                         icon: Icons.car_repair,
+                        customValidator: (v) {
+                          if (v!.length > 50) return 'أقصى طول 50 حرفاً';
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 12),
 
@@ -339,6 +370,14 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                         enabled: isEditing,
                         keyboardType: TextInputType.number,
                         icon: Icons.calendar_today,
+                        customValidator: (v) {
+                          final y = int.tryParse(v!);
+                          final maxYear = DateTime.now().year + 1;
+                          if (y == null || y < 2000 || y > maxYear) {
+                            return 'سنة الصنع بين 2000 و $maxYear';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 12),
 
@@ -348,6 +387,10 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                         controller: plateNumberController,
                         enabled: isEditing,
                         icon: Icons.pin,
+                        customValidator: (v) {
+                          if (v!.length > 20) return 'أقصى طول 20 حرفاً';
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 12),
 
@@ -357,16 +400,73 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                         controller: colorController,
                         enabled: isEditing,
                         icon: Icons.color_lens_outlined,
+                        customValidator: (v) {
+                          if (v!.length > 30) return 'أقصى طول 30 حرفاً';
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 12),
 
                       // نوع المركبة
-                      _buildTextField(
-                        label: 'نوع المركبة (Type - مثلاً Van / Bus)',
-                        controller: typeController,
-                        enabled: isEditing,
-                        icon: Icons.category_outlined,
-                      ),
+                      if (isEditing)
+                        DropdownButtonFormField<String>(
+                          initialValue: _getSelectedTypeEnglish(typeController.text),
+                          decoration: const InputDecoration(
+                            labelText: 'نوع المركبة',
+                            prefixIcon: Icon(Icons.category_outlined),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                            ),
+                          ),
+                          isExpanded: true,
+                          alignment: Alignment.centerRight,
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'Sedan',
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  'سيارة صالون (Sedan)',
+                                  textDirection: TextDirection.rtl,
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Van',
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  'سيارة عائلية / فان (Van)',
+                                  textDirection: TextDirection.rtl,
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Bus',
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  'حافلة نقل / باص (Bus)',
+                                  textDirection: TextDirection.rtl,
+                                ),
+                              ),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              typeController.text = val;
+                            }
+                          },
+                        )
+                      else
+                        _buildTextField(
+                          label: 'نوع المركبة',
+                          controller: TextEditingController(
+                            text: _getTypeArabicName(typeController.text),
+                          ),
+                          enabled: false,
+                          icon: Icons.category_outlined,
+                        ),
                       const SizedBox(height: 12),
 
                       // السعة الاستيعابية
@@ -376,6 +476,13 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                         enabled: isEditing,
                         keyboardType: TextInputType.number,
                         icon: Icons.airline_seat_recline_normal,
+                        customValidator: (v) {
+                          final cap = int.tryParse(v!);
+                          if (cap == null || cap < 1 || cap > 60) {
+                            return 'السعة بين 1 و 60 راكب';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 12),
 
@@ -465,6 +572,7 @@ class PrimaryVehicleInfoView extends StatelessWidget {
     required bool enabled,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? customValidator,
   }) {
     return TextFormField(
       controller: controller,
@@ -480,6 +588,9 @@ class PrimaryVehicleInfoView extends StatelessWidget {
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
           return 'هذا الحقل مطلوب';
+        }
+        if (customValidator != null) {
+          return customValidator(value.trim());
         }
         return null;
       },
@@ -511,5 +622,23 @@ class PrimaryVehicleInfoView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getSelectedTypeEnglish(String raw) {
+    final clean = raw.trim().toLowerCase();
+    if (clean == 'sedan' || clean == 'car' || clean.contains('صالون')) {
+      return 'Sedan';
+    }
+    if (clean == 'van' || clean.contains('فان')) {
+      return 'Van';
+    }
+    return 'Bus';
+  }
+
+  String _getTypeArabicName(String raw) {
+    final en = _getSelectedTypeEnglish(raw);
+    if (en == 'Sedan') return 'سيارة صالون (Sedan)';
+    if (en == 'Van') return 'سيارة عائلية / فان (Van)';
+    return 'حافلة نقل / باص (Bus)';
   }
 }

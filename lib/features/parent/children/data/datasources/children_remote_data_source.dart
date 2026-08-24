@@ -167,8 +167,40 @@ class ChildrenRemoteDataSource {
 
   bool _isLocalImagePath(String? path) {
     if (path == null || path.isEmpty) return false;
-    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('//')) return false;
+    if (path.startsWith('http://') ||
+        path.startsWith('https://') ||
+        path.startsWith('//')) {
+      return false;
+    }
     return true;
+  }
+
+  String _formatTimeToHHMM24(String? timeStr) {
+    if (timeStr == null || timeStr.trim().isEmpty) return '';
+    final cleaned = timeStr.trim();
+
+    final isPM = cleaned.toUpperCase().contains('PM') || cleaned.contains('م');
+    final isAM = cleaned.toUpperCase().contains('AM') || cleaned.contains('ص');
+
+    final timeOnly = cleaned.replaceAll(RegExp(r'[^\d:]'), '').trim();
+
+    final parts = timeOnly.split(':');
+    if (parts.length >= 2) {
+      int hour = int.tryParse(parts[0]) ?? 0;
+      int minute = int.tryParse(parts[1]) ?? 0;
+
+      if (isPM && hour < 12) {
+        hour += 12;
+      } else if (isAM && hour == 12) {
+        hour = 0;
+      }
+
+      final hh = hour.toString().padLeft(2, '0');
+      final mm = minute.toString().padLeft(2, '0');
+      return '$hh:$mm';
+    }
+
+    return timeOnly;
   }
 
   /// POST /api/parent/children
@@ -184,14 +216,22 @@ class ChildrenRemoteDataSource {
 
     dynamic requestData;
 
-    final startDateStr = (child.logistics?.startDate ?? child.transportPref.startDate)
-        .toIso8601String()
-        .split('T')
-        .first;
+    final startDateStr =
+        (child.logistics?.startDate ?? child.transportPref.startDate)
+            .toIso8601String()
+            .split('T')
+            .first;
     final endDateRaw = child.logistics?.endDate ?? child.transportPref.endDate;
     final endDateStr = endDateRaw != null
         ? endDateRaw.toIso8601String().split('T').first
         : startDateStr;
+
+    final rawPickup =
+        child.logistics?.pickupTime ?? child.transportPref.schoolStartTime;
+    final rawDropoff =
+        child.logistics?.dropoffTime ?? child.transportPref.schoolEndTime;
+    final pickupTimeStr = _formatTimeToHHMM24(rawPickup);
+    final dropoffTimeStr = _formatTimeToHHMM24(rawDropoff);
 
     final flatPayload = <String, dynamic>{
       'parent_id': parentId,
@@ -213,10 +253,8 @@ class ChildrenRemoteDataSource {
       if (child.medicalNotes != null && child.medicalNotes!.isNotEmpty)
         'medical_notes': child.medicalNotes,
       'notification_radius': child.notificationRadius?.toInt() ?? 500,
-      if ((child.logistics?.pickupTime ?? child.transportPref.schoolStartTime).isNotEmpty)
-        'pickup_time': child.logistics?.pickupTime ?? child.transportPref.schoolStartTime,
-      if ((child.logistics?.dropoffTime ?? child.transportPref.schoolEndTime).isNotEmpty)
-        'dropoff_time': child.logistics?.dropoffTime ?? child.transportPref.schoolEndTime,
+      if (pickupTimeStr.isNotEmpty) 'pickup_time': pickupTimeStr,
+      if (dropoffTimeStr.isNotEmpty) 'dropoff_time': dropoffTimeStr,
       if (child.photoUrl != null && !_isLocalImagePath(child.photoUrl))
         'photo_url': child.photoUrl,
     };
@@ -225,7 +263,9 @@ class ChildrenRemoteDataSource {
       try {
         final file = await _imageFileFromPath(localImagePath!);
         final bytes = await file.readAsBytes();
-        debugPrint('📤 [addChild] Sending photo file: ${localImagePath.split('/').last.split('\\').last} (${bytes.length} bytes)');
+        debugPrint(
+          '📤 [addChild] Sending photo file: ${localImagePath.split('/').last.split('\\').last} (${bytes.length} bytes)',
+        );
         requestData = FormData.fromMap({
           ...flatPayload,
           'photo': MultipartFile.fromBytes(
@@ -242,8 +282,10 @@ class ChildrenRemoteDataSource {
       requestData = flatPayload;
     }
 
-    debugPrint('📤 [addChild] flatPayload keys: ${flatPayload.keys.join(', ')}');
-    debugPrint('📤 [addChild] requestData type: ${requestData.runtimeType}');
+    debugPrint('==================================================');
+    debugPrint('➕ [ADD_CHILD_API] Calling Endpoint: POST /api/${ApiEndpoints.parentChildren}');
+    debugPrint('➕ [ADD_CHILD_API] Payload: $flatPayload');
+    debugPrint('==================================================');
 
     final timeout = hasLocalImage
         ? const Duration(seconds: 120)
@@ -283,14 +325,22 @@ class ChildrenRemoteDataSource {
 
     dynamic requestData;
 
-    final startDateStr = (child.logistics?.startDate ?? child.transportPref.startDate)
-        .toIso8601String()
-        .split('T')
-        .first;
+    final startDateStr =
+        (child.logistics?.startDate ?? child.transportPref.startDate)
+            .toIso8601String()
+            .split('T')
+            .first;
     final endDateRaw = child.logistics?.endDate ?? child.transportPref.endDate;
     final endDateStr = endDateRaw != null
         ? endDateRaw.toIso8601String().split('T').first
         : startDateStr;
+
+    final rawPickup =
+        child.logistics?.pickupTime ?? child.transportPref.schoolStartTime;
+    final rawDropoff =
+        child.logistics?.dropoffTime ?? child.transportPref.schoolEndTime;
+    final pickupTimeStr = _formatTimeToHHMM24(rawPickup);
+    final dropoffTimeStr = _formatTimeToHHMM24(rawDropoff);
 
     final flatPayload = <String, dynamic>{
       'parent_id': parentId,
@@ -312,10 +362,8 @@ class ChildrenRemoteDataSource {
       if (child.medicalNotes != null && child.medicalNotes!.isNotEmpty)
         'medical_notes': child.medicalNotes,
       'notification_radius': child.notificationRadius?.toInt() ?? 500,
-      if ((child.logistics?.pickupTime ?? child.transportPref.schoolStartTime).isNotEmpty)
-        'pickup_time': child.logistics?.pickupTime ?? child.transportPref.schoolStartTime,
-      if ((child.logistics?.dropoffTime ?? child.transportPref.schoolEndTime).isNotEmpty)
-        'dropoff_time': child.logistics?.dropoffTime ?? child.transportPref.schoolEndTime,
+      if (pickupTimeStr.isNotEmpty) 'pickup_time': pickupTimeStr,
+      if (dropoffTimeStr.isNotEmpty) 'dropoff_time': dropoffTimeStr,
       if (child.photoUrl != null && !_isLocalImagePath(child.photoUrl))
         'photo_url': child.photoUrl,
     };
@@ -342,8 +390,15 @@ class ChildrenRemoteDataSource {
         ? const Duration(seconds: 120)
         : const Duration(seconds: 30);
 
+    final endpointUrl = ApiEndpoints.parentChildById(child.id.toString());
+    debugPrint('==================================================');
+    debugPrint('✏️ [UPDATE_CHILD_API] Calling Endpoint: POST /api/$endpointUrl');
+    debugPrint('✏️ [UPDATE_CHILD_API] Child ID: ${child.id}');
+    debugPrint('✏️ [UPDATE_CHILD_API] Payload: $flatPayload');
+    debugPrint('==================================================');
+
     final response = await _client.post(
-      ApiEndpoints.parentChildById(child.id.toString()),
+      endpointUrl,
       data: requestData,
       headers: _authHeader,
       receiveTimeout: timeout,

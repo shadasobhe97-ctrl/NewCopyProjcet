@@ -56,13 +56,43 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     cubit.fetchLegalData();
   }
 
+  // 🌟 بعض تواريخ الانتهاء (الدمغ، الفحص الفني، التأمين) الباك يرجعها فقط
+  // جوا الوثيقة نفسها بـ uploaded_files، ومش دايماً على مستوى الجدول الرئيسي
+  // للسائق. فنطابق هذا مع نفس منطق الأولوية المستخدم بكارت الوثيقة.
+  String? _findDocExpiry(DriverLegalDataModel model, String type) {
+    for (final file in model.uploadedFiles) {
+      if (file.type.toUpperCase() != type) continue;
+      switch (type) {
+        case 'LICENSE':
+          return file.licenseExpiryDate;
+        case 'INSURANCE':
+          return file.insuranceExpiryDate;
+        case 'STAMP':
+          return file.stampExpiryDate;
+        case 'TECHNICAL_INSPECTION':
+          return file.technicalInspectionExpiryDate;
+      }
+    }
+    return null;
+  }
+
   void _populateControllers(DriverLegalDataModel model) {
     _nationalIdController.text = model.nationalId;
     _licenseNoController.text = model.licenseNumber;
-    _licenseExpiryController.text = model.licenseExpiry;
-    _insuranceExpiryController.text = model.insuranceExpiry ?? '';
-    _stampExpiryController.text = model.stampExpiry ?? '';
-    _inspectionExpiryController.text = model.technicalInspectionExpiry ?? '';
+    _licenseExpiryController.text = _formatCleanDate(
+      _findDocExpiry(model, 'LICENSE') ?? model.licenseExpiry,
+    );
+    _insuranceExpiryController.text = _formatCleanDate(
+      _findDocExpiry(model, 'INSURANCE') ?? model.insuranceExpiry ?? '',
+    );
+    _stampExpiryController.text = _formatCleanDate(
+      _findDocExpiry(model, 'STAMP') ?? model.stampExpiry ?? '',
+    );
+    _inspectionExpiryController.text = _formatCleanDate(
+      _findDocExpiry(model, 'TECHNICAL_INSPECTION') ??
+          model.technicalInspectionExpiry ??
+          '',
+    );
   }
 
   @override
@@ -181,19 +211,42 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx), // إلغاء التعديل وعدم الإرسال
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _submitUpdates(currentData);
-            },
-            style: AppTheme.elevatedButtonStyle(
-              backgroundColor: primaryColor,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('إلغاء'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _submitUpdates(currentData);
+                    },
+                    style: AppTheme.elevatedButtonStyle(
+                      backgroundColor: primaryColor,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      'موافق وإرسال',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            child: const Text('موافق وإرسال الطلب'),
           ),
         ],
       ),
@@ -215,14 +268,29 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     String? sendStpExpiry;
     String? sendInspExpiry;
 
+    final originalExpiry = _formatCleanDate(
+      _findDocExpiry(currentData, 'LICENSE') ?? currentData.licenseExpiry,
+    );
+    final originalInsExpiry = _formatCleanDate(
+      _findDocExpiry(currentData, 'INSURANCE') ??
+          currentData.insuranceExpiry ??
+          '',
+    );
+    final originalStpExpiry = _formatCleanDate(
+      _findDocExpiry(currentData, 'STAMP') ?? currentData.stampExpiry ?? '',
+    );
+    final originalInspExpiry = _formatCleanDate(
+      _findDocExpiry(currentData, 'TECHNICAL_INSPECTION') ??
+          currentData.technicalInspectionExpiry ??
+          '',
+    );
+
     if (natId != currentData.nationalId) sendNatId = natId;
     if (licNo != currentData.licenseNumber) sendLicNo = licNo;
-    if (expiry != currentData.licenseExpiry) sendExpiry = expiry;
-    if (insExpiry != currentData.insuranceExpiry) sendInsExpiry = insExpiry;
-    if (stpExpiry != currentData.stampExpiry) sendStpExpiry = stpExpiry;
-    if (inspExpiry != currentData.technicalInspectionExpiry) {
-      sendInspExpiry = inspExpiry;
-    }
+    if (expiry != originalExpiry) sendExpiry = expiry;
+    if (insExpiry != originalInsExpiry) sendInsExpiry = insExpiry;
+    if (stpExpiry != originalStpExpiry) sendStpExpiry = stpExpiry;
+    if (inspExpiry != originalInspExpiry) sendInspExpiry = inspExpiry;
 
     context.read<DriverLegalDataCubit>().updateLegalData(
           nationalId: sendNatId,
@@ -450,6 +518,29 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                                 : null,
                             validator: (v) =>
                                 v == null || v.isEmpty ? 'الحقل مطلوب' : null,
+                          ),
+                          const SizedBox(height: 12),
+
+                          // تاريخ انتهاء التأمين
+                          _buildTextField(
+                            label: 'تاريخ انتهاء التأمين (YYYY-MM-DD)',
+                            controller: _insuranceExpiryController,
+                            icon: Icons.security_outlined,
+                            isEditing: _isEditing,
+                            onTap: _isEditing
+                                ? () async {
+                                    final picked = await showDatePicker(
+                                      context: context,
+                                      initialDate: DateTime.now(),
+                                      firstDate: DateTime(2020),
+                                      lastDate: DateTime(2035),
+                                    );
+                                    if (picked != null) {
+                                      _insuranceExpiryController.text =
+                                          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                                    }
+                                  }
+                                : null,
                           ),
                           const SizedBox(height: 12),
 

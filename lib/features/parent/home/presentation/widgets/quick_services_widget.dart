@@ -28,14 +28,16 @@ class QuickServicesWidget extends StatelessWidget {
         'subtitle': 'إدارة الغياب',
         'icon': Icons.calendar_month_outlined,
         'color': AppColors.pending,
-        'action': onAbsence ?? () {},
+        'action': onAbsence ??
+            () => Navigator.pushNamed(context, AppRoutes.parentAbsence),
       },
       {
         'title': 'المحفظة',
         'subtitle': 'الرصيد والدفع',
         'icon': Icons.account_balance_wallet_outlined,
         'color': AppColors.success,
-        'action': onWallet ?? () => ParentMainWrapper.changeTab(3),
+        'action': onWallet ??
+            () => Navigator.pushNamed(context, AppRoutes.parentWallet),
       },
       {
         'title': 'الاشتراكات',

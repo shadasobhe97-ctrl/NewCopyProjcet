@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:kids_transport/core/models/email_verification_info.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
@@ -173,6 +174,7 @@ class DriverProfileRemoteDataSource {
   // 5. جلب الوثائق والبيانات الرسمية (GET)
   Future<DriverLegalDataModel> getLegalData() async {
     try {
+      debugPrint('📜 [GET_LEGAL_DATA] Fetching from endpoint: ${ApiEndpoints.driverLegalData}');
       final response = await apiClient.get(
         ApiEndpoints.driverLegalData,
         headers: {
@@ -182,11 +184,19 @@ class DriverProfileRemoteDataSource {
         },
       );
 
+      debugPrint('📜 [GET_LEGAL_DATA] Response status: ${response.statusCode}');
+      debugPrint('📜 [GET_LEGAL_DATA] Raw response data: ${response.data}');
+
       if (response.statusCode == 200 && response.data is Map) {
         final data = response.data['data'] ?? response.data;
-        return DriverLegalDataModel.fromJson(
+        final model = DriverLegalDataModel.fromJson(
           Map<String, dynamic>.from(data as Map),
         );
+        debugPrint('📜 [GET_LEGAL_DATA] Parsed model uploadedFiles count: ${model.uploadedFiles.length}');
+        for (var f in model.uploadedFiles) {
+          debugPrint('   👉 File doc_type: ${f.type} | fileUrl: ${f.fileUrl}');
+        }
+        return model;
       } else {
         final errorMsg = _extractApiErrorMessage(
           response.data,

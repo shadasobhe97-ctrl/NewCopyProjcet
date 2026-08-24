@@ -33,7 +33,9 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
   Future<void> _fetchSubscription() async {
     try {
       final cubit = context.read<ChildrenCubit>();
-      final (logistics, _) = await cubit.getChildSubscription(widget.child.id.toString());
+      final (logistics, _) = await cubit.getChildSubscription(
+        widget.child.id.toString(),
+      );
       if (mounted) {
         setState(() {
           _logistics = logistics;
@@ -71,8 +73,13 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
         return val;
     }
   }
+
   String _translatePeriod(String val) => val == 'morning' ? 'صباحية' : 'مسائية';
-  String _translateService(String val) => val == 'both' ? 'ذهاب وعودة' : val == 'go' ? 'ذهاب فقط' : 'عودة فقط';
+  String _translateService(String val) => val == 'both'
+      ? 'ذهاب وعودة'
+      : val == 'go'
+      ? 'ذهاب فقط'
+      : 'عودة فقط';
 
   @override
   Widget build(BuildContext context) {
@@ -80,14 +87,17 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
     final childrenState = context.watch<ChildrenCubit>().state;
     ChildModel activeChild = widget.child;
     if (childrenState is ChildrenLoaded) {
-      final idx = childrenState.children.indexWhere((c) => c.id == widget.child.id);
+      final idx = childrenState.children.indexWhere(
+        (c) => c.id == widget.child.id,
+      );
       if (idx != -1) {
         activeChild = childrenState.children[idx];
       }
     }
 
     final pref = activeChild.transportPref;
-    final subscriptionType = _logistics?.subscriptionType ?? pref.subscriptionType;
+    final subscriptionType =
+        _logistics?.subscriptionType ?? pref.subscriptionType;
     final period = _logistics?.preferredTimeSlot ?? pref.period;
     final serviceType = _logistics?.tripDirection ?? pref.serviceType;
     final startDate = _logistics?.startDate ?? pref.startDate;
@@ -100,7 +110,7 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
       child: Scaffold(
         backgroundColor: context.backgroundSurface,
         appBar: AppBar(
-          title: const Text('بيانات النقل (التفضيلات)'),
+          title: const Text('بيانات النقل (الاعدادات )'),
           flexibleSpace: Container(
             decoration: BoxDecoration(
               gradient: AppTheme.linearGradient(
@@ -136,12 +146,18 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
               SizedBox(height: 20.h),
               _buildSection(
                 context: context,
-                title: 'تفضيلات الاشتراك',
+                title: 'اعدادات  الاشتراك',
                 icon: Icons.assignment_rounded,
                 content: [
-                  _buildDataRow('نوع الاشتراك', _translateSub(subscriptionType)),
+                  _buildDataRow(
+                    'نوع الاشتراك',
+                    _translateSub(subscriptionType),
+                  ),
                   _buildDataRow('الفترة', _translatePeriod(period)),
-                  _buildDataRow('الخدمة المطلوبة', _translateService(serviceType)),
+                  _buildDataRow(
+                    'الخدمة المطلوبة',
+                    _translateService(serviceType),
+                  ),
                 ],
               ),
               SizedBox(height: 20.h),
@@ -150,9 +166,15 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
                 title: 'مواعيد الدوام والمشاوير',
                 icon: Icons.access_time_rounded,
                 content: [
-                  _buildDataRow('تاريخ بداية الخدمة', intl.DateFormat('yyyy/MM/dd').format(startDate)),
+                  _buildDataRow(
+                    'تاريخ بداية الخدمة',
+                    intl.DateFormat('yyyy/MM/dd').format(startDate),
+                  ),
                   if (endDate != null)
-                    _buildDataRow('تاريخ نهاية الخدمة', intl.DateFormat('yyyy/MM/dd').format(endDate)),
+                    _buildDataRow(
+                      'تاريخ نهاية الخدمة',
+                      intl.DateFormat('yyyy/MM/dd').format(endDate),
+                    ),
                   _buildDataRow('وقت بداية الدوام', schoolStartTime),
                   _buildDataRow('وقت نهاية الدوام', schoolEndTime),
                 ],
@@ -165,7 +187,12 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
     );
   }
 
-  Widget _buildSection({required BuildContext context, required String title, required IconData icon, required List<Widget> content}) {
+  Widget _buildSection({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required List<Widget> content,
+  }) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
@@ -181,7 +208,13 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
             children: [
               Icon(icon, color: context.primaryColor, size: 22.r),
               SizedBox(width: 8.w),
-              Text(title, style: AppTextStyles.style(fontSize: 16.sp, fontWeight: FontWeight.bold)),
+              Text(
+                title,
+                style: AppTextStyles.style(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
           Divider(height: 24.h),
@@ -197,9 +230,21 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTextStyles.style(color: AppColors.grey500, fontSize: 13.sp)),
+          Text(
+            label,
+            style: AppTextStyles.style(
+              color: AppColors.grey500,
+              fontSize: 13.sp,
+            ),
+          ),
           SizedBox(height: 4.h),
-          Text(value, style: AppTextStyles.style(fontWeight: FontWeight.w600, fontSize: 15.sp)),
+          Text(
+            value,
+            style: AppTextStyles.style(
+              fontWeight: FontWeight.w600,
+              fontSize: 15.sp,
+            ),
+          ),
           SizedBox(height: 8.h),
         ],
       ),

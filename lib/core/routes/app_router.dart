@@ -235,11 +235,12 @@ class AppRoutes {
     switch (settings.name) {
       case parentHome:
       case parentMainWrapper:
+        final initialTab = settings.arguments as int? ?? 0;
         return _route(
           settings,
           BlocProvider(
             create: (context) => getIt<ParentProfileCubit>()..fetchProfile(),
-            child: const ParentMainWrapper(),
+            child: ParentMainWrapper(initialIndex: initialTab),
           ),
         );
       case parentHomeLegacy:

@@ -92,7 +92,10 @@ class AddChildCubit extends Cubit<AddChildState> {
     String? sName,
     String? aId,
     String? aName,
+    ChildModel? existingChild,
   }) async {
+    final activeChild = existingChild ?? editingChild;
+
     if (sId != null) schoolId = sId;
     if (sName != null) schoolName = sName;
     if (aId != null) addressId = aId;
@@ -116,11 +119,11 @@ class AddChildCubit extends Cubit<AddChildState> {
     final gradeStr = (gradeLevel ?? 0).toString();
 
     debugPrint('📸 [AddChildCubit] imagePath: $imagePath');
-    debugPrint('📸 [AddChildCubit] editingChild?.photoUrl: ${editingChild?.photoUrl}');
+    debugPrint('📸 [AddChildCubit] activeChild?.id: ${activeChild?.id}');
 
     final childToSubmit = ChildModel(
-      id: editingChild?.id,
-      parentId: editingChild?.parentId,
+      id: activeChild?.id,
+      parentId: activeChild?.parentId,
       schoolId: schoolId!,
       addressId: addressId!,
       fullName: fullName!,
@@ -132,11 +135,12 @@ class AddChildCubit extends Cubit<AddChildState> {
       logistics: transportPref.toLogistics(),
     );
 
-    debugPrint('📸 [AddChildCubit] childToSubmit.photoUrl: ${childToSubmit.photoUrl}');
+    final isEditMode = activeChild != null || childToSubmit.id != null;
+    debugPrint('📸 [AddChildCubit] isEditMode: $isEditMode (id: ${childToSubmit.id})');
 
-    final (resultChild, message) = editingChild == null
-        ? await _repository.addChild(childToSubmit, imagePath)
-        : await _repository.updateChild(childToSubmit, imagePath);
+    final (resultChild, message) = isEditMode
+        ? await _repository.updateChild(childToSubmit, imagePath)
+        : await _repository.addChild(childToSubmit, imagePath);
 
     debugPrint('📸 [AddChildCubit] resultChild?.photoUrl: ${resultChild?.photoUrl}');
 

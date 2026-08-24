@@ -54,7 +54,7 @@ class VehicleRemoteDataSource {
     if (color != null && color.isNotEmpty) data['color'] = color;
     if (type != null && type.isNotEmpty) data['type'] = type;
     if (capacityManual != null) data['capacity_manual'] = capacityManual;
-    if (hasAc != null) data['has_ac'] = hasAc;
+    if (hasAc != null) data['has_ac'] = hasAc ? 1 : 0;
 
     if (vehicleImage != null) {
       final multipart = await AppImageHelper.createMultipartFile(
@@ -62,7 +62,6 @@ class VehicleRemoteDataSource {
         defaultFilename: 'vehicle.jpg',
       );
       if (multipart != null) {
-        data['vehicle_image_path'] = multipart;
         data['vehicle_image'] = multipart;
       }
     }

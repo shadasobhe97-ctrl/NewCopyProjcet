@@ -38,7 +38,7 @@ class VehicleRepository {
   }
 
   // 📤 تحديث تفاصيل المركبة
-  Future<VehicleModel> updateVehicle({
+  Future<({String message, VehicleModel vehicle})> updateVehicle({
     required int vehicleId,
     String? brand,
     String? model,
@@ -63,10 +63,11 @@ class VehicleRepository {
         hasAc: hasAc,
         vehicleImage: vehicleImage,
       );
-      final data = (response.data is Map && response.data['data'] != null)
-          ? response.data['data']
-          : {};
-      return VehicleModel.fromJson(Map<String, dynamic>.from(data as Map));
+      final resMap = (response.data is Map) ? response.data as Map : {};
+      final message = resMap['message']?.toString() ?? 'تم تحديث بيانات المركبة بنجاح';
+      final data = resMap['data'] != null ? resMap['data'] : {};
+      final vehicle = VehicleModel.fromJson(Map<String, dynamic>.from(data as Map));
+      return (message: message, vehicle: vehicle);
     } on DioException catch (e) {
       throw _handleDioError(e);
     } catch (e) {
@@ -120,8 +121,28 @@ class VehicleRepository {
       );
 
   String _handleDioError(DioException e) {
-    if (e.response?.data is Map && e.response?.data['message'] != null) {
-      return e.response!.data['message'].toString();
+    if (e.response?.data is Map) {
+      final resMap = e.response!.data as Map;
+      String message = '';
+      if (resMap['message'] != null) {
+        message = resMap['message'].toString();
+      }
+      if (resMap['errors'] is Map) {
+        final errorsMap = resMap['errors'] as Map;
+        final errorList = <String>[];
+        errorsMap.forEach((key, val) {
+          if (val is List) {
+            errorList.addAll(val.map((e) => e.toString()));
+          } else if (val != null) {
+            errorList.add(val.toString());
+          }
+        });
+        if (errorList.isNotEmpty) {
+          final joined = errorList.join('\n• ');
+          return message.isNotEmpty ? '$message\n• $joined' : '• $joined';
+        }
+      }
+      if (message.isNotEmpty) return message;
     }
     if (e.response?.statusCode == 422) {
       return 'البيانات المرسلة غير مطابقة لشروط النظام.';

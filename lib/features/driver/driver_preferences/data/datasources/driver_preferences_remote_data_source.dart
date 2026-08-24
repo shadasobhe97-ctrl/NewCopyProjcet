@@ -29,7 +29,7 @@ class DriverPreferencesRemoteDataSource {
     }
     final serverMessage = ApiException.extractMessage(data);
     throw ApiException(
-      serverMessage ?? 'تعذر تحميل الخيارات الافتراضية للتفضيلات.',
+      serverMessage ?? 'تعذر تحميل الخيارات الافتراضية للاعدادات .',
     );
   }
 
@@ -71,10 +71,10 @@ class DriverPreferencesRemoteDataSource {
         return true;
       }
       final serverMessage = ApiException.extractMessage(data);
-      throw ApiException(serverMessage ?? 'تعذر تحديث التفضيلات.');
+      throw ApiException(serverMessage ?? 'تعذر تحديث الاعدادات .');
     }
     throw const ApiException(
-      'فشل تحديث التفضيلات بسبب استجابة خادم غير صالحة.',
+      'فشل تحديث الاعدادات  بسبب استجابة خادم غير صالحة.',
     );
   }
 }

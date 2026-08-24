@@ -45,7 +45,9 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
     final editingChild = cubit.editingChild;
     if (editingChild != null) {
       final pref = editingChild.transportPref;
-      _subType = (pref.subscriptionType == 'multi_day') ? 'multi_day' : 'single_day';
+      _subType = (pref.subscriptionType == 'multi_day')
+          ? 'multi_day'
+          : 'single_day';
       _period = pref.period;
       _serviceType = pref.serviceType;
       _startDate = pref.startDate;
@@ -96,7 +98,11 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
   void _submitFinal() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final startDateOnly = DateTime(_startDate.year, _startDate.month, _startDate.day);
+    final startDateOnly = DateTime(
+      _startDate.year,
+      _startDate.month,
+      _startDate.day,
+    );
 
     if (startDateOnly.isBefore(today)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -115,19 +121,27 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
       if (_endDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('يرجى تحديد تاريخ نهاية الخدمة للاشتراك أكثر من يوم.'),
+            content: Text(
+              'يرجى تحديد تاريخ نهاية الخدمة للاشتراك أكثر من يوم.',
+            ),
             backgroundColor: Colors.red,
           ),
         );
         return;
       }
 
-      final endDateOnly = DateTime(_endDate!.year, _endDate!.month, _endDate!.day);
+      final endDateOnly = DateTime(
+        _endDate!.year,
+        _endDate!.month,
+        _endDate!.day,
+      );
 
       if (_isSameDay(startDateOnly, endDateOnly)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('في حالة الاشتراك لأكثر من يوم، لا يمكن أن يكون تاريخ البداية والنهاية نفس اليوم.'),
+            content: Text(
+              'في حالة الاشتراك لأكثر من يوم، لا يمكن أن يكون تاريخ البداية والنهاية نفس اليوم.',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -166,12 +180,14 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
       schoolStartTime: _formatTime24h(_schoolStartTime),
       schoolEndTime: _formatTime24h(_schoolEndTime),
     );
-    context.read<AddChildCubit>().submitStep2(
+    final cubit = context.read<AddChildCubit>();
+    cubit.submitStep2(
       transportPref: pref,
       sId: _selectedSchoolId,
       sName: _selectedSchoolName,
       aId: _selectedAddressId?.toString(),
       aName: _selectedAddressName,
+      existingChild: cubit.editingChild,
     );
   }
 
@@ -222,7 +238,7 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
         appBar: AppBar(
           title: Text(
             widget.isDirectEdit
-                ? 'تعديل تفضيلات النقل'
+                ? 'تعديل اعدادات  النقل'
                 : (context.read<AddChildCubit>().editingChild != null
                       ? 'تعديل بيانات الطفل'
                       : 'إضافة طفل'),
@@ -254,19 +270,17 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                   SnackBar(
                     content: Text(
                       widget.isDirectEdit
-                          ? 'تم تحديث تفضيلات النقل بنجاح'
+                          ? 'تم تحديث اعدادات  النقل بنجاح'
                           : 'تم تحديث بيانات الطفل بنجاح',
                     ),
                     backgroundColor: Colors.green,
                   ),
                 );
-                // العودة لشاشة أطفالي مباشرة وإزالة شاشات الإضافة/التعديل من المكدس
+                // العودة لشاشة أطفالي مباشرة المكتملة بالتصفح السفلي والدروار
                 Navigator.of(context).pushNamedAndRemoveUntil(
-                  AppRoutes.myChildren,
-                  (route) =>
-                      route.settings.name == AppRoutes.parentMainWrapper ||
-                      route.settings.name == AppRoutes.parentHome ||
-                      route.settings.name == AppRoutes.parentHomeLegacy,
+                  AppRoutes.parentMainWrapper,
+                  (route) => false,
+                  arguments: 1,
                 );
               } else {
                 Navigator.of(context).pushReplacement(
@@ -323,7 +337,7 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                 SizedBox(width: 10.w),
                                 Expanded(
                                   child: Text(
-                                    'تساعد هذه التفضيلات النظام في إيجاد السائق المناسب.',
+                                    'تساعد هذه الاعدادات  النظام في إيجاد السائق المناسب.',
                                     style: AppTextStyles.style(
                                       fontSize: 13.sp,
                                       color: context.primaryColor,
@@ -497,8 +511,14 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                   borderRadius: AppTheme.radius(10.r),
                                   onTap: () async {
                                     final now = DateTime.now();
-                                    final today = DateTime(now.year, now.month, now.day);
-                                    final init = _startDate.isBefore(today) ? today : _startDate;
+                                    final today = DateTime(
+                                      now.year,
+                                      now.month,
+                                      now.day,
+                                    );
+                                    final init = _startDate.isBefore(today)
+                                        ? today
+                                        : _startDate;
                                     final date = await showDatePicker(
                                       context: context,
                                       initialDate: init,
@@ -524,8 +544,12 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                       ),
                                     ),
                                     child: Text(
-                                      intl.DateFormat('yyyy/MM/dd').format(_startDate),
-                                      style: AppTextStyles.style(fontSize: 14.sp),
+                                      intl.DateFormat(
+                                        'yyyy/MM/dd',
+                                      ).format(_startDate),
+                                      style: AppTextStyles.style(
+                                        fontSize: 14.sp,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -540,8 +564,14 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                   borderRadius: AppTheme.radius(10.r),
                                   onTap: () async {
                                     final now = DateTime.now();
-                                    final today = DateTime(now.year, now.month, now.day);
-                                    final init = _startDate.isBefore(today) ? today : _startDate;
+                                    final today = DateTime(
+                                      now.year,
+                                      now.month,
+                                      now.day,
+                                    );
+                                    final init = _startDate.isBefore(today)
+                                        ? today
+                                        : _startDate;
                                     final date = await showDatePicker(
                                       context: context,
                                       initialDate: init,
@@ -564,8 +594,12 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                       ),
                                     ),
                                     child: Text(
-                                      intl.DateFormat('yyyy/MM/dd').format(_startDate),
-                                      style: AppTextStyles.style(fontSize: 14.sp),
+                                      intl.DateFormat(
+                                        'yyyy/MM/dd',
+                                      ).format(_startDate),
+                                      style: AppTextStyles.style(
+                                        fontSize: 14.sp,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -574,8 +608,14 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                   borderRadius: AppTheme.radius(10.r),
                                   onTap: () async {
                                     final now = DateTime.now();
-                                    final today = DateTime(now.year, now.month, now.day);
-                                    final init = (_endDate != null && _endDate!.isAfter(today))
+                                    final today = DateTime(
+                                      now.year,
+                                      now.month,
+                                      now.day,
+                                    );
+                                    final init =
+                                        (_endDate != null &&
+                                            _endDate!.isAfter(today))
                                         ? _endDate!
                                         : today.add(const Duration(days: 1));
                                     final date = await showDatePicker(
@@ -601,11 +641,15 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                                     ),
                                     child: Text(
                                       _endDate != null
-                                          ? intl.DateFormat('yyyy/MM/dd').format(_endDate!)
+                                          ? intl.DateFormat(
+                                              'yyyy/MM/dd',
+                                            ).format(_endDate!)
                                           : 'اختر تاريخ النهاية',
                                       style: AppTextStyles.style(
                                         fontSize: 14.sp,
-                                        color: _endDate == null ? AppColors.grey400 : null,
+                                        color: _endDate == null
+                                            ? AppColors.grey400
+                                            : null,
                                       ),
                                     ),
                                   ),

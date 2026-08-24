@@ -109,15 +109,6 @@ class ParentDrawer extends StatelessWidget {
                         },
                       ),
                       AppDrawerItem(
-                        icon: Icons.people_alt_rounded,
-                        iconColor: context.accentPurple,
-                        label: 'أطفالي',
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.pushNamed(context, AppRoutes.myChildren);
-                        },
-                      ),
-                      AppDrawerItem(
                         icon: Icons.event_busy_rounded,
                         iconColor: context.warningColor,
                         label: 'إدارة الغياب',

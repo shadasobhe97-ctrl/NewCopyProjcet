@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/features/parent/children/presentation/widgets/add_child_shared_widgets.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
@@ -12,6 +13,7 @@ import '../../../../../core/theme/text_styles.dart';
 import '../../../../../core/utils/theme_context.dart';
 import '../../data/models/child_model.dart';
 import '../../logic/children_cubit/add_child_cubit.dart';
+import '../../logic/children_cubit/children_cubit.dart';
 import 'add_child_step2_screen.dart';
 
 class AddChildStep1Screen extends StatefulWidget {
@@ -150,8 +152,9 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
 
   void _submitStep1() {
     if (_formKey.currentState!.validate()) {
-      context.read<AddChildCubit>().submitStep1(
-        img: context.read<AddChildCubit>().imagePath,
+      final cubit = context.read<AddChildCubit>();
+      cubit.submitStep1(
+        img: cubit.imagePath,
         name: _nameController.text.trim(),
         gen: _selectedGender,
         dob: _selectedDate,
@@ -161,10 +164,24 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
             : null,
       );
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const AddChildStep2Screen()),
-      );
+      if (widget.child != null) {
+        // حالة التعديل فقط: يتم حفظ بيانات الطفل الأساسية مباشرة دون الانتقال لتفضيلات النقل
+        final editingChild = widget.child!;
+        cubit.submitStep2(
+          transportPref: editingChild.transportPref,
+          sId: editingChild.schoolId,
+          sName: editingChild.schoolName,
+          aId: editingChild.addressId.toString(),
+          aName: editingChild.addressName,
+          existingChild: editingChild,
+        );
+      } else {
+        // حالة إدخال طفل جديد: الانتقال إلى الخطوة التالية (بيانات النقل)
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AddChildStep2Screen()),
+        );
+      }
     }
   }
 
@@ -176,11 +193,17 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
         decoration: BoxDecoration(
           color: context.primaryColor.withValues(alpha: 0.08),
           borderRadius: AppTheme.radius(8.r),
-          border: Border.all(color: context.primaryColor.withValues(alpha: 0.2)),
+          border: Border.all(
+            color: context.primaryColor.withValues(alpha: 0.2),
+          ),
         ),
         child: Row(
           children: [
-            Icon(Icons.child_care_rounded, size: 18.r, color: context.primaryColor),
+            Icon(
+              Icons.child_care_rounded,
+              size: 18.r,
+              color: context.primaryColor,
+            ),
             SizedBox(width: 8.w),
             Text(
               'مرحلة الروضة (تم التحديد - الصف 0)',
@@ -279,373 +302,423 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
           ),
           elevation: 0,
         ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              AddChildStepIndicator(currentStep: 1),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 32.h),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ── صورة الطفل (تم التعديل لتكون دائرية تماماً) ──
-                        Center(
-                          child: GestureDetector(
-                            onTap: _showImageSourceDialog,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Container(
-                                  width: 110.w,
-                                  height: 110
-                                      .w, // جعل الطول والعرض متطابقين بالـ .w لضمان الدائرية الكاملة
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: context.primaryColor.withValues(
-                                      alpha: 0.05,
-                                    ),
-                                    border: Border.all(
-                                      color: context.primaryColor.withValues(
-                                        alpha: 0.3,
+        body: BlocConsumer<AddChildCubit, AddChildState>(
+          listener: (context, state) {
+            if (state is AddChildSuccess && widget.child != null) {
+              context.read<ChildrenCubit>().childAdded(state.child);
+              context.read<ChildrenCubit>().fetchChildren();
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('تم تحديث بيانات الطفل بنجاح'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                AppRoutes.parentMainWrapper,
+                (route) => false,
+                arguments: 1,
+              );
+            } else if (state is AddChildError && widget.child != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          builder: (context, state) {
+            final isSubmitting = state is AddChildSubmitting;
+            return SafeArea(
+              child: Column(
+                children: [
+                  if (widget.child == null)
+                    const AddChildStepIndicator(currentStep: 1),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 32.h),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // ── صورة الطفل ──
+                            Center(
+                              child: GestureDetector(
+                                onTap: _showImageSourceDialog,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Container(
+                                      width: 110.w,
+                                      height: 110.w,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: context.primaryColor.withValues(
+                                          alpha: 0.05,
+                                        ),
+                                        border: Border.all(
+                                          color: context.primaryColor.withValues(
+                                            alpha: 0.3,
+                                          ),
+                                          width: 2.w,
+                                        ),
                                       ),
-                                      width: 2.w,
-                                    ),
-                                  ),
-                                  child: ClipOval(
-                                    // تم استبدال ClipRRect بـ ClipOval لقص حواف الصورة بشكل دائري ممتاز
-                                    child: _selectedImage != null
-                                        ? Image.file(
-                                            _selectedImage!,
-                                            width: 110.w,
-                                            height: 110.w,
-                                            fit: BoxFit
-                                                .cover, // تم التغيير لـ BoxFit.cover لملء الدائرة كاملة دون قص مشوه
-                                          )
-                                        : (_imagePathWeb != null
-                                              ? Image.network(
-                                                  _imagePathWeb!,
-                                                  width: 110.w,
-                                                  height: 110.w,
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : (hasRemoteImage
-                                                    ? CachedNetworkImage(
-                                                        imageUrl: widget
-                                                            .child!
-                                                            .photoUrl!,
-                                                        width: 110.w,
-                                                        height: 110.w,
-                                                        fit: BoxFit
-                                                            .cover, // تم التغيير لـ BoxFit.cover
-                                                        placeholder:
-                                                            (
-                                                              context,
-                                                              url,
-                                                            ) => Center(
-                                                              child:
-                                                                  CircularProgressIndicator(
-                                                                    strokeWidth:
-                                                                        2.w,
+                                      child: ClipOval(
+                                        child: _selectedImage != null
+                                            ? Image.file(
+                                                _selectedImage!,
+                                                width: 110.w,
+                                                height: 110.w,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : (_imagePathWeb != null
+                                                  ? Image.network(
+                                                      _imagePathWeb!,
+                                                      width: 110.w,
+                                                      height: 110.w,
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                  : (hasRemoteImage
+                                                        ? CachedNetworkImage(
+                                                            imageUrl: widget
+                                                                .child!
+                                                                .photoUrl!,
+                                                            width: 110.w,
+                                                            height: 110.w,
+                                                            fit: BoxFit.cover,
+                                                            placeholder:
+                                                                (
+                                                                  context,
+                                                                  url,
+                                                                ) => Center(
+                                                                  child:
+                                                                      CircularProgressIndicator(
+                                                                        strokeWidth:
+                                                                            2.w,
+                                                                      ),
+                                                                ),
+                                                            errorWidget:
+                                                                (
+                                                                  context,
+                                                                  url,
+                                                                  error,
+                                                                ) => Icon(
+                                                                  Icons
+                                                                      .error_outline_rounded,
+                                                                  size: 40.r,
+                                                                  color: AppColors
+                                                                      .error,
+                                                                ),
+                                                          )
+                                                        : Center(
+                                                            child: Icon(
+                                                              Icons.person_rounded,
+                                                              size: 55.r,
+                                                              color: context
+                                                                  .primaryColor
+                                                                  .withValues(
+                                                                    alpha: 0.4,
                                                                   ),
                                                             ),
-                                                        errorWidget:
-                                                            (
-                                                              context,
-                                                              url,
-                                                              error,
-                                                            ) => Icon(
-                                                              Icons
-                                                                  .error_outline_rounded,
-                                                              size: 40.r,
-                                                              color: AppColors
-                                                                  .error,
-                                                            ),
-                                                      )
-                                                    : Center(
-                                                        child: Icon(
-                                                          Icons.person_rounded,
-                                                          size: 55.r,
-                                                          color: context
-                                                              .primaryColor
-                                                              .withValues(
-                                                                alpha: 0.4,
-                                                              ),
-                                                        ),
-                                                      ))),
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: 2.h,
-                                  left: 2.w,
-                                  child: Container(
-                                    width: 32.w,
-                                    height: 32.h,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: context.primaryColor,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(
-                                            alpha: 0.15,
-                                          ),
-                                          blurRadius: 4.r,
-                                          offset: Offset(0, 2.h),
+                                                          ))),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 2.h,
+                                      left: 2.w,
+                                      child: Container(
+                                        width: 32.w,
+                                        height: 32.h,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: context.primaryColor,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.15,
+                                              ),
+                                              blurRadius: 4.r,
+                                              offset: Offset(0, 2.h),
+                                            ),
+                                          ],
                                         ),
-                                      ],
+                                        child: Icon(
+                                          Icons.camera_alt_rounded,
+                                          size: 16.r,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                                     ),
-                                    child: Icon(
-                                      Icons.camera_alt_rounded,
-                                      size: 16.r,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 8.h),
-                        Center(
-                          child: Text(
-                            'اضغط لإضافة صورة',
-                            style: AppTextStyles.style(
-                              fontSize: 13.sp,
-                              color: context.textMuted,
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 20.h),
-
-                        // ── كل البيانات في بوكس واحد ──
-                        AddChildSectionCard(
-                          title: 'بيانات الطفل',
-                          icon: Icons.child_care_rounded,
-                          children: [
-                            // الاسم
-                            TextFormField(
-                              controller: _nameController,
-                              style: AppTextStyles.style(fontSize: 14.sp),
-                              decoration: InputDecoration(
-                                labelText: 'الاسم الكامل',
-                                prefixIcon: const Icon(Icons.badge_outlined),
-                                border: OutlineInputBorder(
-                                  borderRadius: AppTheme.radius(10.r),
+                                  ],
                                 ),
                               ),
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty) {
-                                  return 'مطلوب';
-                                }
-                                final parts = v.trim().split(RegExp(r'\s+'));
-                                if (parts.length < 3) {
-                                  return 'الرجاء إدخال الاسم ثلاثياً على الأقل';
-                                }
-                                return null;
-                              },
                             ),
-                            SizedBox(height: 14.h),
-
-                            // تاريخ الميلاد
-                            InkWell(
-                              borderRadius: AppTheme.radius(10.r),
-                              onTap: () async {
-                                final date = await showDatePicker(
-                                  context: context,
-                                  initialDate: _selectedDate,
-                                  firstDate: DateTime(2000),
-                                  lastDate: DateTime.now(),
-                                );
-                                if (date != null) {
-                                  setState(() => _selectedDate = date);
-                                }
-                              },
-                              child: InputDecorator(
-                                decoration: InputDecoration(
-                                  labelText: 'تاريخ الميلاد',
-                                  prefixIcon: const Icon(
-                                    Icons.calendar_today_outlined,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: AppTheme.radius(10.r),
-                                  ),
+                            SizedBox(height: 8.h),
+                            Center(
+                              child: Text(
+                                'اضغط لإضافة صورة',
+                                style: AppTextStyles.style(
+                                  fontSize: 13.sp,
+                                  color: context.textMuted,
                                 ),
-                                child: Text(
-                                  '${_selectedDate.year}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.day.toString().padLeft(2, '0')}',
+                              ),
+                            ),
+                            SizedBox(height: 20.h),
+
+                            // ── كل البيانات في بوكس واحد ──
+                            AddChildSectionCard(
+                              title: 'بيانات الطفل',
+                              icon: Icons.child_care_rounded,
+                              children: [
+                                // الاسم
+                                TextFormField(
+                                  controller: _nameController,
                                   style: AppTextStyles.style(fontSize: 14.sp),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 14.h),
-
-                            // الجنس
-                            Text(
-                              'الجنس',
-                              style: AppTextStyles.style(
-                                fontSize: 13.sp,
-                                color: AppColors.grey500,
-                              ),
-                            ),
-                            SizedBox(height: 8.h),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: GenderSelectionButton(
-                                    label: 'ذكر',
-                                    icon: Icons.male_rounded,
-                                    isSelected: _selectedGender == 'male',
-                                    selectedColor: Colors.blue,
-                                    onTap: () => setState(
-                                      () => _selectedGender = 'male',
+                                  decoration: InputDecoration(
+                                    labelText: 'الاسم الكامل',
+                                    prefixIcon: const Icon(Icons.badge_outlined),
+                                    border: OutlineInputBorder(
+                                      borderRadius: AppTheme.radius(10.r),
                                     ),
                                   ),
+                                  validator: (v) {
+                                    if (v == null || v.trim().isEmpty) {
+                                      return 'مطلوب';
+                                    }
+                                    final parts = v.trim().split(RegExp(r'\s+'));
+                                    if (parts.length < 3) {
+                                      return 'الرجاء إدخال الاسم ثلاثياً على الأقل';
+                                    }
+                                    return null;
+                                  },
                                 ),
-                                SizedBox(width: 12.w),
-                                Expanded(
-                                  child: GenderSelectionButton(
-                                    label: 'أنثى',
-                                    icon: Icons.female_rounded,
-                                    isSelected: _selectedGender == 'female',
-                                    selectedColor: Colors.pink,
-                                    onTap: () => setState(
-                                      () => _selectedGender = 'female',
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 14.h),
+                                SizedBox(height: 14.h),
 
-                            // المرحلة والصف الدراسي
-                            Text(
-                              'المرحلة والصف الدراسي',
-                              style: AppTextStyles.style(
-                                fontSize: 13.sp,
-                                color: AppColors.grey500,
-                              ),
-                            ),
-                            SizedBox(height: 8.h),
-                            // اختيار المرحلة (روضة, ابتدائية, إعدادية, ثانوية)
-                            Row(
-                              children: [
-                                {'label': 'روضة', 'idx': 0},
-                                {'label': 'ابتدائية', 'idx': 1},
-                                {'label': 'إعدادية', 'idx': 2},
-                                {'label': 'ثانوية', 'idx': 3},
-                              ].map((stage) {
-                                final idx = stage['idx'] as int;
-                                final isSelected = _selectedStageIndex == idx;
-                                return Expanded(
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _selectedStageIndex = idx;
-                                        if (idx == 0) {
-                                          _selectedGrade = 0;
-                                        } else if (idx == 1) {
-                                          if (_selectedGrade < 1 || _selectedGrade > 6) _selectedGrade = 1;
-                                        } else if (idx == 2) {
-                                          if (_selectedGrade < 7 || _selectedGrade > 9) _selectedGrade = 7;
-                                        } else if (idx == 3) {
-                                          if (_selectedGrade < 10 || _selectedGrade > 12) _selectedGrade = 10;
-                                        }
-                                      });
-                                    },
-                                    child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 200),
-                                      margin: EdgeInsets.symmetric(horizontal: 2.w),
-                                      padding: EdgeInsets.symmetric(vertical: 10.h),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? context.primaryColor
-                                            : context.primaryColor.withValues(alpha: 0.05),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? context.primaryColor
-                                              : AppColors.grey300,
-                                        ),
+                                // تاريخ الميلاد
+                                InkWell(
+                                  borderRadius: AppTheme.radius(10.r),
+                                  onTap: () async {
+                                    final date = await showDatePicker(
+                                      context: context,
+                                      initialDate: _selectedDate,
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime.now(),
+                                    );
+                                    if (date != null) {
+                                      setState(() => _selectedDate = date);
+                                    }
+                                  },
+                                  child: InputDecorator(
+                                    decoration: InputDecoration(
+                                      labelText: 'تاريخ الميلاد',
+                                      prefixIcon: const Icon(
+                                        Icons.calendar_today_outlined,
+                                      ),
+                                      border: OutlineInputBorder(
                                         borderRadius: AppTheme.radius(10.r),
                                       ),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        stage['label'] as String,
-                                        style: AppTextStyles.style(
-                                          color: isSelected
-                                              ? Colors.white
-                                              : context.textMuted,
-                                          fontWeight: isSelected
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
-                                          fontSize: 12.sp,
+                                    ),
+                                    child: Text(
+                                      '${_selectedDate.year}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.day.toString().padLeft(2, '0')}',
+                                      style: AppTextStyles.style(fontSize: 14.sp),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 14.h),
+
+                                // الجنس
+                                Text(
+                                  'الجنس',
+                                  style: AppTextStyles.style(
+                                    fontSize: 13.sp,
+                                    color: AppColors.grey500,
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: GenderSelectionButton(
+                                        label: 'ذكر',
+                                        icon: Icons.male_rounded,
+                                        isSelected: _selectedGender == 'male',
+                                        selectedColor: Colors.blue,
+                                        onTap: () => setState(
+                                          () => _selectedGender = 'male',
                                         ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                            SizedBox(height: 10.h),
-                            // خيارات الصف بناءً على المرحلة
-                            _buildGradeOptionsForStage(),
-                            SizedBox(height: 14.h),
+                                    SizedBox(width: 12.w),
+                                    Expanded(
+                                      child: GenderSelectionButton(
+                                        label: 'أنثى',
+                                        icon: Icons.female_rounded,
+                                        isSelected: _selectedGender == 'female',
+                                        selectedColor: Colors.pink,
+                                        onTap: () => setState(
+                                          () => _selectedGender = 'female',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 14.h),
 
-                            // الملاحظات الطبية
-                            TextFormField(
-                              controller: _medicalNotesController,
-                              maxLines: 3,
-                              style: AppTextStyles.style(fontSize: 14.sp),
-                              decoration: InputDecoration(
-                                labelText: 'الملاحظات الطبية (اختياري)',
-                                prefixIcon: const Icon(
-                                  Icons.medical_services_outlined,
+                                // المرحلة والصف الدراسي
+                                Text(
+                                  'المرحلة والصف الدراسي',
+                                  style: AppTextStyles.style(
+                                    fontSize: 13.sp,
+                                    color: AppColors.grey500,
+                                  ),
                                 ),
-                                hintText: 'أي حالات صحية أو تنبيهات مهمة...',
-                                border: OutlineInputBorder(
-                                  borderRadius: AppTheme.radius(10.r),
+                                SizedBox(height: 8.h),
+                                // اختيار المرحلة (روضة, ابتدائية, إعدادية, ثانوية)
+                                Row(
+                                  children: [
+                                    {'label': 'روضة', 'idx': 0},
+                                    {'label': 'ابتدائية', 'idx': 1},
+                                    {'label': 'إعدادية', 'idx': 2},
+                                    {'label': 'ثانوية', 'idx': 3},
+                                  ].map((stage) {
+                                    final idx = stage['idx'] as int;
+                                    final isSelected =
+                                        _selectedStageIndex == idx;
+                                    return Expanded(
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedStageIndex = idx;
+                                            if (idx == 0) {
+                                              _selectedGrade = 0;
+                                            } else if (idx == 1) {
+                                              if (_selectedGrade < 1 ||
+                                                  _selectedGrade > 6)
+                                                _selectedGrade = 1;
+                                            } else if (idx == 2) {
+                                              if (_selectedGrade < 7 ||
+                                                  _selectedGrade > 9)
+                                                _selectedGrade = 7;
+                                            } else if (idx == 3) {
+                                              if (_selectedGrade < 10 ||
+                                                  _selectedGrade > 12)
+                                                _selectedGrade = 10;
+                                            }
+                                          });
+                                        },
+                                        child: AnimatedContainer(
+                                          duration: const Duration(
+                                            milliseconds: 200,
+                                          ),
+                                          margin: EdgeInsets.symmetric(
+                                            horizontal: 2.w,
+                                          ),
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 10.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? context.primaryColor
+                                                : context.primaryColor
+                                                      .withValues(alpha: 0.05),
+                                            border: Border.all(
+                                              color: isSelected
+                                                  ? context.primaryColor
+                                                  : AppColors.grey300,
+                                            ),
+                                            borderRadius: AppTheme.radius(10.r),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            stage['label'] as String,
+                                            style: AppTextStyles.style(
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : context.textMuted,
+                                              fontWeight: isSelected
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal,
+                                              fontSize: 12.sp,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
                                 ),
+                                SizedBox(height: 10.h),
+                                // خيارات الصف بناءً على المرحلة
+                                _buildGradeOptionsForStage(),
+                                SizedBox(height: 14.h),
+
+                                // الملاحظات الطبية
+                                TextFormField(
+                                  controller: _medicalNotesController,
+                                  maxLines: 3,
+                                  style: AppTextStyles.style(fontSize: 14.sp),
+                                  decoration: InputDecoration(
+                                    labelText: 'الملاحظات الطبية (اختياري)',
+                                    prefixIcon: const Icon(
+                                      Icons.medical_services_outlined,
+                                    ),
+                                    hintText: 'أي حالات صحية أو تنبيهات مهمة...',
+                                    border: OutlineInputBorder(
+                                      borderRadius: AppTheme.radius(10.r),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 28.h),
+
+                            SizedBox(
+                              width: double.infinity,
+                              height: 52.h,
+                              child: ElevatedButton(
+                                onPressed: isSubmitting ? null : _submitStep1,
+                                style: AppTheme.elevatedButtonStyle(
+                                  backgroundColor: context.primaryColor,
+                                ),
+                                child: isSubmitting
+                                    ? const CircularProgressIndicator(
+                                        color: Colors.white,
+                                      )
+                                    : Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            widget.child != null
+                                                ? 'حفظ التعديلات'
+                                                : ' التالي تفضيلات النقل ',
+                                            style: TextStyle(
+                                              fontSize: 16.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          SizedBox(width: 8.w),
+                                          Icon(
+                                            widget.child != null
+                                                ? Icons.check_circle_outline
+                                                : Icons.arrow_forward_rounded,
+                                            color: Colors.white,
+                                          ),
+                                        ],
+                                      ),
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: 28.h),
-
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52.h,
-                          child: ElevatedButton(
-                            onPressed: _submitStep1,
-                            style: AppTheme.elevatedButtonStyle(
-                              backgroundColor: context.primaryColor,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  ' التالي تفضيلات النقل ',
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                SizedBox(width: 8.w),
-                                const Icon(
-                                  Icons.arrow_forward_rounded,
-                                  color: Colors.white,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

@@ -33,7 +33,7 @@ class VehicleCubit extends Cubit<VehicleState> {
   }) async {
     emit(VehicleLoading());
     try {
-      final updatedVehicle = await repository.updateVehicle(
+      final result = await repository.updateVehicle(
         vehicleId: vehicleId,
         brand: brand,
         model: model,
@@ -46,10 +46,10 @@ class VehicleCubit extends Cubit<VehicleState> {
         vehicleImage: vehicleImage,
       );
 
-      // بث نجاح التحديث
-      emit(VehicleDetailsSuccess(updatedVehicle));
+      // 1. بث رسالة النجاح القادمة من الباك إند
+      emit(VehicleUpdateSuccess(result.message, result.vehicle));
 
-      // 🌟 إعادة جلب بيانات المركبة فوراً من السيرفر (GET) لضمان تماثل البيانات
+      // 2. 🌟 إعادة جلب بيانات المركبة فوراً من السيرفر عبر GET للتحقق وتحديث البيانات
       await getVehicleProfile();
     } catch (e) {
       emit(VehicleError(e.toString()));
