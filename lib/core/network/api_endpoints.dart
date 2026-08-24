@@ -2,7 +2,7 @@ class ApiEndpoints {
   const ApiEndpoints._();
 
   // الرابط الأساسي للسيرفر (يحتوي على /api/)
-  static const String baseUrl = ' https://darby-app-api.loca.lt/api/';
+  static const String baseUrl = 'https://nasty-seahorse-19.loca.lt/api/';
 
   //=========================================
   // Auth Endpoints (مسارات المصادقة العامة)
@@ -49,6 +49,11 @@ class ApiEndpoints {
   static const String driverPreferenceDefaults =
       'v1/driver/preferences/defaults';
   static const String driverPreferences = 'v1/driver/preferences';
+  static const String adminZonesTree = 'admin/zones-tree';
+  static const String adminMunicipalities = 'admin/municipalities';
+  static const String adminSubMunicipalities = 'admin/sub-municipalities';
+  static String adminSubMunicipalityZones(dynamic subId) =>
+      'admin/sub-municipalities/$subId/zones';
   static const String driverProfile = 'v1/driver/profile';
   static const String driverProfileUpdate = 'v1/driver/profile/update';
   static const String driverCancelEmailChange =

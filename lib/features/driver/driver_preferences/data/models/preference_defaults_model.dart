@@ -1,4 +1,5 @@
 import 'coverage_model.dart';
+import 'zone_model.dart';
 
 class PreferenceDefaultsModel {
   final List<Map<String, dynamic>> availableShiftSlots;
@@ -20,16 +21,50 @@ class PreferenceDefaultsModel {
       return [];
     }
 
+    final List<CoverageModel> geographyTreeList = [];
+    final rawGeo = json['geography_tree'] ?? json['zones_tree'] ?? json;
+    if (rawGeo is List) {
+      for (final item in rawGeo) {
+        if (item is Map) {
+          final mName = item['name']?.toString() ?? item['municipality_name']?.toString() ?? 'البلدية';
+          final subTree = item['sub_municipalities'];
+          if (subTree is List) {
+            for (final subItem in subTree) {
+              if (subItem is Map) {
+                final subName = subItem['name']?.toString() ?? subItem['sub_municipality_name']?.toString() ?? '';
+                final List<ZoneModel> zList = [];
+                final rawZ = subItem['zones'];
+                if (rawZ is List) {
+                  for (final z in rawZ) {
+                    if (z is Map) {
+                      zList.add(ZoneModel.fromJson(Map<String, dynamic>.from(z)));
+                    }
+                  }
+                }
+                geographyTreeList.add(
+                  CoverageModel(
+                    municipalityName: mName,
+                    subMunicipalityName: subName,
+                    zones: zList,
+                  ),
+                );
+              }
+            }
+          } else {
+            geographyTreeList.add(
+              CoverageModel.fromJson(Map<String, dynamic>.from(item)),
+            );
+          }
+        }
+      }
+    }
+
     return PreferenceDefaultsModel(
       availableShiftSlots: parseListMap(json['available_shift_slots']),
       availableSubscriptionTypes: parseListMap(
         json['available_subscription_types'],
       ),
-      geographyTree:
-          (json['geography_tree'] as List<dynamic>?)
-              ?.map((e) => CoverageModel.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+      geographyTree: geographyTreeList,
     );
   }
 

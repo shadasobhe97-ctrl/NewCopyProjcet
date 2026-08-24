@@ -31,8 +31,10 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
   late TextEditingController _licenseNoController;
   late TextEditingController _licenseExpiryController;
   late TextEditingController _insuranceExpiryController;
+  late TextEditingController _stampExpiryController;
+  late TextEditingController _inspectionExpiryController;
 
-  // الخريطة الاحتفاظ بالصور المعدلة حسب نوع الوثيقة (مثل LICENSE, VEHICLE_LOGBOOK, INSURANCE)
+  // الخريطة الاحتفاظ بالصور المعدلة حسب نوع الوثيقة
   final Map<String, dynamic> _newFilesMap = {};
 
   final ImagePicker _picker = ImagePicker();
@@ -44,6 +46,8 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     _licenseNoController = TextEditingController();
     _licenseExpiryController = TextEditingController();
     _insuranceExpiryController = TextEditingController();
+    _stampExpiryController = TextEditingController();
+    _inspectionExpiryController = TextEditingController();
 
     final cubit = context.read<DriverLegalDataCubit>();
     if (cubit.cachedLegalData != null) {
@@ -57,6 +61,8 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     _licenseNoController.text = model.licenseNumber;
     _licenseExpiryController.text = model.licenseExpiry;
     _insuranceExpiryController.text = model.insuranceExpiry ?? '';
+    _stampExpiryController.text = model.stampExpiry ?? '';
+    _inspectionExpiryController.text = model.technicalInspectionExpiry ?? '';
   }
 
   @override
@@ -65,8 +71,22 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     _licenseNoController.dispose();
     _licenseExpiryController.dispose();
     _insuranceExpiryController.dispose();
+    _stampExpiryController.dispose();
+    _inspectionExpiryController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  String _formatCleanDate(String dateStr) {
+    if (dateStr.contains('T')) {
+      final parts = dateStr.split('T');
+      if (parts.isNotEmpty) return parts.first;
+    }
+    if (dateStr.contains(' ')) {
+      final parts = dateStr.split(' ');
+      if (parts.isNotEmpty) return parts.first;
+    }
+    return dateStr;
   }
 
   Future<void> _pickImageForDoc(String typeKey, ImageSource source) async {
@@ -140,15 +160,21 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'تعديل الوثائق',
-          style: AppTextStyles.style(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+        title: Row(
+          children: [
+            const Icon(Icons.security, color: Colors.orange),
+            const SizedBox(width: 8),
+            Text(
+              'تنبيه أمني هام',
+              style: AppTextStyles.style(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+          ],
         ),
         content: Text(
-          'عند إرسال التعديلات سيتم إرسالها إلى الإدارة للمراجعة.\n\nسيتم إيقاف حساب السائق مؤقتًا حتى تتم مراجعة واعتماد الوثائق الجديدة.\n\nهل تريد المتابعة؟',
+          'عند إرسال التعديلات الجديدة على الوثائق الرسمية، سيتم إرسالها إلى الإدارة للمراجعة والتدقيق.\n\nسيتم إيقاف حساب السائق مؤقتاً لحين الاعتماد لأسباب أمنية ولضمان سلامة الخدمة.\n\nهل تريد المتابعة وإرسال الطلب؟',
           style: AppTextStyles.style(
             fontSize: 14,
             height: 1.5,
@@ -156,7 +182,7 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.pop(ctx), // إلغاء التعديل وعدم الإرسال
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
@@ -167,7 +193,7 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
             style: AppTheme.elevatedButtonStyle(
               backgroundColor: primaryColor,
             ),
-            child: const Text('إرسال الطلب'),
+            child: const Text('موافق وإرسال الطلب'),
           ),
         ],
       ),
@@ -179,22 +205,32 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     final licNo = _licenseNoController.text.trim();
     final expiry = _licenseExpiryController.text.trim();
     final insExpiry = _insuranceExpiryController.text.trim();
+    final stpExpiry = _stampExpiryController.text.trim();
+    final inspExpiry = _inspectionExpiryController.text.trim();
 
     String? sendNatId;
     String? sendLicNo;
     String? sendExpiry;
     String? sendInsExpiry;
+    String? sendStpExpiry;
+    String? sendInspExpiry;
 
     if (natId != currentData.nationalId) sendNatId = natId;
     if (licNo != currentData.licenseNumber) sendLicNo = licNo;
     if (expiry != currentData.licenseExpiry) sendExpiry = expiry;
     if (insExpiry != currentData.insuranceExpiry) sendInsExpiry = insExpiry;
+    if (stpExpiry != currentData.stampExpiry) sendStpExpiry = stpExpiry;
+    if (inspExpiry != currentData.technicalInspectionExpiry) {
+      sendInspExpiry = inspExpiry;
+    }
 
     context.read<DriverLegalDataCubit>().updateLegalData(
           nationalId: sendNatId,
           licenseNumber: sendLicNo,
           licenseExpiry: sendExpiry,
           insuranceExpiry: sendInsExpiry,
+          stampExpiry: sendStpExpiry,
+          technicalInspectionExpiry: sendInspExpiry,
           newFiles: _newFilesMap.isNotEmpty ? _newFilesMap : null,
         );
   }
@@ -417,11 +453,11 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                           ),
                           const SizedBox(height: 12),
 
-                          // تاريخ انتهاء وثيقة التأمين
+                          // تاريخ انتهاء الدمغ
                           _buildTextField(
-                            label: 'تاريخ انتهاء التأمين (YYYY-MM-DD)',
-                            controller: _insuranceExpiryController,
-                            icon: Icons.event_available_outlined,
+                            label: 'تاريخ انتهاء الدمغ (YYYY-MM-DD)',
+                            controller: _stampExpiryController,
+                            icon: Icons.history_edu_outlined,
                             isEditing: _isEditing,
                             onTap: _isEditing
                                 ? () async {
@@ -432,7 +468,30 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                                       lastDate: DateTime(2035),
                                     );
                                     if (picked != null) {
-                                      _insuranceExpiryController.text =
+                                      _stampExpiryController.text =
+                                          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                                    }
+                                  }
+                                : null,
+                          ),
+                          const SizedBox(height: 12),
+
+                          // تاريخ انتهاء الفحص الفني
+                          _buildTextField(
+                            label: 'تاريخ انتهاء الفحص الفني (YYYY-MM-DD)',
+                            controller: _inspectionExpiryController,
+                            icon: Icons.build_circle_outlined,
+                            isEditing: _isEditing,
+                            onTap: _isEditing
+                                ? () async {
+                                    final picked = await showDatePicker(
+                                      context: context,
+                                      initialDate: DateTime.now(),
+                                      firstDate: DateTime(2020),
+                                      lastDate: DateTime(2035),
+                                    );
+                                    if (picked != null) {
+                                      _inspectionExpiryController.text =
                                           '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
                                     }
                                   }
@@ -478,6 +537,7 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                           'uploaded_doc_${fileModel.id}_${fileModel.type}',
                         ),
                         fileModel: fileModel,
+                        legalData: legalData,
                         isEditing: _isEditing,
                         isDark: isDark,
                       ),
@@ -532,11 +592,25 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
   Widget _buildDocumentCard({
     required Key key,
     required DriverUploadedFileModel fileModel,
+    required DriverLegalDataModel legalData,
     required bool isEditing,
     required bool isDark,
   }) {
     final newFile = _newFilesMap[fileModel.type];
     final primaryColor = Theme.of(context).primaryColor;
+
+    String? docExpiry;
+    final typeUpper = fileModel.type.toUpperCase();
+    if (typeUpper == 'LICENSE') {
+      docExpiry = fileModel.licenseExpiryDate ?? legalData.licenseExpiry;
+    } else if (typeUpper == 'INSURANCE') {
+      docExpiry = fileModel.insuranceExpiryDate ?? legalData.insuranceExpiry;
+    } else if (typeUpper == 'STAMP') {
+      docExpiry = fileModel.stampExpiryDate ?? legalData.stampExpiry;
+    } else if (typeUpper == 'TECHNICAL_INSPECTION') {
+      docExpiry = fileModel.technicalInspectionExpiryDate ??
+          legalData.technicalInspectionExpiry;
+    }
 
     return Card(
       key: key,
@@ -572,33 +646,43 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
             ),
             const SizedBox(height: 8),
 
-            // تاريخ الرفع وتاريخ الانتهاء
-            Row(
+            // تاريخ الرفع وتاريخ الانتهاء الخفيف (مغلفة بـ Wrap لمنع أي تجاوز شاشة)
+            Wrap(
+              spacing: 12,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                if (fileModel.uploadedAt.isNotEmpty) ...[
-                  const Icon(Icons.access_time, size: 14, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text(
-                    'تاريخ الرفع: ${fileModel.uploadedAt}',
-                    style: AppTextStyles.style(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
+                if (fileModel.uploadedAt.isNotEmpty)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                      const SizedBox(width: 4),
+                      Text(
+                        'تاريخ الرفع: ${fileModel.uploadedAt}',
+                        style: AppTextStyles.style(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                ],
-                if (fileModel.licenseExpiryDate != null ||
-                    fileModel.insuranceExpiryDate != null) ...[
-                  const Icon(Icons.event, size: 14, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text(
-                    'الانتهاء: ${fileModel.licenseExpiryDate ?? fileModel.insuranceExpiryDate}',
-                    style: AppTextStyles.style(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
+                if (docExpiry != null && docExpiry.isNotEmpty)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.event_available, size: 14, color: Colors.green),
+                      const SizedBox(width: 4),
+                      Text(
+                        'تاريخ الانتهاء: ${_formatCleanDate(docExpiry)}',
+                        style: AppTextStyles.style(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
               ],
             ),
 

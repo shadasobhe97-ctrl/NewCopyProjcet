@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/widgets/app_image_widget.dart';
+import 'package:kids_transport/core/widgets/fullscreen_image_viewer.dart';
 
 class PrimaryVehicleInfoView extends StatelessWidget {
   final GlobalKey<FormState> formKey;
@@ -15,6 +18,8 @@ class PrimaryVehicleInfoView extends StatelessWidget {
   final bool hasAc;
   final String? status;
   final bool? isVerified;
+  final String? vehicleImageUrl;
+  final dynamic selectedVehicleImage;
 
   final TextEditingController brandController;
   final TextEditingController modelController;
@@ -25,6 +30,7 @@ class PrimaryVehicleInfoView extends StatelessWidget {
   final TextEditingController capacityManualController;
 
   final ValueChanged<bool> onHasAcChanged;
+  final VoidCallback onPickImage;
   final VoidCallback onCancel;
   final VoidCallback onSave;
 
@@ -42,6 +48,8 @@ class PrimaryVehicleInfoView extends StatelessWidget {
     required this.hasAc,
     this.status,
     this.isVerified,
+    this.vehicleImageUrl,
+    this.selectedVehicleImage,
     required this.brandController,
     required this.modelController,
     required this.yearController,
@@ -50,6 +58,7 @@ class PrimaryVehicleInfoView extends StatelessWidget {
     required this.typeController,
     required this.capacityManualController,
     required this.onHasAcChanged,
+    required this.onPickImage,
     required this.onCancel,
     required this.onSave,
   });
@@ -62,19 +71,19 @@ class PrimaryVehicleInfoView extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.info_outline, color: primaryColor),
+            const Icon(Icons.security, color: Colors.orange),
             const SizedBox(width: 8),
             Text(
-              'تأكيد تعديل المركبة',
+              'تنبيه أمني هام',
               style: AppTextStyles.style(
                 fontWeight: FontWeight.bold,
-                fontSize: 17,
+                fontSize: 18,
               ),
             ),
           ],
         ),
         content: Text(
-          'سيتم تحديث تفاصيل المركبة وهي قيد المراجعة والتدقيق الآن من قبل الإدارة.\n\nهل ترغب بمتابعة إرسال البيانات؟',
+          'عند إرسال التعديلات الجديدة على بيانات أو صورة المركبة، سيتم إرسالها إلى الإدارة للمراجعة والتدقيق.\n\nسيتم إيقاف حساب السائق مؤقتاً لحين الاعتماد لأسباب أمنية ولضمان سلامة الخدمة.\n\nهل تريد المتابعة وإرسال الطلب؟',
           style: AppTextStyles.style(
             fontSize: 14,
             height: 1.5,
@@ -82,7 +91,7 @@ class PrimaryVehicleInfoView extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.pop(ctx), // إلغاء عدم الإرسال
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
@@ -90,13 +99,10 @@ class PrimaryVehicleInfoView extends StatelessWidget {
               Navigator.pop(ctx);
               onSave();
             },
-            style: ElevatedButton.styleFrom(
+            style: AppTheme.elevatedButtonStyle(
               backgroundColor: primaryColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
             ),
-            child: const Text('إرسال التعديلات', style: TextStyle(color: Colors.white)),
+            child: const Text('موافق وإرسال الطلب'),
           ),
         ],
       ),
@@ -109,6 +115,9 @@ class PrimaryVehicleInfoView extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.primaryColor;
 
+    final hasImage = selectedVehicleImage != null ||
+        (vehicleImageUrl != null && vehicleImageUrl!.trim().isNotEmpty);
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Form(
@@ -117,6 +126,132 @@ class PrimaryVehicleInfoView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // ── 0. صورة المركبة ──
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                color: isDark ? AppColors.grey900 : Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'صورة المركبة الحالية',
+                            style: AppTextStyles.style(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          if (isEditing)
+                            TextButton.icon(
+                              onPressed: onPickImage,
+                              icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+                              label: Text(
+                                hasImage ? 'تغيير الصورة' : 'إضافة صورة',
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      if (hasImage)
+                        GestureDetector(
+                          onTap: () {
+                            FullscreenImageViewer.show(
+                              context,
+                              imageFile: selectedVehicleImage,
+                              imageUrl: vehicleImageUrl,
+                              title: 'صورة المركبة ($brand $model)',
+                            );
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Stack(
+                              alignment: Alignment.bottomRight,
+                              children: [
+                                AppImageWidget(
+                                  image: selectedVehicleImage ?? vehicleImageUrl,
+                                  height: 180,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                                Container(
+                                  margin: const EdgeInsets.all(8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.fullscreen,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'اضغط للتكبير',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          height: 120,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.grey[800]
+                                : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.grey.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.directions_car_outlined,
+                                size: 40,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'لم يتم رفع صورة للمركبة بعد',
+                                style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
               // ── شارة حالة المركبة والتحقق ──
               Card(
                 elevation: 1.5,

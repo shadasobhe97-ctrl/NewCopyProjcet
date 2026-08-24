@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/features/driver/profile/logic/cubit/driver_legal_data_cubit.dart';
 import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
@@ -21,7 +22,9 @@ class _DriverPrimaryVehicleScreenState
     extends State<DriverPrimaryVehicleScreen> {
   bool _isEditing = false;
   bool _hasAc = true;
+  dynamic _selectedVehicleImage;
   final _formKey = GlobalKey<FormState>();
+  final ImagePicker _picker = ImagePicker();
 
   final TextEditingController _brandController = TextEditingController();
   final TextEditingController _modelController = TextEditingController();
@@ -48,6 +51,72 @@ class _DriverPrimaryVehicleScreenState
     _typeController.text = vehicle.type ?? '';
     _capacityManualController.text = vehicle.capacityManual.toString();
     _hasAc = vehicle.hasAc ?? true;
+    _selectedVehicleImage = null;
+  }
+
+  Future<void> _pickVehicleImage(ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 1280,
+        maxHeight: 1280,
+        imageQuality: 70,
+      );
+      if (image != null) {
+        setState(() {
+          _selectedVehicleImage = image;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('فشل اختيار الصورة: $e')),
+      );
+    }
+  }
+
+  void _showImagePickerModal() {
+    final primaryColor = Theme.of(context).primaryColor;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'اختيار صورة المركبة',
+                style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Icon(Icons.camera_alt_outlined, color: primaryColor),
+                title: const Text('التقاط بواسطة الكاميرا'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickVehicleImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library_outlined, color: primaryColor),
+                title: const Text('اختيار من المعرض'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickVehicleImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -186,6 +255,8 @@ class _DriverPrimaryVehicleScreenState
                             hasAc: _hasAc,
                             status: vehicle.status,
                             isVerified: vehicle.isVerified,
+                            vehicleImageUrl: vehicle.vehicleImageUrl,
+                            selectedVehicleImage: _selectedVehicleImage,
                             brandController: _brandController,
                             modelController: _modelController,
                             yearController: _yearController,
@@ -194,6 +265,7 @@ class _DriverPrimaryVehicleScreenState
                             typeController: _typeController,
                             capacityManualController: _capacityManualController,
                             onHasAcChanged: (val) => setState(() => _hasAc = val),
+                            onPickImage: _showImagePickerModal,
                             onCancel: () => setState(() {
                               _initControllers(vehicle);
                               _isEditing = false;
@@ -213,6 +285,7 @@ class _DriverPrimaryVehicleScreenState
                                         _capacityManualController.text,
                                       ),
                                       hasAc: _hasAc,
+                                      vehicleImage: _selectedVehicleImage,
                                     );
                               }
                             },
