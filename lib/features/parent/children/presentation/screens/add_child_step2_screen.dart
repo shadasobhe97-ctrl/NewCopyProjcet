@@ -181,14 +181,25 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
       schoolEndTime: _formatTime24h(_schoolEndTime),
     );
     final cubit = context.read<AddChildCubit>();
-    cubit.submitStep2(
-      transportPref: pref,
-      sId: _selectedSchoolId,
-      sName: _selectedSchoolName,
-      aId: _selectedAddressId?.toString(),
-      aName: _selectedAddressName,
-      existingChild: cubit.editingChild,
-    );
+    if (widget.isDirectEdit && cubit.editingChild != null) {
+      // حالة تعديل بيانات النقل فقط: يتم إرسال حقول النقل والاشتراك الخاصة بهذه الشاشة حصراً
+      cubit.submitChildTransportDataOnly(
+        existingChild: cubit.editingChild!,
+        transportPref: pref,
+        sId: _selectedSchoolId!,
+        aId: _selectedAddressId!,
+      );
+    } else {
+      // حالة إخال طفل جديد
+      cubit.submitStep2(
+        transportPref: pref,
+        sId: _selectedSchoolId,
+        sName: _selectedSchoolName,
+        aId: _selectedAddressId?.toString(),
+        aName: _selectedAddressName,
+        existingChild: cubit.editingChild,
+      );
+    }
   }
 
   Widget _buildSelectionRow({

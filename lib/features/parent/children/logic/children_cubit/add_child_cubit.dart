@@ -151,6 +151,75 @@ class AddChildCubit extends Cubit<AddChildState> {
     }
   }
 
+  Future<void> submitChildPersonalDataOnly({
+    required ChildModel existingChild,
+  }) async {
+    if (fullName == null ||
+        gender == null ||
+        birthDate == null ||
+        gradeLevel == null) {
+      emit(AddChildError('الرجاء استكمال بيانات الطفل الأساسية أولاً.'));
+      return;
+    }
+
+    emit(AddChildSubmitting());
+
+    final gradeStr = (gradeLevel ?? 0).toString();
+
+    final childToSubmit = ChildModel(
+      id: existingChild.id,
+      parentId: existingChild.parentId,
+      schoolId: existingChild.schoolId,
+      addressId: existingChild.addressId,
+      fullName: fullName!,
+      gender: gender!,
+      birthDate: birthDate!,
+      grade: gradeStr,
+      photoUrl: imagePath,
+      medicalNotes: medicalNotes,
+      logistics: existingChild.logistics,
+    );
+
+    final (resultChild, message) = await _repository.updateChildPersonalData(
+      childToSubmit,
+      imagePath,
+    );
+
+    if (resultChild != null) {
+      emit(AddChildSuccess(resultChild, message));
+    } else {
+      emit(AddChildError(message));
+    }
+  }
+
+  Future<void> submitChildTransportDataOnly({
+    required ChildModel existingChild,
+    required TransportPrefModel transportPref,
+    required int sId,
+    required dynamic aId,
+  }) async {
+    emit(AddChildSubmitting());
+
+    final (resultChild, message) = await _repository.updateChildTransportData(
+      childId: existingChild.id.toString(),
+      schoolId: sId,
+      addressId: aId,
+      preferredTimeSlot: transportPref.period,
+      tripDirection: transportPref.serviceType,
+      startDate: transportPref.startDate,
+      endDate: transportPref.endDate,
+      subscriptionType: transportPref.subscriptionType,
+      pickupTime: transportPref.schoolStartTime,
+      dropoffTime: transportPref.schoolEndTime,
+    );
+
+    if (resultChild != null) {
+      emit(AddChildSuccess(resultChild, message));
+    } else {
+      emit(AddChildError(message));
+    }
+  }
+
   Future<(List<SchoolModel>?, String?)> searchSchools(String query) async {
     return await _repository.searchSchools(query);
   }

@@ -11,6 +11,7 @@ import '../../data/models/coverage_model.dart';
 import '../../data/models/zone_model.dart';
 import '../../logic/driver_preferences_cubit.dart';
 import '../../logic/driver_preferences_state.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 
 class DriverPreferencesScreen extends StatefulWidget {
   final bool isMandatory;
@@ -51,6 +52,9 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.isMandatory) {
+      StorageService.saveDriverRegStage('preferences');
+    }
     _loadData();
   }
 
@@ -156,7 +160,10 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
             width: double.infinity,
             child: PrimaryButton(
               label: 'حسناً',
-              onPressed: () {
+              onPressed: () async {
+                await StorageService.setIsPreferencesSet(true);
+                await StorageService.clearDriverRegDraft();
+                if (!dialogContext.mounted) return;
                 Navigator.pop(dialogContext);
                 Navigator.pushNamedAndRemoveUntil(
                   context,

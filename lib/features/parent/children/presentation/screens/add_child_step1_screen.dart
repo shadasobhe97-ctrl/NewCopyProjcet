@@ -165,15 +165,9 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
       );
 
       if (widget.child != null) {
-        // حالة التعديل فقط: يتم حفظ بيانات الطفل الأساسية مباشرة دون الانتقال لتفضيلات النقل
-        final editingChild = widget.child!;
-        cubit.submitStep2(
-          transportPref: editingChild.transportPref,
-          sId: editingChild.schoolId,
-          sName: editingChild.schoolName,
-          aId: editingChild.addressId.toString(),
-          aName: editingChild.addressName,
-          existingChild: editingChild,
+        // حالة تعديل بيانات الطفل فقط: يتم حفظ وإرسال الحقول الخاصة بشاشة بيانات الطفل الشخصية حصراً
+        cubit.submitChildPersonalDataOnly(
+          existingChild: widget.child!,
         );
       } else {
         // حالة إدخال طفل جديد: الانتقال إلى الخطوة التالية (بيانات النقل)

@@ -74,8 +74,15 @@ class ChildrenRepository {
     ChildModel child,
     String? localImagePath,
   ) async {
+    return updateChildPersonalData(child, localImagePath);
+  }
+
+  Future<(ChildModel?, String)> updateChildPersonalData(
+    ChildModel child,
+    String? localImagePath,
+  ) async {
     try {
-      final (updatedChild, message) = await _dataSource.updateChild(
+      final (updatedChild, message) = await _dataSource.updateChildPersonalData(
         child,
         localImagePath,
       );
@@ -84,7 +91,44 @@ class ChildrenRepository {
     } on ApiException catch (e) {
       return (null, e.message);
     } catch (e, stackTrace) {
-      debugPrint('❌ Unexpected error in updateChild: $e\n$stackTrace');
+      debugPrint('❌ Unexpected error in updateChildPersonalData: $e\n$stackTrace');
+      return (null, 'حدث خطأ غير متوقع: $e');
+    }
+  }
+
+  Future<(ChildModel?, String)> updateChildTransportData({
+    required String childId,
+    required int schoolId,
+    required dynamic addressId,
+    required String preferredTimeSlot,
+    required String tripDirection,
+    required DateTime startDate,
+    DateTime? endDate,
+    required String subscriptionType,
+    int? notificationRadius,
+    String? pickupTime,
+    String? dropoffTime,
+  }) async {
+    try {
+      final (updatedChild, message) = await _dataSource.updateChildTransportData(
+        childId: childId,
+        schoolId: schoolId,
+        addressId: addressId,
+        preferredTimeSlot: preferredTimeSlot,
+        tripDirection: tripDirection,
+        startDate: startDate,
+        endDate: endDate,
+        subscriptionType: subscriptionType,
+        notificationRadius: notificationRadius,
+        pickupTime: pickupTime,
+        dropoffTime: dropoffTime,
+      );
+      await _localDataSource.cacheChild(updatedChild);
+      return (updatedChild, message);
+    } on ApiException catch (e) {
+      return (null, e.message);
+    } catch (e, stackTrace) {
+      debugPrint('❌ Unexpected error in updateChildTransportData: $e\n$stackTrace');
       return (null, 'حدث خطأ غير متوقع: $e');
     }
   }

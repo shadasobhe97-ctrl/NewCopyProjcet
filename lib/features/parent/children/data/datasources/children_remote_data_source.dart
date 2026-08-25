@@ -315,8 +315,16 @@ class ChildrenRemoteDataSource {
     return (childModel, message);
   }
 
-  /// POST /api/parent/children/{id}
+  /// POST /api/parent/children/{id} (تحديث كافة البيانات عند الإضافة والتحديث العام)
   Future<(ChildModel, String)> updateChild(
+    ChildModel child,
+    String? localImagePath,
+  ) async {
+    return updateChildPersonalData(child, localImagePath);
+  }
+
+  /// POST /api/parent/children/{id} (تحديث البيانات الشخصية للطفل فقط)
+  Future<(ChildModel, String)> updateChildPersonalData(
     ChildModel child,
     String? localImagePath,
   ) async {
@@ -325,45 +333,14 @@ class ChildrenRemoteDataSource {
 
     dynamic requestData;
 
-    final startDateStr =
-        (child.logistics?.startDate ?? child.transportPref.startDate)
-            .toIso8601String()
-            .split('T')
-            .first;
-    final endDateRaw = child.logistics?.endDate ?? child.transportPref.endDate;
-    final endDateStr = endDateRaw != null
-        ? endDateRaw.toIso8601String().split('T').first
-        : startDateStr;
-
-    final rawPickup =
-        child.logistics?.pickupTime ?? child.transportPref.schoolStartTime;
-    final rawDropoff =
-        child.logistics?.dropoffTime ?? child.transportPref.schoolEndTime;
-    final pickupTimeStr = _formatTimeToHHMM24(rawPickup);
-    final dropoffTimeStr = _formatTimeToHHMM24(rawDropoff);
-
     final flatPayload = <String, dynamic>{
       'parent_id': parentId,
-      'school_id': child.schoolId,
-      'address_id': int.tryParse(child.addressId) ?? child.addressId,
       'full_name': child.fullName,
       'gender': child.gender,
       'birth_date': child.birthDate.toIso8601String().split('T').first,
       'grade': int.tryParse(child.grade) ?? child.gradeLevel,
-      'preferred_time_slot':
-          child.logistics?.preferredTimeSlot ?? child.transportPref.period,
-      'trip_direction':
-          child.logistics?.tripDirection ?? child.transportPref.serviceType,
-      'start_date': startDateStr,
-      'end_date': endDateStr,
-      'subscription_type':
-          child.logistics?.subscriptionType ??
-          child.transportPref.subscriptionType,
       if (child.medicalNotes != null && child.medicalNotes!.isNotEmpty)
         'medical_notes': child.medicalNotes,
-      'notification_radius': child.notificationRadius?.toInt() ?? 500,
-      if (pickupTimeStr.isNotEmpty) 'pickup_time': pickupTimeStr,
-      if (dropoffTimeStr.isNotEmpty) 'dropoff_time': dropoffTimeStr,
       if (child.photoUrl != null && !_isLocalImagePath(child.photoUrl))
         'photo_url': child.photoUrl,
     };
@@ -392,9 +369,9 @@ class ChildrenRemoteDataSource {
 
     final endpointUrl = ApiEndpoints.parentChildById(child.id.toString());
     debugPrint('==================================================');
-    debugPrint('✏️ [UPDATE_CHILD_API] Calling Endpoint: POST /api/$endpointUrl');
-    debugPrint('✏️ [UPDATE_CHILD_API] Child ID: ${child.id}');
-    debugPrint('✏️ [UPDATE_CHILD_API] Payload: $flatPayload');
+    debugPrint('✏️ [UPDATE_PERSONAL_DATA_API] Calling Endpoint: POST /api/$endpointUrl');
+    debugPrint('✏️ [UPDATE_PERSONAL_DATA_API] Child ID: ${child.id}');
+    debugPrint('✏️ [UPDATE_PERSONAL_DATA_API] Payload: $flatPayload');
     debugPrint('==================================================');
 
     final response = await _client.post(
@@ -413,11 +390,75 @@ class ChildrenRemoteDataSource {
       }
     }
     final childData = data['data'] ?? data;
-    debugPrint('📥 [updateChild] response childData: $childData');
     final childModel = ChildModel.fromJson(childData as Map<String, dynamic>);
-    debugPrint('📥 [updateChild] parsed photoUrl: ${childModel.photoUrl}');
     final message =
         (data['message'] as String?) ?? 'تم تحديث بيانات الطفل بنجاح';
+    return (childModel, message);
+  }
+
+  /// POST /api/parent/children/{id} (تحديث بيانات النقل والاشتراك فقط)
+  Future<(ChildModel, String)> updateChildTransportData({
+    required String childId,
+    required int schoolId,
+    required dynamic addressId,
+    required String preferredTimeSlot,
+    required String tripDirection,
+    required DateTime startDate,
+    DateTime? endDate,
+    required String subscriptionType,
+    int? notificationRadius,
+    String? pickupTime,
+    String? dropoffTime,
+  }) async {
+    final parentId = await _resolveParentId();
+
+    final startDateStr = startDate.toIso8601String().split('T').first;
+    final endDateStr = endDate != null
+        ? endDate.toIso8601String().split('T').first
+        : startDateStr;
+
+    final pickupTimeStr = _formatTimeToHHMM24(pickupTime);
+    final dropoffTimeStr = _formatTimeToHHMM24(dropoffTime);
+
+    final flatPayload = <String, dynamic>{
+      'parent_id': parentId,
+      'school_id': schoolId,
+      'address_id': int.tryParse(addressId.toString()) ?? addressId,
+      'preferred_time_slot': preferredTimeSlot,
+      'trip_direction': tripDirection,
+      'start_date': startDateStr,
+      'end_date': endDateStr,
+      'subscription_type': subscriptionType,
+      'notification_radius': notificationRadius ?? 500,
+      if (pickupTimeStr.isNotEmpty) 'pickup_time': pickupTimeStr,
+      if (dropoffTimeStr.isNotEmpty) 'dropoff_time': dropoffTimeStr,
+    };
+
+    final endpointUrl = ApiEndpoints.parentChildById(childId);
+    debugPrint('==================================================');
+    debugPrint('✏️ [UPDATE_TRANSPORT_DATA_API] Calling Endpoint: POST /api/$endpointUrl');
+    debugPrint('✏️ [UPDATE_TRANSPORT_DATA_API] Child ID: $childId');
+    debugPrint('✏️ [UPDATE_TRANSPORT_DATA_API] Payload: $flatPayload');
+    debugPrint('==================================================');
+
+    final response = await _client.post(
+      endpointUrl,
+      data: flatPayload,
+      headers: _authHeader,
+    );
+
+    final data = response.data;
+    if (data is Map) {
+      final success = data['success'];
+      if (success == false) {
+        final serverMessage = ApiException.extractMessage(data);
+        throw ApiException(serverMessage ?? 'تعذر تحديث بيانات النقل.');
+      }
+    }
+    final childData = data['data'] ?? data;
+    final childModel = ChildModel.fromJson(childData as Map<String, dynamic>);
+    final message =
+        (data['message'] as String?) ?? 'تم تحديث بيانات النقل بنجاح';
     return (childModel, message);
   }
 

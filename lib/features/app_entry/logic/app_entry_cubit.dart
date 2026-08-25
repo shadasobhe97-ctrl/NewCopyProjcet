@@ -60,6 +60,11 @@ class AppEntryCubit extends Cubit<AppEntryState> {
         return;
       }
 
+      if (regStage == 'preferences') {
+        emit(NavigateToDriverPreferencesRequired());
+        return;
+      }
+
       if (regStage == 'waiting') {
         emit(NavigateToDriverWaiting());
         return;
@@ -81,8 +86,8 @@ class AppEntryCubit extends Cubit<AppEntryState> {
             emit(NavigateToDriverPreferencesRequired());
           }
         } catch (_) {
-          // Graceful fallback to avoid bricking if offline or API is down
-          emit(NavigateToDriverHome());
+          // إذا كان مفعل ولم يتم تأكيد حفظ التفضيلات محلياً، نوجّهه لإدخال التفضيلات
+          emit(NavigateToDriverPreferencesRequired());
         }
       } else {
         emit(NavigateToDriverWaiting());
