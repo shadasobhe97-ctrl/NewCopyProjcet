@@ -30,7 +30,7 @@ class AddChildStepIndicator extends StatelessWidget {
           ),
           _StepCircle(
             number: 2,
-            label: 'تفضيلات النقل',
+            label: 'اعدادات  النقل',
             isActive: currentStep == 2,
             isDone: currentStep > 2,
           ),

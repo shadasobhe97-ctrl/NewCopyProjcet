@@ -1,204 +1,209 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/app_user_avatar.dart';
+import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
+import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step1_screen.dart';
 import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
 
 class ChildrenSectionWidget extends StatelessWidget {
-  final bool hasChildren;
-  final List<Map<String, String>>? children;
   final VoidCallback? onAddChild;
   final VoidCallback? onViewAll;
 
   const ChildrenSectionWidget({
     super.key,
-    required this.hasChildren,
-    this.children,
     this.onAddChild,
     this.onViewAll,
   });
-
-  static const List<Map<String, String>> _defaultChildren = [
-    {
-      'name': 'سارة',
-      'photo': 'https://i.pravatar.cc/150?img=5',
-      'status': 'في الطريق',
-    },
-    {
-      'name': 'أحمد',
-      'photo': 'https://i.pravatar.cc/150?img=12',
-      'status': 'في المدرسة',
-    },
-    {
-      'name': 'محمد',
-      'photo': 'https://i.pravatar.cc/150?img=11',
-      'status': 'ينتظر',
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
-    final currentChildren = children ?? _defaultChildren;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // هيدر القسم: "أطفالي" على اليمين و "عرض الكل" على اليسار
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return BlocBuilder<ChildrenCubit, ChildrenState>(
+      builder: (context, state) {
+        List<ChildModel> childrenList = [];
+        if (state is ChildrenLoaded) {
+          childrenList = state.children;
+        } else if (state is ChildrenActionLoading) {
+          childrenList = state.children;
+        } else if (state is ChildrenActionSuccess) {
+          childrenList = state.children;
+        } else if (state is ChildrenActionError) {
+          childrenList = state.children;
+        }
+
+        final count = childrenList.length;
+
+        String countText;
+        if (count == 0) {
+          countText = '(لا يوجد أطفال)';
+        } else if (count == 1) {
+          countText = '(طفل واحد)';
+        } else if (count == 2) {
+          countText = '(طفلان)';
+        } else {
+          countText = '($count أطفال)';
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // هيدر القسم: "أطفالي" وعدد الأطفال على اليمين و "عرض الكل" على اليسار
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'أطفالي',
-                  style: AppTextStyles.style(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.white : AppColors.textDark,
+                Row(
+                  children: [
+                    Text(
+                      'أطفالي',
+                      style: AppTextStyles.style(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppColors.white : AppColors.textDark,
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Text(
+                      countText,
+                      style: AppTextStyles.style(
+                        fontSize: 11.sp,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+                InkWell(
+                  onTap: onViewAll ?? () => ParentMainWrapper.changeTab(1),
+                  borderRadius: BorderRadius.circular(8.r),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 4.w,
+                      vertical: 2.h,
+                    ),
+                    child: Text(
+                      'عرض الكل',
+                      style: AppTextStyles.style(
+                        fontSize: 11.5.sp,
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                      ),
+                    ),
                   ),
                 ),
-                if (!hasChildren) ...[
-                  SizedBox(width: 8.w),
-                  Text(
-                    '(لا يوجد أطفال)',
-                    style: AppTextStyles.style(
-                      fontSize: 11.sp,
-                      color: AppColors.textMuted,
+              ],
+            ),
+            SizedBox(height: 10.h),
+
+            // قائمة أفقية: كارد "إضافة طفل" ثابت على اليمين (Index 0)، يليه كروت الأطفال
+            SizedBox(
+              height: 120.h,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  // 1️⃣ كارد "إضافة طفل" - ثابت دائماً في البداية (جهة اليمين)
+                  _buildAddChildCard(context, isDark, primaryColor),
+
+                  // 2️⃣ كروت الأطفال المسجلين (الصورة واسم الطفل الأول فقط)
+                  ...childrenList.map(
+                    (child) => _buildChildCard(
+                      context,
+                      child: child,
+                      isDark: isDark,
+                      primaryColor: primaryColor,
                     ),
                   ),
                 ],
-              ],
-            ),
-            if (hasChildren)
-              InkWell(
-                onTap: onViewAll ?? () => ParentMainWrapper.changeTab(1),
-                borderRadius: BorderRadius.circular(8.r),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-                  child: Text(
-                    'عرض الكل',
-                    style: AppTextStyles.style(
-                      fontSize: 11.5.sp,
-                      fontWeight: FontWeight.bold,
-                      color: primaryColor,
-                    ),
-                  ),
-                ),
               ),
+            ),
           ],
-        ),
-        SizedBox(height: 10.h),
-
-        // 🟢 HAS CHILDREN: قائمة أفقية تحتوي على كروت الأطفال + كارد إضافة طفل في النهاية
-        // ⚪ NO CHILDREN: عرض نفس كارد "إضافة طفل" الصغير فقط
-        SizedBox(
-          height: 130.h, // تم زيادة الارتفاع هنا لمنع خطأ الـ Overflow
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            children: [
-              if (hasChildren) ...[
-                ...currentChildren.map(
-                  (c) => _buildChildCard(
-                    context,
-                    name: c['name'] ?? '',
-                    photo: c['photo'] ?? '',
-                    status: c['status'] ?? 'في الطريق',
-                    isDark: isDark,
-                    primaryColor: primaryColor,
-                  ),
-                ),
-              ],
-              _buildAddChildCard(context, isDark, primaryColor),
-            ],
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-  // كارد الطفل
+  // كارد الطفل (عرض الاسم الأول والصورة فقط)
   Widget _buildChildCard(
     BuildContext context, {
-    required String name,
-    required String photo,
-    required String status,
+    required ChildModel child,
     required bool isDark,
     required Color primaryColor,
   }) {
-    Color statusColor = AppColors.success;
-    if (status == 'ينتظر') statusColor = AppColors.amber;
-    if (status == 'في المدرسة') statusColor = primaryColor;
+    final firstName = child.fullName.trim().isNotEmpty
+        ? child.fullName.trim().split(' ').first
+        : 'طفل';
 
-    return Container(
-      width: 92.w,
-      margin: EdgeInsets.only(left: 10.w),
-      padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 6.w),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.grey900 : AppColors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    final isFemale = child.gender == 'female';
+    final avatarBgColor = isFemale ? context.femalePinkBg : context.maleBlueBg;
+    final avatarIconColor =
+        isFemale ? context.genderFemaleColor : context.genderMaleColor;
+
+    return InkWell(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          AppRoutes.childDataDetails,
+          arguments: child,
+        );
+      },
+      borderRadius: BorderRadius.circular(16.r),
+      child: Container(
+        width: 92.w,
+        margin: EdgeInsets.only(left: 10.w),
+        padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 6.w),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.grey900 : AppColors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: isDark ? AppColors.grey800 : AppColors.grey200,
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AppUserAvatar(
-            imageUrl: photo,
-            radius: 22.r,
-          ),
-          SizedBox(height: 6.h),
-          Text(
-            name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.style(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.bold,
-              color: isDark ? AppColors.white : AppColors.textDark,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
-          SizedBox(height: 3.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 6.r,
-                height: 6.r,
-                decoration: BoxDecoration(
-                  color: statusColor,
-                  shape: BoxShape.circle,
-                ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AppUserAvatar(
+              imageUrl: child.photoUrl,
+              radius: 22.r,
+              backgroundColor: avatarBgColor,
+              iconColor: avatarIconColor,
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              firstName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.style(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.white : AppColors.textDark,
               ),
-              SizedBox(width: 4.w),
-              Text(
-                status,
-                style: AppTextStyles.style(
-                  fontSize: 9.sp,
-                  color: AppColors.textMuted,
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // ➕ كارد "إضافة طفل" الموحد
-  Widget _buildAddChildCard(BuildContext context, bool isDark, Color primaryColor) {
+  Widget _buildAddChildCard(
+    BuildContext context,
+    bool isDark,
+    Color primaryColor,
+  ) {
     return InkWell(
       onTap: onAddChild ??
           () {

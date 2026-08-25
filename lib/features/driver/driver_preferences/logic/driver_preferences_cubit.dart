@@ -14,7 +14,6 @@ class DriverPreferencesCubit extends Cubit<DriverPreferencesState> {
   DriverPreferencesModel? _preferences;
   DriverPreferencesModel? get preferences => _preferences;
 
-
   DriverPreferencesCubit(this._repository) : super(DriverPreferencesInitial());
 
   Future<void> loadPreferenceDefaults() async {
@@ -32,15 +31,17 @@ class DriverPreferencesCubit extends Cubit<DriverPreferencesState> {
 
   Future<void> loadDriverPreferences() async {
     if (_defaults == null) return;
-    
+
     emit(DriverPreferencesLoading());
     try {
       final fetchedPreferences = await _repository.getPreferences();
       _preferences = fetchedPreferences;
-      emit(DriverPreferencesLoaded(
-        preferences: fetchedPreferences,
-        defaults: _defaults!,
-      ));
+      emit(
+        DriverPreferencesLoaded(
+          preferences: fetchedPreferences,
+          defaults: _defaults!,
+        ),
+      );
     } on ApiException catch (e) {
       emit(DriverPreferencesError(e.message));
     } catch (e) {
@@ -56,7 +57,7 @@ class DriverPreferencesCubit extends Cubit<DriverPreferencesState> {
         emit(UpdatePreferencesSuccess());
         await loadPreferenceDefaults(); // Reload all data after success
       } else {
-        emit(const UpdatePreferencesError('فشل حفظ التفضيلات.'));
+        emit(const UpdatePreferencesError('فشل حفظ الاعدادات .'));
       }
     } on ApiException catch (e) {
       emit(UpdatePreferencesError(e.message));

@@ -1,3 +1,20 @@
+import 'package:flutter/foundation.dart';
+import 'package:kids_transport/core/network/api_endpoints.dart';
+
+String _resolveMediaUrl(String rawUrl) {
+  if (rawUrl.isEmpty) return rawUrl;
+  if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+    return rawUrl;
+  }
+  if (rawUrl.startsWith('//')) return 'https:$rawUrl';
+
+  final serverRoot = ApiEndpoints.baseUrl.replaceAll(RegExp(r'/?api/?$'), '');
+  final path = rawUrl.startsWith('/') ? rawUrl : '/$rawUrl';
+  final resolved = '$serverRoot$path';
+  debugPrint('🖼️ [_resolveMediaUrl] rawUrl: $rawUrl -> resolved: $resolved');
+  return resolved;
+}
+
 class DriverLegalDataModel {
   final String nationalId;
   final String licenseNumber;
@@ -20,18 +37,44 @@ class DriverLegalDataModel {
   });
 
   factory DriverLegalDataModel.fromJson(Map<String, dynamic> json) {
+    debugPrint('📜 [DriverLegalDataModel.fromJson] Incoming json keys: ${json.keys.toList()}');
     final rawFiles = json['uploaded_files'] ?? json['files'] ?? [];
     final List<DriverUploadedFileModel> filesList = [];
     if (rawFiles is List) {
+      debugPrint('📜 [DriverLegalDataModel.fromJson] rawFiles length: ${rawFiles.length}');
       for (final item in rawFiles) {
         if (item is Map) {
-          filesList.add(
-            DriverUploadedFileModel.fromJson(
-              Map<String, dynamic>.from(item),
-            ),
+          final fileModel = DriverUploadedFileModel.fromJson(
+            Map<String, dynamic>.from(item),
           );
+          filesList.add(fileModel);
+          debugPrint('   ➕ Added from uploaded_files: type=${fileModel.type}, url=${fileModel.fileUrl}');
         }
       }
+    }
+
+    if (json['documents_map'] is Map) {
+      final docMap = Map<String, dynamic>.from(json['documents_map'] as Map);
+      debugPrint('📜 [DriverLegalDataModel.fromJson] documents_map keys: ${docMap.keys.toList()}');
+      docMap.forEach((docType, url) {
+        if (url != null && url.toString().isNotEmpty) {
+          final exists = filesList
+              .any((f) => f.type.toUpperCase() == docType.toUpperCase());
+          if (!exists) {
+            final resolvedUrl = _resolveMediaUrl(url.toString());
+            filesList.add(
+              DriverUploadedFileModel(
+                id: 0,
+                type: docType,
+                fileUrl: resolvedUrl,
+                status: json['driver_status']?.toString() ?? 'Pending',
+                uploadedAt: '',
+              ),
+            );
+            debugPrint('   ➕ Added from documents_map: docType=$docType, url=$resolvedUrl');
+          }
+        }
+      });
     }
 
     return DriverLegalDataModel(
@@ -107,11 +150,12 @@ class DriverUploadedFileModel {
       type: json['doc_type']?.toString().toUpperCase() ??
           json['type']?.toString().toUpperCase() ??
           '',
-      fileUrl:
-          json['file_url']?.toString() ??
-          json['url']?.toString() ??
-          json['path']?.toString() ??
-          '',
+      fileUrl: _resolveMediaUrl(
+        json['file_url']?.toString() ??
+            json['url']?.toString() ??
+            json['path']?.toString() ??
+            '',
+      ),
       status: json['document_status']?.toString() ??
           json['status']?.toString() ??
           'Pending',

@@ -157,10 +157,8 @@ class ChildModel {
     debugPrint('📸 [ChildModel] raw photo_url: $rawPhoto');
     if (rawPhoto != null && rawPhoto.isNotEmpty) {
       final serverRoot = ApiEndpoints.baseUrl.replaceAll(RegExp(r'/?api/?$'), '');
-      if (rawPhoto.startsWith('https://')) {
+      if (rawPhoto.startsWith('http://') || rawPhoto.startsWith('https://')) {
         resolvedPhotoUrl = rawPhoto;
-      } else if (rawPhoto.startsWith('http://')) {
-        resolvedPhotoUrl = 'https://${rawPhoto.substring(7)}';
       } else if (rawPhoto.startsWith('//')) {
         resolvedPhotoUrl = 'https:$rawPhoto';
       } else {

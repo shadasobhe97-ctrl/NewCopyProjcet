@@ -48,7 +48,6 @@ class ParentModel {
 
   static String? _resolvePhotoUrl(String? url) {
     if (url == null || url.isEmpty) return null;
-    if (url.startsWith('http://')) return 'https://${url.substring(7)}';
     return url;
   }
 

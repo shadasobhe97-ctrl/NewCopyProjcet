@@ -48,7 +48,7 @@ class AppColors {
   static const Color primaryLight = Color(0xFF20B4D8);
 
   // Darker brand blue
-  static const Color primaryDark = Color(0xFF0879B5);
+  static const Color primaryDark = Color(0xFF20B4D8);
 
   // Very light blue background
   static const Color primarySoft = Color(0xFFE0F7FA);

@@ -92,7 +92,10 @@ class AddChildCubit extends Cubit<AddChildState> {
     String? sName,
     String? aId,
     String? aName,
+    ChildModel? existingChild,
   }) async {
+    final activeChild = existingChild ?? editingChild;
+
     if (sId != null) schoolId = sId;
     if (sName != null) schoolName = sName;
     if (aId != null) addressId = aId;
@@ -116,11 +119,11 @@ class AddChildCubit extends Cubit<AddChildState> {
     final gradeStr = (gradeLevel ?? 0).toString();
 
     debugPrint('📸 [AddChildCubit] imagePath: $imagePath');
-    debugPrint('📸 [AddChildCubit] editingChild?.photoUrl: ${editingChild?.photoUrl}');
+    debugPrint('📸 [AddChildCubit] activeChild?.id: ${activeChild?.id}');
 
     final childToSubmit = ChildModel(
-      id: editingChild?.id,
-      parentId: editingChild?.parentId,
+      id: activeChild?.id,
+      parentId: activeChild?.parentId,
       schoolId: schoolId!,
       addressId: addressId!,
       fullName: fullName!,
@@ -132,13 +135,83 @@ class AddChildCubit extends Cubit<AddChildState> {
       logistics: transportPref.toLogistics(),
     );
 
-    debugPrint('📸 [AddChildCubit] childToSubmit.photoUrl: ${childToSubmit.photoUrl}');
+    final isEditMode = activeChild != null || childToSubmit.id != null;
+    debugPrint('📸 [AddChildCubit] isEditMode: $isEditMode (id: ${childToSubmit.id})');
 
-    final (resultChild, message) = editingChild == null
-        ? await _repository.addChild(childToSubmit, imagePath)
-        : await _repository.updateChild(childToSubmit, imagePath);
+    final (resultChild, message) = isEditMode
+        ? await _repository.updateChild(childToSubmit, imagePath)
+        : await _repository.addChild(childToSubmit, imagePath);
 
     debugPrint('📸 [AddChildCubit] resultChild?.photoUrl: ${resultChild?.photoUrl}');
+
+    if (resultChild != null) {
+      emit(AddChildSuccess(resultChild, message));
+    } else {
+      emit(AddChildError(message));
+    }
+  }
+
+  Future<void> submitChildPersonalDataOnly({
+    required ChildModel existingChild,
+  }) async {
+    if (fullName == null ||
+        gender == null ||
+        birthDate == null ||
+        gradeLevel == null) {
+      emit(AddChildError('الرجاء استكمال بيانات الطفل الأساسية أولاً.'));
+      return;
+    }
+
+    emit(AddChildSubmitting());
+
+    final gradeStr = (gradeLevel ?? 0).toString();
+
+    final childToSubmit = ChildModel(
+      id: existingChild.id,
+      parentId: existingChild.parentId,
+      schoolId: existingChild.schoolId,
+      addressId: existingChild.addressId,
+      fullName: fullName!,
+      gender: gender!,
+      birthDate: birthDate!,
+      grade: gradeStr,
+      photoUrl: imagePath,
+      medicalNotes: medicalNotes,
+      logistics: existingChild.logistics,
+    );
+
+    final (resultChild, message) = await _repository.updateChildPersonalData(
+      childToSubmit,
+      imagePath,
+    );
+
+    if (resultChild != null) {
+      emit(AddChildSuccess(resultChild, message));
+    } else {
+      emit(AddChildError(message));
+    }
+  }
+
+  Future<void> submitChildTransportDataOnly({
+    required ChildModel existingChild,
+    required TransportPrefModel transportPref,
+    required int sId,
+    required dynamic aId,
+  }) async {
+    emit(AddChildSubmitting());
+
+    final (resultChild, message) = await _repository.updateChildTransportData(
+      childId: existingChild.id.toString(),
+      schoolId: sId,
+      addressId: aId,
+      preferredTimeSlot: transportPref.period,
+      tripDirection: transportPref.serviceType,
+      startDate: transportPref.startDate,
+      endDate: transportPref.endDate,
+      subscriptionType: transportPref.subscriptionType,
+      pickupTime: transportPref.schoolStartTime,
+      dropoffTime: transportPref.schoolEndTime,
+    );
 
     if (resultChild != null) {
       emit(AddChildSuccess(resultChild, message));

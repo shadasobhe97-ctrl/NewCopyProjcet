@@ -8,6 +8,7 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_state.dart';
 import 'package:kids_transport/features/auth/registration/data/models/driver_status_response_model.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 
 class DriverWaitingScreen extends StatefulWidget {
   const DriverWaitingScreen({super.key});
@@ -45,10 +46,13 @@ class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
     context.read<RegisterCubit>().checkDriverStatus();
   }
 
-  void _onStatusReceived(DriverStatusResponseModel statusData) {
-    // ✅ حالة الموافقة (Approved): التوجيه الفوري لشاشة التفضيلات الإجبارية أولاً
+  void _onStatusReceived(DriverStatusResponseModel statusData) async {
+    // ✅ حالة الموافقة (Approved): التوجيه الفوري لشاشة التفضيلات الإجبارية أولاً وحفظ ستيج الجلسة
     if (statusData.isApproved) {
       _pollingTimer?.cancel();
+      await StorageService.saveDriverRegStage('preferences');
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
