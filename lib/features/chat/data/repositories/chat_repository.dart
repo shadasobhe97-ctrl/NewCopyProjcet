@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dartz/dartz.dart';
 import 'package:kids_transport/core/enums/user_role.dart';
 import 'package:kids_transport/core/errors/failures.dart';
@@ -108,6 +109,26 @@ class ChatRepository {
       userRole: userRole,
       isTyping: isTyping,
     );
+  }
+
+  /// Uploads media bytes (Uint8List) to Firebase Storage (Cross-platform).
+  Future<Either<Failure, String>> uploadMediaBytes({
+    required String chatRoomId,
+    required Uint8List bytes,
+    required String fileName,
+    required String folderName,
+  }) async {
+    try {
+      final url = await _firebaseDataSource.uploadMediaBytes(
+        chatRoomId: chatRoomId,
+        bytes: bytes,
+        fileName: fileName,
+        folderName: folderName,
+      );
+      return Right(url);
+    } catch (e) {
+      return Left(FirebaseFailure(e.toString()));
+    }
   }
 
   /// Uploads a media file to Firebase Storage.

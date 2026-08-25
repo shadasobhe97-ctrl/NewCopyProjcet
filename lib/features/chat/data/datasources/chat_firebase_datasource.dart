@@ -267,12 +267,78 @@ class ChatFirebaseDataSource {
   }
 
   /// Uploads a media file (Image/Video/Audio) to Firebase Storage in chat_media/{chatRoomId}/{folderName}/...
+  /// Uploads media bytes (Image/Video/Audio) to Firebase Storage in chat_media/{chatRoomId}/{folderName}/...
+  /// Fully cross-platform compatible (Flutter Web, Android, iOS).
+  Future<String> uploadMediaBytes({
+    required String chatRoomId,
+    required Uint8List bytes,
+    required String fileName,
+    required String folderName,
+  }) async {
+    try {
+      final String timeStampedName =
+          '${DateTime.now().millisecondsSinceEpoch}_$fileName';
+      final Reference storageRef = FirebaseStorage.instance
+          .ref()
+          .child('chat_media/$chatRoomId/$folderName/$timeStampedName');
+
+      String contentType = 'application/octet-stream';
+      final nameLower = fileName.toLowerCase();
+      if (folderName == 'images') {
+        if (nameLower.endsWith('.png')) {
+          contentType = 'image/png';
+        } else if (nameLower.endsWith('.webp')) {
+          contentType = 'image/webp';
+        } else {
+          contentType = 'image/jpeg';
+        }
+      } else if (folderName == 'videos') {
+        contentType = 'video/mp4';
+      } else if (folderName == 'audios') {
+        if (nameLower.endsWith('.mp3')) {
+          contentType = 'audio/mp3';
+        } else if (nameLower.endsWith('.webm')) {
+          contentType = 'audio/webm';
+        } else {
+          contentType = 'audio/m4a';
+        }
+      }
+
+      final UploadTask uploadTask = storageRef.putData(
+        bytes,
+        SettableMetadata(contentType: contentType),
+      );
+      final TaskSnapshot snapshot = await uploadTask;
+      final String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      if (kDebugMode) {
+        debugPrint('✅ Uploaded media bytes to Firebase Storage: $downloadUrl');
+      }
+      return downloadUrl;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Error uploading media bytes to Firebase Storage: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Uploads a media file (Image/Video/Audio) to Firebase Storage.
   Future<String> uploadMediaFile({
     required String chatRoomId,
     required File file,
     required String folderName,
   }) async {
     try {
+      final bytes = await file.readAsBytes();
+      final fileName = file.path.split('/').last.split('\\').last;
+      return uploadMediaBytes(
+        chatRoomId: chatRoomId,
+        bytes: bytes,
+        fileName: fileName,
+        folderName: folderName,
+      );
+    } catch (_) {
       final String fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last.split('\\').last}';
       final Reference storageRef = FirebaseStorage.instance
@@ -281,17 +347,7 @@ class ChatFirebaseDataSource {
 
       final UploadTask uploadTask = storageRef.putFile(file);
       final TaskSnapshot snapshot = await uploadTask;
-      final String downloadUrl = await snapshot.ref.getDownloadURL();
-
-      if (kDebugMode) {
-        debugPrint('✅ Uploaded media file to Firebase Storage: $downloadUrl');
-      }
-      return downloadUrl;
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('❌ Error uploading media file to Firebase Storage: $e');
-      }
-      rethrow;
+      return await snapshot.ref.getDownloadURL();
     }
   }
 

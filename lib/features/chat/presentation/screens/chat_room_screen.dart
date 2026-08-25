@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
+import 'package:http/http.dart' as http;
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
@@ -91,13 +92,22 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   Future<void> _startRecording() async {
     try {
       if (await _audioRecorder.hasPermission()) {
-        final tempDir = Directory.systemTemp;
-        final path =
-            '${tempDir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        String? path;
+        if (!kIsWeb) {
+          try {
+            final tempDir = Directory.systemTemp;
+            path =
+                '${tempDir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+          } catch (_) {}
+        }
+
+        final config = kIsWeb
+            ? const RecordConfig(encoder: AudioEncoder.opus)
+            : const RecordConfig(encoder: AudioEncoder.aacLc);
 
         await _audioRecorder.start(
-          const RecordConfig(encoder: AudioEncoder.aacLc),
-          path: path,
+          config,
+          path: path ?? '',
         );
 
         setState(() {
@@ -114,6 +124,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             });
           }
         });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('يرجى منح إذن استخدام الميكروفون للتسجيل الصوتي.'),
+              backgroundColor: AppColors.orange,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (kDebugMode) {
@@ -133,15 +152,53 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         _recordingSeconds = 0;
       });
 
-      if (path != null && File(path).existsSync() && duration >= 1) {
-        cubit.sendMediaMessage(
-          chatRoomId: widget.chatRoomId,
-          file: File(path),
-          type: 'audio',
-          senderId: widget.currentUserId,
-          senderRole: widget.currentUserRole,
-          audioDuration: duration,
-        );
+      if (path != null && path.isNotEmpty && duration >= 1) {
+        Uint8List? bytes;
+        try {
+          if (kIsWeb || path.startsWith('blob:') || path.startsWith('http')) {
+            final response = await http.get(Uri.parse(path));
+            if (response.statusCode == 200) {
+              bytes = response.bodyBytes;
+            }
+          }
+          if (bytes == null || bytes.isEmpty) {
+            final xFile = XFile(path);
+            bytes = await xFile.readAsBytes();
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('Failed to read voice note bytes: $e');
+          }
+        }
+
+        if (bytes != null && bytes.isNotEmpty) {
+          final ext = kIsWeb ? 'webm' : 'm4a';
+          cubit.sendMediaBytesMessage(
+            chatRoomId: widget.chatRoomId,
+            bytes: bytes,
+            fileName: 'voice_${DateTime.now().millisecondsSinceEpoch}.$ext',
+            type: 'audio',
+            senderId: widget.currentUserId,
+            senderRole: widget.currentUserRole,
+            audioDuration: duration,
+          );
+          return;
+        }
+
+        // Fallback for native mobile file path
+        if (!kIsWeb) {
+          final file = File(path);
+          if (file.existsSync()) {
+            cubit.sendMediaMessage(
+              chatRoomId: widget.chatRoomId,
+              file: file,
+              type: 'audio',
+              senderId: widget.currentUserId,
+              senderRole: widget.currentUserRole,
+              audioDuration: duration,
+            );
+          }
+        }
       }
     } catch (e) {
       if (kDebugMode) {
@@ -187,9 +244,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       );
 
       if (pickedFile != null) {
-        cubit.sendMediaMessage(
+        final bytes = await pickedFile.readAsBytes();
+        final fileName = pickedFile.name.isNotEmpty
+            ? pickedFile.name
+            : 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+        cubit.sendMediaBytesMessage(
           chatRoomId: widget.chatRoomId,
-          file: File(pickedFile.path),
+          bytes: bytes,
+          fileName: fileName,
           type: 'image',
           senderId: widget.currentUserId,
           senderRole: widget.currentUserRole,
@@ -211,9 +274,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       );
 
       if (pickedFile != null) {
-        cubit.sendMediaMessage(
+        final bytes = await pickedFile.readAsBytes();
+        final fileName = pickedFile.name.isNotEmpty
+            ? pickedFile.name
+            : 'video_${DateTime.now().millisecondsSinceEpoch}.mp4';
+
+        cubit.sendMediaBytesMessage(
           chatRoomId: widget.chatRoomId,
-          file: File(pickedFile.path),
+          bytes: bytes,
+          fileName: fileName,
           type: 'video',
           senderId: widget.currentUserId,
           senderRole: widget.currentUserRole,
@@ -322,10 +391,22 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ],
             ),
           ),
-          body: Column(
-            children: [
-              // Message List Area
-              Expanded(
+          body: BlocListener<ChatRoomCubit, ChatRoomState>(
+            listener: (context, state) {
+              if (state is ChatRoomError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: AppColors.error,
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
+              }
+            },
+            child: Column(
+              children: [
+                // Message List Area
+                Expanded(
                 child: BlocBuilder<ChatRoomCubit, ChatRoomState>(
                   builder: (context, state) {
                     if (state is ChatRoomLoading) {
@@ -602,6 +683,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -162,10 +162,11 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
     );
   }
 
-  /// Uploads media file to Firebase Storage and sends a media message.
-  Future<void> sendMediaMessage({
+  /// Uploads media bytes (Cross-Platform Web/Mobile) to Firebase Storage and sends media message.
+  Future<void> sendMediaBytesMessage({
     required String chatRoomId,
-    required File file,
+    required Uint8List bytes,
+    required String fileName,
     required String type,
     required String senderId,
     required String senderRole,
@@ -180,17 +181,19 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
           ? 'images'
           : (type == 'video' ? 'videos' : 'audios');
 
-      final uploadResult = await _repository.uploadMediaFile(
+      final uploadResult = await _repository.uploadMediaBytes(
         chatRoomId: chatRoomId,
-        file: file,
+        bytes: bytes,
+        fileName: fileName,
         folderName: folderName,
       );
 
       await uploadResult.fold(
         (failure) async {
           if (kDebugMode) {
-            debugPrint('Failed to upload media file: ${failure.message}');
+            debugPrint('Failed to upload media bytes: ${failure.message}');
           }
+          emit(ChatRoomError('تعذر رفع الملف المرفق: ${failure.message}'));
           emit(ChatRoomLoaded(_currentMessages,
               isOtherUserTyping: _isOtherUserTyping));
         },
@@ -213,8 +216,11 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
           );
 
           result.fold(
-            (failure) => emit(ChatRoomLoaded(_currentMessages,
-                isOtherUserTyping: _isOtherUserTyping)),
+            (failure) {
+              emit(ChatRoomError('تعذر إرسال الرسالة: ${failure.message}'));
+              emit(ChatRoomLoaded(_currentMessages,
+                  isOtherUserTyping: _isOtherUserTyping));
+            },
             (_) {
               emit(ChatMessageSent(_currentMessages,
                   isOtherUserTyping: _isOtherUserTyping));
@@ -226,10 +232,91 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
       );
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error in sendMediaMessage: $e');
+        debugPrint('Error in sendMediaBytesMessage: $e');
       }
+      emit(ChatRoomError('حدث خطأ غير متوقع أثناء الإرسال: $e'));
       emit(ChatRoomLoaded(_currentMessages,
           isOtherUserTyping: _isOtherUserTyping));
+    }
+  }
+
+  /// Uploads media file to Firebase Storage and sends a media message.
+  Future<void> sendMediaMessage({
+    required String chatRoomId,
+    required File file,
+    required String type,
+    required String senderId,
+    required String senderRole,
+    int? audioDuration,
+    String? caption,
+  }) async {
+    try {
+      final bytes = await file.readAsBytes();
+      final name = file.path.split('/').last.split('\\').last;
+      return sendMediaBytesMessage(
+        chatRoomId: chatRoomId,
+        bytes: bytes,
+        fileName: name,
+        type: type,
+        senderId: senderId,
+        senderRole: senderRole,
+        audioDuration: audioDuration,
+        caption: caption,
+      );
+    } catch (_) {
+      emit(ChatMessageSending(_currentMessages,
+          isOtherUserTyping: _isOtherUserTyping));
+
+      try {
+        final String folderName = type == 'image'
+            ? 'images'
+            : (type == 'video' ? 'videos' : 'audios');
+
+        final uploadResult = await _repository.uploadMediaFile(
+          chatRoomId: chatRoomId,
+          file: file,
+          folderName: folderName,
+        );
+
+        await uploadResult.fold(
+          (failure) async {
+            emit(ChatRoomLoaded(_currentMessages,
+                isOtherUserTyping: _isOtherUserTyping));
+          },
+          (mediaUrl) async {
+            final messageModel = ChatMessageModel(
+              id: '',
+              senderId: senderId,
+              senderRole: senderRole,
+              message: caption ?? '',
+              timestamp: DateTime.now(),
+              isRead: false,
+              type: type,
+              mediaUrl: mediaUrl,
+              audioDuration: audioDuration,
+            );
+
+            final result = await _repository.sendMessage(
+              chatRoomId: chatRoomId,
+              message: messageModel,
+            );
+
+            result.fold(
+              (failure) => emit(ChatRoomLoaded(_currentMessages,
+                  isOtherUserTyping: _isOtherUserTyping)),
+              (_) {
+                emit(ChatMessageSent(_currentMessages,
+                    isOtherUserTyping: _isOtherUserTyping));
+                emit(ChatRoomLoaded(_currentMessages,
+                    isOtherUserTyping: _isOtherUserTyping));
+              },
+            );
+          },
+        );
+      } catch (e) {
+        emit(ChatRoomLoaded(_currentMessages,
+            isOtherUserTyping: _isOtherUserTyping));
+      }
     }
   }
 
