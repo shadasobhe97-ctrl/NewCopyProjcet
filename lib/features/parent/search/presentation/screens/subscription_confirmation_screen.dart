@@ -87,14 +87,18 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
       );
       final t = breakdownItem.subscriptionType.toLowerCase();
       if (t == 'weekly') return 'أسبوعي';
-      if (t == 'days') return 'يومي';
+      if (t == 'days' || t == 'daily' || t == 'single_day') return 'يومي';
+      if (t == 'multi_day' || t == 'multi-day' || t == 'multiday' || t == 'several_days') return 'عدة أيام';
+      if (t == 'monthly') return 'شهري';
     } catch (_) {}
     try {
       final t = kid.transportPref.subscriptionType.toLowerCase();
       if (t == 'weekly') return 'أسبوعي';
-      if (t == 'days') return 'يومي';
+      if (t == 'days' || t == 'daily' || t == 'single_day') return 'يومي';
+      if (t == 'multi_day' || t == 'multi-day' || t == 'multiday' || t == 'several_days') return 'عدة أيام';
+      if (t == 'monthly') return 'شهري';
     } catch (_) {}
-    return 'شهري';
+    return 'عدة أيام';
   }
 
   double get _totalPrice =>

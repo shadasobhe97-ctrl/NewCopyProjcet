@@ -460,7 +460,7 @@ class _AddChildStep2ScreenState extends State<AddChildStep2Screen> {
                               _buildSelectionRow(
                                 items: {
                                   'single_day': 'يوم واحد',
-                                  'multi_day': 'أكثر من يوم',
+                                  'multi_day': 'عدة أيام',
                                 },
                                 selectedValue: _subType,
                                 onChanged: (v) {

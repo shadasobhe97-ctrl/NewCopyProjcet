@@ -486,11 +486,17 @@ class _ChildSubscriptionCard extends StatelessWidget {
 
   String _typeLabel(String t) {
     switch (t.toLowerCase()) {
+      case 'multi_day':
+      case 'multi-day':
+      case 'multiday':
+      case 'several_days':
+        return 'عدة أيام';
       case 'monthly':
         return 'شهري';
       case 'weekly':
         return 'أسبوعي';
       case 'daily':
+      case 'single_day':
         return 'يومي';
       default:
         return t.isNotEmpty ? t : 'غير متوفر';
