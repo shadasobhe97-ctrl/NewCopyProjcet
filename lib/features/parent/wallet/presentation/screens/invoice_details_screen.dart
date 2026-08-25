@@ -230,7 +230,7 @@ class _InvoiceDetailsScreenContent extends StatelessWidget {
                       _buildInfoRow(context, 'نوع الفاتورة', invoice.type),
                       const Divider(),
                       _buildInfoRow(context, 'نوع الاشتراك',
-                          invoice.subscriptionType ?? 'غير متوفر'),
+                          invoice.subscriptionTypeDisplayLabel),
                       const Divider(),
                       _buildInfoRow(context, 'المبلغ المحسوب',
                           '${invoice.calculatedAmount.toStringAsFixed(2)} د.ل'),

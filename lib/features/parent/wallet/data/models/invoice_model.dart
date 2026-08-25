@@ -38,9 +38,29 @@ class InvoiceModel {
       status: json['status']?.toString() ?? '',
       dueDate: json['due_date']?.toString() ?? '',
       completedTrips: json['completed_trips'] as int?,
-      subscriptionType: json['subscription_type']?.toString(),
+      subscriptionType: json['subscription_type_label']?.toString() ?? json['subscription_type']?.toString(),
       driverName: dName,
     );
+  }
+
+  String get subscriptionTypeDisplayLabel {
+    switch (subscriptionType?.toLowerCase()) {
+      case 'multi_day':
+      case 'multi-day':
+      case 'multiday':
+      case 'several_days':
+        return 'عدة أيام';
+      case 'monthly':
+        return 'شهري';
+      case 'weekly':
+        return 'أسبوعي';
+      case 'daily':
+      case 'single_day':
+      case 'days':
+        return 'يومي';
+      default:
+        return subscriptionType ?? 'غير محدد';
+    }
   }
 
   String get statusDisplayLabel {

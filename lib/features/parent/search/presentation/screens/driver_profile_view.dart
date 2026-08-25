@@ -1782,8 +1782,10 @@ class _DriverProfileViewState extends State<DriverProfileView> {
   String _getSubscriptionTypeArabic(String type) {
     final t = type.toLowerCase();
     if (t == 'weekly') return 'أسبوعي';
-    if (t == 'days') return 'يومي';
-    return 'شهري';
+    if (t == 'days' || t == 'daily' || t == 'single_day') return 'يومي';
+    if (t == 'multi_day' || t == 'multi-day' || t == 'multiday' || t == 'several_days') return 'عدة أيام';
+    if (t == 'monthly') return 'شهري';
+    return type.isNotEmpty ? type : 'عدة أيام';
   }
 
   // ══════════════════════════════════════════════════════════════════

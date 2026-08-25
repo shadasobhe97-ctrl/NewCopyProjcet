@@ -202,6 +202,7 @@ class DriverSubscriptionModel {
   final ChildSubscriptionModel child;
   final ContractModel? contract;
   final String createdAt;
+  final String? subscriptionType;
 
   DriverSubscriptionModel({
     required this.id,
@@ -216,6 +217,7 @@ class DriverSubscriptionModel {
     required this.child,
     this.contract,
     required this.createdAt,
+    this.subscriptionType,
   });
 
   String get statusDisplayLabel {
@@ -231,6 +233,26 @@ class DriverSubscriptionModel {
         return 'ملغي';
       default:
         return status;
+    }
+  }
+
+  String get subscriptionTypeDisplayLabel {
+    switch (subscriptionType?.toLowerCase()) {
+      case 'multi_day':
+      case 'multi-day':
+      case 'multiday':
+      case 'several_days':
+        return 'عدة أيام';
+      case 'monthly':
+        return 'شهري';
+      case 'weekly':
+        return 'أسبوعي';
+      case 'daily':
+      case 'single_day':
+      case 'days':
+        return 'يومي';
+      default:
+        return subscriptionType ?? 'عدة أيام';
     }
   }
 
@@ -267,6 +289,7 @@ class DriverSubscriptionModel {
           ? ContractModel.fromJson(Map<String, dynamic>.from(json['contract'] as Map))
           : null,
       createdAt: json['created_at']?.toString() ?? json['createdAt']?.toString() ?? '',
+      subscriptionType: json['subscription_type_label']?.toString() ?? json['subscription_type']?.toString() ?? json['subscriptionType']?.toString(),
     );
   }
 
@@ -283,6 +306,7 @@ class DriverSubscriptionModel {
         'child': child.toJson(),
         'contract': contract?.toJson(),
         'created_at': createdAt,
+        'subscription_type': subscriptionType,
       };
 }
 

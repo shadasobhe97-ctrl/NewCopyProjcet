@@ -846,6 +846,11 @@ class _DriverSubscriptionCard extends StatelessWidget {
                                   : 'عودة فقط'),
                         color: context.primaryColor,
                       ),
+                      _MiniInfoWidget(
+                        icon: Icons.calendar_today_rounded,
+                        text: subscription.subscriptionTypeDisplayLabel,
+                        color: AppColors.primaryLight,
+                      ),
                     ],
                   ),
                   SizedBox(height: 10.h),

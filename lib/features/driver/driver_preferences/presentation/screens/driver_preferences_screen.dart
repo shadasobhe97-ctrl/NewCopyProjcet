@@ -668,7 +668,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
             ),
             DropdownMenuItem(
               value: 'multi_day',
-              child: Text('أكثر من يوم (متعدد الأيام)'),
+              child: Text('عدة أيام (متعدد الأيام)'),
             ),
             DropdownMenuItem(
               value: 'both',

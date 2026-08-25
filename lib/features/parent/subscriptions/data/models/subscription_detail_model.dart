@@ -233,7 +233,7 @@ class DetailBilling {
   });
 
   factory DetailBilling.fromJson(Map<String, dynamic> json) => DetailBilling(
-        subscriptionType: json['subscriptionType']?.toString() ?? json['subscription_type']?.toString() ?? json['subscription_period']?.toString(),
+        subscriptionType: json['subscription_type_label']?.toString() ?? json['subscriptionType']?.toString() ?? json['subscription_type']?.toString() ?? json['subscription_period']?.toString(),
         totalPrice: _parseDouble(json['totalPrice'] ?? json['total_price'] ?? json['amount'] ?? json['price']) ?? 0.0,
         childPrice: _parseDouble(json['childPrice'] ?? json['child_price'] ?? json['price_per_child']) ?? 0.0,
         currency: json['currency']?.toString() ?? 'دينار',
@@ -243,6 +243,26 @@ class DetailBilling {
         autoRenew: json['autoRenew'] == true || json['auto_renew'] == true,
         paymentMethod: json['paymentMethod']?.toString() ?? json['payment_method']?.toString(),
       );
+
+  String get subscriptionTypeDisplayLabel {
+    switch (subscriptionType?.toLowerCase()) {
+      case 'multi_day':
+      case 'multi-day':
+      case 'multiday':
+      case 'several_days':
+        return 'عدة أيام';
+      case 'monthly':
+        return 'شهري';
+      case 'weekly':
+        return 'أسبوعي';
+      case 'daily':
+      case 'single_day':
+      case 'days':
+        return 'يومي';
+      default:
+        return subscriptionType ?? 'غير محدد';
+    }
+  }
 
   String get formattedTotalPrice {
     return '${totalPrice.toStringAsFixed(2)} دينار';

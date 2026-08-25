@@ -6,6 +6,9 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/features/driver/requests/logic/driver_requests_cubit.dart';
 import 'package:kids_transport/features/driver/requests/data/models/driver_request_model.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:kids_transport/core/network/api_endpoints.dart';
 
 
 /// شاشة تفاصيل طلب الاشتراك للسائق
@@ -83,28 +86,14 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
                       icon: Icons.person_rounded,
                       iconColor: AppColors.primaryLight,
                       title: 'ولي الأمر',
-                      child: _ParentInfoWidget(parent: request.parent),
-                    ),
-                    const SizedBox(height: 12),
-                    _SectionCard(
-                      icon: Icons.school_rounded,
-                      iconColor: AppColors.warning,
-                      title: 'المدرسة',
-                      child: _SchoolInfoWidget(school: request.school),
+                      child: _ParentInfoWidget(request: request),
                     ),
                     const SizedBox(height: 12),
                     _SectionCard(
                       icon: Icons.child_care_rounded,
                       iconColor: AppColors.success,
-                      title: 'الأطفال (${request.children.length})',
-                      child: _ChildrenListWidget(children: request.children),
-                    ),
-                    const SizedBox(height: 12),
-                    _SectionCard(
-                      icon: Icons.schedule_rounded,
-                      iconColor: AppColors.pending,
-                      title: 'تفاصيل الرحلة',
-                      child: _TripDetailsWidget(request: request),
+                      title: 'اشتراكات الأطفال (${request.children.length})',
+                      child: _ChildrenListWidget(children: request.children, request: request),
                     ),
                     if (request.notes != null && request.notes!.isNotEmpty) ...[
                       const SizedBox(height: 12),
@@ -523,11 +512,12 @@ class _SectionCard extends StatelessWidget {
 
 // ── معلومات ولي الأمر ──
 class _ParentInfoWidget extends StatelessWidget {
-  final DriverReqParent parent;
-  const _ParentInfoWidget({required this.parent});
+  final DriverRequestModel request;
+  const _ParentInfoWidget({required this.request});
 
   @override
   Widget build(BuildContext context) {
+    final parent = request.parent;
     return Column(
       children: [
         _InfoRow(
@@ -541,40 +531,28 @@ class _ParentInfoWidget extends StatelessWidget {
             label: 'الهاتف',
             value: parent.phone!,
           ),
-      ],
-    );
-  }
-}
-
-// ── معلومات المدرسة ──
-class _SchoolInfoWidget extends StatelessWidget {
-  final DriverReqSchool school;
-  const _SchoolInfoWidget({required this.school});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
         _InfoRow(
-          icon: Icons.school_outlined,
-          label: 'الاسم',
-          value: school.name.isNotEmpty ? school.name : 'غير محدد',
+          icon: Icons.child_care_rounded,
+          label: 'عدد الأطفال',
+          value: '${request.childrenCount} أطفال',
         ),
-        if (school.address != null && school.address!.isNotEmpty)
-          _InfoRow(
-            icon: Icons.location_on_outlined,
-            label: 'الموقع',
-            value: school.address!,
-          ),
+        _InfoRow(
+          icon: Icons.monetization_on_outlined,
+          label: 'إجمالي السعر',
+          value: '${request.totalPrice} د.ل',
+          valueColor: AppColors.success,
+        ),
       ],
     );
   }
 }
+
 
 // ── قائمة الأطفال ──
 class _ChildrenListWidget extends StatelessWidget {
   final List<DriverReqChild> children;
-  const _ChildrenListWidget({required this.children});
+  final DriverRequestModel request;
+  const _ChildrenListWidget({required this.children, required this.request});
 
   @override
   Widget build(BuildContext context) {
@@ -589,7 +567,7 @@ class _ChildrenListWidget extends StatelessWidget {
       children: children.asMap().entries.map((entry) {
         final index = entry.key;
         final child = entry.value;
-        return _ChildCard(child: child, index: index);
+        return _ChildCard(child: child, request: request, index: index);
       }).toList(),
     );
   }
@@ -597,33 +575,68 @@ class _ChildrenListWidget extends StatelessWidget {
 
 class _ChildCard extends StatelessWidget {
   final DriverReqChild child;
+  final DriverRequestModel request;
   final int index;
-  const _ChildCard({required this.child, required this.index});
+  const _ChildCard({
+    required this.child,
+    required this.request,
+    required this.index,
+  });
+
+  String _formatPrice(String? rawPrice) {
+    if (rawPrice != null && rawPrice.isNotEmpty) {
+      final p = double.tryParse(rawPrice);
+      if (p != null && p > 0) return '${p.toStringAsFixed(0)} د.ل';
+    }
+    return '${request.totalPrice} د.ل';
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
+    final primaryColor = context.primaryColor;
+    final schoolName = child.pivot?.schoolLabel ?? request.school.name;
+    final homeAddress = child.pivot?.homeLabel ?? 'غير محدد';
 
     return Container(
-      margin: EdgeInsets.only(bottom: index < 10 ? 8 : 0),
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.only(bottom: index < request.children.length - 1 ? 12.h : 0),
+      padding: EdgeInsets.all(14.w),
       decoration: AppTheme.boxDecoration(
         color: isDark ? AppColors.grey900 : AppColors.backgroundLight,
-        borderRadius: AppTheme.radius(10),
+        borderRadius: AppTheme.radius(14.r),
+        border: Border.all(
+          color: primaryColor.withValues(alpha: 0.15),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── رأس البطاقة ──
           Row(
             children: [
               CircleAvatar(
-                radius: 18,
-                backgroundColor:
-                    AppColors.primaryLight.withValues(alpha: 0.12),
-                child: const Icon(Icons.child_care_rounded,
-                    color: AppColors.primaryLight, size: 18),
+                radius: 22.r,
+                backgroundColor: primaryColor.withValues(alpha: 0.12),
+                backgroundImage: (child.avatarUrl != null && child.avatarUrl!.isNotEmpty)
+                    ? CachedNetworkImageProvider(
+                        child.avatarUrl!.startsWith('http')
+                            ? child.avatarUrl!
+                            : '${ApiEndpoints.baseUrl.replaceAll('/api/', '')}/storage/${child.avatarUrl!}',
+                      )
+                    : null,
+                child: (child.avatarUrl == null || child.avatarUrl!.isEmpty)
+                    ? Text(
+                        child.name.isNotEmpty ? child.name[0] : '؟',
+                        style: AppTextStyles.style(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                        ),
+                      )
+                    : null,
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -631,152 +644,163 @@ class _ChildCard extends StatelessWidget {
                     Text(
                       child.name.isNotEmpty ? child.name : 'غير محدد',
                       style: AppTextStyles.style(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (child.grade != null)
+                    if (schoolName.isNotEmpty) ...[
+                      SizedBox(height: 2.h),
                       Text(
-                        '${child.grade}',
+                        schoolName,
                         style: AppTextStyles.style(
-                          fontSize: 12,
+                          fontSize: 12.sp,
                           color: AppColors.textMuted,
                         ),
                       ),
+                    ],
+                    SizedBox(height: 4.h),
+                    Wrap(
+                      spacing: 6.w,
+                      runSpacing: 4.h,
+                      children: [
+                        if (child.gender != null && child.gender!.isNotEmpty)
+                          _buildChip(
+                            child.gender == 'male' ? 'ذكر' : 'أنثى',
+                            child.gender == 'male' ? Icons.male_rounded : Icons.female_rounded,
+                            isDark,
+                          ),
+                        if (child.grade != null)
+                          _buildChip(
+                            'الصف: ${child.grade}',
+                            Icons.school_outlined,
+                            isDark,
+                          ),
+                      ],
+                    ),
                   ],
+                ),
+              ),
+              // سعر الطفل
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Text(
+                  _formatPrice(child.pivot?.pricePerChild),
+                  style: AppTextStyles.style(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.success,
+                  ),
                 ),
               ),
             ],
           ),
-          // بيانات موقع الطفل إن وجدت
-          if (child.pivot != null) ...[
-            const SizedBox(height: 8),
-            if (child.pivot!.schoolLabel != null && child.pivot!.schoolLabel!.isNotEmpty)
-              _InfoRow(
-                icon: Icons.school_rounded,
-                label: 'المدرسة',
-                value: child.pivot!.schoolLabel!,
-                isCompact: true,
-              ),
-            if (child.pivot!.homeLabel != null && child.pivot!.homeLabel!.isNotEmpty)
-              _InfoRow(
-                icon: Icons.home_rounded,
-                label: 'المنزل',
-                value: child.pivot!.homeLabel!,
-                isCompact: true,
-              ),
-            if (double.tryParse(child.pivot!.pricePerChild) != null && double.tryParse(child.pivot!.pricePerChild)! > 0)
-              _InfoRow(
-                icon: Icons.monetization_on_rounded,
-                label: 'الإجمالي',
-                value: '${child.pivot!.pricePerChild} د.ل',
-                isCompact: true,
-              ),
-            if (child.pivot!.childNotes != null && child.pivot!.childNotes!.isNotEmpty)
-              _InfoRow(
-                icon: Icons.notes_rounded,
-                label: 'ملاحظات',
-                value: child.pivot!.childNotes!,
-                isCompact: true,
-              ),
-          ],
-          if (child.birthDate != null && child.birthDate!.isNotEmpty) ...[
-            const SizedBox(height: 4),
+          SizedBox(height: 10.h),
+          const Divider(height: 1, thickness: 0.5),
+          SizedBox(height: 10.h),
+
+          // ── تفاصيل الاشتراك الخاصة بالطفل ──
+          _InfoRow(
+            icon: Icons.repeat_rounded,
+            label: 'نوع الاشتراك',
+            value: request.subscriptionTypeDisplayLabel,
+          ),
+          const Divider(height: 12, thickness: 0.5),
+          _InfoRow(
+            icon: Icons.swap_horiz_rounded,
+            label: 'الاتجاه',
+            value: request.directionDisplayLabel,
+          ),
+          const Divider(height: 12, thickness: 0.5),
+          _InfoRow(
+            icon: Icons.calendar_today_rounded,
+            label: 'تاريخ بداية الاشتراك',
+            value: request.startDate.isNotEmpty ? request.startDate : 'غير متوفر',
+          ),
+          const Divider(height: 12, thickness: 0.5),
+          _InfoRow(
+            icon: Icons.event_rounded,
+            label: 'تاريخ نهاية الاشتراك',
+            value: (request.endDate.isNotEmpty && request.endDate != 'null')
+                ? request.endDate
+                : 'غير متوفر',
+          ),
+          if (request.daysCount != null) ...[
+            const Divider(height: 12, thickness: 0.5),
             _InfoRow(
-              icon: Icons.cake_rounded,
-              label: 'تاريخ الميلاد',
-              value: child.birthDate!,
-              isCompact: true,
+              icon: Icons.date_range_rounded,
+              label: 'عدد أيام العمل',
+              value: '${request.daysCount} يوم',
             ),
           ],
-          if (child.gender != null && child.gender!.isNotEmpty) ...[
-            const SizedBox(height: 4),
+          const Divider(height: 12, thickness: 0.5),
+          _InfoRow(
+            icon: Icons.location_on_rounded,
+            label: 'عنوان المنزل',
+            value: homeAddress,
+            valueColor: Colors.blue.shade700,
+          ),
+          const Divider(height: 12, thickness: 0.5),
+          _InfoRow(
+            icon: Icons.school_rounded,
+            label: 'اسم المدرسة',
+            value: schoolName,
+            valueColor: Colors.teal.shade700,
+          ),
+          if (request.school.address != null && request.school.address!.isNotEmpty) ...[
+            const Divider(height: 12, thickness: 0.5),
             _InfoRow(
-              icon: Icons.people_rounded,
-              label: 'الجنس',
-              value: child.gender == 'male' ? 'ذكر' : 'أنثى',
-              isCompact: true,
+              icon: Icons.map_outlined,
+              label: 'عنوان المدرسة',
+              value: request.school.address!,
+            ),
+          ],
+          if (child.pivot?.childNotes != null && child.pivot!.childNotes!.isNotEmpty) ...[
+            const Divider(height: 12, thickness: 0.5),
+            _InfoRow(
+              icon: Icons.notes_rounded,
+              label: 'ملاحظات الطفل',
+              value: child.pivot!.childNotes!,
             ),
           ],
           if (child.medicalNotes != null && child.medicalNotes!.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const Divider(height: 12, thickness: 0.5),
             _InfoRow(
               icon: Icons.medical_services_rounded,
               label: 'ملاحظات طبية',
               value: child.medicalNotes!,
-              isCompact: true,
             ),
           ],
         ],
       ),
     );
   }
-}
 
-// ── تفاصيل الرحلة ──
-class _TripDetailsWidget extends StatelessWidget {
-  final DriverRequestModel request;
-  const _TripDetailsWidget({required this.request});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _InfoRow(
-          icon: Icons.schedule_rounded,
-          label: 'الفترة',
-          value: request.timingDisplayLabel,
-        ),
-        _InfoRow(
-          icon: Icons.people_alt_rounded,
-          label: 'عدد الأطفال',
-          value: '${request.childrenCount}',
-        ),
-        if (request.direction.isNotEmpty)
-          _InfoRow(
-            icon: Icons.swap_calls_rounded,
-            label: 'الاتجاه',
-            value: request.direction == 'two_way'
-                ? 'ذهاب وعودة'
-                : request.direction == 'one_way_to_school'
-                    ? 'ذهاب للمدرسة فقط'
-                    : 'عودة للمنزل فقط',
+  Widget _buildChip(String text, IconData icon, bool isDark) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.grey800 : AppColors.grey.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11.sp, color: AppColors.textMuted),
+          SizedBox(width: 3.w),
+          Text(
+            text,
+            style: AppTextStyles.style(
+              fontSize: 11.sp,
+              color: AppColors.textMuted,
+            ),
           ),
-        if (request.daysCount != null)
-          _InfoRow(
-            icon: Icons.calendar_view_week_rounded,
-            label: 'عدد الأيام',
-            value: '${request.daysCount} أيام',
-          ),
-        if (request.pickupTime != null && request.pickupTime!.isNotEmpty)
-          _InfoRow(
-            icon: Icons.login_rounded,
-            label: 'وقت الاصطحاب',
-            value: request.pickupTime!,
-          ),
-        if (request.dropoffTime != null && request.dropoffTime!.isNotEmpty)
-          _InfoRow(
-            icon: Icons.logout_rounded,
-            label: 'وقت التوصيل',
-            value: request.dropoffTime!,
-          ),
-        if (request.createdAt.isNotEmpty)
-          _InfoRow(
-            icon: Icons.calendar_today_rounded,
-            label: 'تاريخ الطلب',
-            value: _formatDate(request.createdAt),
-          ),
-      ],
+        ],
+      ),
     );
-  }
-
-  String _formatDate(String raw) {
-    try {
-      final dt = DateTime.parse(raw);
-      return '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
-    } catch (_) {
-      return raw;
-    }
   }
 }
 
@@ -786,18 +810,20 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
   final bool isCompact;
+  final Color? valueColor;
 
   const _InfoRow({
     required this.icon,
     required this.label,
     required this.value,
     this.isCompact = false,
+    this.valueColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: isCompact ? 4 : 8),
+      padding: EdgeInsets.only(bottom: isCompact ? 4 : 2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -816,6 +842,7 @@ class _InfoRow extends StatelessWidget {
               style: AppTextStyles.style(
                 fontSize: isCompact ? 12 : 13,
                 fontWeight: FontWeight.w600,
+                color: valueColor,
               ),
             ),
           ),

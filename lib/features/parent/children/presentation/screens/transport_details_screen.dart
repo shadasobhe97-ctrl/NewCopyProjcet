@@ -60,11 +60,16 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
   }
 
   String _translateSub(String val) {
-    switch (val) {
+    switch (val.toLowerCase()) {
       case 'single_day':
+      case 'daily':
+      case 'days':
         return 'يوم واحد';
       case 'multi_day':
-        return 'أكثر من يوم';
+      case 'multi-day':
+      case 'multiday':
+      case 'several_days':
+        return 'عدة أيام';
       case 'monthly':
         return 'شهري';
       case 'weekly':
