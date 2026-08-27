@@ -1,3 +1,4 @@
+import 'package:kids_transport/core/utils/subscription_enums.dart';
 import 'contract_model.dart';
 import 'parsers.dart';
 
@@ -80,26 +81,6 @@ class InvoiceDetailsModel {
     }
   }
 
-  String get subscriptionTypeLabel {
-    switch (subscriptionType?.toLowerCase()) {
-      case 'multi_day':
-      case 'multi-day':
-      case 'multiday':
-      case 'several_days':
-        return 'عدة أيام';
-      case 'monthly':
-        return 'شهري';
-      case 'weekly':
-        return 'أسبوعي';
-      case 'daily':
-      case 'single_day':
-      case 'days':
-        return 'يومي';
-      case 'term':
-      case 'semester':
-        return 'فصلي';
-      default:
-        return subscriptionType ?? 'غير محدد';
-    }
-  }
+  String get subscriptionTypeLabel =>
+      SubscriptionEnums.typeLabel(subscriptionType);
 }

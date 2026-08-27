@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kids_transport/core/utils/subscription_enums.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kids_transport/features/parent/search/data/models/driver_search_model.dart';
@@ -185,38 +186,13 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       builder: (_) => const Center(child: CircularProgressIndicator()),
     ).then((_) => _loadingShowing = false);
 
-    final primaryKid = _selectedKids.first;
-
-    debugPrint('>>> Raw values before building JSON:');
-    debugPrint('driver_id          = ${widget.driver.driverId}');
-    debugPrint('school_id          = ${primaryKid.schoolId}');
-    debugPrint(
-      'subscription_type  = ${primaryKid.transportPref.subscriptionType}',
-    );
-    debugPrint(
-      'start_date         = ${primaryKid.transportPref.startDate.toIso8601String().split('T').first}',
-    );
-    debugPrint(
-      'end_date           = ${primaryKid.transportPref.endDate?.toIso8601String().split('T').first}',
-    );
-
-    String timingVal = 'BOTH';
-    final p = primaryKid.transportPref.period.toLowerCase();
-    if (p == 'morning') timingVal = 'MORNING';
-    if (p == 'evening' || p == 'afternoon') timingVal = 'EVENING';
-    debugPrint(
-      'timing (raw period) = ${primaryKid.transportPref.period} → $timingVal',
-    );
-
-    // Get direction format — serviceType already stores go/return/both
-    String directionVal = primaryKid.transportPref.serviceType.toLowerCase();
-    debugPrint(
-      'direction (raw svc) = ${primaryKid.transportPref.serviceType} → $directionVal',
-    );
-
-    final List<SubscriptionChildRequest> childrenRequestList = [];
-    debugPrint('\n>>> Children breakdown:');
+        final List<SubscriptionChildRequest> childrenRequestList = [];
+    // أطفال ينقصهم عنوان منزل أو مدرسة — لا يجوز إرسالهم بالرقم 0
+    final List<String> kidsMissingAddress = [];
+    final List<String> kidsMissingSchool = [];
+    debugPrint('>>> بيانات كل طفل على حدة (كل طفل بإعداداته الخاصة):');
     for (final kid in _selectedKids) {
+      final pref = kid.transportPref;
       final breakdownItem = widget.driver.breakdown.firstWhere(
         (b) => b.childId == kid.id,
         orElse: () => BreakdownModelInfo(
@@ -225,67 +201,83 @@ class _DriverProfileViewState extends State<DriverProfileView> {
           schoolName: kid.schoolName,
           distanceKm: 0.0,
           pricePerKm: 0.0,
-          subscriptionType: kid.transportPref.subscriptionType,
+          subscriptionType: pref.subscriptionType,
           workingDays: 22,
           childPrice: widget.driver.price,
           childPriceRaw: widget.driver.price.toInt(),
         ),
       );
 
-      debugPrint('  child_id            = ${kid.id}');
-      debugPrint(
-        '  pickup_address_id   = ${kid.addressId} (type: ${kid.addressId.runtimeType})',
+      // نوع الاشتراك/الاتجاه/الفترة/التواريخ تُؤخذ من هذا الطفل تحديداً
+      final childType = SubscriptionEnums.normalizeType(
+        breakdownItem.subscriptionType.isNotEmpty
+            ? breakdownItem.subscriptionType
+            : pref.subscriptionType,
       );
-      debugPrint('  dropoff_address_id  = ${kid.schoolId} (نوع: school_id)');
-      debugPrint(
-        '  price_per_child     = ${breakdownItem.childPrice} (type: ${breakdownItem.childPrice.runtimeType})',
-      );
-      debugPrint('  child_notes         = ${kid.medicalNotes ?? ""}');
+      final childDirection = SubscriptionEnums.normalizeDirection(pref.serviceType);
+      final childTiming = SubscriptionEnums.normalizeTiming(pref.period);
+      final childStart = pref.startDate.toIso8601String().split('T').first;
+      final childEnd = pref.endDate?.toIso8601String().split('T').first;
+
+      debugPrint('  child_id            = ${kid.id} (${kid.name})');
+      debugPrint('  school_id           = ${kid.schoolId}');
+      debugPrint('  subscription_type   = $childType');
+      debugPrint('  trip_direction      = $childDirection');
+      debugPrint('  timing              = $childTiming');
+      debugPrint('  start_date          = $childStart');
+      debugPrint('  end_date            = $childEnd');
+      debugPrint('  pickup_address_id   = ${kid.addressId}');
+      debugPrint('  dropoff_address_id  = ${kid.schoolId}');
+      debugPrint('  price_per_child     = ${breakdownItem.childPrice}');
       debugPrint('  ---');
+
+      final pickupId = int.tryParse(kid.addressId) ?? 0;
+      if (pickupId <= 0) kidsMissingAddress.add(kid.name);
+      if (kid.schoolId <= 0) kidsMissingSchool.add(kid.name);
 
       childrenRequestList.add(
         SubscriptionChildRequest(
           childId: kid.id ?? 0,
-          pickupAddressId: kid.addressId,
-          dropoffAddressId: kid.schoolId
-              .toString(), // ✅ معرّف المدرسة وليس عنوان المنزل
+          schoolId: kid.schoolId,
+          subscriptionType: childType,
+          tripDirection: childDirection,
+          timing: childTiming,
+          startDate: childStart,
+          endDate: childEnd,
+          pickupAddressId: pickupId,
+          dropoffAddressId: kid.schoolId,
           pricePerChild: breakdownItem.childPrice,
           childNotes: kid.medicalNotes ?? '',
         ),
       );
     }
 
-    debugPrint('days_count          = 22');
-    debugPrint('notes               = ""');
-
-    // Map subscription_type to backend contract: monthly|daily
-    String mappedSubscriptionType = primaryKid.transportPref.subscriptionType
-        .toLowerCase();
-    if (mappedSubscriptionType == 'days') mappedSubscriptionType = 'daily';
-    if (mappedSubscriptionType == 'weekly') mappedSubscriptionType = 'monthly';
+    if (kidsMissingAddress.isNotEmpty || kidsMissingSchool.isNotEmpty) {
+      if (_loadingShowing) Navigator.of(context).pop();
+      final parts = <String>[];
+      if (kidsMissingAddress.isNotEmpty) {
+        parts.add('لا يوجد عنوان منزل محدد لـ: ${kidsMissingAddress.join('، ')}');
+      }
+      if (kidsMissingSchool.isNotEmpty) {
+        parts.add('لا توجد مدرسة محددة لـ: ${kidsMissingSchool.join('، ')}');
+      }
+      _showSnack(
+        '${parts.join('\n')}\nيرجى استكمال بيانات الطفل قبل إرسال الطلب.',
+        AppColors.error,
+        duration: const Duration(seconds: 5),
+      );
+      return;
+    }
 
     final request = SubscriptionRequest(
       driverId: widget.driver.driverId,
-      schoolId: primaryKid.schoolId,
-      subscriptionType: mappedSubscriptionType,
-      direction: directionVal,
-      timing: timingVal,
-      startDate: primaryKid.transportPref.startDate
-          .toIso8601String()
-          .split('T')
-          .first,
-      endDate: primaryKid.transportPref.endDate
-          ?.toIso8601String()
-          .split('T')
-          .first,
-      daysCount: 22,
       notes: '',
       children: childrenRequestList,
     );
 
-    debugPrint('\n>>> Final JSON being sent:');
+    debugPrint('>>> Final JSON being sent:');
     debugPrint(request.toJson().toString());
-    debugPrint('========================================================\n');
+    debugPrint('========================================================');
 
     context.read<SearchCubit>().submitSubscription(request);
   }
@@ -1779,14 +1771,8 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     );
   }
 
-  String _getSubscriptionTypeArabic(String type) {
-    final t = type.toLowerCase();
-    if (t == 'weekly') return 'أسبوعي';
-    if (t == 'days' || t == 'daily' || t == 'single_day') return 'يومي';
-    if (t == 'multi_day' || t == 'multi-day' || t == 'multiday' || t == 'several_days') return 'عدة أيام';
-    if (t == 'monthly') return 'شهري';
-    return type.isNotEmpty ? type : 'عدة أيام';
-  }
+  String _getSubscriptionTypeArabic(String type) =>
+      SubscriptionEnums.typeLabel(type);
 
   // ══════════════════════════════════════════════════════════════════
   // Section: Bottom Action Bar

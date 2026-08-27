@@ -1,3 +1,6 @@
+import 'package:kids_transport/core/utils/subscription_enums.dart';
+import 'subscription_location_model.dart';
+
 class SubscriptionDetailModel {
   final int id;
   final String status;
@@ -160,7 +163,7 @@ class DetailSchedule {
   final String? shiftLabel;
   final String? pickupZoneName;
   final String? schoolName;
-  final DetailLocation? homeLocation;
+  final SubscriptionLocationModel? homeLocation;
   final String? pickupTime;
   final String? dropoffTime;
 
@@ -197,11 +200,11 @@ class DetailSchedule {
       pickupZoneName: json['pickupZoneName']?.toString() ?? json['pickup_zone_name']?.toString() ?? json['pickup_location']?['label']?.toString(),
       schoolName: json['schoolName']?.toString() ?? json['school_name']?.toString() ?? json['child']?['school_name']?.toString(),
       homeLocation: json['homeLocation'] is Map
-          ? DetailLocation.fromJson(Map<String, dynamic>.from(json['homeLocation'] as Map))
+          ? SubscriptionLocationModel.fromJson(Map<String, dynamic>.from(json['homeLocation'] as Map))
           : (json['home_location'] is Map
-              ? DetailLocation.fromJson(Map<String, dynamic>.from(json['home_location'] as Map))
+              ? SubscriptionLocationModel.fromJson(Map<String, dynamic>.from(json['home_location'] as Map))
               : (json['pickup_location'] is Map
-                  ? DetailLocation.fromJson(Map<String, dynamic>.from(json['pickup_location'] as Map))
+                  ? SubscriptionLocationModel.fromJson(Map<String, dynamic>.from(json['pickup_location'] as Map))
                   : null)),
       pickupTime: pTime,
       dropoffTime: dTime,
@@ -244,25 +247,8 @@ class DetailBilling {
         paymentMethod: json['paymentMethod']?.toString() ?? json['payment_method']?.toString(),
       );
 
-  String get subscriptionTypeDisplayLabel {
-    switch (subscriptionType?.toLowerCase()) {
-      case 'multi_day':
-      case 'multi-day':
-      case 'multiday':
-      case 'several_days':
-        return 'عدة أيام';
-      case 'monthly':
-        return 'شهري';
-      case 'weekly':
-        return 'أسبوعي';
-      case 'daily':
-      case 'single_day':
-      case 'days':
-        return 'يومي';
-      default:
-        return subscriptionType ?? 'غير محدد';
-    }
-  }
+  String get subscriptionTypeDisplayLabel =>
+      SubscriptionEnums.typeLabel(subscriptionType);
 
   String get formattedTotalPrice {
     return '${totalPrice.toStringAsFixed(2)} دينار';

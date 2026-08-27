@@ -9,6 +9,8 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
+import 'package:kids_transport/features/parent/subscriptions/data/models/subscription_location_model.dart';
+import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscription_map_screen.dart';
 
 class DriverSubscriptionDetailsScreen extends StatefulWidget {
   final int subscriptionId;
@@ -450,6 +452,43 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
                                     onPressed: () => _openMap(coords!.school!.latitude, coords.school!.longitude),
                                   ),
                               ],
+                            ),
+                            SizedBox(height: 12.h),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  final pickup = SubscriptionLocationModel(
+                                    latitude: coords?.home?.latitude,
+                                    longitude: coords?.home?.longitude,
+                                    address: subscription.pickupLabel,
+                                  );
+                                  final dropoff = SubscriptionLocationModel(
+                                    latitude: coords?.school?.latitude,
+                                    longitude: coords?.school?.longitude,
+                                    address: subscription.dropoffLabel,
+                                  );
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => SubscriptionMapScreen(
+                                        title: 'عرض موقع الاشتراك',
+                                        pickupLocation: pickup,
+                                        dropoffLocation: dropoff,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: Icon(Icons.map_rounded, size: 16.sp, color: context.primaryColor),
+                                label: Text(
+                                  'عرض المواقع على الخريطة',
+                                  style: AppTextStyles.style(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: context.primaryColor,
+                                  ),
+                                ),
+                              ),
                             ),
                           ],
                         ),

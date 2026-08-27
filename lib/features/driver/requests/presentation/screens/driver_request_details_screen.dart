@@ -9,6 +9,8 @@ import 'package:kids_transport/features/driver/requests/data/models/driver_reque
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
+import 'package:kids_transport/features/parent/subscriptions/data/models/subscription_location_model.dart';
+import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscription_map_screen.dart';
 
 
 /// شاشة تفاصيل طلب الاشتراك للسائق
@@ -88,6 +90,8 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
                       title: 'ولي الأمر',
                       child: _ParentInfoWidget(request: request),
                     ),
+                    const SizedBox(height: 12),
+                    _TotalPriceCard(request: request),
                     const SizedBox(height: 12),
                     _SectionCard(
                       icon: Icons.child_care_rounded,
@@ -518,12 +522,15 @@ class _ParentInfoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final parent = request.parent;
+    final hasParentData =
+        parent.name.isNotEmpty || (parent.phone?.isNotEmpty ?? false);
+
     return Column(
       children: [
         _InfoRow(
           icon: Icons.person_outline_rounded,
           label: 'الاسم',
-          value: parent.name.isNotEmpty ? parent.name : 'غير محدد',
+          value: parent.name.isNotEmpty ? parent.name : 'غير متوفر من الخادم',
         ),
         if (parent.phone != null && parent.phone!.isNotEmpty)
           _InfoRow(
@@ -531,22 +538,73 @@ class _ParentInfoWidget extends StatelessWidget {
             label: 'الهاتف',
             value: parent.phone!,
           ),
+        if (!hasParentData)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'لم يُرجع الخادم بيانات ولي الأمر لهذا الطلب.',
+              style: AppTextStyles.style(
+                fontSize: 11,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
         _InfoRow(
           icon: Icons.child_care_rounded,
           label: 'عدد الأطفال',
           value: '${request.childrenCount} أطفال',
-        ),
-        _InfoRow(
-          icon: Icons.monetization_on_outlined,
-          label: 'إجمالي السعر',
-          value: '${request.totalPrice} د.ل',
-          valueColor: AppColors.success,
         ),
       ],
     );
   }
 }
 
+
+// ── بطاقة السعر الإجمالي ──
+class _TotalPriceCard extends StatelessWidget {
+  final DriverRequestModel request;
+  const _TotalPriceCard({required this.request});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = context.isDarkMode;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+      decoration: AppTheme.boxDecoration(
+        color: AppColors.success.withValues(alpha: isDark ? 0.16 : 0.08),
+        borderRadius: AppTheme.radius(16),
+        border: AppTheme.border(
+          color: AppColors.success.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.payments_rounded,
+              color: AppColors.success, size: 26),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'السعر الإجمالي',
+              style: AppTextStyles.style(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(
+            '${request.totalPrice} د.ل',
+            style: AppTextStyles.style(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.success,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 // ── قائمة الأطفال ──
 class _ChildrenListWidget extends StatelessWidget {
@@ -583,20 +641,24 @@ class _ChildCard extends StatelessWidget {
     required this.index,
   });
 
-  String _formatPrice(String? rawPrice) {
-    if (rawPrice != null && rawPrice.isNotEmpty) {
-      final p = double.tryParse(rawPrice);
-      if (p != null && p > 0) return '${p.toStringAsFixed(0)} د.ل';
-    }
-    return '${request.totalPrice} د.ل';
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final primaryColor = context.primaryColor;
-    final schoolName = child.pivot?.schoolLabel ?? request.school.name;
-    final homeAddress = child.pivot?.homeLabel ?? 'غير محدد';
+    final details = child.details;
+
+    // نقاط الانطلاق/الوصول الخاصة بهذا الطفل تحديداً
+    final pickup = child.pickupLocation;
+    final dropoff = child.dropoffLocation;
+    // الاسم أولاً ("منزلي" / "مدرسة النور")، والعنوان التفصيلي يُعرض فقط إن كان حقيقياً
+    final pickupName = pickup != null
+        ? pickup.displayName
+        : (child.pivot?.homeLabel ?? 'غير محدد');
+    final schoolName = dropoff != null
+        ? dropoff.displayName
+        : (child.pivot?.schoolLabel ?? request.school.name);
+    final pickupAddress = pickup?.displayAddress;
+    final schoolAddress = dropoff?.displayAddress;
 
     return Container(
       margin: EdgeInsets.only(bottom: index < request.children.length - 1 ? 12.h : 0),
@@ -669,7 +731,13 @@ class _ChildCard extends StatelessWidget {
                             child.gender == 'male' ? Icons.male_rounded : Icons.female_rounded,
                             isDark,
                           ),
-                        if (child.grade != null)
+                        if (child.age != null)
+                          _buildChip(
+                            'العمر: ${child.age} سنوات',
+                            Icons.cake_outlined,
+                            isDark,
+                          ),
+                        if (child.grade != null && child.grade! > 0)
                           _buildChip(
                             'الصف: ${child.grade}',
                             Icons.school_outlined,
@@ -688,7 +756,7 @@ class _ChildCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Text(
-                  _formatPrice(child.pivot?.pricePerChild),
+                  child.priceLabel,
                   style: AppTextStyles.style(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.bold,
@@ -706,64 +774,89 @@ class _ChildCard extends StatelessWidget {
           _InfoRow(
             icon: Icons.repeat_rounded,
             label: 'نوع الاشتراك',
-            value: request.subscriptionTypeDisplayLabel,
+            value: details.typeLabel,
           ),
           const Divider(height: 12, thickness: 0.5),
           _InfoRow(
             icon: Icons.swap_horiz_rounded,
             label: 'الاتجاه',
-            value: request.directionDisplayLabel,
+            value: details.directionLabel,
+          ),
+          const Divider(height: 12, thickness: 0.5),
+          _InfoRow(
+            icon: Icons.access_time_rounded,
+            label: 'الفترة',
+            value: details.timingLabel,
           ),
           const Divider(height: 12, thickness: 0.5),
           _InfoRow(
             icon: Icons.calendar_today_rounded,
             label: 'تاريخ بداية الاشتراك',
-            value: request.startDate.isNotEmpty ? request.startDate : 'غير متوفر',
+            value: _fmt(details.startDate),
           ),
           const Divider(height: 12, thickness: 0.5),
           _InfoRow(
             icon: Icons.event_rounded,
             label: 'تاريخ نهاية الاشتراك',
-            value: (request.endDate.isNotEmpty && request.endDate != 'null')
-                ? request.endDate
-                : 'غير متوفر',
+            value: _fmt(details.endDate),
           ),
-          if (request.daysCount != null) ...[
+          if (details.workingDaysCount != null) ...[
             const Divider(height: 12, thickness: 0.5),
             _InfoRow(
               icon: Icons.date_range_rounded,
               label: 'عدد أيام العمل',
-              value: '${request.daysCount} يوم',
+              value: '${details.workingDaysCount} يوم',
             ),
           ],
           const Divider(height: 12, thickness: 0.5),
           _InfoRow(
-            icon: Icons.location_on_rounded,
-            label: 'عنوان المنزل',
-            value: homeAddress,
-            valueColor: Colors.blue.shade700,
+            icon: Icons.directions_bus_filled_rounded,
+            label: 'سعر الرحلة',
+            value: _money(details.tripPrice ?? 0),
           ),
           const Divider(height: 12, thickness: 0.5),
           _InfoRow(
+            icon: Icons.person_pin_rounded,
+            label: 'إجمالي اشتراك الطفل',
+            value: child.priceLabel,
+            valueColor: AppColors.success,
+          ),
+          const Divider(height: 12, thickness: 0.5),
+          _InfoRow(
+            icon: Icons.location_on_rounded,
+            label: 'نقطة الانطلاق',
+            value: pickupName,
+            valueColor: Colors.blue.shade700,
+          ),
+          if (pickupAddress != null) ...[
+            const Divider(height: 12, thickness: 0.5),
+            _InfoRow(
+              icon: Icons.place_outlined,
+              label: 'عنوان الانطلاق',
+              value: pickupAddress,
+            ),
+          ],
+          const Divider(height: 12, thickness: 0.5),
+          _InfoRow(
             icon: Icons.school_rounded,
-            label: 'اسم المدرسة',
-            value: schoolName,
+            label: 'المدرسة (نقطة الوصول)',
+            value: schoolName.isNotEmpty ? schoolName : 'غير محدد',
             valueColor: Colors.teal.shade700,
           ),
-          if (request.school.address != null && request.school.address!.isNotEmpty) ...[
+          if (schoolAddress != null) ...[
             const Divider(height: 12, thickness: 0.5),
             _InfoRow(
               icon: Icons.map_outlined,
               label: 'عنوان المدرسة',
-              value: request.school.address!,
+              value: schoolAddress,
             ),
           ],
-          if (child.pivot?.childNotes != null && child.pivot!.childNotes!.isNotEmpty) ...[
+          if (_notes(child) != null) ...[
             const Divider(height: 12, thickness: 0.5),
             _InfoRow(
               icon: Icons.notes_rounded,
               label: 'ملاحظات الطفل',
-              value: child.pivot!.childNotes!,
+              value: _notes(child)!,
             ),
           ],
           if (child.medicalNotes != null && child.medicalNotes!.isNotEmpty) ...[
@@ -774,10 +867,79 @@ class _ChildCard extends StatelessWidget {
               value: child.medicalNotes!,
             ),
           ],
+          SizedBox(height: 12.h),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                final pickupPoint = SubscriptionLocationModel(
+                  id: pickup?.id,
+                  name: pickupName,
+                  address: pickupAddress,
+                  latitude: pickup?.latitude,
+                  longitude: pickup?.longitude,
+                );
+                final dropoffPoint = SubscriptionLocationModel(
+                  id: dropoff?.id,
+                  name: schoolName,
+                  address: schoolAddress,
+                  latitude: dropoff?.latitude,
+                  longitude: dropoff?.longitude,
+                );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SubscriptionMapScreen(
+                      title: 'موقع توصيل ${child.name}',
+                      pickupLocation: pickupPoint,
+                      dropoffLocation: dropoffPoint,
+                    ),
+                  ),
+                );
+              },
+              icon: Icon(
+                Icons.map_rounded,
+                size: 16.sp,
+                color: primaryColor,
+              ),
+              label: Text(
+                'عرض الموقع على الخريطة',
+                style: AppTextStyles.style(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(
+                  color: primaryColor.withValues(alpha: 0.5),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                padding: EdgeInsets.symmetric(vertical: 8.h),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
+
+  /// ملاحظات ولي الأمر عن الطفل: الحقل الجديد أولاً ثم pivot القديم
+  static String? _notes(DriverReqChild c) {
+    final v = c.childNotes ?? c.pivot?.childNotes;
+    if (v == null) return null;
+    final t = v.trim();
+    return (t.isEmpty || t == 'null') ? null : t;
+  }
+
+  String _money(double v) => v == v.roundToDouble()
+      ? '${v.toInt()} د.ل'
+      : '${v.toStringAsFixed(2)} د.ل';
+
+  String _fmt(String? raw) =>
+      (raw != null && raw.isNotEmpty && raw != 'null') ? raw : 'غير متوفر';
 
   Widget _buildChip(String text, IconData icon, bool isDark) {
     return Container(

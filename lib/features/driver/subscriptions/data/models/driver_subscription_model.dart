@@ -1,3 +1,4 @@
+import 'package:kids_transport/core/utils/subscription_enums.dart';
 // نموذج الاشتراكات النشطة للسائق - GET /api/driver/active-subscriptions
 // الفلاتر: active | pending | completed | cancelled
 
@@ -236,25 +237,8 @@ class DriverSubscriptionModel {
     }
   }
 
-  String get subscriptionTypeDisplayLabel {
-    switch (subscriptionType?.toLowerCase()) {
-      case 'multi_day':
-      case 'multi-day':
-      case 'multiday':
-      case 'several_days':
-        return 'عدة أيام';
-      case 'monthly':
-        return 'شهري';
-      case 'weekly':
-        return 'أسبوعي';
-      case 'daily':
-      case 'single_day':
-      case 'days':
-        return 'يومي';
-      default:
-        return subscriptionType ?? 'عدة أيام';
-    }
-  }
+  String get subscriptionTypeDisplayLabel =>
+      SubscriptionEnums.typeLabel(subscriptionType);
 
   String? get pickupLabel => pickupLocation?.label;
   String? get dropoffLabel => dropoffLocation?.label;

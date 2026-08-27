@@ -14,6 +14,7 @@ class DriverRequestsRemoteDataSource {
     return {'Authorization': token ?? ''};
   }
 
+  /// GET /api/driver/requests — قائمة طلبات السائق (مع الترقيم)
   Future<PaginatedDriverRequests> fetchRequests({
     String? filter,
     int page = 1,
@@ -23,14 +24,18 @@ class DriverRequestsRemoteDataSource {
       queryParams['filter'] = filter;
     }
 
-    // التعديل: مسح /api/ من الرابط
     final response = await _apiClient.get(
       'driver/requests',
-      queryParameters: queryParams.isEmpty ? null : queryParams,
+      queryParameters: queryParams,
       headers: _authHeader,
     );
 
-    final data = response.data;
+    return parsePaginated(response.data);
+  }
+
+  /// يقرأ استجابة القائمة سواء جاء الترقيم داخل meta (العقد الحالي)
+  /// أو في جذر الاستجابة (الشكل القديم).
+  static PaginatedDriverRequests parsePaginated(dynamic data) {
     if (data == null) {
       return PaginatedDriverRequests(
         data: [],
@@ -41,8 +46,9 @@ class DriverRequestsRemoteDataSource {
     }
 
     if (data is Map) {
-      final success = data['success'];
-      if (success == false) {
+      // الباك يستخدم success في بعض المسارات و status في غيرها
+      final ok = data['success'] ?? data['status'];
+      if (ok == false) {
         final msg = ApiException.extractMessage(data);
         throw ApiException(msg ?? 'تعذر تحميل الطلبات.');
       }
@@ -55,16 +61,22 @@ class DriverRequestsRemoteDataSource {
     String? nextPageUrl;
 
     if (data is Map) {
-      if (data['data'] is List) {
-        rawList = data['data'] as List;
-        currentPage = data['current_page'] is int ? data['current_page'] : 1;
-        lastPage = data['last_page'] is int ? data['last_page'] : 1;
-        perPage = data['per_page'] is int ? data['per_page'] : 15;
-        nextPageUrl = data['next_page_url']?.toString();
-      } else {
-        // Fallback if pagination is not directly at root but under another key, or not paginated
-        rawList = data['data'] ?? [];
-      }
+      rawList = data['data'] is List ? data['data'] as List : const [];
+
+      // الترقيم داخل meta في العقد الحالي
+      final meta = data['meta'] is Map
+          ? Map<String, dynamic>.from(data['meta'] as Map)
+          : data;
+      currentPage = _asInt(meta['current_page']) ?? 1;
+      lastPage = _asInt(meta['last_page']) ?? 1;
+      perPage = _asInt(meta['per_page']) ?? 15;
+
+      // رابط الصفحة التالية داخل links في العقد الحالي
+      final links = data['links'] is Map
+          ? Map<String, dynamic>.from(data['links'] as Map)
+          : null;
+      nextPageUrl =
+          links?['next']?.toString() ?? data['next_page_url']?.toString();
     } else if (data is List) {
       rawList = data;
     }
@@ -83,8 +95,19 @@ class DriverRequestsRemoteDataSource {
     );
   }
 
+  static int? _asInt(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return int.tryParse(v.toString());
+  }
+
+  /// GET /api/driver/requests/{id} — تفاصيل طلب واحد.
+  ///
+  /// شكل هذا المسار يختلف عن القائمة: status ككائن، total_amount بدل
+  /// total_price، وبيانات الطفل موزّعة على trip_details و subscription_period
+  /// و pricing و school و home. الموديل يقرأ الشكلين.
   Future<DriverRequestModel> fetchRequestDetails(int requestId) async {
-    // التعديل: مسح /api/ من الرابط
     final response = await _apiClient.get(
       'driver/requests/$requestId',
       headers: _authHeader,
@@ -92,20 +115,18 @@ class DriverRequestsRemoteDataSource {
 
     final data = response.data;
     if (data is Map) {
-      final success = data['success'];
-      if (success == false) {
+      // الباك يستخدم success في بعض المسارات و status في غيرها
+      final ok = data['success'] ?? data['status'];
+      if (ok == false) {
         final msg = ApiException.extractMessage(data);
         throw ApiException(msg ?? 'تعذر تحميل تفاصيل الطلب.');
       }
-      Map<String, dynamic> requestData;
-      if (data['data'] is Map) {
-        requestData = Map<String, dynamic>.from(data['data'] as Map);
-      } else {
-        requestData = Map<String, dynamic>.from(data);
-      }
+      final requestData = data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : Map<String, dynamic>.from(data);
       return DriverRequestModel.fromJson(requestData);
     }
-    throw ApiException('تعذر تحميل تفاصيل الطلب.');
+    throw const ApiException('تعذر تحميل تفاصيل الطلب.');
   }
 
   Future<AcceptRequestResponseModel> acceptRequest(int requestId) async {

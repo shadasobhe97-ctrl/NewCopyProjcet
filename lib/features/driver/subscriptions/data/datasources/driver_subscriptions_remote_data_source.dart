@@ -31,8 +31,9 @@ class DriverSubscriptionsRemoteDataSource {
     final data = response.data;
     if (data == null) return [];
     if (data is Map) {
-      final success = data['success'];
-      if (success == false) {
+      // الباك إند يستخدم success أحياناً و status أحياناً أخرى
+      final ok = data['success'] ?? data['status'];
+      if (ok == false) {
         final msg = ApiException.extractMessage(data);
         throw ApiException(msg ?? 'تعذر تحميل الاشتراكات.');
       }
@@ -62,8 +63,8 @@ class DriverSubscriptionsRemoteDataSource {
     final data = response.data;
     if (data == null) throw ApiException('تعذر تحميل تفاصيل الاشتراك.');
     if (data is Map) {
-      final success = data['success'];
-      if (success == false) {
+      final ok = data['success'] ?? data['status'];
+      if (ok == false) {
         final msg = ApiException.extractMessage(data);
         throw ApiException(msg ?? 'تعذر تحميل تفاصيل الاشتراك.');
       }

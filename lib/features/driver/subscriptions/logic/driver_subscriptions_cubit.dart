@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/features/driver/subscriptions/data/models/driver_subscription_model.dart';
 import 'package:kids_transport/features/driver/subscriptions/data/repositories/driver_subscriptions_repository.dart';
 
@@ -41,6 +42,9 @@ class DriverSubscriptionsCubit extends Cubit<DriverSubscriptionsState> {
 
       final subscriptions = await _repository.getSubscriptions(filter: filterStr);
       emit(DriverSubscriptionsLoaded(subscriptions: subscriptions, activeFilter: filter));
+    } on ApiException catch (e) {
+      // رسالة الخادم كما هي (مثال: "لم يتم العثور على ملفك الشخصي")
+      emit(DriverSubscriptionsError(e.message));
     } catch (e) {
       emit(DriverSubscriptionsError('فشل تحميل الاشتراكات: ${e.toString()}'));
     }
@@ -51,6 +55,8 @@ class DriverSubscriptionsCubit extends Cubit<DriverSubscriptionsState> {
     try {
       final detail = await _repository.getSubscriptionDetail(id);
       emit(DriverSubscriptionDetailLoaded(detail));
+    } on ApiException catch (e) {
+      emit(DriverSubscriptionDetailError(e.message));
     } catch (e) {
       emit(DriverSubscriptionDetailError('فشل تحميل تفاصيل الاشتراك: ${e.toString()}'));
     }

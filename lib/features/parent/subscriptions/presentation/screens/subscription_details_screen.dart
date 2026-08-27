@@ -7,6 +7,8 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import '../../logic/subscriptions_cubit/subscriptions_cubit.dart';
 import '../../data/models/subscription_detail_model.dart';
+import '../../data/models/subscription_location_model.dart';
+import 'subscription_map_screen.dart';
 
 class SubscriptionDetailsScreen extends StatefulWidget {
   final int subscriptionId;
@@ -138,7 +140,7 @@ class _SubscriptionDetailsScreenState
           SizedBox(height: 16.h),
           _buildDriverCard(sub.driver, theme, isDark),
           SizedBox(height: 16.h),
-          _buildScheduleCard(sub.schedule, theme, isDark),
+          _buildScheduleCard(sub, theme, isDark),
           SizedBox(height: 16.h),
           _buildBillingCard(sub.billing, theme, isDark),
           SizedBox(height: 16.h),
@@ -398,7 +400,8 @@ class _SubscriptionDetailsScreenState
   }
 
   Widget _buildScheduleCard(
-      DetailSchedule schedule, ThemeData theme, bool isDark) {
+      SubscriptionDetailModel sub, ThemeData theme, bool isDark) {
+    final schedule = sub.schedule;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(18.w),
@@ -444,6 +447,55 @@ class _SubscriptionDetailsScreenState
           _divider(isDark),
           _detailRow(
               'وقت التوصيل المتوقع', _formatTime(schedule.dropoffTime), isDark),
+          SizedBox(height: 12.h),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                final homeLoc = sub.schedule.homeLocation;
+                final pickup = homeLoc != null
+                    ? SubscriptionLocationModel(
+                        latitude: homeLoc.latitude,
+                        longitude: homeLoc.longitude,
+                        address: schedule.pickupZoneName,
+                      )
+                    : SubscriptionLocationModel(address: schedule.pickupZoneName);
+                final dropoff = SubscriptionLocationModel(address: sub.child.schoolName);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SubscriptionMapScreen(
+                      title: 'موقع اشتراك ${sub.child.name ?? ""}',
+                      pickupLocation: pickup,
+                      dropoffLocation: dropoff,
+                    ),
+                  ),
+                );
+              },
+              icon: Icon(
+                Icons.map_rounded,
+                size: 16.sp,
+                color: theme.colorScheme.primary,
+              ),
+              label: Text(
+                'عرض الموقع على الخريطة',
+                style: AppTextStyles.style(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                padding: EdgeInsets.symmetric(vertical: 8.h),
+              ),
+            ),
+          ),
         ],
       ),
     );

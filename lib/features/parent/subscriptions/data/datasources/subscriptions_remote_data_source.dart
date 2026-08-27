@@ -45,7 +45,8 @@ class SubscriptionsRemoteDataSource {
     debugPrint('📥 [ActiveSubscriptions] Response => $data');
 
     if (data is Map) {
-      final success = data['success'];
+      // الباك يستخدم success في بعض المسارات و status في غيرها
+      final success = data['success'] ?? data['status'];
       if (success == false) {
         final msg = ApiException.extractMessage(data);
         throw ApiException(msg ?? 'تعذر تحميل الاشتراكات.');
@@ -73,7 +74,8 @@ class SubscriptionsRemoteDataSource {
     );
     final data = response.data;
     if (data is Map) {
-      final success = data['success'];
+      // الباك يستخدم success في بعض المسارات و status في غيرها
+      final success = data['success'] ?? data['status'];
       if (success == false) {
         final serverMessage = ApiException.extractMessage(data);
         throw ApiException(serverMessage ?? 'تعذر تحميل تفاصيل الاشتراك.');
@@ -91,7 +93,8 @@ class SubscriptionsRemoteDataSource {
     );
     final data = response.data;
     if (data is Map) {
-      final success = data['success'];
+      // الباك يستخدم success في بعض المسارات و status في غيرها
+      final success = data['success'] ?? data['status'];
       if (success == false) {
         final serverMessage = ApiException.extractMessage(data);
         throw ApiException(serverMessage ?? 'تعذر إلغاء طلب الاشتراك.');

@@ -529,7 +529,13 @@ class _DriverRequestCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              request.parent.name,
+                              request.parent.name.isNotEmpty
+                                  ? request.parent.name
+                                  : (request.children.isNotEmpty
+                                      ? request.children
+                                          .map((c) => c.name)
+                                          .join('، ')
+                                      : 'طلب #${request.id}'),
                               style: AppTextStyles.style(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
@@ -583,7 +589,9 @@ class _DriverRequestCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            request.subscriptionTypeDisplayLabel,
+                            request.hasMixedChildDetails
+                                ? 'نوع الاشتراك يختلف حسب الطفل'
+                                : request.subscriptionTypeDisplayLabel,
                             style: AppTextStyles.style(
                               fontSize: 13,
                               color: AppColors.textMuted,

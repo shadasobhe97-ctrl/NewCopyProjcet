@@ -1,4 +1,8 @@
-// نموذج طلب الاشتراك الجديد - GET /api/parent/requests/{id}
+import 'package:kids_transport/core/utils/subscription_enums.dart';
+
+import 'subscription_location_model.dart';
+
+// نموذج طلب الاشتراك - GET /api/parent/requests/{id}
 class RequestModel {
   final int id;
   final String status;
@@ -37,15 +41,20 @@ class RequestModel {
     if (statusAr != null && statusAr!.isNotEmpty) return statusAr!;
     switch (status.toLowerCase()) {
       case 'accepted':
-        return 'مقبول';
+      case 'approved':
+        return 'تمت الموافقة';
       case 'rejected':
         return 'مرفوض';
       case 'pending':
         return 'قيد الانتظار';
       case 'cancelled':
         return 'ملغي';
+      case 'active':
+        return 'نشط';
+      case 'completed':
+        return 'مكتمل';
       default:
-        return status;
+        return 'غير محدد';
     }
   }
 
@@ -64,8 +73,12 @@ class RequestModel {
     return RequestModel(
       id: _parseInt(json['id']) ?? 0,
       status: json['status']?.toString() ?? 'pending',
-      startDate: json['start_date']?.toString() ?? '',
-      workingDaysCount: _parseInt(json['working_days_count']) ?? 0,
+      startDate: json['start_date']?.toString() ??
+          (childrenList.isNotEmpty ? childrenList.first.subscription.startDate : ''),
+      workingDaysCount: _parseInt(json['working_days_count']) ??
+          (childrenList.isNotEmpty
+              ? childrenList.first.subscription.workingDaysCount
+              : 0),
       totalAmount: _parseDouble(json['total_amount'] ?? json['total_price']) ?? 0.0,
       childrenCount: _parseInt(json['children_count']) ?? childrenList.length,
       createdAt: json['created_at']?.toString() ?? '',
@@ -164,33 +177,62 @@ class RequestHome {
 class RequestChildSubscription {
   final String type;
   final String tripType;
+  final String timing;
   final String startDate;
   final String? endDate;
   final int workingDaysCount;
+  /// إجمالي اشتراك الطفل للفترة كاملة (سعر الرحلة × عدد أيام العمل)
+  final double? pricePerChild;
+  final double? distanceKm;
+
+  /// سعر الرحلة الواحدة
+  final double? tripPrice;
 
   const RequestChildSubscription({
     required this.type,
     required this.tripType,
+    this.timing = '',
     required this.startDate,
     this.endDate,
     required this.workingDaysCount,
+    this.pricePerChild,
+    this.distanceKm,
+    this.tripPrice,
   });
+
+  /// يوم واحد | عدة أيام — لا توجد اشتراكات شهرية/أسبوعية في العقد.
+  String get typeDisplayLabel =>
+      type.isEmpty ? 'غير متوفر' : SubscriptionEnums.typeLabel(type);
+
+  String get tripTypeDisplayLabel =>
+      tripType.isEmpty ? 'غير متوفر' : SubscriptionEnums.directionLabel(tripType);
+
+  String get timingDisplayLabel =>
+      timing.isEmpty ? 'غير متوفر' : SubscriptionEnums.timingLabel(timing);
 
   factory RequestChildSubscription.fromJson(Map<String, dynamic> json) =>
       RequestChildSubscription(
-        type: json['type']?.toString() ?? '',
-        tripType: json['trip_type']?.toString() ?? '',
+        type: json['type']?.toString() ?? json['subscription_type']?.toString() ?? '',
+        tripType: json['trip_type']?.toString() ?? json['trip_direction']?.toString() ?? '',
+        timing: json['timing']?.toString() ?? '',
         startDate: json['start_date']?.toString() ?? '',
         endDate: json['end_date']?.toString(),
         workingDaysCount: _parseInt(json['working_days_count']) ?? 0,
+        pricePerChild: _parseDouble(json['price_per_child']),
+        distanceKm: _parseDouble(json['distance_km']),
+        tripPrice: _parseDouble(json['trip_price']),
       );
 
   Map<String, dynamic> toJson() => {
         'type': type,
         'trip_type': tripType,
+        if (timing.isNotEmpty) 'timing': timing,
         'start_date': startDate,
         if (endDate != null) 'end_date': endDate,
         'working_days_count': workingDaysCount,
+        if (pricePerChild != null) 'price_per_child': pricePerChild,
+        if (distanceKm != null) 'distance_km': distanceKm,
+        if (tripPrice != null) 'trip_price': tripPrice,
       };
 }
 
@@ -205,6 +247,8 @@ class RequestChild {
   final RequestSchool school;
   final RequestHome home;
   final RequestChildSubscription subscription;
+  final SubscriptionLocationModel? pickupLocation;
+  final SubscriptionLocationModel? dropoffLocation;
 
   const RequestChild({
     required this.id,
@@ -216,7 +260,16 @@ class RequestChild {
     required this.school,
     required this.home,
     required this.subscription,
+    this.pickupLocation,
+    this.dropoffLocation,
   });
+
+  /// اسم المدرسة: من كائن school إن وُجد، وإلا من نقطة الوصول (School/dropoff_location)
+  String get schoolName {
+    if (school.name.isNotEmpty) return school.name;
+    if (dropoffLocation?.hasName ?? false) return dropoffLocation!.name!.trim();
+    return '';
+  }
 
   String get avatarInitials {
     if (name.isEmpty) return '?';
@@ -231,13 +284,24 @@ class RequestChild {
     return RequestChild(
       id: _parseInt(json['id']) ?? 0,
       name: json['name']?.toString() ?? '',
-      price: _parseDouble(json['price']) ?? 0.0,
+      price: _parseDouble(json['price'] ??
+              json['price_per_child'] ??
+              (json['details'] is Map
+                  ? (json['details'] as Map)['price_per_child']
+                  : null)) ??
+          0.0,
       gender: json['gender']?.toString(),
       age: _parseInt(json['age']),
-      photoUrl: json['photo_url']?.toString(),
+      photoUrl: json['photo_url']?.toString() ?? json['photo']?.toString(),
       school: RequestSchool.fromJson(json['school'] as Map<String, dynamic>? ?? {}),
       home: RequestHome.fromJson(json['home'] as Map<String, dynamic>? ?? {}),
-      subscription: RequestChildSubscription.fromJson(json['subscription'] as Map<String, dynamic>? ?? {}),
+      subscription: RequestChildSubscription.fromJson(
+        (json['subscription'] ?? json['details']) as Map<String, dynamic>? ?? {},
+      ),
+      // الخادم يرسلها أحياناً باسم pickup_location/dropoff_location
+      // وأحياناً باسم Home/School — ندعم الشكلين
+      pickupLocation: _location(json['pickup_location'] ?? json['Home'] ?? json['home']),
+      dropoffLocation: _location(json['dropoff_location'] ?? json['School'] ?? json['school_location']),
     );
   }
 
@@ -251,13 +315,19 @@ class RequestChild {
         'school': school.toJson(),
         'home': home.toJson(),
         'subscription': subscription.toJson(),
+        if (pickupLocation != null) 'pickup_location': pickupLocation!.toJson(),
+        if (dropoffLocation != null) 'dropoff_location': dropoffLocation!.toJson(),
       };
 }
 
-// ─────────────────────────────────────────────
-// Private helper functions for safe JSON parsing
-// ─────────────────────────────────────────────
+SubscriptionLocationModel? _location(dynamic raw) {
+  if (raw is! Map) return null;
+  return SubscriptionLocationModel.fromJson(Map<String, dynamic>.from(raw));
+}
 
+// ─────────────────────────────────────────────
+// Safe JSON parsing helpers
+// ─────────────────────────────────────────────
 int? _parseInt(dynamic v) {
   if (v == null) return null;
   if (v is int) return v;

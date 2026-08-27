@@ -8,6 +8,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import '../../logic/requests_cubit/requests_cubit.dart';
 import '../../data/models/request_model.dart';
+import '../../data/models/subscription_location_model.dart';
+import 'subscription_map_screen.dart';
 
 class RequestDetailsScreen extends StatefulWidget {
   final RequestModel request;
@@ -129,6 +131,13 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
                               SizedBox(height: 16.h),
                               // ── معلومات عامة ──
                               _GeneralInfoCard(
+                                request: req,
+                                theme: theme,
+                                isDark: isDark,
+                              ),
+                              SizedBox(height: 16.h),
+                              // ── السعر الإجمالي (بطاقة مستقلة) ──
+                              _TotalPriceCard(
                                 request: req,
                                 theme: theme,
                                 isDark: isDark,
@@ -455,6 +464,7 @@ class _GeneralInfoCard extends StatelessWidget {
             isDark: isDark,
           ),
 
+
           // ── ملاحظات الطلب ──
           if (request.notes != null && request.notes!.isNotEmpty) ...[
             _Divider(isDark: isDark),
@@ -465,6 +475,57 @@ class _GeneralInfoCard extends StatelessWidget {
               isDark: isDark,
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  بطاقة السعر الإجمالي                                   ║
+// ╚══════════════════════════════════════════════════════════╝
+class _TotalPriceCard extends StatelessWidget {
+  final RequestModel request;
+  final ThemeData theme;
+  final bool isDark;
+  const _TotalPriceCard({
+    required this.request,
+    required this.theme,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 18.h, horizontal: 20.w),
+      decoration: BoxDecoration(
+        color: AppColors.success.withValues(alpha: isDark ? 0.16 : 0.08),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.payments_rounded, color: AppColors.success, size: 26.r),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Text(
+              'السعر الإجمالي',
+              style: AppTextStyles.style(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.grey300 : AppColors.textDark,
+              ),
+            ),
+          ),
+          Text(
+            request.formattedPrice,
+            style: AppTextStyles.style(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+              color: AppColors.success,
+            ),
+          ),
         ],
       ),
     );
@@ -484,41 +545,22 @@ class _ChildSubscriptionCard extends StatelessWidget {
     required this.isDark,
   });
 
-  String _typeLabel(String t) {
-    switch (t.toLowerCase()) {
-      case 'multi_day':
-      case 'multi-day':
-      case 'multiday':
-      case 'several_days':
-        return 'عدة أيام';
-      case 'monthly':
-        return 'شهري';
-      case 'weekly':
-        return 'أسبوعي';
-      case 'daily':
-      case 'single_day':
-        return 'يومي';
-      default:
-        return t.isNotEmpty ? t : 'غير متوفر';
-    }
-  }
-
-  String _dirLabel(String d) {
-    switch (d.toLowerCase()) {
-      case 'both':
-        return 'ذهاب وعودة';
-      case 'go':
-        return 'ذهاب فقط';
-      case 'return':
-        return 'عودة فقط';
-      default:
-        return d.isNotEmpty ? d : 'غير متوفر';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final sub = child.subscription;
+    final pickup = child.pickupLocation;
+    final dropoff = child.dropoffLocation;
+
+    // الاسم أولاً ("منزلي" / "مدرسة النور")، والعنوان التفصيلي يُعرض فقط إن كان حقيقياً
+    final pickupName = pickup != null
+        ? pickup.displayName
+        : (child.home.address.isNotEmpty ? child.home.address : 'غير محدد');
+    final dropoffName = dropoff != null
+        ? dropoff.displayName
+        : (child.schoolName.isNotEmpty ? child.schoolName : 'غير محدد');
+    final pickupAddress = pickup?.displayAddress;
+    final dropoffAddress = dropoff?.displayAddress;
 
     return _Card(
       isDark: isDark,
@@ -566,36 +608,33 @@ class _ChildSubscriptionCard extends StatelessWidget {
                         color: isDark ? AppColors.white : AppColors.textDark,
                       ),
                     ),
-                    Text(
-                      child.school.name.isNotEmpty
-                          ? child.school.name
-                          : 'غير متوفر',
-                      style: AppTextStyles.style(
-                        fontSize: 11.sp,
-                        color: isDark ? AppColors.grey400 : AppColors.textMuted,
+                    if (child.schoolName.isNotEmpty)
+                      Text(
+                        child.schoolName,
+                        style: AppTextStyles.style(
+                          fontSize: 11.sp,
+                          color: isDark ? AppColors.grey400 : AppColors.textMuted,
+                        ),
                       ),
-                    ),
                     SizedBox(height: 4.h),
                     Wrap(
                       spacing: 6.w,
                       runSpacing: 4.h,
                       children: [
-                        _buildInfoChip(
-                          child.age != null
-                              ? 'العمر: ${child.age} سنوات'
-                              : 'العمر: غير متوفر',
-                          Icons.cake_outlined,
-                          isDark,
-                        ),
-                        _buildInfoChip(
-                          child.gender != null
-                              ? (child.gender == 'male' ? 'ذكر' : 'أنثى')
-                              : 'جنس الطفل: غير متوفر',
-                          child.gender == 'male'
-                              ? Icons.male_rounded
-                              : Icons.female_rounded,
-                          isDark,
-                        ),
+                        if (child.age != null)
+                          _buildInfoChip(
+                            'العمر: ${child.age} سنوات',
+                            Icons.cake_outlined,
+                            isDark,
+                          ),
+                        if (child.gender != null && child.gender!.isNotEmpty)
+                          _buildInfoChip(
+                            child.gender == 'male' ? 'ذكر' : 'أنثى',
+                            child.gender == 'male'
+                                ? Icons.male_rounded
+                                : Icons.female_rounded,
+                            isDark,
+                          ),
                       ],
                     ),
                   ],
@@ -626,14 +665,14 @@ class _ChildSubscriptionCard extends StatelessWidget {
           _InfoRow(
             icon: Icons.repeat_rounded,
             label: 'نوع الاشتراك',
-            value: _typeLabel(sub.type),
+            value: sub.typeDisplayLabel,
             isDark: isDark,
           ),
           _Divider(isDark: isDark),
           _InfoRow(
             icon: Icons.swap_horiz_rounded,
             label: 'الاتجاه',
-            value: _dirLabel(sub.tripType),
+            value: sub.tripTypeDisplayLabel,
             isDark: isDark,
           ),
           _Divider(isDark: isDark),
@@ -664,34 +703,96 @@ class _ChildSubscriptionCard extends StatelessWidget {
           ),
           _Divider(isDark: isDark),
           _InfoRow(
+            icon: Icons.directions_bus_filled_rounded,
+            label: 'سعر الرحلة',
+            value: _formatAmount(sub.tripPrice ?? 0),
+            isDark: isDark,
+          ),
+          _Divider(isDark: isDark),
+          _InfoRow(
+            icon: Icons.person_pin_rounded,
+            label: 'إجمالي اشتراك الطفل',
+            value: _formatAmount(child.price),
+            isDark: isDark,
+            valueColor: AppColors.success,
+          ),
+          _Divider(isDark: isDark),
+          _InfoRow(
             icon: Icons.location_on_rounded,
-            label: 'عنوان المنزل',
-            value: child.home.address.isNotEmpty
-                ? child.home.address
-                : 'غير متوفر',
+            label: 'نقطة الانطلاق',
+            value: pickupName,
             isDark: isDark,
             valueColor: Colors.blue.shade700,
           ),
+          if (pickupAddress != null) ...[
+            _Divider(isDark: isDark),
+            _InfoRow(
+              icon: Icons.place_outlined,
+              label: 'عنوان الانطلاق',
+              value: pickupAddress,
+              isDark: isDark,
+            ),
+          ],
           _Divider(isDark: isDark),
           _InfoRow(
             icon: Icons.school_rounded,
-            label: 'اسم المدرسة',
-            value: child.school.name.isNotEmpty
-                ? child.school.name
-                : 'غير متوفر',
+            label: 'المدرسة (نقطة الوصول)',
+            value: dropoffName,
             isDark: isDark,
             valueColor: Colors.teal.shade700,
           ),
-          _Divider(isDark: isDark),
-          _InfoRow(
-            icon: Icons.map_outlined,
-            label: 'عنوان المدرسة',
-            value:
-                (child.school.address != null &&
-                    child.school.address!.isNotEmpty)
-                ? child.school.address!
-                : 'غير متوفر',
-            isDark: isDark,
+          if (dropoffAddress != null) ...[
+            _Divider(isDark: isDark),
+            _InfoRow(
+              icon: Icons.map_outlined,
+              label: 'عنوان المدرسة',
+              value: dropoffAddress,
+              isDark: isDark,
+            ),
+          ],
+          SizedBox(height: 12.h),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                final pickupPoint = pickup ??
+                    SubscriptionLocationModel(name: pickupName);
+                final dropoffPoint = dropoff ??
+                    SubscriptionLocationModel(name: dropoffName);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SubscriptionMapScreen(
+                      title: 'موقع توصيل ${child.name}',
+                      pickupLocation: pickupPoint,
+                      dropoffLocation: dropoffPoint,
+                    ),
+                  ),
+                );
+              },
+              icon: Icon(
+                Icons.map_rounded,
+                size: 16.sp,
+                color: theme.colorScheme.primary,
+              ),
+              label: Text(
+                'عرض الموقع على الخريطة',
+                style: AppTextStyles.style(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                padding: EdgeInsets.symmetric(vertical: 8.h),
+              ),
+            ),
           ),
         ],
       ),

@@ -70,10 +70,6 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
       case 'multiday':
       case 'several_days':
         return 'عدة أيام';
-      case 'monthly':
-        return 'شهري';
-      case 'weekly':
-        return 'أسبوعي';
       default:
         return val;
     }
