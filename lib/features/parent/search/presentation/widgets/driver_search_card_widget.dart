@@ -203,6 +203,16 @@ class DriverSearchCardWidget extends StatelessWidget {
                               onChanged: onSelectedChanged,
                             ),
                           ),
+                        if (driver.hasSiblingDiscount)
+                          Text(
+                            '${driver.subtotalPrice.toInt()} د.ل',
+                            style: AppTextStyles.style(
+                              fontSize: 12,
+                              color: subTextColor,
+                              decoration: TextDecoration.lineThrough,
+                              decorationColor: subTextColor,
+                            ),
+                          ),
                         Text(
                           '${displayPrice.toInt()} د.ل',
                           style: AppTextStyles.style(

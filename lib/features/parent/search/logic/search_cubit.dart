@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/repositories/search_repository.dart';
+import '../data/models/driver_search_model.dart';
 import '../data/models/subscription_request.dart';
 import 'search_state.dart';
 
@@ -59,6 +60,27 @@ class SearchCubit extends Cubit<SearchState> {
       emit(PricingLoaded(list.first));
     } else {
       emit(PricingError('لم يتم العثور على السائق.'));
+    }
+  }
+
+  /// يعيد جلب تسعير سائق محدد بناءً على المجموعة الحالية من الأطفال المختارين
+  /// (لا يعتمد على أي بيانات مخزّنة سابقاً)، حتى يعكس خصم الإخوة الصحيح
+  /// عندما يغيّر ولي الأمر عدد/هوية الأطفال بعد نتيجة البحث الأولى.
+  Future<DriverSearchModel?> fetchDriverPricing({
+    required int driverId,
+    required List<int> childIds,
+  }) async {
+    if (childIds.isEmpty) return null;
+
+    final (list, error) =
+        await _repository.searchDrivers({'child_ids': childIds});
+
+    if (error != null || list == null || list.isEmpty) return null;
+
+    try {
+      return list.firstWhere((d) => d.driverId == driverId);
+    } catch (_) {
+      return list.first;
     }
   }
 

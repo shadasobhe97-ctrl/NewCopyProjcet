@@ -9,6 +9,9 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
 import 'package:kids_transport/features/parent/search/logic/search_state.dart';
 import 'package:kids_transport/features/parent/search/data/models/subscription_request.dart';
+import 'package:kids_transport/core/di/dependency_injection.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
+import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_cubit.dart';
 
 class SubscriptionConfirmationScreen extends StatefulWidget {
   final DriverSearchModel driver;
@@ -64,6 +67,14 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
         }
       }
     });
+  }
+
+  BreakdownModelInfo? _breakdownForKid(ChildModel kid) {
+    try {
+      return widget.driver.breakdown.firstWhere((b) => b.childId == kid.id);
+    } catch (_) {
+      return null;
+    }
   }
 
   double _priceForKid(ChildModel kid) {
@@ -185,6 +196,89 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
     context.read<SearchCubit>().submitSubscription(request);
   }
 
+  void _showInsufficientBalanceDialog(BuildContext context, String message) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
+          title: Row(
+            children: [
+              const Icon(Icons.account_balance_wallet_rounded, color: AppColors.error),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  'رصيد المحفظة غير كافٍ',
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16.sp,
+                    color: isDark ? AppColors.white : AppColors.textDark,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            message,
+            style: AppTextStyles.style(
+              fontSize: 14.sp,
+              color: isDark ? AppColors.grey300 : AppColors.grey700,
+              height: 1.5,
+            ),
+          ),
+          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+          actions: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: isDark ? AppColors.grey700 : AppColors.grey300),
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                ),
+                child: Text(
+                  'إلغاء',
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.grey300 : AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.parentRecharge,
+                    arguments: getIt<WalletCubit>(),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                ),
+                child: Text(
+                  'اشحن محفظتك',
+                  style: AppTextStyles.style(fontWeight: FontWeight.bold, color: AppColors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// يمنع إرسال الطلب بمعرّفات ناقصة (تصل للباك كصفر فيُرفض الطلب بلا سبب واضح)
   void _showValidationError(
     List<String> missingAddress,
@@ -249,25 +343,29 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
             );
             Navigator.pop(context, true);
           } else if (state is SubscriptionError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: Text(
-                    state.errorMessage,
-                    style: AppTextStyles.style(
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w600,
+            if (state.errorMessage.contains('رصيد المحفظة')) {
+              _showInsufficientBalanceDialog(context, state.errorMessage);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text(
+                      state.errorMessage,
+                      style: AppTextStyles.style(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
+                  backgroundColor: AppColors.error,
+                  behavior: SnackBarBehavior.floating,
+                  margin: EdgeInsets.all(16.w),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                  duration: const Duration(seconds: 4),
                 ),
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-                margin: EdgeInsets.all(16.w),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                duration: const Duration(seconds: 4),
-              ),
-            );
+              );
+            }
           }
         },
         builder: (context, state) {
@@ -552,37 +650,96 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                             final price = _priceForKid(kid);
                             final label = _labelForKid(kid);
                             final isMale = kid.gender.toLowerCase() == 'male';
+                            final breakdownItem = _breakdownForKid(kid);
+                            // خصم الإخوة له معنى فقط لو الطلب شامل أكثر من طفل
+                            final hasDiscount =
+                                (breakdownItem?.hasSiblingDiscount ?? false) &&
+                                    widget.selectedKids.length > 1;
 
                             return Padding(
                               padding: EdgeInsets.symmetric(vertical: 6.0.h),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Icon(
-                                        isMale ? Icons.face_rounded : Icons.face_4_rounded,
-                                        size: 16.r,
-                                        color: isMale ? theme.colorScheme.primary : AppColors.femalePink,
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            isMale ? Icons.face_rounded : Icons.face_4_rounded,
+                                            size: 16.r,
+                                            color: isMale ? theme.colorScheme.primary : AppColors.femalePink,
+                                          ),
+                                          SizedBox(width: 8.w),
+                                          Text(
+                                            '${kid.name} ($label)',
+                                            style: AppTextStyles.style(
+                                              fontSize: 13.sp,
+                                              color: isDark ? AppColors.grey200 : AppColors.grey800,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      SizedBox(width: 8.w),
-                                      Text(
-                                        '${kid.name} ($label)',
-                                        style: AppTextStyles.style(
-                                          fontSize: 13.sp,
-                                          color: isDark ? AppColors.grey200 : AppColors.grey800,
-                                        ),
-                                      ),
+                                      hasDiscount
+                                          ? Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  '${breakdownItem!.subtotal.toStringAsFixed(2)} د.ل',
+                                                  style: AppTextStyles.style(
+                                                    fontSize: 11.sp,
+                                                    color: AppColors.grey500,
+                                                    decoration: TextDecoration.lineThrough,
+                                                    decorationColor: AppColors.grey500,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 4.w),
+                                                Icon(
+                                                  Icons.arrow_back_rounded,
+                                                  size: 12.r,
+                                                  color: AppColors.grey500,
+                                                ),
+                                                SizedBox(width: 4.w),
+                                                Text(
+                                                  '${price.toStringAsFixed(2)} د.ل',
+                                                  style: AppTextStyles.style(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 13.sp,
+                                                    color: AppColors.success,
+                                                  ),
+                                                ),
+                                              ],
+                                            )
+                                          : Text(
+                                              '${price.toStringAsFixed(2)} د.ل',
+                                              style: AppTextStyles.style(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 13.sp,
+                                                color: isDark ? AppColors.white : AppColors.textDark,
+                                              ),
+                                            ),
                                     ],
                                   ),
-                                  Text(
-                                    '${price.toStringAsFixed(2)} د.ل',
-                                    style: AppTextStyles.style(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13.sp,
-                                      color: isDark ? AppColors.white : AppColors.textDark,
+                                  if (hasDiscount)
+                                    Padding(
+                                      padding: EdgeInsets.only(top: 4.h, right: 24.w),
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.success.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(6.r),
+                                        ),
+                                        child: Text(
+                                          'خصم الإخوة ${breakdownItem!.discountPercent.toStringAsFixed(0)}%',
+                                          style: AppTextStyles.style(
+                                            fontSize: 10.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.success,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
                                 ],
                               ),
                             );

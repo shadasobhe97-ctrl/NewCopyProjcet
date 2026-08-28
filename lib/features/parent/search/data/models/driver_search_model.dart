@@ -43,6 +43,13 @@ class DriverSearchModel {
   String? get vehicleColor => vehicle.color;
   String? get status => driver.status;
 
+  double get subtotalPrice =>
+      breakdown.isEmpty ? price : breakdown.fold(0.0, (sum, b) => sum + b.subtotal);
+  // خصم الإخوة له معنى فقط لو فيه أكثر من طفل بنفس الطلب — حماية إضافية
+  // بحيث ما يظهرش الخصم أبداً لطفل واحد حتى لو وصلت بيانات تسعير غير متوقعة
+  bool get hasSiblingDiscount =>
+      breakdown.length > 1 && breakdown.any((b) => b.hasSiblingDiscount);
+
   factory DriverSearchModel.fromJson(Map<String, dynamic> json) {
     // drivers fields are flat at the top level, not nested under 'driver'
     final pricingData = json['pricing'] is Map
@@ -212,6 +219,9 @@ class BreakdownModelInfo {
   final int workingDays;
   final double childPrice;
   final int childPriceRaw;
+  final double subtotal;
+  final double discountPercent;
+  final double discountAmount;
   final String? error;
 
   BreakdownModelInfo({
@@ -224,10 +234,18 @@ class BreakdownModelInfo {
     required this.workingDays,
     required this.childPrice,
     required this.childPriceRaw,
+    double? subtotal,
+    this.discountPercent = 0,
+    this.discountAmount = 0,
     this.error,
-  });
+  }) : subtotal = subtotal ?? childPrice;
+
+  bool get hasSiblingDiscount => discountPercent > 0 && discountAmount > 0;
 
   factory BreakdownModelInfo.fromJson(Map<String, dynamic> json) {
+    final finalTotal = json.containsKey('final_total')
+        ? _parsePriceString(json['final_total'])
+        : _parsePriceString(json['child_price']);
     return BreakdownModelInfo(
       childId: _readInt(json['child_id']),
       childName: json['child_name']?.toString() ?? '',
@@ -236,8 +254,13 @@ class BreakdownModelInfo {
       pricePerKm: _readDouble(json['price_per_km']),
       subscriptionType: json['subscription_type']?.toString() ?? 'monthly',
       workingDays: _readInt(json['working_days']),
-      childPrice: _parsePriceString(json['child_price']),
+      childPrice: finalTotal,
       childPriceRaw: _readInt(json['child_price_raw']),
+      subtotal: _readDouble(json['subtotal']) > 0
+          ? _readDouble(json['subtotal'])
+          : finalTotal,
+      discountPercent: _readDouble(json['discount_percent']),
+      discountAmount: _readDouble(json['discount_amount']),
       error: json['error']?.toString(),
     );
   }

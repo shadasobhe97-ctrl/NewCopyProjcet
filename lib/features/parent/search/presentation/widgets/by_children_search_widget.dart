@@ -418,8 +418,8 @@ class ByChildrenSearchWidget extends StatelessWidget {
               itemCount: filteredDrivers.length,
               itemBuilder: (context, i) {
                 final driver = filteredDrivers[i];
-                // السعر الإجمالي = سعر السائق × عدد الأطفال المحددين
-                final totalPrice = driver.price * selectedKidsIds.length;
+                // السعر الإجمالي للأطفال المحددين (يتضمن خصم الإخوة إن وجد) يأتي جاهزاً من السيرفر
+                final totalPrice = driver.price;
 
                 return DriverSearchCardWidget(
                   driver: driver,

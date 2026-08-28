@@ -14,6 +14,8 @@ import 'subscription_confirmation_screen.dart';
 import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
 import 'package:kids_transport/features/parent/search/logic/search_state.dart';
 import 'package:kids_transport/features/parent/search/data/models/subscription_request.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
+import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_cubit.dart';
 
 // Reviews & Ratings imports
 import 'package:kids_transport/core/di/dependency_injection.dart';
@@ -53,6 +55,10 @@ class DriverProfileView extends StatefulWidget {
 class _DriverProfileViewState extends State<DriverProfileView> {
   late List<int> _selectedKidsIds;
   bool _loadingShowing = false;
+  // نسخة السائق بعد إعادة جلب التسعير للمجموعة الحالية من الأطفال المختارين
+  // (تفادياً لعرض/إرسال خصم إخوة قديم محسوب على تشكيلة أطفال مختلفة)
+  DriverSearchModel? _pricedDriver;
+  DriverSearchModel get _effectiveDriver => _pricedDriver ?? widget.driver;
   List<ChildModel> get _selectedKids {
     final state = context.read<ChildrenCubit>().state;
     final availableKids = state is ChildrenLoaded
@@ -71,7 +77,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
   }
 
   // ─── Actions ────────────────────────────────────────────────────────────────
-  void _onSendRequest() {
+  void _onSendRequest() async {
     if (_selectedKidsIds.isEmpty) {
       _showSnack('يرجى اختيار طفل واحد على الأقل.', AppColors.error);
       return;
@@ -86,8 +92,17 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       return;
     }
 
-    // ابحث عن سائق مناسب → تأكيد مباشر
+    // ابحث عن سائق مناسب → أعد جلب التسعير للتشكيلة الحالية من الأطفال
+    // (قد تكون مختلفة عن التشكيلة التي بحث بها السائق أول مرة) ثم أكّد
     if (widget.showPricing) {
+      final fresh = await context.read<SearchCubit>().fetchDriverPricing(
+        driverId: widget.driver.driverId,
+        childIds: _selectedKidsIds,
+      );
+      if (!mounted) return;
+      if (fresh != null) {
+        setState(() => _pricedDriver = fresh);
+      }
       _showConfirmDialog();
       return;
     }
@@ -119,7 +134,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'السائق: ${widget.driver.fullName}',
+                'السائق: ${_effectiveDriver.fullName}',
                 style: AppTextStyles.style(
                   fontSize: 14,
                   color: isDark ? AppColors.grey300 : AppColors.grey700,
@@ -135,7 +150,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
               ),
               const SizedBox(height: 12),
               Text(
-                'السعر الإجمالي: ${widget.driver.pricing.totalPrice.toStringAsFixed(2)} د.ل',
+                'السعر الإجمالي: ${_effectiveDriver.pricing.totalPrice.toStringAsFixed(2)} د.ل',
                 style: AppTextStyles.style(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
@@ -193,7 +208,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     debugPrint('>>> بيانات كل طفل على حدة (كل طفل بإعداداته الخاصة):');
     for (final kid in _selectedKids) {
       final pref = kid.transportPref;
-      final breakdownItem = widget.driver.breakdown.firstWhere(
+      final breakdownItem = _effectiveDriver.breakdown.firstWhere(
         (b) => b.childId == kid.id,
         orElse: () => BreakdownModelInfo(
           childId: kid.id ?? 0,
@@ -203,8 +218,8 @@ class _DriverProfileViewState extends State<DriverProfileView> {
           pricePerKm: 0.0,
           subscriptionType: pref.subscriptionType,
           workingDays: 22,
-          childPrice: widget.driver.price,
-          childPriceRaw: widget.driver.price.toInt(),
+          childPrice: _effectiveDriver.price,
+          childPriceRaw: _effectiveDriver.price.toInt(),
         ),
       );
 
@@ -270,7 +285,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     }
 
     final request = SubscriptionRequest(
-      driverId: widget.driver.driverId,
+      driverId: _effectiveDriver.driverId,
       notes: '',
       children: childrenRequestList,
     );
@@ -313,6 +328,97 @@ class _DriverProfileViewState extends State<DriverProfileView> {
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: duration,
+      ),
+    );
+  }
+
+  void _handleErrorMessage(String message) {
+    if (message.contains('رصيد المحفظة')) {
+      _showInsufficientBalanceDialog(message);
+    } else {
+      _showSnack(message, AppColors.error);
+    }
+  }
+
+  void _showInsufficientBalanceDialog(String message) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
+          title: Row(
+            children: [
+              const Icon(Icons.account_balance_wallet_rounded, color: AppColors.error),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'رصيد المحفظة غير كافٍ',
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: isDark ? AppColors.white : AppColors.textDark,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            message,
+            style: AppTextStyles.style(
+              fontSize: 14,
+              color: isDark ? AppColors.grey300 : AppColors.grey700,
+              height: 1.5,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: isDark ? AppColors.grey700 : AppColors.grey300),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  'إلغاء',
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.grey300 : AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.parentRecharge,
+                    arguments: getIt<WalletCubit>(),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  'اشحن محفظتك',
+                  style: AppTextStyles.style(fontWeight: FontWeight.bold, color: AppColors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -686,7 +792,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (temp.isEmpty) {
                             _showSnack(
                               'يرجى اختيار طفل واحد على الأقل.',
@@ -695,17 +801,37 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                             return;
                           }
                           Navigator.pop(ctx);
-                          setState(() => _selectedKidsIds = temp);
+                          setState(() {
+                            _selectedKidsIds = temp;
+                            // امسح التسعير القديم فوراً لحد ما يوصل تسعير جديد
+                            // يطابق التشكيلة الحالية من الأطفال
+                            _pricedDriver = null;
+                          });
+
+                          // أعد جلب التسعير للتشكيلة الحالية من الأطفال حتى
+                          // ينعكس خصم الإخوة (أو عدمه) الصحيح، بدل الاعتماد
+                          // على نتيجة البحث الأولى القديمة
+                          final fresh = await context
+                              .read<SearchCubit>()
+                              .fetchDriverPricing(
+                                driverId: widget.driver.driverId,
+                                childIds: temp,
+                              );
+                          if (!context.mounted) return;
+                          if (fresh != null) {
+                            setState(() => _pricedDriver = fresh);
+                          }
 
                           final selectedKidsList = availableKids
                               .where((k) => k.id != null && temp.contains(k.id))
                               .toList();
+                          if (!context.mounted) return;
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
                                   SubscriptionConfirmationScreen(
-                                    driver: widget.driver,
+                                    driver: fresh ?? widget.driver,
                                     selectedKids: selectedKidsList,
                                   ),
                             ),
@@ -759,6 +885,13 @@ class _DriverProfileViewState extends State<DriverProfileView> {
         listeners: [
           BlocListener<SearchCubit, SearchState>(
             listener: (context, state) {
+              // تفادياً لمعالجة نفس النتيجة مرتين: SearchCubit مشترك على مستوى
+              // التطبيق، فلو صار push لشاشة تأكيد الاشتراك فوق هذه الشاشة
+              // وهي لسه موجودة بالخلفية، بيوصلها نفس الحدث أيضاً (Dialog/SnackBar
+              // مكرر). نتجاهل الحدث هنا إذا مو هذه الشاشة هي الحالية فعلاً.
+              final route = ModalRoute.of(context);
+              if (route != null && !route.isCurrent) return;
+
               if (state is PricingLoaded) {
                 Navigator.pushReplacement(
                   context,
@@ -770,14 +903,14 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                   ),
                 );
               } else if (state is PricingError) {
-                _showSnack(state.errorMessage, AppColors.error);
+                _handleErrorMessage(state.errorMessage);
               } else if (state is SubscriptionSuccess) {
                 if (_loadingShowing) Navigator.of(context).pop();
                 Navigator.pop(context);
                 _showSnack(state.message, AppColors.success);
               } else if (state is SubscriptionError) {
                 if (_loadingShowing) Navigator.of(context).pop();
-                _showSnack(state.errorMessage, AppColors.error);
+                _handleErrorMessage(state.errorMessage);
               }
             },
           ),
@@ -1577,7 +1710,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
   }
 
   Widget _buildBreakdownCard(ThemeData theme, bool isDark) {
-    final breakdownList = widget.driver.breakdown;
+    final breakdownList = _effectiveDriver.breakdown;
     if (breakdownList.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -1602,7 +1735,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                 ),
               ),
               Text(
-                '${widget.driver.pricing.totalPrice.toStringAsFixed(2)} د.ل',
+                '${_effectiveDriver.pricing.totalPrice.toStringAsFixed(2)} د.ل',
                 style: AppTextStyles.style(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -1622,6 +1755,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             itemBuilder: (context, index) {
               final item = breakdownList[index];
               final hasError = item.error != null && item.error!.isNotEmpty;
+              // خصم الإخوة له معنى فقط لو فيه أكثر من طفل بنفس الطلب
+              final itemHasDiscount =
+                  item.hasSiblingDiscount && breakdownList.length > 1;
 
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -1642,16 +1778,52 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                           ),
                         ),
                         if (!hasError)
-                          Text(
-                            '${item.childPrice.toStringAsFixed(2)} د.ل',
-                            style: AppTextStyles.style(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: isDark
-                                  ? AppColors.white
-                                  : AppColors.textDark,
-                            ),
-                          )
+                          itemHasDiscount
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '${item.subtotal.toStringAsFixed(2)} د.ل',
+                                      style: AppTextStyles.style(
+                                        fontSize: 12,
+                                        color: isDark
+                                            ? AppColors.grey500
+                                            : AppColors.grey500,
+                                        decoration: TextDecoration.lineThrough,
+                                        decorationColor: isDark
+                                            ? AppColors.grey500
+                                            : AppColors.grey500,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.arrow_back_rounded,
+                                      size: 13,
+                                      color: isDark
+                                          ? AppColors.grey500
+                                          : AppColors.grey500,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${item.childPrice.toStringAsFixed(2)} د.ل',
+                                      style: AppTextStyles.style(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                        color: AppColors.success,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Text(
+                                  '${item.childPrice.toStringAsFixed(2)} د.ل',
+                                  style: AppTextStyles.style(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: isDark
+                                        ? AppColors.white
+                                        : AppColors.textDark,
+                                  ),
+                                )
                         else
                           Text(
                             'غير متاح',
@@ -1664,6 +1836,26 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                       ],
                     ),
                     const SizedBox(height: 6),
+                    if (itemHasDiscount)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'خصم الإخوة ${item.discountPercent.toStringAsFixed(0)}%',
+                            style: AppTextStyles.style(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.success,
+                            ),
+                          ),
+                        ),
+                      ),
                     _breakdownDetailRow(
                       Icons.school_outlined,
                       'المدرسة',
