@@ -31,6 +31,10 @@ import 'package:kids_transport/features/parent/reviews/presention/reviews/loadin
 
 // Complaints imports
 import 'package:kids_transport/features/parent/complaints/presentation/screens/create_complaint_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:kids_transport/features/chat/presentation/screens/chat_room_screen.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
+
 
 class DriverProfileView extends StatefulWidget {
   final DriverSearchModel driver;
@@ -297,14 +301,124 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     context.read<SearchCubit>().submitSubscription(request);
   }
 
-  void _onMessage() {
-    // TODO: navigate to in-app chat screen
-    _showSnack(
-      'ميزة المراسلة ستكون متاحة قريباً.',
-      AppColors.grey700,
-      duration: const Duration(seconds: 2),
+  void _makePhoneCall(String phoneNumber) async {
+    final Uri uri = Uri(scheme: 'tel', path: phoneNumber);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
+        _showSnack('تعذر إجراء المكالمة على الرقم: $phoneNumber', AppColors.error);
+      }
+    } catch (_) {
+      _showSnack('تعذر إجراء المكالمة على الرقم: $phoneNumber', AppColors.error);
+    }
+  }
+
+  void _handleCallDriver(DriverSearchModel driver) {
+    final primary = driver.phoneNumber;
+    final alt = driver.alternativePhone;
+
+    final hasPrimary = primary != null && primary.trim().isNotEmpty;
+    final hasAlt = alt != null && alt.trim().isNotEmpty;
+
+    if (!hasPrimary && !hasAlt) {
+      _showSnack('رقم هاتف السائق غير متاح حالياً.', AppColors.error);
+      return;
+    }
+
+    if (hasPrimary && hasAlt) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceDark : AppColors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.grey700 : AppColors.grey300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Text(
+                  'اختر رقم الاتصال بالسائق',
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: isDark ? AppColors.white : AppColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.phone_rounded, color: AppColors.success),
+                  title: const Text('الرقم الأساسي'),
+                  subtitle: Text(primary!),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _makePhoneCall(primary);
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.phone_iphone_rounded, color: AppColors.primary),
+                  title: const Text('الرقم الاحتياطي'),
+                  subtitle: Text(alt!),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _makePhoneCall(alt);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else if (hasPrimary) {
+      _makePhoneCall(primary!);
+    } else if (hasAlt) {
+      _makePhoneCall(alt!);
+    }
+  }
+
+  void _handleOpenChat(DriverSearchModel driver, bool hasSubscription) {
+    if (!hasSubscription) {
+      _showSnack(
+        'المحادثات المباشرة متاحة فقط مع السائقين الذين لديك معهم اشتراك نشط.',
+        AppColors.amber,
+        duration: const Duration(seconds: 4),
+      );
+      return;
+    }
+
+    final parentId = StorageService.getParentId()?.toString() ?? '0';
+    final chatRoomId = 'parent_${parentId}_driver_${driver.driverId}';
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatRoomScreen(
+          chatRoomId: chatRoomId,
+          otherUserName: driver.fullName,
+          otherUserPhoto: driver.photoUrl,
+          canChat: true,
+          currentUserId: parentId,
+          currentUserRole: 'parent',
+        ),
+      ),
     );
   }
+
 
   void _showSnack(
     String msg,
@@ -1527,6 +1641,77 @@ class _DriverProfileViewState extends State<DriverProfileView> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          // Action Buttons: Call & Send Message
+          BlocBuilder<ReviewsCubit, ReviewsState>(
+            builder: (context, state) {
+              final hasSub = state is ReviewsLoaded && state.hasSubscription;
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _handleCallDriver(d),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.success,
+                        foregroundColor: AppColors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.phone_rounded, size: 18),
+                      label: Text(
+                        'اتصال بالسائق',
+                        style: AppTextStyles.style(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13.5,
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _handleOpenChat(d, hasSub),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: hasSub
+                            ? theme.colorScheme.primary
+                            : (isDark ? AppColors.grey800 : AppColors.grey300),
+                        foregroundColor: hasSub
+                            ? theme.colorScheme.onPrimary
+                            : (isDark ? AppColors.grey400 : AppColors.grey600),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        size: 18,
+                        color: hasSub
+                            ? theme.colorScheme.onPrimary
+                            : (isDark ? AppColors.grey400 : AppColors.grey600),
+                      ),
+                      label: Text(
+                        'إرسال رسالة',
+                        style: AppTextStyles.style(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13.5,
+                          color: hasSub
+                              ? theme.colorScheme.onPrimary
+                              : (isDark ? AppColors.grey400 : AppColors.grey600),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
@@ -2186,7 +2371,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       child: SizedBox(
         height: 52,
         child: OutlinedButton(
-          onPressed: _onMessage,
+          onPressed: () => _handleOpenChat(_effectiveDriver, true),
           style: OutlinedButton.styleFrom(
             foregroundColor: theme.colorScheme.primary,
             side: BorderSide(

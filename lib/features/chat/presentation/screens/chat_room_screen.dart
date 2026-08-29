@@ -17,6 +17,9 @@ import '../widgets/chat_message_bubble.dart';
 import '../widgets/media_attachment_bottom_sheet.dart';
 import '../widgets/recording_input_bar.dart';
 import '../../data/models/chat_message_model.dart';
+import 'package:kids_transport/features/parent/search/data/repositories/search_repository.dart';
+import 'package:kids_transport/features/parent/search/presentation/screens/driver_profile_view.dart';
+
 
 class ChatRoomScreen extends StatefulWidget {
   final String chatRoomId;
@@ -295,6 +298,52 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
   }
 
+  void _openDriverProfile(BuildContext context) async {
+    final roleLower = widget.currentUserRole.toLowerCase();
+    if (!roleLower.contains('parent') && !roleLower.contains('ولي')) return;
+
+    int driverId = 0;
+    try {
+      final parts = widget.chatRoomId.split('_');
+      final driverIndex = parts.indexOf('driver');
+      if (driverIndex != -1 && driverIndex + 1 < parts.length) {
+        driverId = int.tryParse(parts[driverIndex + 1]) ?? 0;
+      }
+    } catch (_) {}
+
+    if (driverId <= 0) return;
+
+    final searchRepo = getIt<SearchRepository>();
+    final (drivers, error) = await searchRepo.searchDrivers({'search_query': driverId.toString()});
+
+    if (!context.mounted) return;
+
+    if (drivers != null && drivers.isNotEmpty) {
+      final driverModel = drivers.firstWhere(
+        (d) => d.driverId == driverId,
+        orElse: () => drivers.first,
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DriverProfileView(
+            driver: driverModel,
+            availableKids: const [],
+            showPricing: false,
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error ?? 'تعذر تحميل ملف السائق.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   // ==================== [بناء الواجهة الرئيسية] ====================
 
   @override
@@ -320,75 +369,79 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
             foregroundColor: isDark ? AppColors.white : AppColors.textDark,
             surfaceTintColor: Colors.transparent,
-            title: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(18.r),
-                  child: Container(
-                    width: 36.w,
-                    height: 36.w,
-                    color: isDark ? AppColors.grey800 : AppColors.grey100,
-                    child: widget.otherUserPhoto != null &&
-                            widget.otherUserPhoto!.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: widget.otherUserPhoto!,
-                            fit: BoxFit.cover,
-                            errorWidget: (context, url, error) => Icon(
+            title: InkWell(
+              onTap: () => _openDriverProfile(context),
+              borderRadius: BorderRadius.circular(12.r),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(18.r),
+                    child: Container(
+                      width: 36.w,
+                      height: 36.w,
+                      color: isDark ? AppColors.grey800 : AppColors.grey100,
+                      child: widget.otherUserPhoto != null &&
+                              widget.otherUserPhoto!.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: widget.otherUserPhoto!,
+                              fit: BoxFit.cover,
+                              errorWidget: (context, url, error) => Icon(
+                                Icons.person_rounded,
+                                color: isDark
+                                    ? AppColors.grey400
+                                    : AppColors.grey600,
+                                size: 20.r,
+                              ),
+                            )
+                          : Icon(
                               Icons.person_rounded,
-                              color: isDark
-                                  ? AppColors.grey400
-                                  : AppColors.grey600,
+                              color:
+                                  isDark ? AppColors.grey400 : AppColors.grey600,
                               size: 20.r,
                             ),
-                          )
-                        : Icon(
-                            Icons.person_rounded,
-                            color:
-                                isDark ? AppColors.grey400 : AppColors.grey600,
-                            size: 20.r,
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.otherUserName,
+                          style: AppTextStyles.style(
+                            fontSize: 14.5.sp,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? AppColors.white : AppColors.textDark,
                           ),
-                  ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        widget.otherUserName,
-                        style: AppTextStyles.style(
-                          fontSize: 14.5.sp,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? AppColors.white : AppColors.textDark,
                         ),
-                      ),
-                      BlocBuilder<ChatRoomCubit, ChatRoomState>(
-                        builder: (context, state) {
-                          final isTyping = (state is ChatRoomLoaded &&
-                                  state.isOtherUserTyping) ||
-                              (state is ChatMessageSending &&
-                                  state.isOtherUserTyping) ||
-                              (state is ChatMessageSent &&
-                                  state.isOtherUserTyping);
+                        BlocBuilder<ChatRoomCubit, ChatRoomState>(
+                          builder: (context, state) {
+                            final isTyping = (state is ChatRoomLoaded &&
+                                    state.isOtherUserTyping) ||
+                                (state is ChatMessageSending &&
+                                    state.isOtherUserTyping) ||
+                                (state is ChatMessageSent &&
+                                    state.isOtherUserTyping);
 
-                          if (isTyping) {
-                            return Text(
-                              'جاري الكتابة...',
-                              style: AppTextStyles.style(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.success,
-                              ),
-                            );
-                          }
-                          return const SizedBox();
-                        },
-                      ),
-                    ],
+                            if (isTyping) {
+                              return Text(
+                                'جاري الكتابة...',
+                                style: AppTextStyles.style(
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.success,
+                                ),
+                              );
+                            }
+                            return const SizedBox();
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           body: BlocListener<ChatRoomCubit, ChatRoomState>(
