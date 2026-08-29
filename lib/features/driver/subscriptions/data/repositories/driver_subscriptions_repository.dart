@@ -14,4 +14,8 @@ class DriverSubscriptionsRepository {
   Future<DriverSubscriptionModel> getSubscriptionDetail(int id) {
     return _remoteDataSource.fetchDetail(id);
   }
+
+  Future<String> cancelSubscription(int id) {
+    return _remoteDataSource.cancelSubscription(id);
+  }
 }

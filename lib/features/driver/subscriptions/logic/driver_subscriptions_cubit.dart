@@ -63,4 +63,19 @@ class DriverSubscriptionsCubit extends Cubit<DriverSubscriptionsState> {
   }
 
   Future<void> refresh() => loadSubscriptions(filter: _currentFilter);
+
+  Future<void> cancelSubscription(DriverSubscriptionModel subscription) async {
+    emit(DriverSubscriptionCancelLoading(subscription));
+    try {
+      final message = await _repository.cancelSubscription(subscription.id);
+      emit(DriverSubscriptionCancelSuccess(message));
+    } on ApiException catch (e) {
+      emit(DriverSubscriptionCancelError(subscription, e.message));
+    } catch (e) {
+      emit(DriverSubscriptionCancelError(
+        subscription,
+        'تعذر إلغاء الاشتراك، يرجى المحاولة مرة أخرى.',
+      ));
+    }
+  }
 }

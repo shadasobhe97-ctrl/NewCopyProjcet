@@ -407,7 +407,6 @@ class _SubscriptionsFilterBar extends StatelessWidget {
     final filters = [
       (DriverSubscriptionsFilter.all, 'الكل'),
       (DriverSubscriptionsFilter.currentActive, 'نشط'),
-      (DriverSubscriptionsFilter.pendingStart, 'معلق'),
       (DriverSubscriptionsFilter.completed, 'مكتمل'),
       (DriverSubscriptionsFilter.cancelled, 'ملغي'),
     ];
@@ -655,6 +654,7 @@ class _DriverSubscriptionCard extends StatelessWidget {
   Color _getStatusColor() {
     switch (subscription.status.toLowerCase()) {
       case 'active':
+      case 'accepted':
         return AppColors.success;
       case 'pending':
       case 'pending_start':
@@ -676,21 +676,6 @@ class _DriverSubscriptionCard extends StatelessWidget {
     } catch (_) {
       return raw;
     }
-  }
-
-  String _formatTimeArabic(String? timeStr) {
-    if (timeStr == null || timeStr.isEmpty) return 'غير محدد';
-    try {
-      final parts = timeStr.split(':');
-      if (parts.length >= 2) {
-        final hour = int.parse(parts[0]);
-        final minute = int.parse(parts[1]);
-        final amPm = hour >= 12 ? 'م' : 'ص';
-        final formattedHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-        return '${formattedHour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $amPm';
-      }
-    } catch (_) {}
-    return timeStr;
   }
 
   @override
@@ -836,22 +821,13 @@ class _DriverSubscriptionCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _MiniInfoWidget(
-                        icon: Icons.login_rounded,
-                        text: _formatTimeArabic(subscription.pickupTime),
+                        icon: Icons.schedule_rounded,
+                        text: subscription.timingLabel,
                         color: AppColors.pending,
                       ),
                       _MiniInfoWidget(
-                        icon: Icons.logout_rounded,
-                        text: _formatTimeArabic(subscription.dropoffTime),
-                        color: AppColors.error,
-                      ),
-                      _MiniInfoWidget(
                         icon: Icons.alt_route_rounded,
-                        text: subscription.tripType == 'both'
-                            ? 'ذهاب وعودة'
-                            : (subscription.tripType == 'morning'
-                                  ? 'ذهاب فقط'
-                                  : 'عودة فقط'),
+                        text: subscription.tripDirectionLabel,
                         color: context.primaryColor,
                       ),
                       _MiniInfoWidget(
@@ -891,22 +867,22 @@ class _DriverSubscriptionCard extends StatelessWidget {
             ),
             SizedBox(height: 12.h),
 
-            // تفاصيل العقد
-            if (subscription.contract != null) ...[
+            // المالية
+            if (subscription.driverNetPrice != null) ...[
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 4.w),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'عقد: ${subscription.contract!.contractNumber}',
+                      'صافي الربح',
                       style: AppTextStyles.style(
                         fontSize: 12.sp,
                         color: AppColors.textMuted,
                       ),
                     ),
                     Text(
-                      'سعر الاشتراك: ${subscription.contract!.totalPrice} د.ل',
+                      '${subscription.driverNetPrice} د.ل',
                       style: AppTextStyles.style(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.bold,
@@ -920,7 +896,7 @@ class _DriverSubscriptionCard extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 4.w),
                 child: Text(
-                  'المدة: ${_formatDate(subscription.contract!.startDate)} - ${_formatDate(subscription.contract!.endDate)}',
+                  'المدة: ${_formatDate(subscription.startDate)} - ${_formatDate(subscription.endDate)}',
                   style: AppTextStyles.style(
                     fontSize: 11.sp,
                     color: AppColors.textMuted,

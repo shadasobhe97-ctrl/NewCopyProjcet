@@ -73,4 +73,26 @@ class DriverSubscriptionsRemoteDataSource {
     final detail = (data is Map && data['data'] != null) ? data['data'] : data;
     return DriverSubscriptionModel.fromJson(Map<String, dynamic>.from(detail as Map));
   }
+
+  /// POST /api/driver/active-subscriptions/{id}/cancel (لإلغاء الاشتراك المفعل)
+  Future<String> cancelSubscription(int id) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.driverActiveSubscriptionCancel(id),
+      data: {
+        'active_subscription_id': id,
+      },
+      headers: _authHeader,
+    );
+
+    final data = response.data;
+    if (data is Map) {
+      final ok = data['success'] ?? data['status'];
+      if (ok == false) {
+        final msg = ApiException.extractMessage(data);
+        throw ApiException(msg ?? 'تعذر إلغاء الاشتراك.');
+      }
+      return (data['message'] as String?) ?? 'تم إلغاء الاشتراك بنجاح.';
+    }
+    return 'تم إلغاء الاشتراك بنجاح.';
+  }
 }

@@ -98,6 +98,8 @@ class ApiEndpoints {
   static const String driverActiveSubscriptions = 'driver/active-subscriptions';
   static String driverSubscriptionDetails(int id) =>
       'driver/active-subscriptions/$id';
+  static String driverActiveSubscriptionCancel(int id) =>
+      'driver/active-subscriptions/$id/cancel';
 
   static const String parentProfile = 'parent/profile';
   static const String parentProfileUpdate = 'parent/profile/update';
@@ -121,6 +123,8 @@ class ApiEndpoints {
   static const String parentActiveSubscriptions = 'parent/active-subscriptions';
   static String parentSubscriptionDetail(int id) =>
       'parent/active-subscriptions/$id';
+  static String parentActiveSubscriptionCancel(int id) =>
+      'parent/active-subscriptions/$id/cancel';
 
   // Parent Wallet & Finance
   static const String parentWalletBalance = 'parent/wallet/balance';

@@ -9,6 +9,7 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
+import 'package:kids_transport/features/driver/subscriptions/data/models/driver_subscription_model.dart';
 import 'package:kids_transport/features/parent/subscriptions/data/models/subscription_location_model.dart';
 import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscription_map_screen.dart';
 
@@ -78,19 +79,57 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
     }
   }
 
-  String _formatTimeArabic(String? timeStr) {
-    if (timeStr == null || timeStr.isEmpty) return 'غير محدد';
-    try {
-      final parts = timeStr.split(':');
-      if (parts.length >= 2) {
-        final hour = int.parse(parts[0]);
-        final minute = int.parse(parts[1]);
-        final amPm = hour >= 12 ? 'م' : 'ص';
-        final formattedHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-        return '${formattedHour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $amPm';
-      }
-    } catch (_) {}
-    return timeStr;
+
+  void _confirmCancel(BuildContext context, DriverSubscriptionModel subscription) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+          title: Text(
+            'إلغاء الاشتراك',
+            style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 16.sp),
+          ),
+          content: Text(
+            'هل أنت متأكد من إلغاء هذا الاشتراك؟ سيتم إشعار ولي الأمر فوراً ولا يمكن التراجع عن هذا الإجراء.',
+            style: AppTextStyles.style(fontSize: 13.sp, color: AppColors.textMuted, height: 1.5),
+          ),
+          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+          actions: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: OutlinedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                ),
+                child: Text('تراجع', style: AppTextStyles.style(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  context.read<DriverSubscriptionsCubit>().cancelSubscription(subscription);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: AppColors.white,
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                ),
+                child: Text(
+                  'إلغاء الاشتراك',
+                  style: AppTextStyles.style(fontWeight: FontWeight.bold, color: AppColors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -100,7 +139,33 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
       child: Scaffold(
         backgroundColor: context.backgroundSurface,
         appBar: _buildAppBar(context),
-        body: BlocBuilder<DriverSubscriptionsCubit, DriverSubscriptionsState>(
+        body: BlocConsumer<DriverSubscriptionsCubit, DriverSubscriptionsState>(
+          listener: (context, state) {
+            if (state is DriverSubscriptionCancelSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text(state.message),
+                  ),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+              Navigator.of(context).pop(true);
+            } else if (state is DriverSubscriptionCancelError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text(state.message),
+                  ),
+                  backgroundColor: AppColors.error,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          },
           builder: (context, state) {
             if (state is DriverSubscriptionDetailLoading) {
               return const Center(child: CircularProgressIndicator());
@@ -133,11 +198,20 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
               );
             }
 
+            DriverSubscriptionModel? subscription;
+            var isCancelling = false;
             if (state is DriverSubscriptionDetailLoaded) {
-              final subscription = state.subscription;
+              subscription = state.subscription;
+            } else if (state is DriverSubscriptionCancelLoading) {
+              subscription = state.subscription;
+              isCancelling = true;
+            } else if (state is DriverSubscriptionCancelError) {
+              subscription = state.subscription;
+            }
+
+            if (subscription != null) {
               final child = subscription.child;
               final parent = subscription.parent;
-              final contract = subscription.contract;
               final coords = subscription.coordinates;
 
               return RefreshIndicator(
@@ -294,12 +368,6 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
                                   ],
                                 ),
                               ),
-                            if (parent.email != null && parent.email!.isNotEmpty)
-                              _InfoRow(
-                                icon: Icons.email_rounded,
-                                label: 'البريد الإلكتروني',
-                                value: parent.email!,
-                              ),
                           ],
                         ),
                       ),
@@ -313,21 +381,14 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
                         child: Column(
                           children: [
                             _InfoRow(
+                              icon: Icons.schedule_rounded,
+                              label: 'الفترة',
+                              value: subscription.timingLabel,
+                            ),
+                            _InfoRow(
                               icon: Icons.alt_route_rounded,
-                              label: 'نوع الرحلة',
-                              value: subscription.tripType == 'both'
-                                  ? 'ذهاب وعودة'
-                                  : (subscription.tripType == 'morning' ? 'ذهاب فقط' : 'عودة فقط'),
-                            ),
-                            _InfoRow(
-                              icon: Icons.login_rounded,
-                              label: 'وقت الانطلاق (الذهاب)',
-                              value: _formatTimeArabic(subscription.pickupTime),
-                            ),
-                            _InfoRow(
-                              icon: Icons.logout_rounded,
-                              label: 'وقت الرجوع (العودة)',
-                              value: _formatTimeArabic(subscription.dropoffTime),
+                              label: 'اتجاه الرحلة',
+                              value: subscription.tripDirectionLabel,
                             ),
                             _InfoRow(
                               icon: Icons.home_rounded,
@@ -375,29 +436,23 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
                                           color: AppColors.textMuted,
                                         ),
                                       ),
-                                      if (coords?.home?.latitude != null)
-                                        Text(
-                                          '${coords!.home!.latitude.toStringAsFixed(4)}, ${coords.home!.longitude.toStringAsFixed(4)}',
-                                          style: AppTextStyles.style(
-                                            fontSize: 11.sp,
-                                            color: AppColors.textMuted,
-                                          ),
-                                        ),
                                     ],
                                   ),
                                 ),
                                 if (coords?.home?.latitude != null && coords?.home?.longitude != null)
-                                  ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.success.withValues(alpha: 0.1),
-                                      foregroundColor: AppColors.success,
-                                      elevation: 0,
-                                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                                  Flexible(
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.success.withValues(alpha: 0.1),
+                                        foregroundColor: AppColors.success,
+                                        elevation: 0,
+                                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                                      ),
+                                      icon: Icon(Icons.navigation_rounded, size: 14.sp),
+                                      label: Text('خريطة', style: AppTextStyles.style(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.success)),
+                                      onPressed: () => _openMap(coords!.home!.latitude, coords.home!.longitude),
                                     ),
-                                    icon: Icon(Icons.navigation_rounded, size: 14.sp),
-                                    label: Text('خريطة', style: AppTextStyles.style(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.success)),
-                                    onPressed: () => _openMap(coords!.home!.latitude, coords.home!.longitude),
                                   ),
                               ],
                             ),
@@ -427,29 +482,23 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
                                           color: AppColors.textMuted,
                                         ),
                                       ),
-                                      if (coords?.school?.latitude != null)
-                                        Text(
-                                          '${coords!.school!.latitude.toStringAsFixed(4)}, ${coords.school!.longitude.toStringAsFixed(4)}',
-                                          style: AppTextStyles.style(
-                                            fontSize: 11.sp,
-                                            color: AppColors.textMuted,
-                                          ),
-                                        ),
                                     ],
                                   ),
                                 ),
                                 if (coords?.school?.latitude != null && coords?.school?.longitude != null)
-                                  ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.success.withValues(alpha: 0.1),
-                                      foregroundColor: AppColors.success,
-                                      elevation: 0,
-                                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                                  Flexible(
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.success.withValues(alpha: 0.1),
+                                        foregroundColor: AppColors.success,
+                                        elevation: 0,
+                                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                                      ),
+                                      icon: Icon(Icons.navigation_rounded, size: 14.sp),
+                                      label: Text('خريطة', style: AppTextStyles.style(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.success)),
+                                      onPressed: () => _openMap(coords!.school!.latitude, coords.school!.longitude),
                                     ),
-                                    icon: Icon(Icons.navigation_rounded, size: 14.sp),
-                                    label: Text('خريطة', style: AppTextStyles.style(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.success)),
-                                    onPressed: () => _openMap(coords!.school!.latitude, coords.school!.longitude),
                                   ),
                               ],
                             ),
@@ -461,7 +510,7 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
                                   final pickup = SubscriptionLocationModel(
                                     latitude: coords?.home?.latitude,
                                     longitude: coords?.home?.longitude,
-                                    address: subscription.pickupLabel,
+                                    address: subscription!.pickupLabel,
                                   );
                                   final dropoff = SubscriptionLocationModel(
                                     latitude: coords?.school?.latitude,
@@ -495,44 +544,46 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
                       ),
                       SizedBox(height: 12.h),
 
-                      // CARD 5: العقد والاشتراك (Contract & Finance)
-                      if (contract != null) ...[
-                        _SectionCard(
-                          icon: Icons.assignment_rounded,
-                          iconColor: AppColors.primaryLight,
-                          title: 'بيانات العقد والمالية',
-                          child: Column(
-                            children: [
-                              _InfoRow(
-                                icon: Icons.receipt_rounded,
-                                label: 'رقم العقد',
-                                value: contract.contractNumber,
-                              ),
-                              _InfoRow(
-                                icon: Icons.date_range_rounded,
-                                label: 'مدة الاشتراك',
-                                value: '${_formatDate(contract.startDate)} - ${_formatDate(contract.endDate)}',
-                              ),
+                      // CARD 5: المالية (Finance)
+                      _SectionCard(
+                        icon: Icons.assignment_rounded,
+                        iconColor: AppColors.primaryLight,
+                        title: 'بيانات الاشتراك والمالية',
+                        child: Column(
+                          children: [
+                            _InfoRow(
+                              icon: Icons.date_range_rounded,
+                              label: 'مدة الاشتراك',
+                              value: '${_formatDate(subscription.startDate)} - ${_formatDate(subscription.endDate)}',
+                            ),
+                            if (subscription.workingDaysCount != null)
                               _InfoRow(
                                 icon: Icons.calendar_month_rounded,
-                                label: 'عدد أيام العمل الفعلية',
-                                value: '${contract.totalWorkingDays} يوم',
+                                label: 'عدد أيام العمل',
+                                value: '${subscription.workingDaysCount} يوم',
                               ),
+                            if (subscription.pricePerChild != null)
+                              _InfoRow(
+                                icon: Icons.receipt_long_rounded,
+                                label: 'سعر اشتراك الطفل',
+                                value: '${subscription.pricePerChild} د.ل',
+                              ),
+                            if (subscription.platformCommission != null)
+                              _InfoRow(
+                                icon: Icons.percent_rounded,
+                                label: 'عمولة المنصة',
+                                value: '${subscription.platformCommission} د.ل',
+                              ),
+                            if (subscription.driverNetPrice != null)
                               _InfoRow(
                                 icon: Icons.monetization_on_rounded,
-                                label: 'سعر الاشتراك',
-                                value: '${contract.totalPrice} د.ل',
+                                label: 'صافي الربح',
+                                value: '${subscription.driverNetPrice} د.ل',
                               ),
-                              _InfoRow(
-                                icon: Icons.info_outline_rounded,
-                                label: 'حالة العقد',
-                                value: contract.status == 'active' ? 'مفعّل' : contract.status,
-                              ),
-                            ],
-                          ),
+                          ],
                         ),
-                        SizedBox(height: 12.h),
-                      ],
+                      ),
+                      SizedBox(height: 12.h),
 
                       // CARD 6: معلومات إضافية (Additional Info)
                       _SectionCard(
@@ -554,6 +605,41 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
                           ],
                         ),
                       ),
+
+                      if (subscription.status.toLowerCase() == 'accepted') ...[
+                        SizedBox(height: 16.h),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: isCancelling
+                                ? null
+                                : () => _confirmCancel(context, subscription!),
+                            icon: isCancelling
+                                ? SizedBox(
+                                    width: 16.r,
+                                    height: 16.r,
+                                    child: const CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.error,
+                                    ),
+                                  )
+                                : Icon(Icons.cancel_outlined, size: 18.sp, color: AppColors.error),
+                            label: Text(
+                              isCancelling ? 'جارٍ الإلغاء...' : 'إلغاء الاشتراك',
+                              style: AppTextStyles.style(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.error,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppColors.error),
+                              padding: EdgeInsets.symmetric(vertical: 12.h),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                            ),
+                          ),
+                        ),
+                      ],
                       SizedBox(height: 24.h),
                     ],
                   ),

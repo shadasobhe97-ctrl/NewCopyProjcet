@@ -19,9 +19,7 @@ class SubscriptionCard extends StatelessWidget {
     required this.isCancelling,
   });
 
-  bool get _isCancellable =>
-      subscription.status.toLowerCase() == 'active' ||
-      subscription.status.toLowerCase() == 'pending_start';
+  bool get _isCancellable => subscription.status.toLowerCase() == 'accepted';
 
   String _getInitials(String name) {
     if (name.isEmpty) return '?';
@@ -48,7 +46,6 @@ class SubscriptionCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final driver = subscription.driver;
     final child = subscription.child;
-    final contract = subscription.contract;
 
     final isFemale = driver.name.contains('ة') ||
         driver.name.contains('فاطمة') ||
@@ -115,7 +112,7 @@ class SubscriptionCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'من ${_formatDate(contract.startDate)} إلى ${_formatDate(contract.endDate)}',
+                      'من ${_formatDate(child.startDate ?? '')} إلى ${_formatDate(child.endDate ?? '')}',
                       style: AppTextStyles.style(
                         fontSize: 11.sp,
                         color: isDark ? AppColors.grey500 : AppColors.textMuted,

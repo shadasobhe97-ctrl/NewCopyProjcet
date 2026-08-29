@@ -43,20 +43,31 @@ class SubscriptionDetailModel {
     }
   }
 
-  factory SubscriptionDetailModel.fromJson(Map<String, dynamic> json) =>
-      SubscriptionDetailModel(
-        id: _parseInt(json['id']) ?? 0,
-        status: json['status']?.toString() ?? '',
-        statusLabel: json['statusLabel']?.toString() ?? json['status_label']?.toString() ?? '',
-        child: DetailChild.fromJson(json['child'] as Map<String, dynamic>? ?? {}),
-        driver: DetailDriver.fromJson(json['driver'] as Map<String, dynamic>? ?? {}),
-        schedule: DetailSchedule.fromJson((json['schedule'] ?? json) as Map<String, dynamic>),
-        billing: DetailBilling.fromJson((json['billing'] ?? json['contract'] ?? json) as Map<String, dynamic>),
-        requestId: _parseInt(json['requestId'] ?? json['request_id'] ?? json['id']) ?? 0,
-        cancelReason: json['cancelReason']?.toString() ?? json['cancel_reason']?.toString(),
-        cancelledAt: json['cancelledAt']?.toString() ?? json['cancelled_at']?.toString(),
-        createdAt: json['createdAt']?.toString() ?? json['created_at']?.toString() ?? '',
-      );
+  factory SubscriptionDetailModel.fromJson(Map<String, dynamic> json) {
+    final childJson = json['child'] as Map<String, dynamic>? ?? {};
+    final detailsJson = childJson['details'] as Map<String, dynamic>? ?? {};
+
+    return SubscriptionDetailModel(
+      id: _parseInt(json['active_subscription_id'] ?? json['id'] ?? json['subscription_id']) ?? 0,
+      status: json['status']?.toString() ?? '',
+      statusLabel: json['statusLabel']?.toString() ?? json['status_label']?.toString() ?? '',
+      child: DetailChild.fromJson(childJson),
+      driver: DetailDriver.fromJson(json['driver'] as Map<String, dynamic>? ?? {}),
+      schedule: DetailSchedule.fromJson(childJson, detailsJson),
+      billing: DetailBilling.fromJson(
+        detailsJson,
+        rootTotalPrice: _parseDouble(json['total_price']),
+      ),
+      requestId: _parseInt(json['subscription_request_id'] ??
+              json['requestId'] ??
+              json['request_id'] ??
+              json['id']) ??
+          0,
+      cancelReason: json['cancelReason']?.toString() ?? json['cancel_reason']?.toString(),
+      cancelledAt: json['cancelledAt']?.toString() ?? json['cancelled_at']?.toString(),
+      createdAt: json['createdAt']?.toString() ?? json['created_at']?.toString() ?? '',
+    );
+  }
 }
 
 class DetailChild {
@@ -65,6 +76,7 @@ class DetailChild {
   final String? avatar;
   final String? avatarInitials;
   final String schoolName;
+  final String? schoolAddress;
   final DetailLocation? schoolLocation;
 
   const DetailChild({
@@ -73,21 +85,36 @@ class DetailChild {
     this.avatar,
     this.avatarInitials,
     required this.schoolName,
+    this.schoolAddress,
     this.schoolLocation,
   });
 
-  factory DetailChild.fromJson(Map<String, dynamic> json) => DetailChild(
-        id: _parseInt(json['id']) ?? 0,
-        name: json['name']?.toString() ?? json['child_name']?.toString() ?? json['childName']?.toString(),
-        avatar: json['avatar']?.toString() ?? json['photo_url']?.toString() ?? json['image']?.toString(),
-        avatarInitials: json['avatarInitials']?.toString() ?? json['avatar_initials']?.toString(),
-        schoolName: json['schoolName']?.toString() ?? json['school_name']?.toString() ?? '',
-        schoolLocation: json['schoolLocation'] is Map
-            ? DetailLocation.fromJson(Map<String, dynamic>.from(json['schoolLocation'] as Map))
-            : (json['school_location'] is Map
-                ? DetailLocation.fromJson(Map<String, dynamic>.from(json['school_location'] as Map))
-                : null),
-      );
+  factory DetailChild.fromJson(Map<String, dynamic> json) {
+    final school = json['School'] as Map<String, dynamic>? ??
+        json['school'] as Map<String, dynamic>?;
+
+    return DetailChild(
+      id: _parseInt(json['id']) ?? 0,
+      name: json['name']?.toString() ?? json['child_name']?.toString() ?? json['childName']?.toString(),
+      avatar: json['photo']?.toString() ??
+          json['avatar']?.toString() ??
+          json['photo_url']?.toString() ??
+          json['image']?.toString(),
+      avatarInitials: json['avatarInitials']?.toString() ?? json['avatar_initials']?.toString(),
+      schoolName: school?['name']?.toString() ??
+          json['schoolName']?.toString() ??
+          json['school_name']?.toString() ??
+          '',
+      schoolAddress: school?['address']?.toString(),
+      schoolLocation: school != null
+          ? DetailLocation.fromJson(Map<String, dynamic>.from(school))
+          : (json['schoolLocation'] is Map
+              ? DetailLocation.fromJson(Map<String, dynamic>.from(json['schoolLocation'] as Map))
+              : (json['school_location'] is Map
+                  ? DetailLocation.fromJson(Map<String, dynamic>.from(json['school_location'] as Map))
+                  : null)),
+    );
+  }
 }
 
 class DetailLocation {
@@ -104,7 +131,7 @@ class DetailLocation {
   factory DetailLocation.fromJson(Map<String, dynamic> json) => DetailLocation(
         lat: _parseDouble(json['lat'] ?? json['latitude']),
         lng: _parseDouble(json['lng'] ?? json['longitude']),
-        label: json['label']?.toString(),
+        label: json['label']?.toString() ?? json['name']?.toString(),
       );
 }
 
@@ -130,7 +157,10 @@ class DetailDriver {
         name: json['name']?.toString() ?? json['driver_name']?.toString() ?? json['full_name']?.toString() ?? '',
         phone: json['phone']?.toString(),
         rating: _parseDouble(json['rating']) ?? 5.0,
-        avatarUrl: json['avatar_url']?.toString() ?? json['avatar']?.toString() ?? json['avatarUrl']?.toString(),
+        avatarUrl: json['photo']?.toString() ??
+            json['avatar_url']?.toString() ??
+            json['avatar']?.toString() ??
+            json['avatarUrl']?.toString(),
         vehicle: json['vehicle'] is Map
             ? DetailVehicle.fromJson(Map<String, dynamic>.from(json['vehicle'] as Map))
             : null,
@@ -161,53 +191,46 @@ class DetailVehicle {
 class DetailSchedule {
   final String? shift;
   final String? shiftLabel;
+  final String? timing;
   final String? pickupZoneName;
   final String? schoolName;
   final SubscriptionLocationModel? homeLocation;
-  final String? pickupTime;
-  final String? dropoffTime;
 
   const DetailSchedule({
     this.shift,
     this.shiftLabel,
+    this.timing,
     this.pickupZoneName,
     this.schoolName,
     this.homeLocation,
-    this.pickupTime,
-    this.dropoffTime,
   });
 
-  factory DetailSchedule.fromJson(Map<String, dynamic> json) {
-    final pTime = json['pickupTime']?.toString() ?? json['pickup_time']?.toString();
-    final dTime = json['dropoffTime']?.toString() ?? json['dropoff_time']?.toString();
-
-    String? derivedShiftLabel;
-    if (pTime != null && pTime.isNotEmpty && dTime != null && dTime.isNotEmpty) {
-      derivedShiftLabel = 'both';
-    } else if (pTime != null && pTime.isNotEmpty) {
-      derivedShiftLabel = 'morning';
-    } else if (dTime != null && dTime.isNotEmpty) {
-      derivedShiftLabel = 'evening';
-    }
+  /// [childJson] هو كائن الطفل الكامل (فيه Home/School)، و[detailsJson]
+  /// هو child['details'] (فيه trip_direction/timing وغيرها)
+  factory DetailSchedule.fromJson(
+    Map<String, dynamic> childJson,
+    Map<String, dynamic> detailsJson,
+  ) {
+    final home = childJson['Home'] as Map<String, dynamic>? ??
+        childJson['home'] as Map<String, dynamic>?;
+    final school = childJson['School'] as Map<String, dynamic>? ??
+        childJson['school'] as Map<String, dynamic>?;
+    final direction = detailsJson['trip_direction']?.toString();
 
     return DetailSchedule(
-      shift: json['shift']?.toString() ?? json['direction']?.toString(),
-      shiftLabel: json['shiftLabel']?.toString() ??
-          json['shift_label']?.toString() ??
-          json['direction_label']?.toString() ??
-          json['direction']?.toString() ??
-          derivedShiftLabel,
-      pickupZoneName: json['pickupZoneName']?.toString() ?? json['pickup_zone_name']?.toString() ?? json['pickup_location']?['label']?.toString(),
-      schoolName: json['schoolName']?.toString() ?? json['school_name']?.toString() ?? json['child']?['school_name']?.toString(),
-      homeLocation: json['homeLocation'] is Map
-          ? SubscriptionLocationModel.fromJson(Map<String, dynamic>.from(json['homeLocation'] as Map))
-          : (json['home_location'] is Map
-              ? SubscriptionLocationModel.fromJson(Map<String, dynamic>.from(json['home_location'] as Map))
-              : (json['pickup_location'] is Map
-                  ? SubscriptionLocationModel.fromJson(Map<String, dynamic>.from(json['pickup_location'] as Map))
-                  : null)),
-      pickupTime: pTime,
-      dropoffTime: dTime,
+      shift: direction,
+      shiftLabel: direction,
+      timing: detailsJson['timing']?.toString(),
+      pickupZoneName: home?['name']?.toString(),
+      schoolName: school?['name']?.toString(),
+      // العنوان الخام للمنزل مقصود إخفاؤه، الاسم بس هو المعروض
+      homeLocation: home != null
+          ? SubscriptionLocationModel(
+              name: home['name']?.toString(),
+              latitude: _parseDouble(home['latitude']),
+              longitude: _parseDouble(home['longitude']),
+            )
+          : null,
     );
   }
 }
@@ -216,6 +239,8 @@ class DetailBilling {
   final String? subscriptionType;
   final double totalPrice;
   final double childPrice;
+  final double? tripPrice;
+  final int? workingDaysCount;
   final String? currency;
   final String? startsAt;
   final String? endsAt;
@@ -227,6 +252,8 @@ class DetailBilling {
     this.subscriptionType,
     required this.totalPrice,
     required this.childPrice,
+    this.tripPrice,
+    this.workingDaysCount,
     this.currency,
     this.startsAt,
     this.endsAt,
@@ -235,16 +262,34 @@ class DetailBilling {
     this.paymentMethod,
   });
 
-  factory DetailBilling.fromJson(Map<String, dynamic> json) => DetailBilling(
-        subscriptionType: json['subscription_type_label']?.toString() ?? json['subscriptionType']?.toString() ?? json['subscription_type']?.toString() ?? json['subscription_period']?.toString(),
-        totalPrice: _parseDouble(json['totalPrice'] ?? json['total_price'] ?? json['amount'] ?? json['price']) ?? 0.0,
-        childPrice: _parseDouble(json['childPrice'] ?? json['child_price'] ?? json['price_per_child']) ?? 0.0,
-        currency: json['currency']?.toString() ?? 'دينار',
-        startsAt: json['startsAt']?.toString() ?? json['starts_at']?.toString() ?? json['start_date']?.toString() ?? json['startDate']?.toString(),
-        endsAt: json['endsAt']?.toString() ?? json['ends_at']?.toString() ?? json['end_date']?.toString() ?? json['endDate']?.toString(),
-        remainingDays: _parseInt(json['remainingDays'] ?? json['remaining_days'] ?? json['days_remaining']),
-        autoRenew: json['autoRenew'] == true || json['auto_renew'] == true,
-        paymentMethod: json['paymentMethod']?.toString() ?? json['payment_method']?.toString(),
+  /// [detailsJson] هو child['details']، و[rootTotalPrice] هو السعر
+  /// الإجمالي من جذر الرد (total_price)
+  factory DetailBilling.fromJson(
+    Map<String, dynamic> detailsJson, {
+    double? rootTotalPrice,
+  }) =>
+      DetailBilling(
+        subscriptionType: detailsJson['subscription_type_label']?.toString() ??
+            detailsJson['subscriptionType']?.toString() ??
+            detailsJson['subscription_type']?.toString(),
+        totalPrice: rootTotalPrice ?? _parseDouble(detailsJson['total_price']) ?? 0.0,
+        childPrice: _parseDouble(detailsJson['price_per_child']) ?? 0.0,
+        tripPrice: _parseDouble(detailsJson['trip_price']),
+        workingDaysCount: _parseInt(detailsJson['working_days_count']),
+        currency: detailsJson['currency']?.toString() ?? 'دينار',
+        startsAt: detailsJson['startsAt']?.toString() ??
+            detailsJson['starts_at']?.toString() ??
+            detailsJson['start_date']?.toString() ??
+            detailsJson['startDate']?.toString(),
+        endsAt: detailsJson['endsAt']?.toString() ??
+            detailsJson['ends_at']?.toString() ??
+            detailsJson['end_date']?.toString() ??
+            detailsJson['endDate']?.toString(),
+        remainingDays: _parseInt(detailsJson['remainingDays'] ??
+            detailsJson['remaining_days'] ??
+            detailsJson['days_remaining']),
+        autoRenew: detailsJson['autoRenew'] == true || detailsJson['auto_renew'] == true,
+        paymentMethod: detailsJson['paymentMethod']?.toString() ?? detailsJson['payment_method']?.toString(),
       );
 
   String get subscriptionTypeDisplayLabel =>
@@ -256,6 +301,10 @@ class DetailBilling {
 
   String get formattedChildPrice {
     return '${childPrice.toStringAsFixed(2)} دينار';
+  }
+
+  String get formattedTripPrice {
+    return tripPrice != null ? '${tripPrice!.toStringAsFixed(2)} دينار' : 'غير متوفر';
   }
 }
 

@@ -578,28 +578,58 @@ class _TotalPriceCard extends StatelessWidget {
           color: AppColors.success.withValues(alpha: 0.35),
         ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          const Icon(Icons.payments_rounded,
-              color: AppColors.success, size: 26),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'السعر الإجمالي',
-              style: AppTextStyles.style(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+          Row(
+            children: [
+              const Icon(Icons.payments_rounded,
+                  color: AppColors.success, size: 26),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'السعر الإجمالي (يدفعه ولي الأمر)',
+                  style: AppTextStyles.style(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-            ),
+              Text(
+                '${request.totalPrice} د.ل',
+                style: AppTextStyles.style(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-          Text(
-            '${request.totalPrice} د.ل',
-            style: AppTextStyles.style(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.success,
+          if (request.driverNetTotal != null) ...[
+            const Divider(height: 18, thickness: 0.5),
+            Row(
+              children: [
+                const Icon(Icons.account_balance_wallet_rounded,
+                    color: AppColors.success, size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'صافي أرباحك الإجمالية',
+                    style: AppTextStyles.style(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${request.driverNetTotal} د.ل',
+                  style: AppTextStyles.style(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.success,
+                  ),
+                ),
+              ],
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -817,10 +847,26 @@ class _ChildCard extends StatelessWidget {
           const Divider(height: 12, thickness: 0.5),
           _InfoRow(
             icon: Icons.person_pin_rounded,
-            label: 'إجمالي اشتراك الطفل',
+            label: 'سعر اشتراك الطفل',
             value: child.priceLabel,
-            valueColor: AppColors.success,
           ),
+          if (child.platformCommissionLabel != null) ...[
+            const Divider(height: 12, thickness: 0.5),
+            _InfoRow(
+              icon: Icons.percent_rounded,
+              label: 'عمولة المنصة',
+              value: child.platformCommissionLabel!,
+            ),
+          ],
+          if (child.driverNetPriceLabel != null) ...[
+            const Divider(height: 12, thickness: 0.5),
+            _InfoRow(
+              icon: Icons.account_balance_wallet_rounded,
+              label: 'صافي ربحك',
+              value: child.driverNetPriceLabel!,
+              valueColor: AppColors.success,
+            ),
+          ],
           const Divider(height: 12, thickness: 0.5),
           _InfoRow(
             icon: Icons.location_on_rounded,

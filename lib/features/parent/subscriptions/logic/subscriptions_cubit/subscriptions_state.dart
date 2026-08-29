@@ -54,3 +54,18 @@ class SubscriptionsActionError extends SubscriptionsState {
   final String message;
   const SubscriptionsActionError(this.currentList, this.message);
 }
+
+class SubscriptionCancelLoading extends SubscriptionsState {
+  final int id;
+  const SubscriptionCancelLoading(this.id);
+}
+
+class SubscriptionCancelSuccess extends SubscriptionsState {
+  final String message;
+  const SubscriptionCancelSuccess(this.message);
+}
+
+class SubscriptionCancelError extends SubscriptionsState {
+  final String message;
+  const SubscriptionCancelError(this.message);
+}

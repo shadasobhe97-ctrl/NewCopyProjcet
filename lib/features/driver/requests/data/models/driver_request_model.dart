@@ -21,7 +21,10 @@ class DriverRequestModel {
   final String startDate;
   final String endDate;
   final int? daysCount;
+  /// السعر الإجمالي اللي ولي الأمر بيدفعه (بعد خصم الإخوة إن وجد)
   final String totalPrice;
+  /// إجمالي صافي أرباح السائق من الطلب كامل (بعد عمولة المنصة)
+  final double? driverNetTotal;
   final String? rejectionReason;
   final DriverReqParent parent;
   final DriverReqSchool school;
@@ -55,6 +58,7 @@ class DriverRequestModel {
     required this.endDate,
     this.daysCount,
     required this.totalPrice,
+    this.driverNetTotal,
     this.rejectionReason,
     required this.parent,
     required this.school,
@@ -164,8 +168,13 @@ class DriverRequestModel {
       startDate: json['start_date']?.toString() ?? firstDetails?.startDate ?? '',
       endDate: json['end_date']?.toString() ?? firstDetails?.endDate ?? '',
       daysCount: _parseInt(json['days_count']) ?? firstDetails?.workingDaysCount,
-      totalPrice:
-          (json['total_price'] ?? json['total_amount'])?.toString() ?? '0',
+      // السعر اللي ولي الأمر بيدفعه (بعد الخصم) أولاً، وليس صافي السائق
+      totalPrice: (json['total_after_discount'] ??
+                  json['total_price'] ??
+                  json['total_amount'])
+              ?.toString() ??
+          '0',
+      driverNetTotal: _toDouble(json['driver_net_total'] ?? json['total_amount']),
       currency: json['currency']?.toString(),
       createdAtFormatted: json['created_at_formatted']?.toString(),
       driver: json['driver'] is Map
@@ -324,6 +333,18 @@ class DriverReqChild {
         : '${p.toStringAsFixed(2)} د.ل';
   }
 
+  static String _formatMoney(double v) => v == v.roundToDouble()
+      ? '${v.toInt()} د.ل'
+      : '${v.toStringAsFixed(2)} د.ل';
+
+  /// صافي مستحقات السائق من هذا الطفل
+  String? get driverNetPriceLabel =>
+      details.driverNetPrice != null ? _formatMoney(details.driverNetPrice!) : null;
+
+  /// عمولة المنصة من هذا الطفل
+  String? get platformCommissionLabel =>
+      details.platformCommission != null ? _formatMoney(details.platformCommission!) : null;
+
   factory DriverReqChild.fromJson(Map<String, dynamic> json) {
     // مسار التفاصيل يوزّع الملاحظات داخل كائن notes
     final notes = json['notes'] is Map
@@ -441,12 +462,18 @@ class DriverReqChildDetails {
   final String? startDate;
   final String? endDate;
   final int? workingDaysCount;
-  /// إجمالي اشتراك الطفل للفترة كاملة (سعر الرحلة × عدد أيام العمل)
+  /// السعر اللي ولي الأمر بيدفعه (بعد خصم الإخوة إن وجد) — إجمالي اشتراك الطفل
   final double? pricePerChild;
   final double? distanceKm;
 
   /// سعر الرحلة الواحدة
   final double? tripPrice;
+
+  /// عمولة المنصة من هذا الطفل
+  final double? platformCommission;
+
+  /// صافي مستحقات السائق من هذا الطفل (بعد خصم عمولة المنصة)
+  final double? driverNetPrice;
 
   const DriverReqChildDetails({
     this.subscriptionType,
@@ -458,6 +485,8 @@ class DriverReqChildDetails {
     this.pricePerChild,
     this.distanceKm,
     this.tripPrice,
+    this.platformCommission,
+    this.driverNetPrice,
   });
 
   bool get isEmpty =>
@@ -515,10 +544,13 @@ class DriverReqChildDetails {
       endDate: period['end_date']?.toString(),
       workingDaysCount:
           DriverRequestModel._parseInt(period['working_days_count']),
-      pricePerChild:
-          _toDouble(pricing['total_price'] ?? pricing['price_per_child']),
+      // سعر ولي الأمر (بعد الخصم) أولاً — وليس صافي السائق
+      pricePerChild: _toDouble(pricing['total_amount_after_discount'] ??
+          pricing['price_per_child']),
       distanceKm: _toDouble(pricing['distance_km']),
       tripPrice: _toDouble(pricing['trip_price']),
+      platformCommission: _toDouble(pricing['platform_commission']),
+      driverNetPrice: _toDouble(pricing['driver_net_price'] ?? pricing['total_price']),
     );
   }
 }

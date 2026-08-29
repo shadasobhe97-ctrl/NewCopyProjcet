@@ -179,7 +179,6 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
           items: const [
             DropdownMenuItem(value: 'all', child: Text('الكل')),
             DropdownMenuItem(value: 'active', child: Text('النشطة')),
-            DropdownMenuItem(value: 'pending', child: Text('المعلقة')),
             DropdownMenuItem(value: 'completed', child: Text('المكتملة')),
             DropdownMenuItem(value: 'cancelled', child: Text('الملغاة')),
           ],
@@ -232,9 +231,18 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
                 return _buildEmpty(isDark, theme, context);
               }
 
+              // مهم: أي حالة إجراء (تحميل/نجاح/خطأ الإلغاء) بتحمل نسخة من
+              // القايمة الحالية ولازم نستخدمها، وإلا القايمة تختفي مؤقتاً
+              // (تظهر شاشة "لا توجد اشتراكات") لحد ما يوصل رد التحديث التالي
               final List<ActiveSubscriptionModel> subs;
               if (state is SubscriptionsLoaded) {
                 subs = state.subscriptions;
+              } else if (state is SubscriptionsActionLoading) {
+                subs = state.currentList;
+              } else if (state is SubscriptionsActionSuccess) {
+                subs = state.updatedList;
+              } else if (state is SubscriptionsActionError) {
+                subs = state.currentList;
               } else {
                 subs = [];
               }
@@ -265,18 +273,90 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
             subscription: sub,
             isCancelling: state is SubscriptionsActionLoading &&
                 state.actionId == sub.id,
-            onDetailsPressed: () {
-              Navigator.pushNamed(
+            onDetailsPressed: () async {
+              final result = await Navigator.pushNamed(
                 context,
                 AppRoutes.subscriptionDetails,
                 arguments: sub.id,
               );
+              if (result == true) {
+                _loadSubscriptions();
+              }
             },
-            onCancelPressed: () {
-              context.read<SubscriptionsCubit>().cancelSubscription(sub.id);
-            },
+            onCancelPressed: () => _confirmCancel(context, sub.id),
           );
         },
+      ),
+    );
+  }
+
+  void _confirmCancel(BuildContext context, int id) {
+    final isDark = widget.isDark;
+    final cubit = context.read<SubscriptionsCubit>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
+          title: Text(
+            'إلغاء الاشتراك',
+            style: AppTextStyles.style(
+              fontWeight: FontWeight.bold,
+              fontSize: 16.sp,
+              color: isDark ? AppColors.white : AppColors.textDark,
+            ),
+          ),
+          content: Text(
+            'هل أنت متأكد من إلغاء هذا الاشتراك؟ سيتم إشعار السائق فوراً ولا يمكن التراجع عن هذا الإجراء.',
+            style: AppTextStyles.style(
+              fontSize: 13.sp,
+              color: isDark ? AppColors.grey300 : AppColors.grey700,
+              height: 1.5,
+            ),
+          ),
+          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+          actions: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: isDark ? AppColors.grey700 : AppColors.grey300),
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                ),
+                child: Text(
+                  'تراجع',
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.grey300 : AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  cubit.cancelSubscription(id);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: AppColors.white,
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                ),
+                child: Text(
+                  'إلغاء الاشتراك',
+                  style: AppTextStyles.style(fontWeight: FontWeight.bold, color: AppColors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

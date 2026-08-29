@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/utils/subscription_enums.dart';
 import '../../logic/subscriptions_cubit/subscriptions_cubit.dart';
 import '../../data/models/subscription_detail_model.dart';
 import '../../data/models/subscription_location_model.dart';
@@ -43,39 +44,78 @@ class _SubscriptionDetailsScreenState
     }
   }
 
-  String _formatTime(String? raw) {
-    if (raw == null || raw.isEmpty) return 'غير محدد';
-    try {
-      final parts = raw.split(':');
-      if (parts.length >= 2) {
-        final hour = int.parse(parts[0]);
-        final minute = int.parse(parts[1]);
-        final isPm = hour >= 12;
-        final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-        final displayMinute = minute.toString().padLeft(2, '0');
-        final period = isPm ? 'م' : 'ص';
-        return '$displayHour:$displayMinute $period';
-      }
-      return raw;
-    } catch (_) {
-      return raw;
-    }
-  }
 
-  String _shiftLabel(String? shift) {
-    if (shift == null) return 'غير محدد';
-    switch (shift.toLowerCase()) {
-      case 'morning':
-      case 'to_school':
-        return 'ذهاب فقط (الفترة الصباحية)';
-      case 'evening':
-      case 'from_school':
-        return 'عودة فقط (الفترة المسائية)';
-      case 'both':
-        return 'ذهاب وعودة';
-      default:
-        return shift;
-    }
+  SubscriptionDetailModel? _loadedDetail;
+
+  void _confirmCancel(BuildContext context, int subscriptionId) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cubit = context.read<SubscriptionsCubit>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
+          title: Text(
+            'إلغاء الاشتراك',
+            style: AppTextStyles.style(
+              fontWeight: FontWeight.bold,
+              fontSize: 16.sp,
+              color: isDark ? AppColors.white : AppColors.textDark,
+            ),
+          ),
+          content: Text(
+            'هل أنت متأكد من إلغاء هذا الاشتراك؟ سيتم إشعار السائق فوراً ولا يمكن التراجع عن هذا الإجراء.',
+            style: AppTextStyles.style(
+              fontSize: 13.sp,
+              color: isDark ? AppColors.grey300 : AppColors.grey700,
+              height: 1.5,
+            ),
+          ),
+          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+          actions: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: isDark ? AppColors.grey700 : AppColors.grey300),
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                ),
+                child: Text(
+                  'تراجع',
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.grey300 : AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  cubit.cancelSubscription(subscriptionId);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: AppColors.white,
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                ),
+                child: Text(
+                  'إلغاء الاشتراك',
+                  style: AppTextStyles.style(fontWeight: FontWeight.bold, color: AppColors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -102,22 +142,56 @@ class _SubscriptionDetailsScreenState
           backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
           foregroundColor: isDark ? AppColors.white : AppColors.textDark,
         ),
-        body: BlocBuilder<SubscriptionsCubit, SubscriptionsState>(
+        body: BlocConsumer<SubscriptionsCubit, SubscriptionsState>(
+          listener: (context, state) {
+            if (state is SubscriptionCancelSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.message,
+                    style: AppTextStyles.style(color: AppColors.white),
+                  ),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                ),
+              );
+              Navigator.of(context).pop(true);
+            } else if (state is SubscriptionCancelError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.message,
+                    style: AppTextStyles.style(color: AppColors.white),
+                  ),
+                  backgroundColor: AppColors.error,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                ),
+              );
+            }
+          },
           builder: (context, state) {
-            if (state is SubscriptionDetailLoading) {
+            if (state is SubscriptionDetailLoading && _loadedDetail == null) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state is SubscriptionDetailError) {
+            if (state is SubscriptionDetailError && _loadedDetail == null) {
               return _buildErrorState(context, state.message, isDark, theme);
             }
 
             if (state is SubscriptionDetailLoaded) {
+              _loadedDetail = state.detail;
+            }
+
+            final isCancelling = state is SubscriptionCancelLoading && state.id == widget.subscriptionId;
+
+            if (_loadedDetail != null) {
               return RefreshIndicator(
                 onRefresh: () => context
                     .read<SubscriptionsCubit>()
                     .fetchSubscriptionDetail(widget.subscriptionId),
-                child: _buildContent(context, state.detail, isDark, theme),
+                child: _buildContent(context, _loadedDetail!, isDark, theme, isCancelling),
               );
             }
 
@@ -129,7 +203,9 @@ class _SubscriptionDetailsScreenState
   }
 
   Widget _buildContent(BuildContext context, SubscriptionDetailModel sub,
-      bool isDark, ThemeData theme) {
+      bool isDark, ThemeData theme, bool isCancelling) {
+    final isCancellable = sub.status.toLowerCase() == 'accepted' || sub.status.toLowerCase() == 'active';
+
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.all(16.w),
@@ -145,6 +221,40 @@ class _SubscriptionDetailsScreenState
           _buildBillingCard(sub.billing, theme, isDark),
           SizedBox(height: 16.h),
           _buildAdditionalCard(sub, theme, isDark),
+          if (isCancellable) ...[
+            SizedBox(height: 20.h),
+            SizedBox(
+              width: double.infinity,
+              height: 48.h,
+              child: ElevatedButton.icon(
+                onPressed: isCancelling ? null : () => _confirmCancel(context, sub.id),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                  elevation: 0,
+                ),
+                icon: isCancelling
+                    ? SizedBox(
+                        width: 20.r,
+                        height: 20.r,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Icon(Icons.cancel_outlined, size: 20.r),
+                label: Text(
+                  isCancelling ? 'جاري الإلغاء...' : 'إلغاء الاشتراك',
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14.sp,
+                    color: AppColors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
           SizedBox(height: 20.h),
         ],
       ),
@@ -231,6 +341,16 @@ class _SubscriptionDetailsScreenState
                         color: isDark ? AppColors.grey400 : AppColors.textMuted,
                       ),
                     ),
+                    if (child.schoolAddress != null && child.schoolAddress!.isNotEmpty) ...[
+                      SizedBox(height: 2.h),
+                      Text(
+                        child.schoolAddress!,
+                        style: AppTextStyles.style(
+                          fontSize: 11.sp,
+                          color: isDark ? AppColors.grey500 : AppColors.grey500,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -437,16 +557,13 @@ class _SubscriptionDetailsScreenState
             ],
           ),
           SizedBox(height: 16.h),
-          _detailRow('الفترة', _shiftLabel(schedule.shiftLabel), isDark),
+          _detailRow('الفترة', SubscriptionEnums.timingLabel(schedule.timing), isDark),
+          _divider(isDark),
+          _detailRow('اتجاه الرحلة',
+              SubscriptionEnums.directionLabel(schedule.shift), isDark),
           _divider(isDark),
           _detailRow(
               'منطقة الالتقاط', schedule.pickupZoneName ?? 'غير محدد', isDark),
-          _divider(isDark),
-          _detailRow(
-              'وقت الالتقاط المتوقع', _formatTime(schedule.pickupTime), isDark),
-          _divider(isDark),
-          _detailRow(
-              'وقت التوصيل المتوقع', _formatTime(schedule.dropoffTime), isDark),
           SizedBox(height: 12.h),
           SizedBox(
             width: double.infinity,
@@ -541,9 +658,16 @@ class _SubscriptionDetailsScreenState
           _detailRow('سعر اشتراك الطفل', billing.formattedChildPrice, isDark,
               valueColor: theme.colorScheme.primary, isBoldValue: true),
           _divider(isDark),
+          _detailRow('سعر الرحلة', billing.formattedTripPrice, isDark),
+          _divider(isDark),
           _detailRow('السعر الإجمالي للطلب', billing.formattedTotalPrice, isDark,
               valueColor: theme.colorScheme.primary, isBoldValue: true),
           _divider(isDark),
+          if (billing.workingDaysCount != null) ...[
+            _detailRow(
+                'عدد أيام العمل', '${billing.workingDaysCount} يوم', isDark),
+            _divider(isDark),
+          ],
           _detailRow('تاريخ البداية', _formatDate(billing.startsAt), isDark),
           _divider(isDark),
           _detailRow('تاريخ النهاية', _formatDate(billing.endsAt), isDark),

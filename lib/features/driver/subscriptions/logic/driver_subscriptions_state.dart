@@ -36,3 +36,23 @@ class DriverSubscriptionDetailError extends DriverSubscriptionsState {
 
   DriverSubscriptionDetailError(this.message);
 }
+
+// ── إلغاء الاشتراك ──
+class DriverSubscriptionCancelLoading extends DriverSubscriptionsState {
+  final DriverSubscriptionModel subscription;
+
+  DriverSubscriptionCancelLoading(this.subscription);
+}
+
+class DriverSubscriptionCancelSuccess extends DriverSubscriptionsState {
+  final String message;
+
+  DriverSubscriptionCancelSuccess(this.message);
+}
+
+class DriverSubscriptionCancelError extends DriverSubscriptionsState {
+  final DriverSubscriptionModel subscription;
+  final String message;
+
+  DriverSubscriptionCancelError(this.subscription, this.message);
+}

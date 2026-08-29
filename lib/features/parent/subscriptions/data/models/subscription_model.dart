@@ -67,7 +67,7 @@ class SubscriptionModel {
 
   factory SubscriptionModel.fromJson(Map<String, dynamic> json) {
     return SubscriptionModel(
-      id: _parseInt(json['id']) ?? 0,
+      id: _parseInt(json['active_subscription_id'] ?? json['id'] ?? json['subscription_id']) ?? 0,
       subscriptionType: json['subscription_type']?.toString() ?? 'monthly',
       direction: json['direction']?.toString() ?? '',
       timing: json['timing']?.toString() ?? '',

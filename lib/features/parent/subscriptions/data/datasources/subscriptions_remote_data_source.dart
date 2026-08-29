@@ -85,10 +85,13 @@ class SubscriptionsRemoteDataSource {
     return SubscriptionDetailModel.fromJson(detail as Map<String, dynamic>);
   }
 
-  /// POST /api/guardian/requests/{id}/cancel (لإلغاء الطلب)
+  /// POST /api/parent/active-subscriptions/{id}/cancel (لإلغاء الاشتراك المفعل)
   Future<String> cancelSubscription(int id) async {
     final response = await _client.post(
-      ApiEndpoints.guardianRequestCancel(id),
+      ApiEndpoints.parentActiveSubscriptionCancel(id),
+      data: {
+        'active_subscription_id': id,
+      },
       headers: _authHeader,
     );
     final data = response.data;

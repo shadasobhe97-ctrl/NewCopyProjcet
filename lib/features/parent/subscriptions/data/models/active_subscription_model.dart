@@ -1,29 +1,23 @@
 // نموذج الاشتراك النشط - GET /api/parent/active-subscriptions
-// الـ response مختلف تماماً عن SubscriptionModel
+// نفس شكل رد GET /api/parent/active-subscriptions/{id}
 
 class ActiveSubscriptionModel {
   final int id;
-  final String status; // active | pending_start | completed | cancelled
+  final int requestId;
+  final String status; // accepted | pending_start | completed | cancelled
   final String? statusLabel;
-  final String? pickupTime;
-  final String? dropoffTime;
-  final Location? pickupLocation;
-  final Location? dropoffLocation;
+  final double totalPrice;
   final ActiveChild child;
-  final ActiveContract contract;
   final ActiveDriver driver;
   final String createdAt;
 
   const ActiveSubscriptionModel({
     required this.id,
+    required this.requestId,
     required this.status,
     this.statusLabel,
-    this.pickupTime,
-    this.dropoffTime,
-    this.pickupLocation,
-    this.dropoffLocation,
+    required this.totalPrice,
     required this.child,
-    required this.contract,
     required this.driver,
     required this.createdAt,
   });
@@ -34,6 +28,7 @@ class ActiveSubscriptionModel {
     }
     switch (status.toLowerCase()) {
       case 'active':
+      case 'accepted':
         return 'نشط';
       case 'pending_start':
       case 'pending':
@@ -48,7 +43,7 @@ class ActiveSubscriptionModel {
   }
 
   String get formattedPrice {
-    final tp = contract.totalPrice;
+    final tp = totalPrice;
     if (tp == tp.toInt()) {
       return '${tp.toInt()} دينار';
     }
@@ -58,91 +53,66 @@ class ActiveSubscriptionModel {
   String get childName => child.name ?? child.schoolName;
 
   factory ActiveSubscriptionModel.fromJson(Map<String, dynamic> json) {
+    final childJson = json['child'] as Map<String, dynamic>? ?? {};
+
     return ActiveSubscriptionModel(
-      id: _parseInt(json['id']) ?? 0,
-      status: json['status']?.toString() ?? 'active',
+      id: _parseInt(json['active_subscription_id'] ?? json['id'] ?? json['subscription_id']) ?? 0,
+      requestId: _parseInt(json['subscription_request_id'] ?? json['request_id'] ?? json['id']) ?? 0,
+      status: json['status']?.toString() ?? 'accepted',
       statusLabel: json['statusLabel']?.toString() ?? json['status_label']?.toString(),
-      pickupTime: json['pickup_time']?.toString(),
-      dropoffTime: json['dropoff_time']?.toString(),
-      pickupLocation: json['pickup_location'] is Map
-          ? Location.fromJson(
-              Map<String, dynamic>.from(json['pickup_location'] as Map))
-          : null,
-      dropoffLocation: json['dropoff_location'] is Map
-          ? Location.fromJson(
-              Map<String, dynamic>.from(json['dropoff_location'] as Map))
-          : null,
-      child: ActiveChild.fromJson(
-        json['child'] as Map<String, dynamic>? ?? {},
-      ),
-      contract: ActiveContract.fromJson(
-        (json['contract'] ?? json['billing']) as Map<String, dynamic>? ?? {},
-      ),
+      totalPrice: _parseDouble(json['total_price']) ?? 0.0,
+      child: ActiveChild.fromJson(childJson),
       driver: ActiveDriver.fromJson(
         json['driver'] as Map<String, dynamic>? ?? {},
       ),
-      createdAt: json['created_at']?.toString() ?? '',
+      createdAt: json['created_at']?.toString() ?? json['createdAt']?.toString() ?? '',
     );
   }
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        'subscription_request_id': requestId,
         'status': status,
         if (statusLabel != null) 'statusLabel': statusLabel,
-        if (pickupTime != null) 'pickup_time': pickupTime,
-        if (dropoffTime != null) 'dropoff_time': dropoffTime,
-        if (pickupLocation != null) 'pickup_location': pickupLocation!.toJson(),
-        if (dropoffLocation != null)
-          'dropoff_location': dropoffLocation!.toJson(),
+        'total_price': totalPrice,
         'child': child.toJson(),
-        'contract': contract.toJson(),
         'driver': driver.toJson(),
         'created_at': createdAt,
       };
 }
 
-// ── الموقع ──
-class Location {
-  final double latitude;
-  final double longitude;
-  final String? label;
-
-  const Location({
-    required this.latitude,
-    required this.longitude,
-    this.label,
-  });
-
-  factory Location.fromJson(Map<String, dynamic> json) => Location(
-        latitude: _parseDouble(json['latitude']) ?? 0.0,
-        longitude: _parseDouble(json['longitude']) ?? 0.0,
-        label: json['label']?.toString(),
-      );
-
-  Map<String, dynamic> toJson() => {
-        'latitude': latitude,
-        'longitude': longitude,
-        if (label != null) 'label': label,
-      };
-}
-
-// ── الطفل (واحد فقط، ليس مصفوفة) ──
+// ── الطفل (طفل واحد لكل اشتراك) ──
 class ActiveChild {
   final int id;
   final String? name;
   final String schoolName;
+  final String? schoolAddress;
+  final String? startDate;
+  final String? endDate;
 
   const ActiveChild({
     required this.id,
     this.name,
     required this.schoolName,
+    this.schoolAddress,
+    this.startDate,
+    this.endDate,
   });
 
-  factory ActiveChild.fromJson(Map<String, dynamic> json) => ActiveChild(
-        id: _parseInt(json['id']) ?? 0,
-        name: json['name']?.toString() ?? json['child_name']?.toString() ?? json['childName']?.toString(),
-        schoolName: json['school_name']?.toString() ?? json['schoolName']?.toString() ?? '',
-      );
+  factory ActiveChild.fromJson(Map<String, dynamic> json) {
+    final school = json['School'] as Map<String, dynamic>? ??
+        json['school'] as Map<String, dynamic>?;
+    final details = json['details'] as Map<String, dynamic>? ?? {};
+
+    return ActiveChild(
+      id: _parseInt(json['id']) ?? 0,
+      name: json['name']?.toString(),
+      schoolName: school?['name']?.toString() ?? '',
+      schoolAddress: school?['address']?.toString(),
+      startDate: details['start_date']?.toString(),
+      endDate: details['end_date']?.toString(),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -151,109 +121,33 @@ class ActiveChild {
       };
 }
 
-// ── العقد ──
-class ActiveContract {
-  final int id;
-  final String contractNumber;
-  final String startDate;
-  final String endDate;
-  final double totalPrice;
-  final String status;
-
-  const ActiveContract({
-    required this.id,
-    required this.contractNumber,
-    required this.startDate,
-    required this.endDate,
-    required this.totalPrice,
-    required this.status,
-  });
-
-  factory ActiveContract.fromJson(Map<String, dynamic> json) => ActiveContract(
-        id: _parseInt(json['id']) ?? 0,
-        contractNumber: json['contract_number']?.toString() ?? json['contractNumber']?.toString() ?? '',
-        startDate: json['start_date']?.toString() ?? json['startDate']?.toString() ?? json['startsAt']?.toString() ?? json['starts_at']?.toString() ?? '',
-        endDate: json['end_date']?.toString() ?? json['endDate']?.toString() ?? json['endsAt']?.toString() ?? json['ends_at']?.toString() ?? '',
-        totalPrice: _parseDouble(json['total_price']) ?? _parseDouble(json['totalPrice']) ?? 0.0,
-        status: json['status']?.toString() ?? 'active',
-      );
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'contract_number': contractNumber,
-        'start_date': startDate,
-        'end_date': endDate,
-        'total_price': totalPrice,
-        'status': status,
-      };
-}
-
-// ── السائق مع المركبة ──
+// ── السائق ──
 class ActiveDriver {
   final int id;
   final String name;
   final String? phone;
   final String? avatarUrl;
-  final ActiveVehicle? vehicle;
 
   const ActiveDriver({
     required this.id,
     required this.name,
     this.phone,
     this.avatarUrl,
-    this.vehicle,
   });
 
   factory ActiveDriver.fromJson(Map<String, dynamic> json) => ActiveDriver(
         id: _parseInt(json['id']) ?? 0,
         name: json['name']?.toString() ?? '',
         phone: json['phone']?.toString(),
-        avatarUrl: json['avatar_url']?.toString() ?? json['avatar']?.toString() ?? json['avatarUrl']?.toString(),
-        vehicle: json['vehicle'] is Map
-            ? ActiveVehicle.fromJson(
-                Map<String, dynamic>.from(json['vehicle'] as Map))
-            : null,
+        avatarUrl: json['photo']?.toString() ?? json['avatar_url']?.toString() ?? json['avatar']?.toString(),
       );
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
         if (phone != null) 'phone': phone,
-        if (avatarUrl != null) 'avatar_url': avatarUrl,
-        if (vehicle != null) 'vehicle': vehicle!.toJson(),
+        if (avatarUrl != null) 'photo': avatarUrl,
       };
-}
-
-// ── المركبة ──
-class ActiveVehicle {
-  final String plateNumber;
-  final String? brand;
-  final String? model;
-  final String? color;
-
-  const ActiveVehicle({
-    required this.plateNumber,
-    this.brand,
-    this.model,
-    this.color,
-  });
-
-  factory ActiveVehicle.fromJson(Map<String, dynamic> json) => ActiveVehicle(
-        plateNumber: json['plate_number']?.toString() ?? '',
-        brand: json['brand']?.toString(),
-        model: json['model']?.toString(),
-        color: json['color']?.toString(),
-      );
-
-  Map<String, dynamic> toJson() => {
-        'plate_number': plateNumber,
-        if (brand != null) 'brand': brand,
-        if (model != null) 'model': model,
-        if (color != null) 'color': color,
-      };
-
-  String get displayName =>
-      [brand, model, color].where((e) => e != null && e.isNotEmpty).join(' ');
 }
 
 // ─────────────────────────────────────────────
