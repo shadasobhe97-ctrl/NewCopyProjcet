@@ -125,13 +125,16 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
             children: [
               CustomScrollView(
                 slivers: [
-                  // البطاقة العلوية الثابتة - تظهر دائماً حتى أثناء التحميل أو حدوث خطأ
+                  // البطاقة العلوية الثابتة - مطابقة تماماً للتصميم في الصورة
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 8.h),
+                      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 12.h),
                       child: Container(
                         width: double.infinity,
-                        padding: EdgeInsets.all(20.w),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 10.h,
+                        ),
                         decoration: BoxDecoration(
                           color: context.isDarkMode
                               ? AppColors.darkCard
@@ -141,58 +144,49 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.black.withValues(
-                                alpha: context.isDarkMode ? 0.3 : 0.05,
+                                alpha: context.isDarkMode ? 0.3 : 0.04,
                               ),
                               blurRadius: 10.r,
                               offset: Offset(0, 3.h),
                             ),
                           ],
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
                           children: [
-                            Text(
-                              'أطفالي',
-                              style: AppTextStyles.style(
-                                fontSize: 20.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 4.h),
-                            Text(
-                              subtitle,
-                              style: AppTextStyles.style(
-                                color: AppColors.textMuted,
-                                fontSize: 13.sp,
-                              ),
-                            ),
-                            SizedBox(height: 16.h),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                // يظل الزر متاحاً للإضافة طالما لا توجد عملية حذف/تعديل جارية
-                                onPressed: isActionLoading
-                                    ? null
-                                    : () => _openAddChild(context),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primaryLight,
-                                  foregroundColor: AppColors.white,
-                                  elevation: 0,
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: 14.h,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: AppTheme.radius(12.r),
-                                  ),
+                            // ── الجهة اليمنى (في اتجاه RTL): أيقونة المجموعة + النص ──
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.people_alt_rounded,
+                                  color: context.primaryColor,
+                                  size: 24.r,
                                 ),
-                                child: Text(
-                                  'إضافة طفل جديد',
+                                SizedBox(width: 8.w),
+                                Text(
+                                  subtitle,
                                   style: AppTextStyles.style(
+                                    fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 15.sp,
+                                    color: context.isDarkMode
+                                        ? AppColors.white
+                                        : AppColors.textDark,
                                   ),
                                 ),
+                              ],
+                            ),
+                            const Spacer(),
+                            // ── الجهة اليسرى (في اتجاه RTL): أيقونة + للإضافة ──
+                            IconButton(
+                              onPressed: isActionLoading
+                                  ? null
+                                  : () => _openAddChild(context),
+                              icon: Icon(
+                                Icons.add_rounded,
+                                color: context.primaryColor,
+                                size: 30.r,
                               ),
+                              tooltip: 'إضافة طفل جديد',
                             ),
                           ],
                         ),

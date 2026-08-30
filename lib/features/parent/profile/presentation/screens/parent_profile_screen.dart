@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -82,7 +80,9 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     if (!mounted) return;
     final current = _emailController.text.trim();
     final isDifferent =
-        current.isNotEmpty && _originalEmail.isNotEmpty && current != _originalEmail;
+        current.isNotEmpty &&
+        _originalEmail.isNotEmpty &&
+        current != _originalEmail;
     if (isDifferent != _isEmailEdited) {
       setState(() {
         _isEmailEdited = isDifferent;
@@ -197,7 +197,9 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text('تم رفض طلب تغيير البريد الإلكتروني.'),
+                      content: const Text(
+                        'تم رفض طلب تغيير البريد الإلكتروني.',
+                      ),
                       backgroundColor: context.errorColor,
                     ),
                   );
@@ -205,7 +207,9 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text('انتهت صلاحية رابط تأكيد البريد الإلكتروني.'),
+                      content: const Text(
+                        'انتهت صلاحية رابط تأكيد البريد الإلكتروني.',
+                      ),
                       backgroundColor: context.errorColor,
                     ),
                   );
@@ -248,126 +252,128 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                         MediaQuery.sizeOf(context).height * 0.04,
                       ),
                       child: Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          _buildAvatarSection(),
-                          SizedBox(
-                            height: MediaQuery.sizeOf(context).height * 0.035,
-                          ),
-                          _ProfileFieldCard(
-                            focusNode: _nameFocus,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildFieldLabel('الاسم بالكامل'),
-                                TextFormField(
-                                  controller: _nameController,
-                                  focusNode: _nameFocus,
-                                  decoration: _buildInputDecoration(
-                                    hintText: 'أدخل اسمك الكامل',
-                                    icon: Icons.person_outline_rounded,
-                                  ),
-                                  validator: (val) => val == null || val.isEmpty
-                                      ? 'يرجى إدخال الاسم'
-                                      : null,
-                                ),
-                              ],
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            _buildAvatarSection(),
+                            SizedBox(
+                              height: MediaQuery.sizeOf(context).height * 0.035,
                             ),
-                          ),
-                          SizedBox(
-                            height: MediaQuery.sizeOf(context).height * 0.02,
-                          ),
-                          _ProfileFieldCard(
-                            focusNode: _phoneFocus,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildFieldLabel('رقم الهاتف الأساسي'),
-                                TextFormField(
-                                  controller: _phoneController,
-                                  focusNode: _phoneFocus,
-                                  keyboardType: TextInputType.phone,
-                                  decoration: _buildInputDecoration(
-                                    hintText: 'أدخل رقم الهاتف الأساسي',
-                                    icon: Icons.phone_rounded,
+                            _ProfileFieldCard(
+                              focusNode: _nameFocus,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildFieldLabel('الاسم بالكامل'),
+                                  TextFormField(
+                                    controller: _nameController,
+                                    focusNode: _nameFocus,
+                                    decoration: _buildInputDecoration(
+                                      hintText: 'أدخل اسمك الكامل',
+                                      icon: Icons.person_outline_rounded,
+                                    ),
+                                    validator: (val) =>
+                                        val == null || val.isEmpty
+                                        ? 'يرجى إدخال الاسم'
+                                        : null,
                                   ),
-                                  validator: (val) =>
-                                      AppValidators.validateLibyanPhone(
-                                    val,
-                                    isRequired: true,
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          SizedBox(
-                            height: MediaQuery.sizeOf(context).height * 0.02,
-                          ),
-                          _ProfileFieldCard(
-                            focusNode: _backupFocus,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildFieldLabel('رقم هاتف الاحتياط'),
-                                TextFormField(
-                                  controller: _backupPhoneController,
-                                  focusNode: _backupFocus,
-                                  keyboardType: TextInputType.phone,
-                                  decoration: _buildInputDecoration(
-                                    hintText: 'أدخل رقم هاتف الاحتياط',
-                                    icon: Icons.phone_android_rounded,
-                                  ),
-                                  validator: (v) => AppValidators.validateLibyanPhone(
-                                    v,
-                                    isRequired: false,
-                                    primaryPhone: _phoneController.text,
-                                  ),
-                                ),
-                              ],
+                            SizedBox(
+                              height: MediaQuery.sizeOf(context).height * 0.02,
                             ),
-                          ),
-                          SizedBox(
-                            height: MediaQuery.sizeOf(context).height * 0.02,
-                          ),
-                          _ProfileFieldCard(
-                            focusNode: _emailFocus,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildFieldLabel('البريد الإلكتروني'),
-                                ProfileEmailField(
-                                  controller: _emailController,
-                                  isVerified: _isEmailVerified,
-                                  isEdited: _isEmailEdited,
-                                ),
-                              ],
+                            _ProfileFieldCard(
+                              focusNode: _phoneFocus,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildFieldLabel('رقم الهاتف الأساسي'),
+                                  TextFormField(
+                                    controller: _phoneController,
+                                    focusNode: _phoneFocus,
+                                    keyboardType: TextInputType.phone,
+                                    decoration: _buildInputDecoration(
+                                      hintText: 'أدخل رقم الهاتف الأساسي',
+                                      icon: Icons.phone_rounded,
+                                    ),
+                                    validator: (val) =>
+                                        AppValidators.validateLibyanPhone(
+                                          val,
+                                          isRequired: true,
+                                        ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          SizedBox(
-                            height: MediaQuery.sizeOf(context).height * 0.04,
-                          ),
-                          PrimaryButton(
-                            label: isSaving
-                                ? 'جاري الحفظ...'
-                                : 'حفظ التغييرات',
-                            onPressed: isSaving ? null : _saveProfile,
-                            borderRadius: 30,
-                            width: MediaQuery.sizeOf(context).width * 0.9,
-                          ),
-                          SizedBox(
-                            height: MediaQuery.sizeOf(context).height * 0.02,
-                          ),
-                        ],
+                            SizedBox(
+                              height: MediaQuery.sizeOf(context).height * 0.02,
+                            ),
+                            _ProfileFieldCard(
+                              focusNode: _backupFocus,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildFieldLabel('رقم هاتف الاحتياط'),
+                                  TextFormField(
+                                    controller: _backupPhoneController,
+                                    focusNode: _backupFocus,
+                                    keyboardType: TextInputType.phone,
+                                    decoration: _buildInputDecoration(
+                                      hintText: 'أدخل رقم هاتف الاحتياط',
+                                      icon: Icons.phone_android_rounded,
+                                    ),
+                                    validator: (v) =>
+                                        AppValidators.validateLibyanPhone(
+                                          v,
+                                          isRequired: false,
+                                          primaryPhone: _phoneController.text,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              height: MediaQuery.sizeOf(context).height * 0.02,
+                            ),
+                            _ProfileFieldCard(
+                              focusNode: _emailFocus,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildFieldLabel('البريد الإلكتروني'),
+                                  ProfileEmailField(
+                                    controller: _emailController,
+                                    isVerified: _isEmailVerified,
+                                    isEdited: _isEmailEdited,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              height: MediaQuery.sizeOf(context).height * 0.04,
+                            ),
+                            PrimaryButton(
+                              label: isSaving
+                                  ? 'جاري الحفظ...'
+                                  : 'حفظ التغييرات',
+                              onPressed: isSaving ? null : _saveProfile,
+                              borderRadius: 30,
+                              width: MediaQuery.sizeOf(context).width * 0.9,
+                            ),
+                            SizedBox(
+                              height: MediaQuery.sizeOf(context).height * 0.02,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
+        );
       },
     );
   }
@@ -432,10 +438,7 @@ class _ProfileFieldCard extends StatefulWidget {
   final Widget child;
   final FocusNode focusNode;
 
-  const _ProfileFieldCard({
-    required this.child,
-    required this.focusNode,
-  });
+  const _ProfileFieldCard({required this.child, required this.focusNode});
 
   @override
   State<_ProfileFieldCard> createState() => _ProfileFieldCardState();

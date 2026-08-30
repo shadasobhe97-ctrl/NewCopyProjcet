@@ -9,8 +9,9 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/transport_details_screen.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/child_data_details_screen.dart';
+import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step1_screen.dart';
 import 'subscription_confirmation_screen.dart';
+import '../widgets/child_selection_card_widget.dart';
 import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
 import 'package:kids_transport/features/parent/search/logic/search_state.dart';
 import 'package:kids_transport/features/parent/search/data/models/subscription_request.dart';
@@ -21,6 +22,7 @@ import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/features/parent/reviews/logic/reviews_cubit.dart';
 import 'package:kids_transport/features/parent/reviews/logic/reviews_state.dart';
+import 'package:kids_transport/features/parent/reviews/data/repositories/reviews_repository.dart';
 import 'package:kids_transport/features/parent/reviews/data/models/review_model.dart';
 import 'package:kids_transport/features/parent/reviews/presention/reviews/rating_summary.dart';
 import 'package:kids_transport/features/parent/reviews/presention/reviews/review_card.dart';
@@ -34,6 +36,8 @@ import 'package:kids_transport/features/parent/complaints/presentation/screens/c
 import 'package:url_launcher/url_launcher.dart';
 import 'package:kids_transport/features/chat/presentation/screens/chat_room_screen.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/features/parent/subscriptions/logic/subscriptions_cubit/subscriptions_cubit.dart';
+import 'package:kids_transport/features/parent/subscriptions/data/repositories/subscriptions_repository.dart';
 
 
 class DriverProfileView extends StatefulWidget {
@@ -78,6 +82,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     super.initState();
     _selectedKidsIds = List<int>.from(widget.initialSelectedKidsIds);
     context.read<ChildrenCubit>().fetchChildren();
+    context.read<SubscriptionsCubit>().fetchSubscriptions();
   }
 
   // ─── Actions ────────────────────────────────────────────────────────────────
@@ -87,29 +92,37 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       return;
     }
 
-    // اعرف السائق → يبعت طلب تسعير للباك
-    if (!widget.showPricing && widget.searchQuery.isNotEmpty) {
-      context.read<SearchCubit>().getPricing(
-        searchQuery: widget.searchQuery,
-        childIds: _selectedKidsIds,
-      );
-      return;
+    _loadingShowing = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    ).then((_) => _loadingShowing = false);
+
+    final fresh = await context.read<SearchCubit>().fetchDriverPricing(
+      driverId: widget.driver.driverId,
+      childIds: _selectedKidsIds,
+    );
+
+    if (_loadingShowing) {
+      Navigator.of(context).pop();
     }
 
-    // ابحث عن سائق مناسب → أعد جلب التسعير للتشكيلة الحالية من الأطفال
-    // (قد تكون مختلفة عن التشكيلة التي بحث بها السائق أول مرة) ثم أكّد
-    if (widget.showPricing) {
-      final fresh = await context.read<SearchCubit>().fetchDriverPricing(
-        driverId: widget.driver.driverId,
-        childIds: _selectedKidsIds,
-      );
-      if (!mounted) return;
-      if (fresh != null) {
-        setState(() => _pricedDriver = fresh);
-      }
-      _showConfirmDialog();
-      return;
+    if (!mounted) return;
+
+    if (fresh != null) {
+      setState(() => _pricedDriver = fresh);
     }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SubscriptionConfirmationScreen(
+          driver: fresh ?? widget.driver,
+          selectedKids: _selectedKids,
+        ),
+      ),
+    );
   }
 
   void _showConfirmDialog() {
@@ -391,8 +404,43 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     }
   }
 
-  void _handleOpenChat(DriverSearchModel driver, bool hasSubscription) {
-    if (!hasSubscription) {
+  void _handleOpenChat(DriverSearchModel driver) async {
+    bool hasActiveSub = false;
+
+    // 1. استخدام حالة ReviewsCubit أولاً إذا كانت محمّلة
+    final reviewsState = context.read<ReviewsCubit>().state;
+    if (reviewsState is ReviewsLoaded) {
+      hasActiveSub = reviewsState.hasSubscription;
+    } else {
+      // 2. التحقق من السيرفر باستخدام نفس دالة التحقق الخاصة بالتعليقات (checkSubscription)
+      try {
+        final checkRes = await getIt<ReviewsRepository>()
+            .checkSubscription(driver.driverId);
+        hasActiveSub = checkRes.hasSubscription == true;
+      } catch (_) {}
+
+      // 3. كبديل إضافي: فحص كاش/قائمة الاشتراكات
+      if (!hasActiveSub) {
+        try {
+          final subState = context.read<SubscriptionsCubit>().state;
+          if (subState is SubscriptionsLoaded) {
+            hasActiveSub = subState.subscriptions.any(
+              (sub) => sub.driver.id == driver.driverId,
+            );
+          }
+          if (!hasActiveSub) {
+            final cached = await getIt<SubscriptionsRepository>()
+                .getCachedSubscriptions();
+            hasActiveSub =
+                cached.any((sub) => sub.driver.id == driver.driverId);
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (!mounted) return;
+
+    if (!hasActiveSub) {
       _showSnack(
         'المحادثات المباشرة متاحة فقط مع السائقين الذين لديك معهم اشتراك نشط.',
         AppColors.amber,
@@ -537,94 +585,30 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     );
   }
 
-  void _showEditChoiceDialog(BuildContext context, ChildModel kid) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
-          title: Text(
-            "ماذا تود أن تعدل؟",
-            style: AppTextStyles.style(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: isDark ? AppColors.white : AppColors.textDark,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                leading: Icon(
-                  Icons.edit_road_rounded,
-                  color: theme.colorScheme.primary,
-                ),
-                title: Text(
-                  "بيانات النقل",
-                  style: AppTextStyles.style(
-                    fontSize: 14,
-                    color: isDark ? AppColors.grey200 : AppColors.textDark,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TransportDetailsScreen(child: kid),
-                    ),
-                  ).then((_) {
-                    if (context.mounted) {
-                      context.read<ChildrenCubit>().fetchChildren();
-                    }
-                  });
-                },
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                leading: Icon(
-                  Icons.person_outline_rounded,
-                  color: theme.colorScheme.primary,
-                ),
-                title: Text(
-                  "بيانات الطفل",
-                  style: AppTextStyles.style(
-                    fontSize: 14,
-                    color: isDark ? AppColors.grey200 : AppColors.textDark,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChildDataDetailsScreen(child: kid),
-                    ),
-                  ).then((_) {
-                    if (context.mounted) {
-                      context.read<ChildrenCubit>().fetchChildren();
-                    }
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
+  void _openEditPersonalData(BuildContext context, ChildModel kid) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddChildStep1Screen(child: kid),
       ),
-    );
+    ).then((_) {
+      if (context.mounted) {
+        context.read<ChildrenCubit>().fetchChildren();
+      }
+    });
+  }
+
+  void _openEditTransportData(BuildContext context, ChildModel kid) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TransportDetailsScreen(child: kid),
+      ),
+    ).then((_) {
+      if (context.mounted) {
+        context.read<ChildrenCubit>().fetchChildren();
+      }
+    });
   }
 
   void _showChildrenPicker() {
@@ -746,124 +730,26 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                           shrinkWrap: true,
                           itemCount: availableKids.length,
                           itemBuilder: (lCtx, index) {
-                          final kid = availableKids[index];
-                          final isSel = kid.id != null && temp.contains(kid.id);
-                          final isMale = kid.gender.toLowerCase() == 'male';
+                            final kid = availableKids[index];
+                            final isSel =
+                                kid.id != null && temp.contains(kid.id);
 
-                          return GestureDetector(
-                            onTap: () => setSheet(() {
-                              if (kid.id != null) {
-                                isSel ? temp.remove(kid.id) : temp.add(kid.id!);
-                              }
-                            }),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              margin: const EdgeInsets.only(bottom: 10),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSel
-                                    ? theme.colorScheme.primary.withValues(
-                                        alpha: isDark ? 0.1 : 0.04,
-                                      )
-                                    : (isDark
-                                          ? AppColors.grey900
-                                          : AppColors.grey50),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: isSel
-                                      ? theme.colorScheme.primary
-                                      : (isDark
-                                            ? AppColors.grey800
-                                            : AppColors.grey200),
-                                  width: isSel ? 1.5 : 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 18,
-                                    backgroundColor:
-                                        (isMale
-                                                ? theme.colorScheme.primary
-                                                : AppColors.femalePink)
-                                            .withValues(alpha: 0.1),
-                                    backgroundImage: kid.photoUrl != null
-                                        ? NetworkImage(kid.photoUrl!)
-                                        : null,
-                                    child: kid.photoUrl == null
-                                        ? Icon(
-                                            isMale
-                                                ? Icons.face_rounded
-                                                : Icons.face_4_rounded,
-                                            color: isMale
-                                                ? theme.colorScheme.primary
-                                                : AppColors.femalePink,
-                                            size: 20,
-                                          )
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          kid.name,
-                                          style: AppTextStyles.style(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                            color: isDark
-                                                ? AppColors.white
-                                                : AppColors.textDark,
-                                          ),
-                                        ),
-                                        Text(
-                                          kid.schoolName,
-                                          style: AppTextStyles.style(
-                                            fontSize: 11,
-                                            color: isDark
-                                                ? AppColors.grey400
-                                                : AppColors.textMuted,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Checkbox(
-                                    value: isSel,
-                                    activeColor: theme.colorScheme.primary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    onChanged: (v) => setSheet(() {
-                                      if (kid.id != null) {
-                                        (v == true)
-                                            ? temp.add(kid.id!)
-                                            : temp.remove(kid.id);
-                                      }
-                                    }),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.edit_rounded,
-                                      size: 20,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                    onPressed: () =>
-                                        _showEditChoiceDialog(context, kid),
-                                    tooltip: 'تعديل',
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                            return ChildSelectionCardWidget(
+                              kid: kid,
+                              isSelected: isSel,
+                              onKidToggle: (id, val) => setSheet(() {
+                                if (val) {
+                                  if (!temp.contains(id)) temp.add(id);
+                                } else {
+                                  temp.remove(id);
+                                }
+                              }),
+                              onEditPersonalData: (k) => _openEditPersonalData(context, k),
+                              onEditTransportData: (k) => _openEditTransportData(context, k),
+                            );
+                          },
+                        ),
                       ),
-                    ),
 
                     if (temp.length > 1) ...[
                       const SizedBox(height: 8),
@@ -906,7 +792,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: () async {
+                        onPressed: () {
                           if (temp.isEmpty) {
                             _showSnack(
                               'يرجى اختيار طفل واحد على الأقل.',
@@ -917,45 +803,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                           Navigator.pop(ctx);
                           setState(() {
                             _selectedKidsIds = temp;
-                            // امسح التسعير القديم فوراً لحد ما يوصل تسعير جديد
-                            // يطابق التشكيلة الحالية من الأطفال
                             _pricedDriver = null;
-                          });
-
-                          // أعد جلب التسعير للتشكيلة الحالية من الأطفال حتى
-                          // ينعكس خصم الإخوة (أو عدمه) الصحيح، بدل الاعتماد
-                          // على نتيجة البحث الأولى القديمة
-                          final fresh = await context
-                              .read<SearchCubit>()
-                              .fetchDriverPricing(
-                                driverId: widget.driver.driverId,
-                                childIds: temp,
-                              );
-                          if (!context.mounted) return;
-                          if (fresh != null) {
-                            setState(() => _pricedDriver = fresh);
-                          }
-
-                          final selectedKidsList = availableKids
-                              .where((k) => k.id != null && temp.contains(k.id))
-                              .toList();
-                          if (!context.mounted) return;
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  SubscriptionConfirmationScreen(
-                                    driver: fresh ?? widget.driver,
-                                    selectedKids: selectedKidsList,
-                                  ),
-                            ),
-                          ).then((wasConfirmed) {
-                            if (!mounted) return;
-                            if (wasConfirmed == true) {
-                              Navigator.pop(context);
-                            } else {
-                              _showChildrenPicker();
-                            }
                           });
                         },
                         style: ElevatedButton.styleFrom(
@@ -1675,7 +1523,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => _handleOpenChat(d, hasSub),
+                      onPressed: () => _handleOpenChat(d),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: hasSub
                             ? theme.colorScheme.primary
@@ -2257,35 +2105,28 @@ class _DriverProfileViewState extends State<DriverProfileView> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 10),
-        Row(
-          children: [
-            _messageBtn(theme),
-            const SizedBox(width: 12),
-            Expanded(
-              child: SizedBox(
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _showChildrenPicker,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(
-                    'اختيار الأطفال',
-                    style: AppTextStyles.style(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: theme.colorScheme.onPrimary,
-                    ),
-                  ),
-                ),
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: _showChildrenPicker,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
               ),
             ),
-          ],
+            child: Text(
+              'اختيار الأطفال',
+              style: AppTextStyles.style(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: theme.colorScheme.onPrimary,
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -2325,84 +2166,31 @@ class _DriverProfileViewState extends State<DriverProfileView> {
           ],
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            _messageBtn(theme),
-            const SizedBox(width: 12),
-            Expanded(
-              child: SizedBox(
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: _onSendRequest,
-                  icon: const Icon(Icons.send_rounded, size: 18),
-                  label: Text(
-                    'متابعة وتأكيد الطلب',
-                    style: AppTextStyles.style(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: theme.colorScheme.onPrimary,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: _onSendRequest,
+            icon: const Icon(Icons.send_rounded, size: 18),
+            label: Text(
+              'متابعة وتأكيد الطلب',
+              style: AppTextStyles.style(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: theme.colorScheme.onPrimary,
               ),
             ),
-          ],
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
         ),
       ],
-    );
-  }
-
-  Widget _messageBtn(ThemeData theme) {
-    // IntrinsicWidth is required here: _messageBtn is a non-Expanded child of
-    // a Row, so Flutter measures it with maxWidth=infinity. Without IntrinsicWidth,
-    // SizedBox(height:52) passes that infinity directly to OutlinedButton's
-    // RenderConstrainedBox → BoxConstraints(w=Infinity) crash.
-    // IntrinsicWidth pre-computes the button's natural content width (finite),
-    // so RenderConstrainedBox always receives bounded constraints.
-    return IntrinsicWidth(
-      child: SizedBox(
-        height: 52,
-        child: OutlinedButton(
-          onPressed: () => _handleOpenChat(_effectiveDriver, true),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: theme.colorScheme.primary,
-            side: BorderSide(
-              color: theme.colorScheme.primary.withValues(alpha: 0.35),
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.chat_bubble_outline_rounded,
-                size: 18,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'رسالة',
-                style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 

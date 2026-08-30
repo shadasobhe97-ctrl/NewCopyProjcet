@@ -45,8 +45,12 @@ class TripDetailsModel {
       );
     }
 
-    VehicleInfoModel vehicleObj = VehicleInfoModel.fromJson(json['vehicle'] ?? json['vehicle_info']);
-    DestinationInfo destObj = DestinationInfo.fromJson(json['destination'] is Map<String, dynamic> ? json['destination'] : {});
+    VehicleInfoModel vehicleObj = VehicleInfoModel.fromJson(
+      json['vehicle'] ?? json['vehicle_info'],
+    );
+    DestinationInfo destObj = DestinationInfo.fromJson(
+      json['destination'] is Map<String, dynamic> ? json['destination'] : {},
+    );
 
     List<TripChildInfo> childrenList = [];
     if (json['children'] is List) {

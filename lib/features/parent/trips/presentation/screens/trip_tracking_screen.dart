@@ -353,6 +353,17 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                           color: AppColors.textMuted,
                         ),
                       ),
+                      if (trip.busOccupancy != null) ...[
+                        SizedBox(height: 2.h),
+                        Text(
+                          'ركاب الحافلة: ${trip.busOccupancy!.displayOccupancy}',
+                          style: AppTextStyles.style(
+                            fontSize: 9.5.sp,
+                            fontWeight: FontWeight.bold,
+                            color: context.primaryColor,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

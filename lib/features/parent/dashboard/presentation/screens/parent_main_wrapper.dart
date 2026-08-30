@@ -10,7 +10,6 @@ import 'package:kids_transport/features/parent/home/presentation/screens/parent_
 import 'package:kids_transport/features/parent/children/presentation/screens/my_children_screen.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/features/parent/search/presentation/screens/parent_search_screen.dart';
 import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscriptions_screen.dart';
 import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profile_cubit.dart';
@@ -56,6 +55,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
     final name = context.read<ParentProfileCubit>().getCachedFullName();
     return name.isEmpty ? "ولي أمر" : name;
   }
+
   final String? userAvatarurl = null;
 
   late final List<Widget> _screens;
@@ -222,9 +222,8 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ChatListScreen(
-                          userRole: UserRole.parent,
-                        ),
+                        builder: (context) =>
+                            const ChatListScreen(userRole: UserRole.parent),
                       ),
                     );
                   },
@@ -247,7 +246,10 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                             size: 22,
                           ),
                           onPressed: () {
-                            Navigator.pushNamed(context, AppRoutes.notifications).then((_) {
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.notifications,
+                            ).then((_) {
                               getIt<NotificationCubit>().updateUnreadCount();
                             });
                           },

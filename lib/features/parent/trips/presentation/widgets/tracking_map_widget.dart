@@ -127,34 +127,86 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
         ),
       );
 
-      // Destination marker with Name Tag above
+      // Destination / Schools / Home markers with Name Tag above
       if (widget.singleTrip != null) {
-        final destLatLng = LatLng(
-          widget.singleTrip!.destination.lat,
-          widget.singleTrip!.destination.lng,
-        );
-        markers.add(
-          Marker(
-            point: destLatLng,
-            width: 100.w,
-            height: 75.h,
-            child: _buildDestinationMarker(
-              context,
-              widget.singleTrip!.destination.type == 'home'
-                  ? Icons.home_rounded
-                  : Icons.school_rounded,
-              widget.singleTrip!.destination.name,
-            ),
-          ),
-        );
+        final trip = widget.singleTrip!;
 
-        polylines.add(
-          Polyline(
-            points: [driverLatLng, destLatLng],
-            strokeWidth: 5.0,
-            color: context.primaryColor,
-          ),
-        );
+        // Render Unique Schools (Deduplicated)
+        for (final school in trip.uniqueSchools) {
+          final schoolLatLng = LatLng(school.lat, school.lng);
+          markers.add(
+            Marker(
+              point: schoolLatLng,
+              width: 110.w,
+              height: 75.h,
+              child: _buildDestinationMarker(
+                context,
+                Icons.school_rounded,
+                school.name,
+              ),
+            ),
+          );
+
+          polylines.add(
+            Polyline(
+              points: [driverLatLng, schoolLatLng],
+              strokeWidth: 5.0,
+              color: context.primaryColor,
+            ),
+          );
+        }
+
+        // Render Unique Home Addresses (Deduplicated)
+        for (final home in trip.uniqueHomeAddresses) {
+          final homeLatLng = LatLng(home.lat, home.lng);
+          markers.add(
+            Marker(
+              point: homeLatLng,
+              width: 110.w,
+              height: 75.h,
+              child: _buildDestinationMarker(
+                context,
+                Icons.home_rounded,
+                home.title.isNotEmpty ? home.title : 'المنزل',
+              ),
+            ),
+          );
+
+          polylines.add(
+            Polyline(
+              points: [driverLatLng, homeLatLng],
+              strokeWidth: 5.0,
+              color: AppColors.accentPurple,
+            ),
+          );
+        }
+
+        // Fallback for destination if unique arrays are empty
+        if (trip.uniqueSchools.isEmpty && trip.uniqueHomeAddresses.isEmpty) {
+          final destLatLng = LatLng(trip.destination.lat, trip.destination.lng);
+          markers.add(
+            Marker(
+              point: destLatLng,
+              width: 110.w,
+              height: 75.h,
+              child: _buildDestinationMarker(
+                context,
+                trip.destination.type == 'home'
+                    ? Icons.home_rounded
+                    : Icons.school_rounded,
+                trip.destination.name,
+              ),
+            ),
+          );
+
+          polylines.add(
+            Polyline(
+              points: [driverLatLng, destLatLng],
+              strokeWidth: 5.0,
+              color: context.primaryColor,
+            ),
+          );
+        }
       }
     } else if (widget.isMultiMode && widget.multiTracks.isNotEmpty) {
       initialCenter = LatLng(
@@ -195,34 +247,59 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
           ),
         );
 
-        // Destination Marker
+        // Destination Marker (Deduplicated)
         if (tripMatch != null) {
-          final destLatLng = LatLng(
-            tripMatch.destination.lat,
-            tripMatch.destination.lng,
-          );
-          markers.add(
-            Marker(
-              point: destLatLng,
-              width: 100.w,
-              height: 75.h,
-              child: _buildDestinationMarker(
-                context,
-                tripMatch.destination.type == 'home'
-                    ? Icons.home_rounded
-                    : Icons.school_rounded,
-                tripMatch.destination.name,
+          if (tripMatch.uniqueSchools.isNotEmpty) {
+            for (final school in tripMatch.uniqueSchools) {
+              final schoolLatLng = LatLng(school.lat, school.lng);
+              markers.add(
+                Marker(
+                  point: schoolLatLng,
+                  width: 110.w,
+                  height: 75.h,
+                  child: _buildDestinationMarker(
+                    context,
+                    Icons.school_rounded,
+                    school.name,
+                  ),
+                ),
+              );
+              polylines.add(
+                Polyline(
+                  points: [driverLatLng, schoolLatLng],
+                  strokeWidth: 5.0,
+                  color: color,
+                ),
+              );
+            }
+          } else {
+            final destLatLng = LatLng(
+              tripMatch.destination.lat,
+              tripMatch.destination.lng,
+            );
+            markers.add(
+              Marker(
+                point: destLatLng,
+                width: 110.w,
+                height: 75.h,
+                child: _buildDestinationMarker(
+                  context,
+                  tripMatch.destination.type == 'home'
+                      ? Icons.home_rounded
+                      : Icons.school_rounded,
+                  tripMatch.destination.name,
+                ),
               ),
-            ),
-          );
+            );
 
-          polylines.add(
-            Polyline(
-              points: [driverLatLng, destLatLng],
-              strokeWidth: 5.0,
-              color: color,
-            ),
-          );
+            polylines.add(
+              Polyline(
+                points: [driverLatLng, destLatLng],
+                strokeWidth: 5.0,
+                color: color,
+              ),
+            );
+          }
         }
       }
     }

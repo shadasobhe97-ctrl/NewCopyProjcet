@@ -18,23 +18,40 @@ class TripStatusChip extends StatelessWidget {
     this.isCompact = false,
   });
 
-  factory TripStatusChip.fromStatusString(String status, {bool isCompact = false}) {
+  factory TripStatusChip.fromStatusString(
+    String status, {
+    bool isCompact = false,
+  }) {
     final s = status.toLowerCase();
-    if (s.contains('waiting') || s.contains('ينتظر') || s.contains('انتظار')) {
+    if (s.contains('waiting') ||
+        s.contains('pending') ||
+        s.contains('boarding') ||
+        s.contains('ينتظر') ||
+        s.contains('انتظار')) {
       return TripStatusChip(
-        statusText: 'ينتظر',
+        statusText: 'في انتظار الصعود',
         type: StatusType.waiting,
         isCompact: isCompact,
       );
     }
-    if (s.contains('in_bus') || s.contains('picked_up') || s.contains('صعود') || s.contains('طريق')) {
+    if (s.contains('in_bus') ||
+        s.contains('in_progress') ||
+        s.contains('active') ||
+        s.contains('picked_up') ||
+        s.contains('started') ||
+        s.contains('صعود') ||
+        s.contains('طريق')) {
       return TripStatusChip(
         statusText: 'في الطريق',
         type: StatusType.inBus,
         isCompact: isCompact,
       );
     }
-    if (s.contains('arrived') || s.contains('dropped_off') || s.contains('وصل')) {
+    if (s.contains('arrived') ||
+        s.contains('dropped_off') ||
+        s.contains('completed') ||
+        s.contains('وصل') ||
+        s.contains('مكتمل')) {
       return TripStatusChip(
         statusText: 'تم الوصول',
         type: StatusType.arrived,
@@ -48,8 +65,15 @@ class TripStatusChip extends StatelessWidget {
         isCompact: isCompact,
       );
     }
+    if (s.contains('cancelled') || s.contains('ملغي')) {
+      return TripStatusChip(
+        statusText: 'ملغاة',
+        type: StatusType.absent,
+        isCompact: isCompact,
+      );
+    }
     return TripStatusChip(
-      statusText: status,
+      statusText: 'جارية',
       type: StatusType.inBus,
       isCompact: isCompact,
     );
@@ -77,10 +101,7 @@ class TripStatusChip extends StatelessWidget {
       return Container(
         width: 8.r,
         height: 8.r,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       );
     }
 
@@ -96,10 +117,7 @@ class TripStatusChip extends StatelessWidget {
           Container(
             width: 7.r,
             height: 7.r,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           SizedBox(width: 6.w),
           Text(
