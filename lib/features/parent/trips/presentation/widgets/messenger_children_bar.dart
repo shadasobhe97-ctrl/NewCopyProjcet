@@ -71,30 +71,62 @@ class MessengerChildrenBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isAllSelected
-                    ? context.primaryColor
-                    : Colors.transparent,
-                width: 2.0,
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(2.5),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isAllSelected
+                        ? context.primaryColor
+                        : Colors.transparent,
+                    width: isAllSelected ? 3.0 : 1.5,
+                  ),
+                  boxShadow: isAllSelected
+                      ? [
+                          BoxShadow(
+                            color: context.primaryColor.withValues(alpha: 0.35),
+                            blurRadius: 6,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: CircleAvatar(
+                  radius: 20.r,
+                  backgroundColor: isAllSelected
+                      ? context.primaryColor
+                      : (context.isDarkMode ? AppColors.grey800 : AppColors.grey200),
+                  child: Icon(
+                    Icons.directions_bus_rounded,
+                    color: isAllSelected ? AppColors.white : AppColors.grey700,
+                    size: 20.r,
+                  ),
+                ),
               ),
-            ),
-            child: CircleAvatar(
-              radius: 20.r,
-              backgroundColor: isAllSelected
-                  ? context.primaryColor
-                  : AppColors.grey200,
-              child: Icon(
-                Icons.directions_bus_rounded,
-                color: isAllSelected ? AppColors.white : AppColors.grey700,
-                size: 20.r,
-              ),
-            ),
+              if (isAllSelected)
+                Positioned(
+                  top: -2.r,
+                  right: -2.r,
+                  child: Container(
+                    padding: EdgeInsets.all(2.r),
+                    decoration: BoxDecoration(
+                      color: context.primaryColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.white, width: 1.5),
+                    ),
+                    child: Icon(
+                      Icons.check_rounded,
+                      size: 10.r,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ),
+            ],
           ),
-          SizedBox(height: 2.h),
+          SizedBox(height: 3.h),
           Text(
             'الكل',
             style: AppTextStyles.style(
@@ -122,26 +154,58 @@ class MessengerChildrenBar extends StatelessWidget {
         children: [
           Opacity(
             opacity: (!isAllSelected && !isSelected) ? 0.55 : 1.0,
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: statusColor,
-                  width: isSelected ? 2.5 : 1.5,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(2.5),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? context.primaryColor : statusColor,
+                      width: isSelected ? 3.0 : 1.5,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: context.primaryColor.withValues(alpha: 0.35),
+                              blurRadius: 6,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: AppUserAvatar(
+                    imageUrl: item.childPhoto,
+                    radius: 20.r,
+                    backgroundColor: context.isDarkMode
+                        ? AppColors.grey800
+                        : AppColors.grey200,
+                    iconColor: context.primaryColor,
+                  ),
                 ),
-              ),
-              child: AppUserAvatar(
-                imageUrl: item.childPhoto,
-                radius: 20.r,
-                backgroundColor: context.isDarkMode
-                    ? AppColors.grey800
-                    : AppColors.grey200,
-                iconColor: context.primaryColor,
-              ),
+                if (isSelected)
+                  Positioned(
+                    top: -2.r,
+                    right: -2.r,
+                    child: Container(
+                      padding: EdgeInsets.all(2.r),
+                      decoration: BoxDecoration(
+                        color: context.primaryColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.white, width: 1.5),
+                      ),
+                      child: Icon(
+                        Icons.check_rounded,
+                        size: 10.r,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-          SizedBox(height: 2.h),
+          SizedBox(height: 3.h),
           SizedBox(
             width: 50.w,
             child: Text(

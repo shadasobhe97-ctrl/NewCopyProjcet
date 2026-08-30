@@ -128,62 +128,74 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
       );
 
       // Destination / Schools / Home markers with Name Tag above
-      if (widget.singleTrip != null) {
-        final trip = widget.singleTrip!;
+      final List<ChildSchoolModel> uniqueSchools = widget.singleTrip?.uniqueSchools ??
+          widget.singleTrack?.uniqueSchools ??
+          [];
+      final List<ChildAddressModel> uniqueHomes = widget.singleTrip?.uniqueHomeAddresses ??
+          widget.singleTrack?.uniqueHomeAddresses ??
+          [];
 
-        // Render Unique Schools (Deduplicated)
-        for (final school in trip.uniqueSchools) {
-          final schoolLatLng = LatLng(school.lat, school.lng);
-          markers.add(
-            Marker(
-              point: schoolLatLng,
-              width: 110.w,
-              height: 75.h,
-              child: _buildDestinationMarker(
-                context,
-                Icons.school_rounded,
-                school.name,
-              ),
+      // Render Unique Schools (Deduplicated)
+      for (final school in uniqueSchools) {
+        final schoolLatLng = LatLng(school.lat, school.lng);
+        markers.add(
+          Marker(
+            point: schoolLatLng,
+            width: 110.w,
+            height: 75.h,
+            child: _buildDestinationMarker(
+              context,
+              Icons.school_rounded,
+              school.name,
             ),
-          );
+          ),
+        );
 
-          polylines.add(
-            Polyline(
-              points: [driverLatLng, schoolLatLng],
-              strokeWidth: 5.0,
-              color: context.primaryColor,
+        polylines.add(
+          Polyline(
+            points: [driverLatLng, schoolLatLng],
+            strokeWidth: 5.0,
+            color: context.primaryColor,
+          ),
+        );
+      }
+
+      // Render Unique Home Addresses (Deduplicated)
+      for (final home in uniqueHomes) {
+        final homeLatLng = LatLng(home.lat, home.lng);
+        markers.add(
+          Marker(
+            point: homeLatLng,
+            width: 110.w,
+            height: 75.h,
+            child: _buildDestinationMarker(
+              context,
+              Icons.home_rounded,
+              home.title.isNotEmpty ? home.title : 'المنزل',
             ),
-          );
-        }
+          ),
+        );
 
-        // Render Unique Home Addresses (Deduplicated)
-        for (final home in trip.uniqueHomeAddresses) {
-          final homeLatLng = LatLng(home.lat, home.lng);
-          markers.add(
-            Marker(
-              point: homeLatLng,
-              width: 110.w,
-              height: 75.h,
-              child: _buildDestinationMarker(
-                context,
-                Icons.home_rounded,
-                home.title.isNotEmpty ? home.title : 'المنزل',
-              ),
-            ),
-          );
+        polylines.add(
+          Polyline(
+            points: [driverLatLng, homeLatLng],
+            strokeWidth: 5.0,
+            color: AppColors.accentPurple,
+          ),
+        );
+      }
 
-          polylines.add(
-            Polyline(
-              points: [driverLatLng, homeLatLng],
-              strokeWidth: 5.0,
-              color: AppColors.accentPurple,
-            ),
-          );
-        }
+      // Fallback for destination if unique arrays are empty
+      if (uniqueSchools.isEmpty && uniqueHomes.isEmpty) {
+        final destName = widget.singleTrip?.destination.name ?? widget.singleTrack?.destination?.name;
+        final destType = widget.singleTrip?.destination.type ?? widget.singleTrack?.destination?.type ?? 'school';
+        final destLat = widget.singleTrip?.destination.lat ?? widget.singleTrack?.destination?.lat;
+        final destLng = widget.singleTrip?.destination.lng ?? widget.singleTrack?.destination?.lng;
 
-        // Fallback for destination if unique arrays are empty
-        if (trip.uniqueSchools.isEmpty && trip.uniqueHomeAddresses.isEmpty) {
-          final destLatLng = LatLng(trip.destination.lat, trip.destination.lng);
+        if (destLat != null && destLng != null && destLat != 0.0 && destLng != 0.0) {
+          final destLatLng = LatLng(destLat, destLng);
+          final isHomeDest = destType.toLowerCase() == 'home';
+
           markers.add(
             Marker(
               point: destLatLng,
@@ -191,10 +203,10 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
               height: 75.h,
               child: _buildDestinationMarker(
                 context,
-                trip.destination.type == 'home'
-                    ? Icons.home_rounded
-                    : Icons.school_rounded,
-                trip.destination.name,
+                isHomeDest ? Icons.home_rounded : Icons.school_rounded,
+                (destName != null && destName.isNotEmpty)
+                    ? destName
+                    : (isHomeDest ? 'المنزل (الوجهة)' : 'المدرسة (الوجهة)'),
               ),
             ),
           );
@@ -203,7 +215,7 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
             Polyline(
               points: [driverLatLng, destLatLng],
               strokeWidth: 5.0,
-              color: context.primaryColor,
+              color: isHomeDest ? AppColors.accentPurple : context.primaryColor,
             ),
           );
         }
@@ -247,36 +259,70 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
           ),
         );
 
-        // Destination Marker (Deduplicated)
-        if (tripMatch != null) {
-          if (tripMatch.uniqueSchools.isNotEmpty) {
-            for (final school in tripMatch.uniqueSchools) {
-              final schoolLatLng = LatLng(school.lat, school.lng);
-              markers.add(
-                Marker(
-                  point: schoolLatLng,
-                  width: 110.w,
-                  height: 75.h,
-                  child: _buildDestinationMarker(
-                    context,
-                    Icons.school_rounded,
-                    school.name,
-                  ),
+        // Destination Markers (Deduplicated across tripMatch or track)
+        final List<ChildSchoolModel> uniqueSchools = tripMatch?.uniqueSchools ?? track.uniqueSchools;
+        final List<ChildAddressModel> uniqueHomes = tripMatch?.uniqueHomeAddresses ?? track.uniqueHomeAddresses;
+
+        if (uniqueSchools.isNotEmpty) {
+          for (final school in uniqueSchools) {
+            final schoolLatLng = LatLng(school.lat, school.lng);
+            markers.add(
+              Marker(
+                point: schoolLatLng,
+                width: 110.w,
+                height: 75.h,
+                child: _buildDestinationMarker(
+                  context,
+                  Icons.school_rounded,
+                  school.name,
                 ),
-              );
-              polylines.add(
-                Polyline(
-                  points: [driverLatLng, schoolLatLng],
-                  strokeWidth: 5.0,
-                  color: color,
-                ),
-              );
-            }
-          } else {
-            final destLatLng = LatLng(
-              tripMatch.destination.lat,
-              tripMatch.destination.lng,
+              ),
             );
+            polylines.add(
+              Polyline(
+                points: [driverLatLng, schoolLatLng],
+                strokeWidth: 5.0,
+                color: color,
+              ),
+            );
+          }
+        }
+
+        if (uniqueHomes.isNotEmpty) {
+          for (final home in uniqueHomes) {
+            final homeLatLng = LatLng(home.lat, home.lng);
+            markers.add(
+              Marker(
+                point: homeLatLng,
+                width: 110.w,
+                height: 75.h,
+                child: _buildDestinationMarker(
+                  context,
+                  Icons.home_rounded,
+                  home.title.isNotEmpty ? home.title : 'المنزل',
+                ),
+              ),
+            );
+            polylines.add(
+              Polyline(
+                points: [driverLatLng, homeLatLng],
+                strokeWidth: 5.0,
+                color: color,
+              ),
+            );
+          }
+        }
+
+        if (uniqueSchools.isEmpty && uniqueHomes.isEmpty) {
+          final destName = tripMatch?.destination.name ?? track.destination?.name;
+          final destType = tripMatch?.destination.type ?? track.destination?.type ?? 'school';
+          final destLat = tripMatch?.destination.lat ?? track.destination?.lat;
+          final destLng = tripMatch?.destination.lng ?? track.destination?.lng;
+
+          if (destLat != null && destLng != null && destLat != 0.0 && destLng != 0.0) {
+            final destLatLng = LatLng(destLat, destLng);
+            final isHomeDest = destType.toLowerCase() == 'home';
+
             markers.add(
               Marker(
                 point: destLatLng,
@@ -284,10 +330,10 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
                 height: 75.h,
                 child: _buildDestinationMarker(
                   context,
-                  tripMatch.destination.type == 'home'
-                      ? Icons.home_rounded
-                      : Icons.school_rounded,
-                  tripMatch.destination.name,
+                  isHomeDest ? Icons.home_rounded : Icons.school_rounded,
+                  (destName != null && destName.isNotEmpty)
+                      ? destName
+                      : (isHomeDest ? 'المنزل' : 'المدرسة'),
                 ),
               ),
             );
