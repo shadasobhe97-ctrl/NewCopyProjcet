@@ -11,6 +11,7 @@ import 'package:kids_transport/features/app_entry/logic/app_entry_cubit.dart';
 import 'package:kids_transport/features/driver/driver_preferences/data/repositories/driver_preferences_repository.dart';
 
 // Chat Feature Imports
+import 'package:kids_transport/core/services/cloudinary_service.dart';
 import 'package:kids_transport/features/chat/data/datasources/chat_api_datasource.dart';
 import 'package:kids_transport/features/chat/data/datasources/chat_firebase_datasource.dart';
 import 'package:kids_transport/features/chat/data/repositories/chat_repository.dart';
@@ -45,6 +46,11 @@ void setupDependencyInjection() {
   }
 
   // Chat Feature Registration
+  if (!getIt.isRegistered<CloudinaryService>()) {
+    getIt.registerLazySingleton<CloudinaryService>(
+      () => CloudinaryService(),
+    );
+  }
   if (!getIt.isRegistered<ChatApiDataSource>()) {
     getIt.registerLazySingleton<ChatApiDataSource>(
       () => ChatApiDataSource(getIt<ApiClient>()),
@@ -52,7 +58,10 @@ void setupDependencyInjection() {
   }
   if (!getIt.isRegistered<ChatFirebaseDataSource>()) {
     getIt.registerLazySingleton<ChatFirebaseDataSource>(
-      () => ChatFirebaseDataSource(FirebaseFirestore.instance),
+      () => ChatFirebaseDataSource(
+        FirebaseFirestore.instance,
+        cloudinaryService: getIt<CloudinaryService>(),
+      ),
     );
   }
   if (!getIt.isRegistered<ChatRepository>()) {

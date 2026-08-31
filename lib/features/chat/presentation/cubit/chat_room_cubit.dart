@@ -162,7 +162,7 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
     );
   }
 
-  /// Uploads media bytes (Cross-Platform Web/Mobile) to Firebase Storage and sends media message.
+  /// Uploads media bytes (Cross-Platform Web/Mobile) to Cloudinary and sends media message.
   Future<void> sendMediaBytesMessage({
     required String chatRoomId,
     required Uint8List bytes,
@@ -240,7 +240,7 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
     }
   }
 
-  /// Uploads media file to Firebase Storage and sends a media message.
+  /// Uploads media file to Cloudinary and sends a media message.
   Future<void> sendMediaMessage({
     required String chatRoomId,
     required File file,

@@ -531,7 +531,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       itemCount: messages.length,
                       itemBuilder: (context, index) {
                         final msg = messages[index];
-                        final isMe = msg.senderId == widget.currentUserId;
+                        final isMe = (msg.senderRole.isNotEmpty &&
+                                msg.senderRole.toLowerCase() ==
+                                    widget.currentUserRole.toLowerCase()) ||
+                            msg.senderId == widget.currentUserId;
 
                         return ChatMessageBubble(
                           message: msg,

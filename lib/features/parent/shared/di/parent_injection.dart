@@ -34,6 +34,11 @@ import 'package:kids_transport/features/parent/absence/data/datasources/absence_
 import 'package:kids_transport/features/parent/absence/data/repositories/absence_repository.dart';
 import 'package:kids_transport/features/parent/absence/logic/absence_cubit.dart';
 
+// Location Change
+import 'package:kids_transport/features/parent/location_change/data/datasources/location_change_remote_data_source.dart';
+import 'package:kids_transport/features/parent/location_change/data/repositories/location_change_repository.dart';
+import 'package:kids_transport/features/parent/location_change/logic/cubit/location_change_cubit.dart';
+
 // Wallet & Finance
 import 'package:kids_transport/features/parent/wallet/data/datasources/wallet_remote_data_source.dart';
 import 'package:kids_transport/features/parent/wallet/data/datasources/invoices_remote_data_source.dart';
@@ -355,6 +360,25 @@ void initParentInjection() {
   if (!getIt.isRegistered<AbsenceCubit>()) {
     getIt.registerFactory<AbsenceCubit>(
       () => AbsenceCubit(getIt<AbsenceRepository>()),
+    );
+  }
+
+  // =========================================
+  // 10. Location Change Feature
+  // =========================================
+  if (!getIt.isRegistered<LocationChangeRemoteDataSource>()) {
+    getIt.registerLazySingleton<LocationChangeRemoteDataSource>(
+      () => LocationChangeRemoteDataSource(getIt<ApiClient>()),
+    );
+  }
+  if (!getIt.isRegistered<LocationChangeRepository>()) {
+    getIt.registerLazySingleton<LocationChangeRepository>(
+      () => LocationChangeRepository(getIt<LocationChangeRemoteDataSource>()),
+    );
+  }
+  if (!getIt.isRegistered<LocationChangeCubit>()) {
+    getIt.registerFactory<LocationChangeCubit>(
+      () => LocationChangeCubit(getIt<LocationChangeRepository>()),
     );
   }
 }

@@ -38,6 +38,7 @@ import 'package:kids_transport/features/chat/presentation/screens/chat_room_scre
 import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/parent/subscriptions/logic/subscriptions_cubit/subscriptions_cubit.dart';
 import 'package:kids_transport/features/parent/subscriptions/data/repositories/subscriptions_repository.dart';
+import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 
 
 class DriverProfileView extends StatefulWidget {
@@ -404,23 +405,31 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     }
   }
 
-  void _handleOpenChat(DriverSearchModel driver) async {
+  void _handleOpenChat(BuildContext context, DriverSearchModel driver) async {
     bool hasActiveSub = false;
 
-    // 1. استخدام حالة ReviewsCubit أولاً إذا كانت محمّلة
-    final reviewsState = context.read<ReviewsCubit>().state;
-    if (reviewsState is ReviewsLoaded) {
-      hasActiveSub = reviewsState.hasSubscription;
-    } else {
-      // 2. التحقق من السيرفر باستخدام نفس دالة التحقق الخاصة بالتعليقات (checkSubscription)
+    // 1. التحقق الفوري من حالة ReviewsCubit إذا كانت جاهزة ومحمّلة
+    try {
+      final reviewsState = context.read<ReviewsCubit>().state;
+      if (reviewsState is ReviewsLoaded && reviewsState.hasSubscription) {
+        hasActiveSub = true;
+      }
+    } catch (e) {
+      debugPrint('Error reading ReviewsCubit in _handleOpenChat: $e');
+    }
+
+    if (!hasActiveSub) {
+      // 2. التحقق المباشر من السيرفر عبر Endpoint: parent/subscriptions/check
       try {
         final checkRes = await getIt<ReviewsRepository>()
             .checkSubscription(driver.driverId);
         hasActiveSub = checkRes.hasSubscription == true;
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Error calling checkSubscription in _handleOpenChat: $e');
+      }
 
-      // 3. كبديل إضافي: فحص كاش/قائمة الاشتراكات
-      if (!hasActiveSub) {
+      // 3. فحص كاش/قائمة الاشتراكات كخطة احتياطية
+      if (!hasActiveSub && context.mounted) {
         try {
           final subState = context.read<SubscriptionsCubit>().state;
           if (subState is SubscriptionsLoaded) {
@@ -434,37 +443,41 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             hasActiveSub =
                 cached.any((sub) => sub.driver.id == driver.driverId);
           }
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('Error checking SubscriptionsCubit in _handleOpenChat: $e');
+        }
       }
     }
 
-    if (!mounted) return;
+    if (!context.mounted) return;
 
-    if (!hasActiveSub) {
+    if (hasActiveSub) {
+      // التوجه مباشرة للشات
+      final parentId = StorageService.getParentId()?.toString() ?? '0';
+      final sessionUserId = getIt<SessionRepository>().getUserId() ?? parentId;
+      final chatRoomId = 'parent_${parentId}_driver_${driver.driverId}';
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatRoomScreen(
+            chatRoomId: chatRoomId,
+            otherUserName: driver.fullName,
+            otherUserPhoto: driver.photoUrl,
+            canChat: true,
+            currentUserId: sessionUserId,
+            currentUserRole: 'parent',
+          ),
+        ),
+      );
+    } else {
+      // إظهار الرسالة للمستخدم
       _showSnack(
         'المحادثات المباشرة متاحة فقط مع السائقين الذين لديك معهم اشتراك نشط.',
         AppColors.amber,
         duration: const Duration(seconds: 4),
       );
-      return;
     }
-
-    final parentId = StorageService.getParentId()?.toString() ?? '0';
-    final chatRoomId = 'parent_${parentId}_driver_${driver.driverId}';
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ChatRoomScreen(
-          chatRoomId: chatRoomId,
-          otherUserName: driver.fullName,
-          otherUserPhoto: driver.photoUrl,
-          canChat: true,
-          currentUserId: parentId,
-          currentUserRole: 'parent',
-        ),
-      ),
-    );
   }
 
 
@@ -1523,7 +1536,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => _handleOpenChat(d),
+                      onPressed: () => _handleOpenChat(context, d),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: hasSub
                             ? theme.colorScheme.primary

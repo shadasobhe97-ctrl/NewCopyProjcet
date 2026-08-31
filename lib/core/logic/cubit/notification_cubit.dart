@@ -54,14 +54,25 @@ class NotificationCubit extends Cubit<NotificationState> {
 
   NotificationCubit(this._repository) : super(NotificationInitial());
 
-  Future<void> loadNotifications() async {
+  Future<void> loadNotifications({
+    int? perPage,
+    bool? unreadOnly,
+    String? type,
+  }) async {
     emit(NotificationLoading());
     try {
-      final result = await _repository.getNotifications(1);
-      int unread = 0;
-      try {
-        unread = await _repository.getUnreadCount();
-      } catch (_) {}
+      final result = await _repository.getNotifications(
+        1,
+        perPage: perPage,
+        unreadOnly: unreadOnly,
+        type: type,
+      );
+      int unread = result.unreadCount ?? 0;
+      if (result.unreadCount == null) {
+        try {
+          unread = await _repository.getUnreadCount();
+        } catch (_) {}
+      }
 
       emit(NotificationLoaded(
         notifications: result.notifications,
@@ -76,13 +87,22 @@ class NotificationCubit extends Cubit<NotificationState> {
     }
   }
 
-  Future<void> loadMore() async {
+  Future<void> loadMore({
+    int? perPage,
+    bool? unreadOnly,
+    String? type,
+  }) async {
     final currentState = state;
     if (currentState is! NotificationLoaded || !currentState.hasMore) return;
 
     try {
       final nextPage = currentState.currentPage + 1;
-      final result = await _repository.getNotifications(nextPage);
+      final result = await _repository.getNotifications(
+        nextPage,
+        perPage: perPage,
+        unreadOnly: unreadOnly,
+        type: type,
+      );
 
       emit(currentState.copyWith(
         notifications: [...currentState.notifications, ...result.notifications],
@@ -90,19 +110,31 @@ class NotificationCubit extends Cubit<NotificationState> {
         lastPage: result.lastPage,
         total: result.total,
         hasMore: result.hasMore,
+        unreadCount: result.unreadCount ?? currentState.unreadCount,
       ));
     } catch (_) {
       // Keep existing items on pagination error
     }
   }
 
-  Future<void> refresh() async {
+  Future<void> refresh({
+    int? perPage,
+    bool? unreadOnly,
+    String? type,
+  }) async {
     try {
-      final result = await _repository.getNotifications(1);
-      int unread = 0;
-      try {
-        unread = await _repository.getUnreadCount();
-      } catch (_) {}
+      final result = await _repository.getNotifications(
+        1,
+        perPage: perPage,
+        unreadOnly: unreadOnly,
+        type: type,
+      );
+      int unread = result.unreadCount ?? 0;
+      if (result.unreadCount == null) {
+        try {
+          unread = await _repository.getUnreadCount();
+        } catch (_) {}
+      }
 
       emit(NotificationLoaded(
         notifications: result.notifications,

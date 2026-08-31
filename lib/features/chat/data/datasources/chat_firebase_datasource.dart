@@ -1,15 +1,19 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:kids_transport/core/services/cloudinary_service.dart';
 import 'package:kids_transport/core/services/notification_service.dart';
 import '../models/chat_conversation_model.dart';
 import '../models/chat_message_model.dart';
 
 class ChatFirebaseDataSource {
   final FirebaseFirestore _firestore;
+  final CloudinaryService _cloudinaryService;
 
-  ChatFirebaseDataSource(this._firestore);
+  ChatFirebaseDataSource(
+    this._firestore, {
+    CloudinaryService? cloudinaryService,
+  }) : _cloudinaryService = cloudinaryService ?? CloudinaryService();
 
   /// Streams messages from chat_rooms/{chatRoomId}/messages ordered by timestamp ascending,
   /// filtering out messages soft-deleted by currentUserId.
@@ -266,8 +270,7 @@ class ChatFirebaseDataSource {
     }
   }
 
-  /// Uploads a media file (Image/Video/Audio) to Firebase Storage in chat_media/{chatRoomId}/{folderName}/...
-  /// Uploads media bytes (Image/Video/Audio) to Firebase Storage in chat_media/{chatRoomId}/{folderName}/...
+  /// Uploads media bytes (Image/Video/Audio) to Cloudinary via Unsigned REST API.
   /// Fully cross-platform compatible (Flutter Web, Android, iOS).
   Future<String> uploadMediaBytes({
     required String chatRoomId,
@@ -275,79 +278,48 @@ class ChatFirebaseDataSource {
     required String fileName,
     required String folderName,
   }) async {
+    debugPrint(
+        '📁 [ChatFirebaseDataSource] Initiating uploadMediaBytes for room="$chatRoomId", fileName="$fileName", folderName="$folderName"');
     try {
-      final String timeStampedName =
-          '${DateTime.now().millisecondsSinceEpoch}_$fileName';
-      final Reference storageRef = FirebaseStorage.instance
-          .ref()
-          .child('chat_media/$chatRoomId/$folderName/$timeStampedName');
-
-      String contentType = 'application/octet-stream';
-      final nameLower = fileName.toLowerCase();
-      if (folderName == 'images') {
-        if (nameLower.endsWith('.png')) {
-          contentType = 'image/png';
-        } else if (nameLower.endsWith('.webp')) {
-          contentType = 'image/webp';
-        } else {
-          contentType = 'image/jpeg';
-        }
-      } else if (folderName == 'videos') {
-        contentType = 'video/mp4';
-      } else if (folderName == 'audios') {
-        if (nameLower.endsWith('.mp3')) {
-          contentType = 'audio/mp3';
-        } else if (nameLower.endsWith('.webm')) {
-          contentType = 'audio/webm';
-        } else {
-          contentType = 'audio/m4a';
-        }
-      }
-
-      final UploadTask uploadTask = storageRef.putData(
-        bytes,
-        SettableMetadata(contentType: contentType),
+      final String downloadUrl = await _cloudinaryService.uploadBytes(
+        bytes: bytes,
+        fileName: fileName,
+        folderName: folderName,
       );
-      final TaskSnapshot snapshot = await uploadTask;
-      final String downloadUrl = await snapshot.ref.getDownloadURL();
 
-      if (kDebugMode) {
-        debugPrint('✅ Uploaded media bytes to Firebase Storage: $downloadUrl');
-      }
+      debugPrint(
+          '✅ [ChatFirebaseDataSource] uploadMediaBytes completed successfully. URL: $downloadUrl');
       return downloadUrl;
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('❌ Error uploading media bytes to Firebase Storage: $e');
-      }
+    } catch (e, stackTrace) {
+      debugPrint(
+          '❌ [ChatFirebaseDataSource] uploadMediaBytes failed with exception: $e');
+      debugPrint('StackTrace: $stackTrace');
       rethrow;
     }
   }
 
-  /// Uploads a media file (Image/Video/Audio) to Firebase Storage.
+  /// Uploads a media file (Image/Video/Audio) to Cloudinary via Unsigned REST API.
   Future<String> uploadMediaFile({
     required String chatRoomId,
     required File file,
     required String folderName,
   }) async {
+    debugPrint(
+        '📁 [ChatFirebaseDataSource] Initiating uploadMediaFile for room="$chatRoomId", filePath="${file.path}", folderName="$folderName"');
     try {
-      final bytes = await file.readAsBytes();
-      final fileName = file.path.split('/').last.split('\\').last;
-      return uploadMediaBytes(
-        chatRoomId: chatRoomId,
-        bytes: bytes,
-        fileName: fileName,
+      final String downloadUrl = await _cloudinaryService.uploadFile(
+        file: file,
         folderName: folderName,
       );
-    } catch (_) {
-      final String fileName =
-          '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last.split('\\').last}';
-      final Reference storageRef = FirebaseStorage.instance
-          .ref()
-          .child('chat_media/$chatRoomId/$folderName/$fileName');
 
-      final UploadTask uploadTask = storageRef.putFile(file);
-      final TaskSnapshot snapshot = await uploadTask;
-      return await snapshot.ref.getDownloadURL();
+      debugPrint(
+          '✅ [ChatFirebaseDataSource] uploadMediaFile completed successfully. URL: $downloadUrl');
+      return downloadUrl;
+    } catch (e, stackTrace) {
+      debugPrint(
+          '❌ [ChatFirebaseDataSource] uploadMediaFile failed with exception: $e');
+      debugPrint('StackTrace: $stackTrace');
+      rethrow;
     }
   }
 

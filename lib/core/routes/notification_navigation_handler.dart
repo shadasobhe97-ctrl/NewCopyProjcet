@@ -47,11 +47,15 @@ class NotificationNavigationHandler {
   static void _executeNavigation(NavigatorState state, Map<String, dynamic> data, String? role) {
     final String screen = (data['screen']?.toString() ?? '').toUpperCase();
     final String action = (data['action']?.toString() ?? '').toLowerCase();
-    final String entityIdStr = data['entity_id']?.toString() ?? data['id']?.toString() ?? '';
+    final String entityIdStr = data['entity_id']?.toString() ??
+        data['trip_id']?.toString() ??
+        data['subscription_id']?.toString() ??
+        data['id']?.toString() ??
+        '';
     final int? entityId = int.tryParse(entityIdStr);
 
-    final bool isParent = role?.toLowerCase() == 'parent';
     final bool isDriver = role?.toLowerCase() == 'driver';
+    final bool isParent = !isDriver;
 
     if (isParent) {
       switch (screen) {
@@ -90,16 +94,19 @@ class NotificationNavigationHandler {
       }
     } else if (isDriver) {
       switch (screen) {
+        case 'DRIVER_TRIP_DETAILS':
         case 'TRIP_DETAILS':
           if (entityId != null) {
             state.pushNamed(AppRoutes.driverTripDetails, arguments: entityId);
           }
           break;
+        case 'DRIVER_LIVE_TRIP':
         case 'LIVE_TRIP':
           if (entityId != null) {
             state.pushNamed(AppRoutes.driverLiveTrip, arguments: entityId);
           }
           break;
+        case 'DRIVER_SUBSCRIPTION_DETAILS':
         case 'SUBSCRIPTION_DETAILS':
           if (entityId != null) {
             state.pushNamed(AppRoutes.driverSubscriptionDetails, arguments: entityId);
