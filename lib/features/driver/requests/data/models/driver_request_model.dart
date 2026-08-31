@@ -68,22 +68,8 @@ class DriverRequestModel {
     this.createdAtFormatted,
   });
 
-  // ── الحالة بالعربية ──
-  String get statusDisplayLabel {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return 'معلق';
-      case 'accepted':
-      case 'approved':
-        return 'مقبول';
-      case 'rejected':
-        return 'مرفوض';
-      case 'cancelled':
-        return 'ملغي';
-      default:
-        return status;
-    }
-  }
+  String get statusDisplayLabel =>
+      SubscriptionEnums.statusLabel(status);
 
   // ── الفترة بالعربية ──
   String get timingDisplayLabel => SubscriptionEnums.timingLabel(timing);

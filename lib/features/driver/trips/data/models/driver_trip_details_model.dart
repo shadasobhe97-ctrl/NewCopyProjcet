@@ -6,6 +6,7 @@ class DriverTripDetailsModel extends Equatable {
   final String tripType;
   final String routeName;
   final String status;
+  final String? suspensionReason;
   final String tripDate;
   final String? recommendedDeparture;
   final int estimatedDuration;
@@ -19,6 +20,7 @@ class DriverTripDetailsModel extends Equatable {
     required this.tripType,
     required this.routeName,
     required this.status,
+    this.suspensionReason,
     required this.tripDate,
     required this.recommendedDeparture,
     required this.estimatedDuration,
@@ -34,6 +36,7 @@ class DriverTripDetailsModel extends Equatable {
       tripType: json['trip_type']?.toString() ?? '',
       routeName: json['route_name']?.toString() ?? '',
       status: json['status']?.toString() ?? 'pending',
+      suspensionReason: json['suspension_reason']?.toString(),
       tripDate: json['trip_date']?.toString() ?? '',
       recommendedDeparture: json['recommended_departure']?.toString(),
       estimatedDuration: _parseInt(json['estimated_duration']),
@@ -69,12 +72,20 @@ class DriverTripDetailsModel extends Equatable {
     return 0;
   }
 
+  static double? _parseDouble(dynamic val) {
+    if (val is double) return val;
+    if (val is num) return val.toDouble();
+    if (val is String) return double.tryParse(val);
+    return null;
+  }
+
   @override
   List<Object?> get props => [
         tripId,
         tripType,
         routeName,
         status,
+        suspensionReason,
         tripDate,
         recommendedDeparture,
         estimatedDuration,
@@ -146,12 +157,69 @@ class TripSchoolModel extends Equatable {
   List<Object?> get props => [schoolId, name, childrenCount];
 }
 
+class ChildHomeLocationModel extends Equatable {
+  final String? title;
+  final String? address;
+  final double? lat;
+  final double? lng;
+
+  const ChildHomeLocationModel({
+    this.title,
+    this.address,
+    this.lat,
+    this.lng,
+  });
+
+  factory ChildHomeLocationModel.fromJson(Map<String, dynamic> json) {
+    return ChildHomeLocationModel(
+      title: json['title']?.toString(),
+      address: json['address']?.toString(),
+      lat: DriverTripDetailsModel._parseDouble(json['lat']),
+      lng: DriverTripDetailsModel._parseDouble(json['lng']),
+    );
+  }
+
+  @override
+  List<Object?> get props => [title, address, lat, lng];
+}
+
+class ChildSchoolLocationModel extends Equatable {
+  final int? id;
+  final String? name;
+  final String? address;
+  final double? lat;
+  final double? lng;
+
+  const ChildSchoolLocationModel({
+    this.id,
+    this.name,
+    this.address,
+    this.lat,
+    this.lng,
+  });
+
+  factory ChildSchoolLocationModel.fromJson(Map<String, dynamic> json) {
+    return ChildSchoolLocationModel(
+      id: json['id'] == null ? null : DriverTripDetailsModel._parseInt(json['id']),
+      name: json['name']?.toString(),
+      address: json['address']?.toString(),
+      lat: DriverTripDetailsModel._parseDouble(json['lat']),
+      lng: DriverTripDetailsModel._parseDouble(json['lng']),
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, name, address, lat, lng];
+}
+
 /// حالة طفل ضمن تفاصيل الرحلة
 class TripDetailsChildModel extends Equatable {
   final int tripChildId;
   final int childId;
   final String name;
+  final String? photo;
   final String school;
+  final String? schoolName;
   final String pickupAddress;
   final String dropoffAddress;
   final String status;
@@ -159,12 +227,16 @@ class TripDetailsChildModel extends Equatable {
   final String dropoffStatus;
   final String? eta;
   final int sequenceOrder;
+  final ChildHomeLocationModel? homeLocation;
+  final ChildSchoolLocationModel? schoolLocation;
 
   const TripDetailsChildModel({
     required this.tripChildId,
     required this.childId,
     required this.name,
+    this.photo,
     required this.school,
+    this.schoolName,
     required this.pickupAddress,
     required this.dropoffAddress,
     required this.status,
@@ -172,6 +244,8 @@ class TripDetailsChildModel extends Equatable {
     required this.dropoffStatus,
     required this.eta,
     required this.sequenceOrder,
+    this.homeLocation,
+    this.schoolLocation,
   });
 
   factory TripDetailsChildModel.fromJson(Map<String, dynamic> json) {
@@ -179,14 +253,22 @@ class TripDetailsChildModel extends Equatable {
       tripChildId: DriverTripDetailsModel._parseInt(json['trip_child_id']),
       childId: DriverTripDetailsModel._parseInt(json['child_id']),
       name: json['name']?.toString() ?? '',
-      school: json['school']?.toString() ?? '',
-      pickupAddress: json['pickup_address']?.toString() ?? '',
-      dropoffAddress: json['dropoff_address']?.toString() ?? '',
+      photo: json['photo']?.toString(),
+      school: json['school']?.toString() ?? json['school_name']?.toString() ?? '',
+      schoolName: json['school_name']?.toString() ?? json['school']?.toString(),
+      pickupAddress: json['pickup_address']?.toString() ?? json['home_location']?['address']?.toString() ?? '',
+      dropoffAddress: json['dropoff_address']?.toString() ?? json['school_location']?['address']?.toString() ?? '',
       status: json['status']?.toString() ?? 'pending',
       pickupStatus: json['pickup_status']?.toString() ?? 'pending',
       dropoffStatus: json['dropoff_status']?.toString() ?? 'pending',
       eta: json['eta']?.toString(),
       sequenceOrder: DriverTripDetailsModel._parseInt(json['sequence_order']),
+      homeLocation: json['home_location'] is Map
+          ? ChildHomeLocationModel.fromJson(Map<String, dynamic>.from(json['home_location'] as Map))
+          : null,
+      schoolLocation: json['school_location'] is Map
+          ? ChildSchoolLocationModel.fromJson(Map<String, dynamic>.from(json['school_location'] as Map))
+          : null,
     );
   }
 
@@ -195,7 +277,9 @@ class TripDetailsChildModel extends Equatable {
         tripChildId,
         childId,
         name,
+        photo,
         school,
+        schoolName,
         pickupAddress,
         dropoffAddress,
         status,
@@ -203,5 +287,7 @@ class TripDetailsChildModel extends Equatable {
         dropoffStatus,
         eta,
         sequenceOrder,
+        homeLocation,
+        schoolLocation,
       ];
 }

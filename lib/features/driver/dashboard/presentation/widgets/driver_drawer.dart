@@ -106,6 +106,20 @@ class DriverDrawer extends StatelessWidget {
                     },
                   ),
 
+                  // ── نشاطي وأرباحي ──
+                  AppDrawerItem(
+                    icon: Icons.bar_chart_rounded,
+                    iconColor: context.primaryColor,
+                    label: 'نشاطي وأرباحي',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.driverStatistics,
+                      );
+                    },
+                  ),
+
                   // ── تفضيلات العمل ──
                   AppDrawerItem(
                     icon: Icons.settings_suggest_rounded,

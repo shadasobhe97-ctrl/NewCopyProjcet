@@ -1,3 +1,5 @@
+import 'package:kids_transport/core/utils/subscription_enums.dart';
+
 // نموذج الاشتراك النشط - GET /api/parent/active-subscriptions
 // نفس شكل رد GET /api/parent/active-subscriptions/{id}
 
@@ -22,25 +24,8 @@ class ActiveSubscriptionModel {
     required this.createdAt,
   });
 
-  String get statusDisplayLabel {
-    if (statusLabel != null && statusLabel!.isNotEmpty) {
-      return statusLabel!;
-    }
-    switch (status.toLowerCase()) {
-      case 'active':
-      case 'accepted':
-        return 'نشط';
-      case 'pending_start':
-      case 'pending':
-        return 'بانتظار البدء';
-      case 'completed':
-        return 'مكتمل';
-      case 'cancelled':
-        return 'ملغي';
-      default:
-        return status;
-    }
-  }
+  String get statusDisplayLabel =>
+      SubscriptionEnums.statusLabel(status, fallbackLabel: statusLabel);
 
   String get formattedPrice {
     final tp = totalPrice;

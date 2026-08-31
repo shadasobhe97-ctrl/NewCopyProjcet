@@ -9,6 +9,7 @@ import 'package:kids_transport/features/driver/trips/data/models/driver_trip_liv
 import 'package:kids_transport/features/driver/trips/data/models/driver_trip_stop_model.dart';
 import 'package:kids_transport/features/driver/trips/data/models/live_trip_child_item.dart';
 import 'package:kids_transport/features/driver/trips/data/models/trip_action_result_model.dart';
+import 'package:kids_transport/features/driver/trips/data/models/vehicle_breakdown_model.dart';
 import 'package:kids_transport/features/driver/trips/data/repositories/driver_trips_repository.dart';
 
 part 'live_trip_state.dart';
@@ -79,19 +80,34 @@ class LiveTripCubit extends Cubit<LiveTripState> {
         targetStop = schoolId != null ? schoolStopBySchoolId[schoolId] : null;
       }
 
+      double? targetLat = targetStop?.latitude;
+      double? targetLng = targetStop?.longitude;
+      bool targetIsSchool = targetStop?.isSchool ?? (child.status == 'boarded');
+
+      if (child.status == 'pending') {
+        targetLat ??= child.homeLocation?.lat;
+        targetLng ??= child.homeLocation?.lng;
+        targetIsSchool = false;
+      } else if (child.status == 'boarded') {
+        targetLat ??= child.schoolLocation?.lat;
+        targetLng ??= child.schoolLocation?.lng;
+        targetIsSchool = true;
+      }
+
       return LiveTripChildItem(
         tripChildId: child.tripChildId,
         childId: child.childId,
         name: child.name,
+        photo: child.photo,
         school: child.school,
         pickupAddress: child.pickupAddress,
         dropoffAddress: child.dropoffAddress,
         status: child.status,
         sequenceOrder: child.sequenceOrder,
         eta: targetStop?.eta ?? child.eta,
-        targetLatitude: targetStop?.latitude,
-        targetLongitude: targetStop?.longitude,
-        targetIsSchool: targetStop?.isSchool ?? false,
+        targetLatitude: targetLat,
+        targetLongitude: targetLng,
+        targetIsSchool: targetIsSchool,
       );
     }).toList();
 
@@ -268,26 +284,52 @@ class LiveTripCubit extends Cubit<LiveTripState> {
     );
   }
 
-  Future<void> markAbsent(int tripId, LiveTripChildItem item) {
+  Future<void> markAbsent(
+    int tripId,
+    LiveTripChildItem item, {
+    required double latitude,
+    required double longitude,
+  }) {
     return _applyOptimisticAction(
       tripId,
       item,
       'absent',
-      call: () => _repository.updateChildStatus(tripId, item.tripChildId, action: 'absent'),
+      call: () => _repository.updateChildStatus(
+        tripId,
+        item.tripChildId,
+        action: 'absent',
+        latitude: latitude,
+        longitude: longitude,
+      ),
     );
   }
 
-  Future<void> markDropoffFailed(int tripId, LiveTripChildItem item) {
+  Future<void> markDropoffFailed(
+    int tripId,
+    LiveTripChildItem item, {
+    required double latitude,
+    required double longitude,
+  }) {
     return _applyOptimisticAction(
       tripId,
       item,
       'dropoff_failed',
-      call: () =>
-          _repository.updateChildStatus(tripId, item.tripChildId, action: 'dropoff_failed'),
+      call: () => _repository.updateChildStatus(
+        tripId,
+        item.tripChildId,
+        action: 'dropoff_failed',
+        latitude: latitude,
+        longitude: longitude,
+      ),
     );
   }
 
-  Future<void> markDirectParentHandling(int tripId, LiveTripChildItem item) {
+  Future<void> markDirectParentHandling(
+    int tripId,
+    LiveTripChildItem item, {
+    required double latitude,
+    required double longitude,
+  }) {
     return _applyOptimisticAction(
       tripId,
       item,
@@ -296,6 +338,8 @@ class LiveTripCubit extends Cubit<LiveTripState> {
         tripId,
         item.tripChildId,
         action: 'direct_parent_handling',
+        latitude: latitude,
+        longitude: longitude,
       ),
     );
   }
@@ -340,12 +384,15 @@ class LiveTripCubit extends Cubit<LiveTripState> {
     }
   }
 
-  Future<void> reportBreakdown(int tripId, {String? reason}) async {
+  Future<void> reportBreakdown(int tripId, VehicleBreakdownRequestModel request) async {
     final current = state;
     if (current is! LiveTripLoaded) return;
     try {
-      final result = await _repository.reportBreakdown(tripId, reason: reason);
-      emit(current.copyWith(tripStatus: result.status));
+      final result = await _repository.reportBreakdown(tripId, request);
+      emit(current.copyWith(
+        tripStatus: 'suspended_breakdown',
+        breakdownResult: result,
+      ));
     } catch (e) {
       final message = e is ApiException ? e.message : 'فشل تسجيل توقف الرحلة: ${e.toString()}';
       emit(current.copyWith(actionErrorMessage: message));

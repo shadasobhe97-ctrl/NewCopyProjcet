@@ -1,9 +1,4 @@
 /// توحيد قيم عقد الـ API الخاصة بالاشتراك وتسمياتها بالعربية.
-///
-/// عقد الباك إند:
-///  - subscription_type : single_day | multi_day   (لا يوجد شهري/أسبوعي)
-///  - trip_direction    : go | return | both
-///  - timing            : MORNING | EVENING | BOTH
 class SubscriptionEnums {
   const SubscriptionEnums._();
 
@@ -97,5 +92,64 @@ class SubscriptionEnums {
       default:
         return 'صباحاً ومساءً';
     }
+  }
+
+  // ── ترجمة حالة الاشتراك / الطلب ──
+  static String statusLabel(String? rawStatus, {String? fallbackLabel}) {
+    if (fallbackLabel != null && fallbackLabel.trim().isNotEmpty) {
+      final translatedFallback = _translateStatusString(fallbackLabel.trim());
+      if (translatedFallback != null) return translatedFallback;
+      if (RegExp(r'[\u0600-\u06FF]').hasMatch(fallbackLabel)) {
+        return fallbackLabel.trim();
+      }
+    }
+
+    final status = (rawStatus ?? '').trim().toLowerCase();
+    final translated = _translateStatusString(status);
+    return translated ?? 'غير محدد';
+  }
+
+  static String? _translateStatusString(String str) {
+    final lower = str.toLowerCase();
+    if (lower.contains('active')) return 'نشط';
+    if (lower.contains('accepted') || lower.contains('approved')) return 'مقبول';
+    if (lower.contains('pending_start')) return 'بانتظار البدء';
+    if (lower.contains('pending') || lower.contains('waiting')) return 'قيد الانتظار';
+    if (lower.contains('completed') || lower.contains('finished')) return 'مكتمل';
+    if (lower.contains('cancelled') || lower.contains('canceled')) return 'ملغي';
+    if (lower.contains('rejected')) return 'مرفوض';
+    if (lower.contains('hold') || lower.contains('suspended')) return 'معلق مؤقتاً';
+    return null;
+  }
+
+  // ── جنس الطفل بالعربية ──
+  static String genderLabel(String? raw) {
+    if (raw == null) return 'غير محدد';
+    final lower = raw.trim().toLowerCase();
+    if (lower == 'male' || lower == 'm' || lower == 'boy' || lower == 'man' || lower == 'ذكر') {
+      return 'ذكر';
+    }
+    if (lower == 'female' || lower == 'f' || lower == 'girl' || lower == 'woman' || lower == 'أنثى') {
+      return 'أنثى';
+    }
+    return 'غير محدد';
+  }
+
+  // ── تنظيف العناوين والمواقع من الكلمات الإنجليزية والـ Placeholders ──
+  static String cleanAddress(String? raw, {String fallback = 'غير محدد'}) {
+    if (raw == null) return fallback;
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return fallback;
+    final lower = trimmed.toLowerCase();
+    if (lower == 'null' ||
+        lower == 'n/a' ||
+        lower == 'none' ||
+        lower == 'undefined' ||
+        lower == 'عنوان غير متوفر' ||
+        lower == 'غير متوفر' ||
+        lower == 'غير محدد') {
+      return fallback;
+    }
+    return trimmed;
   }
 }

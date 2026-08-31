@@ -15,6 +15,7 @@ import 'package:kids_transport/features/driver/trips/presentation/widgets/forgot
 import 'package:kids_transport/features/driver/trips/presentation/widgets/qr_scan_sheet.dart';
 import 'package:kids_transport/features/driver/trips/presentation/widgets/trip_progress_bar.dart';
 import 'package:kids_transport/features/driver/trips/presentation/widgets/trip_child_action_card.dart';
+import 'package:kids_transport/features/driver/trips/data/models/vehicle_breakdown_model.dart';
 
 /// شاشة الرحلة الحية: الخريطة، المحطات، الطفل الحالي، التقدّم، والإجراءات
 class LiveTripScreen extends StatefulWidget {
@@ -67,24 +68,36 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
   }
 
   Future<void> _handleManualConfirm(LiveTripChildItem item) async {
-    if (_driverPosition == null) {
-      _showSnack('يتعذر تحديد موقعك حالياً، انتظر قليلاً أو استخدم مسح QR.', isError: true);
+    Position? pos = _driverPosition;
+    if (pos == null) {
+      try {
+        pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        );
+      } catch (_) {}
+    }
+    if (pos == null) {
+      _showSnack(
+        'يتعذر الحصول على الموقع الجغرافي الحالي لتأكيد الإجراء، يرجى تفعيل الموقع أو استخدام مسح QR.',
+        isError: true,
+      );
       return;
     }
+    if (!mounted) return;
     final cubit = context.read<LiveTripCubit>();
     if (item.isDropoffPhase) {
       await cubit.manualDropoff(
         widget.tripId,
         item,
-        latitude: _driverPosition!.latitude,
-        longitude: _driverPosition!.longitude,
+        latitude: pos.latitude,
+        longitude: pos.longitude,
       );
     } else {
       await cubit.manualPickup(
         widget.tripId,
         item,
-        latitude: _driverPosition!.latitude,
-        longitude: _driverPosition!.longitude,
+        latitude: pos.latitude,
+        longitude: pos.longitude,
       );
     }
   }
@@ -96,7 +109,11 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
     await context.read<LiveTripCubit>().scanQr(widget.tripId, item, token, stage: stage);
   }
 
-  Future<void> _confirmAndRun(String title, String message, VoidCallback onConfirm) async {
+  Future<void> _confirmAndRunWithLocation(
+    String title,
+    String message,
+    void Function(double lat, double lng) onConfirm,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dCtx) => AlertDialog(
@@ -112,7 +129,25 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
         ],
       ),
     );
-    if (confirmed == true) onConfirm();
+    if (confirmed == true) {
+      Position? pos = _driverPosition;
+      if (pos == null) {
+        try {
+          pos = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+          );
+        } catch (_) {}
+      }
+      if (pos == null) {
+        if (!mounted) return;
+        _showSnack(
+          'يتعذر الحصول على الموقع الجغرافي الحالي لتأكيد الإجراء، يرجى تفعيل الموقع أو استخدام مسح QR.',
+          isError: true,
+        );
+        return;
+      }
+      onConfirm(pos.latitude, pos.longitude);
+    }
   }
 
   void _showSnack(String message, {bool isError = false}) {
@@ -130,30 +165,171 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
 
   Future<void> _handleReportBreakdown() async {
     final controller = TextEditingController();
+    String? errorText;
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dCtx) => AlertDialog(
-        title: const Text('الإبلاغ عن عطل', textAlign: TextAlign.right),
-        content: TextField(
-          controller: controller,
-          textAlign: TextAlign.right,
-          decoration: const InputDecoration(
-            hintText: 'سبب العطل (اختياري)',
-            border: OutlineInputBorder(),
+      builder: (dCtx) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: AppColors.error),
+              const SizedBox(width: 8),
+              const Text('إبلاغ طوارئ تعطل المركبة', textAlign: TextAlign.right),
+            ],
           ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'يرجى كتابة سبب العطل بشكل دقيق للإدارة والسائقين البدلاء قبل إرسال بلاغ الطوارئ:',
+                style: TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                textAlign: TextAlign.right,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'مثال: عطل في المحرك وتوقف تام للمركبة في طريق الشط',
+                  errorText: errorText,
+                  border: const OutlineInputBorder(),
+                ),
+                onChanged: (_) {
+                  if (errorText != null) {
+                    setStateDialog(() => errorText = null);
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dCtx).pop(false),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final text = controller.text.trim();
+                if (text.isEmpty) {
+                  setStateDialog(() => errorText = 'يرجى إدخال سبب العطل لتفعيل بلاغ الطوارئ');
+                  return;
+                }
+                Navigator.of(dCtx).pop(true);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+              child: const Text('إرسال بلاغ الطوارئ'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (!mounted || confirmed != true) return;
+
+    final reason = controller.text.trim();
+
+    // Get exact current GPS location at moment of breakdown report
+    Position position;
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+    } catch (_) {
+      position = Position(
+        latitude: _driverPosition?.latitude ?? 0.0,
+        longitude: _driverPosition?.longitude ?? 0.0,
+        timestamp: DateTime.now(),
+        accuracy: 0.0,
+        altitude: 0.0,
+        altitudeAccuracy: 0.0,
+        heading: 0.0,
+        headingAccuracy: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0,
+      );
+    }
+
+    if (!mounted) return;
+    String? currentAddress;
+    final currentState = context.read<LiveTripCubit>().state;
+    if (currentState is LiveTripLoaded) {
+      currentAddress = currentState.currentChild?.pickupAddress ??
+          currentState.stops.firstOrNull?.label;
+    }
+
+    final request = VehicleBreakdownRequestModel(
+      latitude: position.latitude,
+      longitude: position.longitude,
+      reason: reason,
+      accuracy: position.accuracy,
+      speed: position.speed,
+      address: currentAddress,
+    );
+
+    if (!mounted) return;
+    await context.read<LiveTripCubit>().reportBreakdown(widget.tripId, request);
+  }
+
+
+  void _showBreakdownResultDialog(VehicleBreakdownResponseModel result) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              result.isNoSubstitutes ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
+              color: result.isNoSubstitutes ? AppColors.warning : AppColors.primary,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                result.isBroadcasted
+                    ? 'تم بث بلاغ الطوارئ'
+                    : (result.isNoSubstitutes ? 'تنبيه السائقين البدلاء' : 'نتيجة بلاغ الطوارئ'),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(result.message, style: const TextStyle(fontSize: 14)),
+            if (result.strandedChildrenCount > 0) ...[
+              const SizedBox(height: 10),
+              Text(
+                'عدد الأطفال المتأثرين بالتعطل: ${result.strandedChildrenCount}',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            ],
+            if (result.isBroadcasted && result.candidatesCount > 0) ...[
+              const SizedBox(height: 6),
+              Text(
+                'عدد السائقين المتاحين بالمنطقة: ${result.candidatesCount}',
+                style: const TextStyle(fontSize: 13, color: AppColors.primary),
+              ),
+            ],
+          ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(dCtx).pop(false), child: const Text('إلغاء')),
           ElevatedButton(
-            onPressed: () => Navigator.of(dCtx).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('تأكيد'),
+            onPressed: () => Navigator.of(dCtx).pop(),
+            child: const Text('حسنًا'),
           ),
         ],
       ),
     );
-    if (!mounted || confirmed != true) return;
-    await context.read<LiveTripCubit>().reportBreakdown(widget.tripId, reason: controller.text.trim());
   }
 
   @override
@@ -185,7 +361,8 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
               current is LiveTripLoaded &&
               (current.blockingErrorMessage != null ||
                   current.actionErrorMessage != null ||
-                  current.isCompleted),
+                  current.isCompleted ||
+                  current.breakdownResult != null),
           listener: (context, state) {
             if (state is! LiveTripLoaded) return;
             if (state.blockingErrorMessage != null) {
@@ -198,6 +375,8 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
             } else if (state.actionErrorMessage != null) {
               _showSnack(state.actionErrorMessage!, isError: true);
               context.read<LiveTripCubit>().clearActionError();
+            } else if (state.breakdownResult != null) {
+              _showBreakdownResultDialog(state.breakdownResult!);
             } else if (state.isCompleted && state.completedSummary != null) {
               _showCompletionDialog(state);
             }
@@ -260,31 +439,42 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
                         onScanQr: loaded.isSuspended ? () {} : () => _handleScanQr(item),
                         onAbsent: loaded.isSuspended
                             ? () {}
-                            : () => _confirmAndRun(
+                            : () => _confirmAndRunWithLocation(
                                   'تأكيد الغياب',
                                   'هل تؤكد أن ${item.name} غير موجود في هذه المحطة؟',
-                                  () => context.read<LiveTripCubit>().markAbsent(widget.tripId, item),
+                                  (lat, lng) => context.read<LiveTripCubit>().markAbsent(
+                                        widget.tripId,
+                                        item,
+                                        latitude: lat,
+                                        longitude: lng,
+                                      ),
                                 ),
                         onSkip: loaded.isSuspended
                             ? () {}
                             : () => context.read<LiveTripCubit>().skipChild(widget.tripId, item),
                         onDropoffFailed: loaded.isSuspended
                             ? () {}
-                            : () => _confirmAndRun(
+                            : () => _confirmAndRunWithLocation(
                                   'تعذر التسليم',
                                   'سيتم تسجيل هذه المحطة كحالة تعذر تسليم. هل أنت متأكد؟',
-                                  () => context
-                                      .read<LiveTripCubit>()
-                                      .markDropoffFailed(widget.tripId, item),
+                                  (lat, lng) => context.read<LiveTripCubit>().markDropoffFailed(
+                                        widget.tripId,
+                                        item,
+                                        latitude: lat,
+                                        longitude: lng,
+                                      ),
                                 ),
                         onDirectParentHandling: loaded.isSuspended
                             ? () {}
-                            : () => _confirmAndRun(
+                            : () => _confirmAndRunWithLocation(
                                   'تسليم مباشر لولي الأمر',
                                   'سيتم تسجيل استلام ولي الأمر للطفل مباشرة. هل أنت متأكد؟',
-                                  () => context
-                                      .read<LiveTripCubit>()
-                                      .markDirectParentHandling(widget.tripId, item),
+                                  (lat, lng) => context.read<LiveTripCubit>().markDirectParentHandling(
+                                        widget.tripId,
+                                        item,
+                                        latitude: lat,
+                                        longitude: lng,
+                                      ),
                                 ),
                       );
                     },

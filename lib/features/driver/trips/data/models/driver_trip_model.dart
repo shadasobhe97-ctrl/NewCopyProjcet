@@ -1,5 +1,37 @@
 import 'package:equatable/equatable.dart';
 
+/// غلاف استجابة رحلات اليوم (GET /v1/driver/trips/today?date=YYYY-MM-DD)
+class DriverTripsTodayResponseModel extends Equatable {
+  final String status;
+  final String? date;
+  final List<DriverTripModel> trips;
+
+  const DriverTripsTodayResponseModel({
+    required this.status,
+    this.date,
+    required this.trips,
+  });
+
+  factory DriverTripsTodayResponseModel.fromJson(Map<String, dynamic> json) {
+    final rawList = json['data'];
+    final tripsList = (rawList is List)
+        ? rawList
+            .whereType<Map>()
+            .map((e) => DriverTripModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList()
+        : <DriverTripModel>[];
+
+    return DriverTripsTodayResponseModel(
+      status: json['status']?.toString() ?? 'success',
+      date: json['date']?.toString(),
+      trips: tripsList,
+    );
+  }
+
+  @override
+  List<Object?> get props => [status, date, trips];
+}
+
 /// عنصر رحلة في قائمة "رحلات اليوم"
 class DriverTripModel extends Equatable {
   final int tripId;
@@ -12,6 +44,8 @@ class DriverTripModel extends Equatable {
   final int estimatedDuration;
   final String? recommendedDeparture;
   final String? startedAt;
+  final String? tripDate;
+  final String? date;
 
   const DriverTripModel({
     required this.tripId,
@@ -24,6 +58,8 @@ class DriverTripModel extends Equatable {
     required this.estimatedDuration,
     required this.recommendedDeparture,
     required this.startedAt,
+    this.tripDate,
+    this.date,
   });
 
   factory DriverTripModel.fromJson(Map<String, dynamic> json) {
@@ -38,10 +74,12 @@ class DriverTripModel extends Equatable {
       estimatedDuration: _parseInt(json['estimated_duration']),
       recommendedDeparture: json['recommended_departure']?.toString(),
       startedAt: json['started_at']?.toString(),
+      tripDate: json['trip_date']?.toString(),
+      date: json['date']?.toString(),
     );
   }
 
-  bool get isPending => status == 'pending';
+  bool get isPending => status == 'pending' || status == 'scheduled';
   bool get isInProgress => status == 'in_progress';
   bool get isCompleted => status == 'completed';
   bool get isSuspended => status == 'suspended_breakdown';
@@ -65,5 +103,7 @@ class DriverTripModel extends Equatable {
         estimatedDuration,
         recommendedDeparture,
         startedAt,
+        tripDate,
+        date,
       ];
 }

@@ -210,23 +210,8 @@ class DriverSubscriptionModel {
     this.workingDaysCount,
   });
 
-  String get statusDisplayLabel {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return 'نشط';
-      case 'accepted':
-        return 'مقبول';
-      case 'pending':
-      case 'pending_start':
-        return 'معلق';
-      case 'completed':
-        return 'مكتمل';
-      case 'cancelled':
-        return 'ملغي';
-      default:
-        return status;
-    }
-  }
+  String get statusDisplayLabel =>
+      SubscriptionEnums.statusLabel(status);
 
   String get subscriptionTypeDisplayLabel =>
       SubscriptionEnums.typeLabel(subscriptionType);

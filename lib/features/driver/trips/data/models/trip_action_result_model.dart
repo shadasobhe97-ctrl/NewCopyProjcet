@@ -89,24 +89,154 @@ class NextChildModel extends Equatable {
   List<Object?> get props => [tripChildId, name];
 }
 
-/// نتيجة تحديث حالة طفل (صعود/نزول/غياب/تجاوز/QR...)
+/// المحطة التالية المرجعة من نقطة تحديث حالة الطفل (next_stop)
+class NextStopModel extends Equatable {
+  final int stopId;
+  final String stopType; // home | school
+  final int sequenceOrder;
+  final String? name;
+  final String? title;
+  final int? childId;
+  final int? tripChildId;
+  final String? childName;
+  final int? schoolId;
+  final String? schoolName;
+  final double latitude;
+  final double longitude;
+  final double? lat;
+  final double? lng;
+  final String? address;
+  final String status;
+  final String? eta;
+
+  const NextStopModel({
+    required this.stopId,
+    required this.stopType,
+    required this.sequenceOrder,
+    this.name,
+    this.title,
+    this.childId,
+    this.tripChildId,
+    this.childName,
+    this.schoolId,
+    this.schoolName,
+    required this.latitude,
+    required this.longitude,
+    this.lat,
+    this.lng,
+    this.address,
+    required this.status,
+    this.eta,
+  });
+
+  factory NextStopModel.fromJson(Map<String, dynamic> json) {
+    int parseInt(dynamic val) {
+      if (val is int) return val;
+      if (val is num) return val.toInt();
+      if (val is String) return int.tryParse(val) ?? 0;
+      return 0;
+    }
+
+    double parseDouble(dynamic val) {
+      if (val is double) return val;
+      if (val is num) return val.toDouble();
+      if (val is String) return double.tryParse(val) ?? 0.0;
+      return 0.0;
+    }
+
+    final latVal = json['latitude'] ?? json['lat'];
+    final lngVal = json['longitude'] ?? json['lng'];
+
+    return NextStopModel(
+      stopId: parseInt(json['stop_id'] ?? json['id']),
+      stopType: json['stop_type']?.toString() ?? 'home',
+      sequenceOrder: parseInt(json['sequence_order']),
+      name: json['name']?.toString(),
+      title: json['title']?.toString(),
+      childId: json['child_id'] == null ? null : parseInt(json['child_id']),
+      tripChildId: json['trip_child_id'] == null ? null : parseInt(json['trip_child_id']),
+      childName: json['child_name']?.toString() ?? json['name']?.toString(),
+      schoolId: json['school_id'] == null ? null : parseInt(json['school_id']),
+      schoolName: json['school_name']?.toString(),
+      latitude: parseDouble(latVal),
+      longitude: parseDouble(lngVal),
+      lat: json['lat'] != null ? parseDouble(json['lat']) : null,
+      lng: json['lng'] != null ? parseDouble(json['lng']) : null,
+      address: json['address']?.toString(),
+      status: json['status']?.toString() ?? 'pending',
+      eta: json['eta']?.toString(),
+    );
+  }
+
+  bool get isHome => stopType == 'home';
+  bool get isSchool => stopType == 'school';
+
+  @override
+  List<Object?> get props => [
+        stopId,
+        stopType,
+        sequenceOrder,
+        name,
+        title,
+        childId,
+        tripChildId,
+        childName,
+        schoolId,
+        schoolName,
+        latitude,
+        longitude,
+        lat,
+        lng,
+        address,
+        status,
+        eta,
+      ];
+}
+
+/// نتيجة تحديث حالة طفل (صعود/نزول/غياب/تعذر تسليم/تسليم مباشر/QR...)
 class ChildStatusActionResultModel extends Equatable {
+  final String status;
   final String message;
+  final NextStopModel? nextStop;
   final NextChildModel? nextChild;
 
-  const ChildStatusActionResultModel({required this.message, required this.nextChild});
+  const ChildStatusActionResultModel({
+    required this.status,
+    required this.message,
+    this.nextStop,
+    this.nextChild,
+  });
 
   factory ChildStatusActionResultModel.fromJson(Map<String, dynamic> json) {
+    NextStopModel? parsedNextStop;
+    if (json['next_stop'] is Map) {
+      parsedNextStop = NextStopModel.fromJson(
+        Map<String, dynamic>.from(json['next_stop'] as Map),
+      );
+    }
+
+    NextChildModel? parsedNextChild;
+    if (json['next_child'] is Map) {
+      parsedNextChild = NextChildModel.fromJson(
+        Map<String, dynamic>.from(json['next_child'] as Map),
+      );
+    } else if (parsedNextStop != null && parsedNextStop.tripChildId != null) {
+      parsedNextChild = NextChildModel(
+        tripChildId: parsedNextStop.tripChildId!,
+        name: parsedNextStop.childName ?? parsedNextStop.name ?? '',
+      );
+    }
+
     return ChildStatusActionResultModel(
+      status: json['status']?.toString() ?? 'success',
       message: json['message']?.toString() ?? '',
-      nextChild: json['next_child'] is Map
-          ? NextChildModel.fromJson(Map<String, dynamic>.from(json['next_child'] as Map))
-          : null,
+      nextStop: parsedNextStop,
+      nextChild: parsedNextChild,
     );
   }
 
   @override
-  List<Object?> get props => [message, nextChild];
+  List<Object?> get props => [status, message, nextStop, nextChild];
 }
 
 /// نتيجة تغيير حالة الرحلة (عطل / استئناف)

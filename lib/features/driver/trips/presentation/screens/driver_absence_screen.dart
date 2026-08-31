@@ -5,16 +5,10 @@ import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/primary_button.dart';
+import 'package:kids_transport/features/driver/trips/data/models/driver_absence_model.dart';
 import 'package:kids_transport/features/driver/trips/logic/driver_absence_cubit/driver_absence_cubit.dart';
 
-const List<String> _arabicMonths = [
-  'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-  'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
-];
-
-const List<String> _arabicWeekdays = ['اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت', 'أحد'];
-
-/// شاشة تسجيل غياب السائق — اختيار عدة تواريخ ثم إرسالها للـ Backend
+/// شاشة تسجيل غياب السائق — اختيار التاريخ، اختيار الرحلات، كتابة سبب الغياب، والاعتماد الفوري approved
 class DriverAbsenceScreen extends StatefulWidget {
   const DriverAbsenceScreen({super.key});
 
@@ -23,10 +17,18 @@ class DriverAbsenceScreen extends StatefulWidget {
 }
 
 class _DriverAbsenceScreenState extends State<DriverAbsenceScreen> {
-  DateTime _visibleMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  final TextEditingController _reasonController = TextEditingController();
 
-  void _changeMonth(int delta) {
-    setState(() => _visibleMonth = DateTime(_visibleMonth.year, _visibleMonth.month + delta));
+  @override
+  void initState() {
+    super.initState();
+    context.read<DriverAbsenceCubit>().loadUpcomingTrips();
+  }
+
+  @override
+  void dispose() {
+    _reasonController.dispose();
+    super.dispose();
   }
 
   @override
@@ -43,13 +45,41 @@ class _DriverAbsenceScreenState extends State<DriverAbsenceScreen> {
                   current.submitStatus == DriverAbsenceSubmitStatus.error),
           listener: (context, state) {
             if (state.submitStatus == DriverAbsenceSubmitStatus.success) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('تم تسجيل الغياب بنجاح.'),
-                  backgroundColor: AppColors.success,
+              final resultMsg = state.responseResult?.reason.isNotEmpty == true
+                  ? 'تم تسجيل غيابك عن الرحلات المحددة فوراً (موافق عليه)، وفصلك منها.'
+                  : 'تم تسجيل غيابك عن الرحلات المحددة بنجاح (موافق عليه فوري).';
+
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (dialogCtx) => AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  title: Row(
+                    children: [
+                      const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 28),
+                      const SizedBox(width: 8),
+                      Text('تم اعتماد الغياب', style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  content: Text(
+                    state.responseResult?.status == 'approved'
+                        ? (state.responseResult?.reason.isNotEmpty == true
+                            ? 'تم تسجيل غيابك والموافقة عليه فوراً (${state.responseResult?.status}).\nوتم إزالتك من الرحلات المحددة.'
+                            : resultMsg)
+                        : resultMsg,
+                    style: AppTextStyles.style(fontSize: 13, height: 1.5),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(dialogCtx).pop();
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('حسنًا'),
+                    ),
+                  ],
                 ),
               );
-              Navigator.of(context).pop();
             } else if (state.submitStatus == DriverAbsenceSubmitStatus.error) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -60,6 +90,16 @@ class _DriverAbsenceScreenState extends State<DriverAbsenceScreen> {
             }
           },
           builder: (context, state) {
+            if (state.isLoadingTrips) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final availableDates = state.availableDates;
+            final tripsForDate = state.tripsForSelectedDate;
+            final isSubmitEnabled = state.selectedDate != null &&
+                state.selectedTripIds.isNotEmpty &&
+                state.reason.trim().isNotEmpty;
+
             return Column(
               children: [
                 Expanded(
@@ -69,31 +109,101 @@ class _DriverAbsenceScreenState extends State<DriverAbsenceScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'اختر تاريخاً واحداً أو أكثر ستكون فيها غائباً، ولن يقوم النظام بتوليد رحلات لمساراتك في تلك الأيام.',
+                          'اختر تاريخ الغياب، حدّد الرحلات التي ستغيب عنها، وادخل سبب الغياب لتتم الموافقة فوراً وتحديث جدول الرحلات.',
                           style: AppTextStyles.style(fontSize: 13, color: context.textMuted, height: 1.5),
                         ),
                         const SizedBox(height: 16),
-                        _buildCalendar(context, state),
-                        if (state.selectedDates.isNotEmpty) ...[
-                          const SizedBox(height: 20),
+                        Text(
+                          '1. اختر تاريخ الغياب',
+                          style: AppTextStyles.style(fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 10),
+                        if (availableDates.isEmpty)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: AppTheme.boxDecoration(
+                              color: context.isDarkMode ? AppColors.surfaceDark : AppColors.white,
+                              borderRadius: AppTheme.radius(12),
+                            ),
+                            child: Text(
+                              'لا تتوفر رحلات قادمة متاحة لتسجيل الغياب عنها.',
+                              style: AppTextStyles.style(fontSize: 13, color: context.textMuted),
+                            ),
+                          )
+                        else
+                          SizedBox(
+                            height: 44,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: availableDates.length,
+                              separatorBuilder: (_, index) => const SizedBox(width: 8),
+                              itemBuilder: (context, index) {
+                                final dateStr = availableDates[index];
+                                final isSelected = state.selectedDate == dateStr;
+                                return ChoiceChip(
+                                  label: Text(
+                                    dateStr,
+                                    style: AppTextStyles.style(
+                                      fontSize: 12,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      color: isSelected ? AppColors.white : context.textPrimary,
+                                    ),
+                                  ),
+                                  selected: isSelected,
+                                  selectedColor: context.primaryColor,
+                                  backgroundColor: context.isDarkMode ? AppColors.surfaceDark : AppColors.grey100,
+                                  onSelected: (_) => context.read<DriverAbsenceCubit>().selectDate(dateStr),
+                                );
+                              },
+                            ),
+                          ),
+                        const SizedBox(height: 20),
+                        if (state.selectedDate != null) ...[
                           Text(
-                            'التواريخ المختارة (${state.selectedDates.length})',
+                            '2. حدد الرحلات في تاريخ (${state.selectedDate})',
                             style: AppTextStyles.style(fontSize: 14, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: state.selectedDates.map((date) {
-                              return Chip(
-                                label: Text(_formatDisplay(date)),
-                                onDeleted: () =>
-                                    context.read<DriverAbsenceCubit>().toggleDate(date),
-                                backgroundColor: AppColors.primaryLight.withValues(alpha: 0.1),
+                          if (tripsForDate.isEmpty)
+                            Text(
+                              'لا تتوفر رحلات في هذا التاريخ.',
+                              style: AppTextStyles.style(fontSize: 13, color: context.textMuted),
+                            )
+                          else
+                            ...tripsForDate.map((trip) {
+                              final isChecked = state.selectedTripIds.contains(trip.id);
+                              return _TripSelectionCard(
+                                trip: trip,
+                                isChecked: isChecked,
+                                onChanged: (_) =>
+                                    context.read<DriverAbsenceCubit>().toggleTripSelection(trip.id),
                               );
-                            }).toList(),
-                          ),
+                            }),
                         ],
+                        const SizedBox(height: 20),
+                        Text(
+                          '3. سبب الغياب',
+                          style: AppTextStyles.style(fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _reasonController,
+                          maxLines: 3,
+                          onChanged: (val) => context.read<DriverAbsenceCubit>().updateReason(val),
+                          decoration: InputDecoration(
+                            hintText: 'ادخل سبب الغياب هنا (مثال: عطل في محرك السيارة)...',
+                            hintStyle: AppTextStyles.style(fontSize: 12, color: context.textMuted),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: context.isDarkMode ? AppColors.grey800 : AppColors.grey300,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: context.isDarkMode ? AppColors.surfaceDark : AppColors.white,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -105,9 +215,9 @@ class _DriverAbsenceScreenState extends State<DriverAbsenceScreen> {
                     icon: Icons.event_busy_rounded,
                     width: double.infinity,
                     isLoading: state.submitStatus == DriverAbsenceSubmitStatus.submitting,
-                    onPressed: state.selectedDates.isEmpty
-                        ? null
-                        : () => context.read<DriverAbsenceCubit>().submit(),
+                    onPressed: isSubmitEnabled
+                        ? () => context.read<DriverAbsenceCubit>().submitAbsenceWithTrips()
+                        : null,
                   ),
                 ),
               ],
@@ -117,103 +227,67 @@ class _DriverAbsenceScreenState extends State<DriverAbsenceScreen> {
       ),
     );
   }
+}
 
-  String _formatDisplay(DateTime date) {
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    return '$day/$month/${date.year}';
+class _TripSelectionCard extends StatelessWidget {
+  final UpcomingAbsenceTripModel trip;
+  final bool isChecked;
+  final ValueChanged<bool?> onChanged;
+
+  const _TripSelectionCard({
+    required this.trip,
+    required this.isChecked,
+    required this.onChanged,
+  });
+
+  String _translateTripType(String type) {
+    if (type.toLowerCase().contains('morning')) return 'رحلة الصباح';
+    if (type.toLowerCase().contains('return') || type.toLowerCase().contains('afternoon')) return 'رحلة العودة';
+    return type;
   }
 
-  Widget _buildCalendar(BuildContext context, DriverAbsenceState state) {
+  @override
+  Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
-    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-    final firstDayOfMonth = DateTime(_visibleMonth.year, _visibleMonth.month, 1);
-    final daysInMonth = DateTime(_visibleMonth.year, _visibleMonth.month + 1, 0).day;
-    final leadingBlanks = (firstDayOfMonth.weekday - DateTime.monday) % 7;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: AppTheme.boxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: AppTheme.radius(16),
+        borderRadius: AppTheme.radius(12),
         border: AppTheme.border(
-          color: isDark ? AppColors.grey800 : AppColors.grey.withValues(alpha: 0.15),
+          color: isChecked
+              ? context.primaryColor
+              : (isDark ? AppColors.grey800 : AppColors.grey.withValues(alpha: 0.15)),
         ),
       ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_right_rounded),
-                onPressed: () => _changeMonth(-1),
-              ),
+      child: CheckboxListTile(
+        value: isChecked,
+        onChanged: onChanged,
+        activeColor: context.primaryColor,
+        title: Text(
+          _translateTripType(trip.tripType),
+          style: AppTextStyles.style(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (trip.scheduledStartTime != null && trip.scheduledStartTime!.isNotEmpty) ...[
+              const SizedBox(height: 2),
               Text(
-                '${_arabicMonths[_visibleMonth.month - 1]} ${_visibleMonth.year}',
-                style: AppTextStyles.style(fontSize: 15, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_left_rounded),
-                onPressed: () => _changeMonth(1),
+                'وقت البداية: ${trip.scheduledStartTime}',
+                style: AppTextStyles.style(fontSize: 12, color: context.textMuted),
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: _arabicWeekdays
-                .map((d) => Expanded(
-                      child: Center(
-                        child: Text(
-                          d,
-                          style: AppTextStyles.style(fontSize: 11, color: context.textMuted),
-                        ),
-                      ),
-                    ))
-                .toList(),
-          ),
-          const SizedBox(height: 6),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7),
-            itemCount: leadingBlanks + daysInMonth,
-            itemBuilder: (context, index) {
-              if (index < leadingBlanks) return const SizedBox.shrink();
-              final day = index - leadingBlanks + 1;
-              final date = DateTime(_visibleMonth.year, _visibleMonth.month, day);
-              final isPast = date.isBefore(today);
-              final isSelected = state.selectedDates.contains(date);
-
-              return Padding(
-                padding: const EdgeInsets.all(3),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: isPast ? null : () => context.read<DriverAbsenceCubit>().toggleDate(date),
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primaryLight
-                          : (isPast ? AppColors.grey.withValues(alpha: 0.05) : null),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '$day',
-                      style: AppTextStyles.style(
-                        fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected
-                            ? AppColors.white
-                            : (isPast ? AppColors.grey400 : null),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
+            if (trip.routeName.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                'المسار: ${trip.routeName}',
+                style: AppTextStyles.style(fontSize: 12, color: context.textMuted),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

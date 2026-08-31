@@ -6,6 +6,9 @@ import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/widgets/empty_state_placeholder.dart';
+import 'package:kids_transport/core/di/dependency_injection.dart';
+import 'package:kids_transport/core/services/battery_service.dart';
+import 'package:kids_transport/features/driver/trips/presentation/widgets/low_battery_dialog.dart';
 import 'package:kids_transport/features/driver/trips/logic/driver_trips_cubit/driver_trips_cubit.dart';
 import 'package:kids_transport/features/driver/trips/presentation/widgets/trip_card.dart';
 
@@ -29,6 +32,15 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> {
   Future<void> _startTrip(int tripId) async {
     setState(() => _startingTripId = tripId);
     try {
+      final batteryService = getIt<BatteryService>();
+      final batteryLevel = await batteryService.getBatteryLevel();
+
+      if (batteryLevel != null && batteryLevel < 50) {
+        if (!mounted) return;
+        await LowBatteryDialog.show(context, batteryLevel: batteryLevel);
+        return;
+      }
+
       final position = await _capturePosition();
       if (!mounted) return;
       final startedTripId = await context.read<DriverTripsCubit>().startTrip(

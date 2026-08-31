@@ -12,17 +12,17 @@ class DriverTripsCubit extends Cubit<DriverTripsState> {
 
   DriverTripsCubit(this._repository) : super(DriverTripsInitial());
 
-  Future<void> loadTripsToday() async {
+  Future<void> loadTripsToday({String? date}) async {
     emit(DriverTripsLoading());
     try {
-      final trips = await _repository.getTripsToday();
+      final trips = await _repository.getTripsToday(date: date);
       emit(DriverTripsLoaded(trips));
     } catch (e) {
       emit(DriverTripsError('فشل تحميل رحلات اليوم: ${e.toString()}'));
     }
   }
 
-  Future<void> refresh() => loadTripsToday();
+  Future<void> refresh({String? date}) => loadTripsToday(date: date);
 
   Future<void> loadTripDetails(int tripId) async {
     emit(DriverTripDetailsLoading());

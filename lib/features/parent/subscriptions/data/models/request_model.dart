@@ -37,26 +37,8 @@ class RequestModel {
     return children.map((c) => c.name).join('، ');
   }
 
-  String get statusDisplayLabel {
-    if (statusAr != null && statusAr!.isNotEmpty) return statusAr!;
-    switch (status.toLowerCase()) {
-      case 'accepted':
-      case 'approved':
-        return 'تمت الموافقة';
-      case 'rejected':
-        return 'مرفوض';
-      case 'pending':
-        return 'قيد الانتظار';
-      case 'cancelled':
-        return 'ملغي';
-      case 'active':
-        return 'نشط';
-      case 'completed':
-        return 'مكتمل';
-      default:
-        return 'غير محدد';
-    }
-  }
+  String get statusDisplayLabel =>
+      SubscriptionEnums.statusLabel(status, fallbackLabel: statusAr);
 
   String get formattedPrice {
     if (totalAmount == totalAmount.toInt()) {

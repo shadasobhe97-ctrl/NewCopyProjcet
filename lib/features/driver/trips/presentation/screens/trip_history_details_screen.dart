@@ -94,9 +94,34 @@ class _TripHistoryDetailsScreenState extends State<TripHistoryDetailsScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '${details.tripDate} • ${details.duration} دقيقة',
+                            '${details.tripDate} • ${details.duration} دقيقة${details.distance > 0 ? ' • ${details.distance.toStringAsFixed(1)} كم' : ''}',
                             style: AppTextStyles.style(fontSize: 13, color: context.textMuted),
                           ),
+                          if (details.summary.totalStudents > 0) ...[
+                            const SizedBox(height: 12),
+                            const Divider(height: 1),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _SummaryStatItem(
+                                  label: 'إجمالي الطلاب',
+                                  value: '${details.summary.totalStudents}',
+                                  color: context.primaryColor,
+                                ),
+                                _SummaryStatItem(
+                                  label: 'تم صعودهم',
+                                  value: '${details.summary.pickedUp}',
+                                  color: AppColors.success,
+                                ),
+                                _SummaryStatItem(
+                                  label: 'الغياب',
+                                  value: '${details.summary.absent}',
+                                  color: AppColors.error,
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -124,6 +149,31 @@ class _TripHistoryDetailsScreenState extends State<TripHistoryDetailsScreen> {
   }
 }
 
+class _SummaryStatItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _SummaryStatItem({required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: AppTextStyles.style(fontSize: 11, color: context.textMuted),
+        ),
+      ],
+    );
+  }
+}
+
 class _ChildHistoryTile extends StatelessWidget {
   final TripHistoryChildModel child;
 
@@ -135,7 +185,7 @@ class _ChildHistoryTile extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: AppTheme.boxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.white,
@@ -157,9 +207,9 @@ class _ChildHistoryTile extends StatelessWidget {
                       child.childName,
                       style: AppTextStyles.style(fontSize: 13, fontWeight: FontWeight.bold),
                     ),
-                    if (child.school.isNotEmpty)
+                    if (child.school.isNotEmpty || child.schoolName.isNotEmpty)
                       Text(
-                        child.school,
+                        child.school.isNotEmpty ? child.school : child.schoolName,
                         style: AppTextStyles.style(fontSize: 12, color: context.textMuted),
                       ),
                   ],
@@ -168,6 +218,37 @@ class _ChildHistoryTile extends StatelessWidget {
               if (child.status.isNotEmpty) TripChildStatusBadge(status: child.status, compact: true),
             ],
           ),
+          if (child.reason != null && child.reason!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: (child.isSkipped ? AppColors.warning : AppColors.error).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    child.isSkipped ? Icons.info_outline_rounded : Icons.report_problem_outlined,
+                    size: 14,
+                    color: child.isSkipped ? AppColors.warning : AppColors.error,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '${child.isSkipped ? "سبب التخطي" : (child.isAbsent ? "سبب الغياب" : "السبب")}: ${child.reason}',
+                      style: AppTextStyles.style(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: child.isSkipped ? AppColors.warning : AppColors.error,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (child.pickupAddress.isNotEmpty || child.scannedPickupAt != null) ...[
             const SizedBox(height: 8),
             _EventRow(

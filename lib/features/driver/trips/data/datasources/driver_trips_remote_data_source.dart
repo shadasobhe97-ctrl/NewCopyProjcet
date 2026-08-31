@@ -1,13 +1,16 @@
+import 'package:intl/intl.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/features/driver/trips/data/models/driver_absence_model.dart';
 import 'package:kids_transport/features/driver/trips/data/models/driver_trip_details_model.dart';
 import 'package:kids_transport/features/driver/trips/data/models/driver_trip_history_model.dart';
 import 'package:kids_transport/features/driver/trips/data/models/driver_trip_live_model.dart';
 import 'package:kids_transport/features/driver/trips/data/models/driver_trip_model.dart';
 import 'package:kids_transport/features/driver/trips/data/models/driver_trip_stop_model.dart';
 import 'package:kids_transport/features/driver/trips/data/models/trip_action_result_model.dart';
+import 'package:kids_transport/features/driver/trips/data/models/vehicle_breakdown_model.dart';
 
 /// مصدر بيانات الرحلات الخاص بالسائق — مرتبط 100% بالـ Backend الحقيقي
 class DriverTripsRemoteDataSource {
@@ -33,18 +36,18 @@ class DriverTripsRemoteDataSource {
     return map;
   }
 
-  Future<List<DriverTripModel>> fetchTripsToday() async {
+  Future<List<DriverTripModel>> fetchTripsToday({String? date}) async {
+    final localTodayDate = date ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
     final response = await _apiClient.get(
       ApiEndpoints.driverTripsToday,
+      queryParameters: {
+        'date': localTodayDate,
+      },
       headers: _authHeader,
     );
     final map = _unwrap(response.data, 'تعذر تحميل رحلات اليوم.');
-    final rawList = map['data'];
-    if (rawList is! List) return const [];
-    return rawList
-        .whereType<Map>()
-        .map((e) => DriverTripModel.fromJson(Map<String, dynamic>.from(e)))
-        .toList();
+    final responseModel = DriverTripsTodayResponseModel.fromJson(map);
+    return responseModel.trips;
   }
 
   Future<DriverTripDetailsModel> fetchTripDetails(int tripId) async {
@@ -129,15 +132,15 @@ class DriverTripsRemoteDataSource {
     int tripId,
     int tripChildId, {
     required String action,
-    double? latitude,
-    double? longitude,
+    required double latitude,
+    required double longitude,
   }) async {
     final response = await _apiClient.post(
       ApiEndpoints.driverTripChildStatus(tripId, tripChildId),
       data: {
         'action': action,
-        'latitude': ?latitude,
-        'longitude': ?longitude,
+        'latitude': latitude,
+        'longitude': longitude,
       },
       headers: _authHeader,
     );
@@ -186,18 +189,17 @@ class DriverTripsRemoteDataSource {
     throw const ApiException('تعذر إنهاء الرحلة.');
   }
 
-  Future<List<DriverTripHistoryModel>> fetchHistory() async {
+  Future<DriverTripHistoryResponseModel> fetchHistory({String? date}) async {
+    final query = <String, dynamic>{};
+    if (date != null && date.isNotEmpty) query['date'] = date;
+
     final response = await _apiClient.get(
       ApiEndpoints.driverTripsHistory,
+      queryParameters: query.isNotEmpty ? query : null,
       headers: _authHeader,
     );
     final map = _unwrap(response.data, 'تعذر تحميل سجل الرحلات.');
-    final rawList = map['data'];
-    if (rawList is! List) return const [];
-    return rawList
-        .whereType<Map>()
-        .map((e) => DriverTripHistoryModel.fromJson(Map<String, dynamic>.from(e)))
-        .toList();
+    return DriverTripHistoryResponseModel.fromJson(map);
   }
 
   Future<DriverTripHistoryDetailsModel> fetchHistoryDetails(int tripId) async {
@@ -213,6 +215,34 @@ class DriverTripsRemoteDataSource {
     throw const ApiException('تعذر تحميل تفاصيل الرحلة.');
   }
 
+  Future<List<UpcomingAbsenceTripModel>> fetchUpcomingTripsForAbsence() async {
+    final response = await _apiClient.get(
+      ApiEndpoints.driverTripsUpcomingForAbsence,
+      headers: _authHeader,
+    );
+    final map = _unwrap(response.data, 'تعذر جلب الرحلات القادمة للغياب.');
+    final rawList = map['data'];
+    if (rawList is List) {
+      return rawList
+          .whereType<Map>()
+          .map((e) => UpcomingAbsenceTripModel.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+    return const [];
+  }
+
+  Future<DriverRegisterAbsenceResponseModel> registerAbsenceWithTrips(
+    DriverRegisterAbsenceRequestModel request,
+  ) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.driverTripsRegisterAbsence,
+      data: request.toJson(),
+      headers: _authHeader,
+    );
+    final map = _unwrap(response.data, 'تعذر تسجيل الغياب.');
+    return DriverRegisterAbsenceResponseModel.fromJson(map);
+  }
+
   Future<void> registerAbsence(List<String> dates) async {
     final response = await _apiClient.post(
       ApiEndpoints.driverTripsRegisterAbsence,
@@ -222,18 +252,17 @@ class DriverTripsRemoteDataSource {
     _unwrap(response.data, 'تعذر تسجيل الغياب.');
   }
 
-  Future<TripStatusChangeResultModel> reportBreakdown(int tripId, {String? reason}) async {
+  Future<VehicleBreakdownResponseModel> reportBreakdown(
+    int tripId,
+    VehicleBreakdownRequestModel request,
+  ) async {
     final response = await _apiClient.post(
       ApiEndpoints.driverTripReportBreakdown(tripId),
-      data: {if (reason != null && reason.isNotEmpty) 'reason': reason},
+      data: request.toJson(),
       headers: _authHeader,
     );
-    final map = _unwrap(response.data, 'تعذر تسجيل توقف الرحلة.');
-    final data = map['data'];
-    if (data is Map) {
-      return TripStatusChangeResultModel.fromJson(Map<String, dynamic>.from(data));
-    }
-    throw const ApiException('تعذر تسجيل توقف الرحلة.');
+    final map = _unwrap(response.data, 'تعذر تسجيل بلاغ طوارئ التعطل.');
+    return VehicleBreakdownResponseModel.fromJson(map);
   }
 
   Future<TripStatusChangeResultModel> resumeTrip(int tripId) async {

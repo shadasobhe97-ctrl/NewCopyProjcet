@@ -13,11 +13,17 @@ class DriverTripsHistoryLoading extends DriverTripsHistoryState {}
 
 class DriverTripsHistoryLoaded extends DriverTripsHistoryState {
   final List<DriverTripHistoryModel> trips;
+  final PaginationModel pagination;
+  final String? selectedDate;
 
-  const DriverTripsHistoryLoaded(this.trips);
+  const DriverTripsHistoryLoaded({
+    required this.trips,
+    required this.pagination,
+    this.selectedDate,
+  });
 
   @override
-  List<Object?> get props => [trips];
+  List<Object?> get props => [trips, pagination, selectedDate];
 }
 
 class DriverTripsHistoryError extends DriverTripsHistoryState {

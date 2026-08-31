@@ -89,17 +89,20 @@ class ApiEndpoints {
       'v1/driver/trips/history/$tripId';
   static const String driverTripsRegisterAbsence =
       'v1/driver/trips/register-absence';
+  static const String driverTripsUpcomingForAbsence =
+      'v1/driver/trips/upcoming-for-absence';
   static String driverTripReportBreakdown(dynamic tripId) =>
       'v1/driver/trips/$tripId/report-breakdown';
   static String driverTripResume(dynamic tripId) =>
       'v1/driver/trips/$tripId/resume';
 
-  // ================= Driver Subscriptions =================
+  // ================= Driver Subscriptions & Statistics =================
   static const String driverActiveSubscriptions = 'driver/active-subscriptions';
   static String driverSubscriptionDetails(int id) =>
       'driver/active-subscriptions/$id';
   static String driverActiveSubscriptionCancel(int id) =>
       'driver/active-subscriptions/$id/cancel';
+  static const String driverStatistics = 'driver/statistics';
 
   static const String parentProfile = 'parent/profile';
   static const String parentProfileUpdate = 'parent/profile/update';

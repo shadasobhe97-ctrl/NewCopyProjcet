@@ -11,11 +11,15 @@ class DriverTripsHistoryCubit extends Cubit<DriverTripsHistoryState> {
 
   DriverTripsHistoryCubit(this._repository) : super(DriverTripsHistoryInitial());
 
-  Future<void> loadHistory() async {
+  Future<void> loadHistory({String? date}) async {
     emit(DriverTripsHistoryLoading());
     try {
-      final trips = await _repository.getHistory();
-      emit(DriverTripsHistoryLoaded(trips));
+      final response = await _repository.getHistory(date: date);
+      emit(DriverTripsHistoryLoaded(
+        trips: response.data,
+        pagination: response.pagination,
+        selectedDate: date,
+      ));
     } catch (e) {
       emit(DriverTripsHistoryError('فشل تحميل سجل الرحلات: ${e.toString()}'));
     }

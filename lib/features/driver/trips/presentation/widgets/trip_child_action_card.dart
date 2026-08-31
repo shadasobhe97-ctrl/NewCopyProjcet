@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -83,12 +84,30 @@ class TripChildActionCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Icon(
-                item.isDropoffPhase ? Icons.school_rounded : Icons.home_rounded,
-                size: 18,
-                color: context.textMuted,
-              ),
-              const SizedBox(width: 6),
+              if (item.photo != null && item.photo!.isNotEmpty) ...[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: CachedNetworkImage(
+                    imageUrl: item.photo!,
+                    width: 30,
+                    height: 30,
+                    fit: BoxFit.cover,
+                    errorWidget: (context, url, error) => Icon(
+                      item.isDropoffPhase ? Icons.school_rounded : Icons.home_rounded,
+                      size: 18,
+                      color: context.textMuted,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ] else ...[
+                Icon(
+                  item.isDropoffPhase ? Icons.school_rounded : Icons.home_rounded,
+                  size: 18,
+                  color: context.textMuted,
+                ),
+                const SizedBox(width: 6),
+              ],
               Expanded(
                 child: Text(
                   item.name,
@@ -100,6 +119,7 @@ class TripChildActionCard extends StatelessWidget {
               TripChildStatusBadge(status: item.status, compact: true),
             ],
           ),
+
           if (address.isNotEmpty) ...[
             const SizedBox(height: 6),
             Padding(

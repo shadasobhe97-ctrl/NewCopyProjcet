@@ -17,12 +17,19 @@ import 'package:kids_transport/features/chat/data/repositories/chat_repository.d
 import 'package:kids_transport/features/chat/presentation/cubit/chat_list_cubit.dart';
 import 'package:kids_transport/features/chat/presentation/cubit/chat_room_cubit.dart';
 
+import 'package:kids_transport/core/services/battery_service.dart';
+
 final getIt = GetIt.instance;
 
 void setupDependencyInjection() {
   // ApiClient الموحد
   if (!getIt.isRegistered<ApiClient>()) {
     getIt.registerLazySingleton<ApiClient>(() => ApiClient());
+  }
+
+  // BatteryService
+  if (!getIt.isRegistered<BatteryService>()) {
+    getIt.registerLazySingleton<BatteryService>(() => BatteryService());
   }
 
   // تهيئة حقن المميزات

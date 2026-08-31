@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/utils/subscription_enums.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/features/driver/requests/logic/driver_requests_cubit.dart';
@@ -757,8 +758,8 @@ class _ChildCard extends StatelessWidget {
                       children: [
                         if (child.gender != null && child.gender!.isNotEmpty)
                           _buildChip(
-                            child.gender == 'male' ? 'ذكر' : 'أنثى',
-                            child.gender == 'male' ? Icons.male_rounded : Icons.female_rounded,
+                            SubscriptionEnums.genderLabel(child.gender),
+                            child.gender?.toLowerCase().startsWith('m') == true ? Icons.male_rounded : Icons.female_rounded,
                             isDark,
                           ),
                         if (child.age != null)

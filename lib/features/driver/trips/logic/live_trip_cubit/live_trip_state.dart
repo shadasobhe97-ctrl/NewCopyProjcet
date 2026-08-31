@@ -32,6 +32,8 @@ class LiveTripLoaded extends LiveTripState {
   final String? blockingErrorMessage;
   final TripCompleteSummaryModel? completedSummary;
 
+  final VehicleBreakdownResponseModel? breakdownResult;
+
   const LiveTripLoaded({
     required this.tripStatus,
     required this.stops,
@@ -43,6 +45,7 @@ class LiveTripLoaded extends LiveTripState {
     this.blockingErrorCode,
     this.blockingErrorMessage,
     this.completedSummary,
+    this.breakdownResult,
   });
 
   bool get isInProgress => tripStatus == 'in_progress';
@@ -65,6 +68,8 @@ class LiveTripLoaded extends LiveTripState {
     String? blockingErrorMessage,
     bool clearBlockingError = false,
     TripCompleteSummaryModel? completedSummary,
+    VehicleBreakdownResponseModel? breakdownResult,
+    bool clearBreakdownResult = false,
   }) {
     return LiveTripLoaded(
       tripStatus: tripStatus ?? this.tripStatus,
@@ -80,6 +85,7 @@ class LiveTripLoaded extends LiveTripState {
       blockingErrorMessage:
           clearBlockingError ? null : (blockingErrorMessage ?? this.blockingErrorMessage),
       completedSummary: completedSummary ?? this.completedSummary,
+      breakdownResult: clearBreakdownResult ? null : (breakdownResult ?? this.breakdownResult),
     );
   }
 
@@ -95,5 +101,6 @@ class LiveTripLoaded extends LiveTripState {
         blockingErrorCode,
         blockingErrorMessage,
         completedSummary,
+        breakdownResult,
       ];
 }

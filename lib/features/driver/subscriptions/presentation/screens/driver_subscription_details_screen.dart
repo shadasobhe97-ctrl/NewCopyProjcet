@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/utils/subscription_enums.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
@@ -300,7 +301,7 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
                             _InfoRow(
                               icon: Icons.wc_rounded,
                               label: 'الجنس',
-                              value: child.gender == 'male' ? 'ذكر' : (child.gender == 'female' ? 'أنثى' : 'غير متوفر'),
+                              value: SubscriptionEnums.genderLabel(child.gender),
                             ),
                             _InfoRow(
                               icon: Icons.note_alt_rounded,

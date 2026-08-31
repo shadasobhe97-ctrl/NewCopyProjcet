@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 
-/// شارة حالة الطفل ضمن محطة/رحلة (قيم trip_stops.status الحقيقية من الباك إند)
+/// شارة حالة الطفل ضمن محطة/رحلة (تضم الحالات: completed, skipped, absent, dropped_off ...)
 class TripChildStatusBadge extends StatelessWidget {
   final String status;
   final bool compact;
@@ -13,14 +13,19 @@ class TripChildStatusBadge extends StatelessWidget {
     switch (status) {
       case 'pending':
         return 'في الانتظار';
+      case 'completed':
+        return 'مكتمل';
+      case 'skipped':
+      case 'skipped_unresponsive':
+        return 'تم التخطي';
+      case 'absent':
+      case 'absent_late':
+        return 'غائب';
       case 'absent_pre':
         return 'غياب مسبق';
       case 'boarded':
         return 'على متن الحافلة';
-      case 'absent_late':
-        return 'غائب';
-      case 'skipped_unresponsive':
-        return 'تم تجاوزه';
+      case 'dropped_off':
       case 'dropped_off_school':
         return 'وصل للمدرسة';
       case 'delivered_home':
@@ -38,18 +43,21 @@ class TripChildStatusBadge extends StatelessWidget {
     switch (status) {
       case 'pending':
         return AppColors.grey500;
-      case 'absent_pre':
-      case 'absent_late':
-        return AppColors.error;
-      case 'boarded':
-        return AppColors.info;
-      case 'skipped_unresponsive':
-        return AppColors.pending;
+      case 'completed':
+      case 'dropped_off':
       case 'dropped_off_school':
       case 'delivered_home':
         return AppColors.success;
+      case 'skipped':
+      case 'skipped_unresponsive':
+        return AppColors.pending;
+      case 'absent':
+      case 'absent_pre':
+      case 'absent_late':
       case 'dropoff_failed':
         return AppColors.error;
+      case 'boarded':
+        return AppColors.info;
       case 'direct_parent_handling':
         return AppColors.accentPurple;
       default:

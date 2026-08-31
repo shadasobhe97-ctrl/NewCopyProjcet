@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
@@ -8,6 +9,9 @@ import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/primary_button.dart';
+import 'package:kids_transport/core/di/dependency_injection.dart';
+import 'package:kids_transport/core/services/battery_service.dart';
+import 'package:kids_transport/features/driver/trips/presentation/widgets/low_battery_dialog.dart';
 import 'package:kids_transport/features/driver/trips/data/models/driver_trip_details_model.dart';
 import 'package:kids_transport/features/driver/trips/logic/driver_trips_cubit/driver_trips_cubit.dart';
 import 'package:kids_transport/features/driver/trips/presentation/widgets/trip_child_status_badge.dart';
@@ -35,6 +39,15 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   Future<void> _startTrip() async {
     setState(() => _isStarting = true);
     try {
+      final batteryService = getIt<BatteryService>();
+      final batteryLevel = await batteryService.getBatteryLevel();
+
+      if (batteryLevel != null && batteryLevel < 50) {
+        if (!mounted) return;
+        await LowBatteryDialog.show(context, batteryLevel: batteryLevel);
+        return;
+      }
+
       Position? position;
       try {
         var permission = await Geolocator.checkPermission();
@@ -278,6 +291,19 @@ class _ChildTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
+              if (child.photo != null && child.photo!.isNotEmpty) ...[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(13),
+                  child: CachedNetworkImage(
+                    imageUrl: child.photo!,
+                    width: 26,
+                    height: 26,
+                    fit: BoxFit.cover,
+                    errorWidget: (context, url, error) => const SizedBox.shrink(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               Expanded(
                 child: Text(
                   child.name,
@@ -287,6 +313,7 @@ class _ChildTile extends StatelessWidget {
               TripChildStatusBadge(status: child.status, compact: true),
             ],
           ),
+
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.only(right: 36),

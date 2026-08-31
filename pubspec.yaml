@@ -61,6 +61,7 @@ dependencies:
   http: ^1.2.0
   device_info_plus: ^13.2.0
   package_info_plus: ^10.1.0
+  battery_plus: ^7.0.0
 
 dev_dependencies:
   flutter_test:

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/utils/subscription_enums.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import '../../logic/requests_cubit/requests_cubit.dart';
@@ -629,8 +630,8 @@ class _ChildSubscriptionCard extends StatelessWidget {
                           ),
                         if (child.gender != null && child.gender!.isNotEmpty)
                           _buildInfoChip(
-                            child.gender == 'male' ? 'ذكر' : 'أنثى',
-                            child.gender == 'male'
+                            SubscriptionEnums.genderLabel(child.gender),
+                            child.gender?.toLowerCase().startsWith('m') == true
                                 ? Icons.male_rounded
                                 : Icons.female_rounded,
                             isDark,

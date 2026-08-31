@@ -42,6 +42,11 @@ import 'package:kids_transport/features/driver/trips/logic/live_trip_cubit/live_
 import 'package:kids_transport/features/driver/trips/logic/driver_trips_history_cubit/driver_trips_history_cubit.dart';
 import 'package:kids_transport/features/driver/trips/logic/driver_absence_cubit/driver_absence_cubit.dart';
 
+// Statistics
+import 'package:kids_transport/features/driver/statistics/data/datasources/driver_statistics_remote_datasource.dart';
+import 'package:kids_transport/features/driver/statistics/data/repositories/driver_statistics_repository.dart';
+import 'package:kids_transport/features/driver/statistics/logic/cubit/driver_statistics_cubit.dart';
+
 final GetIt driverSl = GetIt.instance;
 
 void initDriverInjection() {
@@ -198,6 +203,25 @@ void initDriverInjection() {
   if (!driverSl.isRegistered<DriverAbsenceCubit>()) {
     driverSl.registerFactory<DriverAbsenceCubit>(
       () => DriverAbsenceCubit(driverSl<DriverTripsRepository>()),
+    );
+  }
+
+  // =========================================
+  // 8. Statistics Feature
+  // =========================================
+  if (!driverSl.isRegistered<DriverStatisticsRemoteDataSource>()) {
+    driverSl.registerLazySingleton<DriverStatisticsRemoteDataSource>(
+      () => DriverStatisticsRemoteDataSource(driverSl<ApiClient>()),
+    );
+  }
+  if (!driverSl.isRegistered<DriverStatisticsRepository>()) {
+    driverSl.registerLazySingleton<DriverStatisticsRepository>(
+      () => DriverStatisticsRepository(driverSl<DriverStatisticsRemoteDataSource>()),
+    );
+  }
+  if (!driverSl.isRegistered<DriverStatisticsCubit>()) {
+    driverSl.registerFactory<DriverStatisticsCubit>(
+      () => DriverStatisticsCubit(driverSl<DriverStatisticsRepository>()),
     );
   }
 }

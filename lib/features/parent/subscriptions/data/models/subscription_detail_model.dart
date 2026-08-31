@@ -28,20 +28,8 @@ class SubscriptionDetailModel {
     required this.createdAt,
   });
 
-  String get statusDisplayLabel {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return 'نشط';
-      case 'pending_start':
-        return 'بانتظار البدء';
-      case 'completed':
-        return 'مكتمل';
-      case 'cancelled':
-        return 'ملغي';
-      default:
-        return statusLabel.isNotEmpty ? statusLabel : status;
-    }
-  }
+  String get statusDisplayLabel =>
+      SubscriptionEnums.statusLabel(status, fallbackLabel: statusLabel);
 
   factory SubscriptionDetailModel.fromJson(Map<String, dynamic> json) {
     final childJson = json['child'] as Map<String, dynamic>? ?? {};
