@@ -18,6 +18,7 @@ import 'trip_details_screen.dart';
 import 'active_trips_screen.dart';
 import 'upcoming_trips_screen.dart';
 import 'trip_history_screen.dart';
+import 'child_trips_screen.dart';
 
 class TripsHomeScreen extends StatefulWidget {
   const TripsHomeScreen({super.key});
@@ -287,6 +288,14 @@ class _TripsHomeScreenState extends State<TripsHomeScreen> {
                 childrenOptions.firstWhere((o) => o['id'] == val)['name']
                     as String;
             _tripsCubit.filterByChild(val, selectedName);
+            if (val != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChildTripsScreen(childId: val),
+                ),
+              );
+            }
           },
         ),
       ),
@@ -465,6 +474,17 @@ class _TripsHomeScreenState extends State<TripsHomeScreen> {
                         color: AppColors.textMuted,
                       ),
                     ),
+                    if (trip.busOccupancy != null) ...[
+                      SizedBox(height: 2.h),
+                      Text(
+                        'إشغال الحافلة: ${trip.busOccupancy!.displayOccupancy} أطفال',
+                        style: AppTextStyles.style(
+                          fontSize: 9.5.sp,
+                          fontWeight: FontWeight.bold,
+                          color: context.primaryColor,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

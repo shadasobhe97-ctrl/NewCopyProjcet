@@ -165,9 +165,15 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
       );
 
       if (widget.child != null) {
-        // حالة تعديل بيانات الطفل فقط: يتم حفظ وإرسال الحقول الخاصة بشاشة بيانات الطفل الشخصية حصراً
-        cubit.submitChildPersonalDataOnly(
-          existingChild: widget.child!,
+        // حالة التعديل فقط: يتم حفظ بيانات الطفل الأساسية مباشرة دون الانتقال لاعدادات ت النقل
+        final editingChild = widget.child!;
+        cubit.submitStep2(
+          transportPref: editingChild.transportPref,
+          sId: editingChild.schoolId,
+          sName: editingChild.schoolName,
+          aId: editingChild.addressId.toString(),
+          aName: editingChild.addressName,
+          existingChild: editingChild,
         );
       } else {
         // حالة إدخال طفل جديد: الانتقال إلى الخطوة التالية (بيانات النقل)
@@ -354,9 +360,8 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                           alpha: 0.05,
                                         ),
                                         border: Border.all(
-                                          color: context.primaryColor.withValues(
-                                            alpha: 0.3,
-                                          ),
+                                          color: context.primaryColor
+                                              .withValues(alpha: 0.3),
                                           width: 2.w,
                                         ),
                                       ),
@@ -388,11 +393,10 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                                                   context,
                                                                   url,
                                                                 ) => Center(
-                                                                  child:
-                                                                      CircularProgressIndicator(
-                                                                        strokeWidth:
-                                                                            2.w,
-                                                                      ),
+                                                                  child: CircularProgressIndicator(
+                                                                    strokeWidth:
+                                                                        2.w,
+                                                                  ),
                                                                 ),
                                                             errorWidget:
                                                                 (
@@ -403,13 +407,15 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                                                   Icons
                                                                       .error_outline_rounded,
                                                                   size: 40.r,
-                                                                  color: AppColors
-                                                                      .error,
+                                                                  color:
+                                                                      AppColors
+                                                                          .error,
                                                                 ),
                                                           )
                                                         : Center(
                                                             child: Icon(
-                                                              Icons.person_rounded,
+                                                              Icons
+                                                                  .person_rounded,
                                                               size: 55.r,
                                                               color: context
                                                                   .primaryColor
@@ -473,7 +479,9 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                   style: AppTextStyles.style(fontSize: 14.sp),
                                   decoration: InputDecoration(
                                     labelText: 'الاسم الكامل',
-                                    prefixIcon: const Icon(Icons.badge_outlined),
+                                    prefixIcon: const Icon(
+                                      Icons.badge_outlined,
+                                    ),
                                     border: OutlineInputBorder(
                                       borderRadius: AppTheme.radius(10.r),
                                     ),
@@ -482,7 +490,9 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                     if (v == null || v.trim().isEmpty) {
                                       return 'مطلوب';
                                     }
-                                    final parts = v.trim().split(RegExp(r'\s+'));
+                                    final parts = v.trim().split(
+                                      RegExp(r'\s+'),
+                                    );
                                     if (parts.length < 3) {
                                       return 'الرجاء إدخال الاسم ثلاثياً على الأقل';
                                     }
@@ -517,7 +527,9 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                     ),
                                     child: Text(
                                       '${_selectedDate.year}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.day.toString().padLeft(2, '0')}',
-                                      style: AppTextStyles.style(fontSize: 14.sp),
+                                      style: AppTextStyles.style(
+                                        fontSize: 14.sp,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -572,76 +584,81 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                 SizedBox(height: 8.h),
                                 // اختيار المرحلة (روضة, ابتدائية, إعدادية, ثانوية)
                                 Row(
-                                  children: [
-                                    {'label': 'روضة', 'idx': 0},
-                                    {'label': 'ابتدائية', 'idx': 1},
-                                    {'label': 'إعدادية', 'idx': 2},
-                                    {'label': 'ثانوية', 'idx': 3},
-                                  ].map((stage) {
-                                    final idx = stage['idx'] as int;
-                                    final isSelected =
-                                        _selectedStageIndex == idx;
-                                    return Expanded(
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _selectedStageIndex = idx;
-                                            if (idx == 0) {
-                                              _selectedGrade = 0;
-                                            } else if (idx == 1) {
-                                              if (_selectedGrade < 1 ||
-                                                  _selectedGrade > 6)
-                                                _selectedGrade = 1;
-                                            } else if (idx == 2) {
-                                              if (_selectedGrade < 7 ||
-                                                  _selectedGrade > 9)
-                                                _selectedGrade = 7;
-                                            } else if (idx == 3) {
-                                              if (_selectedGrade < 10 ||
-                                                  _selectedGrade > 12)
-                                                _selectedGrade = 10;
-                                            }
-                                          });
-                                        },
-                                        child: AnimatedContainer(
-                                          duration: const Duration(
-                                            milliseconds: 200,
-                                          ),
-                                          margin: EdgeInsets.symmetric(
-                                            horizontal: 2.w,
-                                          ),
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: 10.h,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: isSelected
-                                                ? context.primaryColor
-                                                : context.primaryColor
-                                                      .withValues(alpha: 0.05),
-                                            border: Border.all(
-                                              color: isSelected
-                                                  ? context.primaryColor
-                                                  : AppColors.grey300,
+                                  children:
+                                      [
+                                        {'label': 'روضة', 'idx': 0},
+                                        {'label': 'ابتدائية', 'idx': 1},
+                                        {'label': 'إعدادية', 'idx': 2},
+                                        {'label': 'ثانوية', 'idx': 3},
+                                      ].map((stage) {
+                                        final idx = stage['idx'] as int;
+                                        final isSelected =
+                                            _selectedStageIndex == idx;
+                                        return Expanded(
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                _selectedStageIndex = idx;
+                                                if (idx == 0) {
+                                                  _selectedGrade = 0;
+                                                } else if (idx == 1) {
+                                                  if (_selectedGrade < 1 ||
+                                                      _selectedGrade > 6)
+                                                    _selectedGrade = 1;
+                                                } else if (idx == 2) {
+                                                  if (_selectedGrade < 7 ||
+                                                      _selectedGrade > 9)
+                                                    _selectedGrade = 7;
+                                                } else if (idx == 3) {
+                                                  if (_selectedGrade < 10 ||
+                                                      _selectedGrade > 12)
+                                                    _selectedGrade = 10;
+                                                }
+                                              });
+                                            },
+                                            child: AnimatedContainer(
+                                              duration: const Duration(
+                                                milliseconds: 200,
+                                              ),
+                                              margin: EdgeInsets.symmetric(
+                                                horizontal: 2.w,
+                                              ),
+                                              padding: EdgeInsets.symmetric(
+                                                vertical: 10.h,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: isSelected
+                                                    ? context.primaryColor
+                                                    : context.primaryColor
+                                                          .withValues(
+                                                            alpha: 0.05,
+                                                          ),
+                                                border: Border.all(
+                                                  color: isSelected
+                                                      ? context.primaryColor
+                                                      : AppColors.grey300,
+                                                ),
+                                                borderRadius: AppTheme.radius(
+                                                  10.r,
+                                                ),
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: Text(
+                                                stage['label'] as String,
+                                                style: AppTextStyles.style(
+                                                  color: isSelected
+                                                      ? Colors.white
+                                                      : context.textMuted,
+                                                  fontWeight: isSelected
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
+                                                  fontSize: 12.sp,
+                                                ),
+                                              ),
                                             ),
-                                            borderRadius: AppTheme.radius(10.r),
                                           ),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            stage['label'] as String,
-                                            style: AppTextStyles.style(
-                                              color: isSelected
-                                                  ? Colors.white
-                                                  : context.textMuted,
-                                              fontWeight: isSelected
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal,
-                                              fontSize: 12.sp,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
+                                        );
+                                      }).toList(),
                                 ),
                                 SizedBox(height: 10.h),
                                 // خيارات الصف بناءً على المرحلة
@@ -658,7 +675,8 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                     prefixIcon: const Icon(
                                       Icons.medical_services_outlined,
                                     ),
-                                    hintText: 'أي حالات صحية أو تنبيهات مهمة...',
+                                    hintText:
+                                        'أي حالات صحية أو تنبيهات مهمة...',
                                     border: OutlineInputBorder(
                                       borderRadius: AppTheme.radius(10.r),
                                     ),
@@ -681,12 +699,13 @@ class _AddChildStep1ScreenState extends State<AddChildStep1Screen> {
                                         color: Colors.white,
                                       )
                                     : Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Text(
                                             widget.child != null
                                                 ? 'حفظ التعديلات'
-                                                : ' التالي تفضيلات النقل ',
+                                                : ' التالي اعدادت النقل ',
                                             style: TextStyle(
                                               fontSize: 16.sp,
                                               fontWeight: FontWeight.bold,

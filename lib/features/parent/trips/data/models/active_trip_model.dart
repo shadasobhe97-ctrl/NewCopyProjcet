@@ -15,7 +15,8 @@ class DriverInfo {
     return DriverInfo(
       id: json['id'] as int? ?? 0,
       name: json['name']?.toString() ?? json['driver_name']?.toString() ?? '',
-      phone: json['phone']?.toString() ?? json['driver_phone']?.toString() ?? '',
+      phone:
+          json['phone']?.toString() ?? json['driver_phone']?.toString() ?? '',
       photo: json['photo']?.toString() ?? json['driver_photo']?.toString(),
     );
   }
@@ -24,11 +25,9 @@ class DriverInfo {
 class VehicleInfoModel {
   final String info;
   final String? plateNumber;
+  final int? capacity;
 
-  const VehicleInfoModel({
-    required this.info,
-    this.plateNumber,
-  });
+  const VehicleInfoModel({required this.info, this.plateNumber, this.capacity});
 
   factory VehicleInfoModel.fromJson(dynamic json) {
     if (json is String) {
@@ -36,10 +35,96 @@ class VehicleInfoModel {
     } else if (json is Map<String, dynamic>) {
       return VehicleInfoModel(
         info: json['info']?.toString() ?? json['model']?.toString() ?? '',
-        plateNumber: json['plate_number']?.toString() ?? json['plate']?.toString(),
+        plateNumber:
+            json['plate_number']?.toString() ?? json['plate']?.toString(),
+        capacity: (json['capacity'] as num?)?.toInt(),
       );
     }
     return const VehicleInfoModel(info: '');
+  }
+}
+
+class BusOccupancyModel {
+  final int currentOnboardCount;
+  final int totalTripChildren;
+
+  const BusOccupancyModel({
+    required this.currentOnboardCount,
+    required this.totalTripChildren,
+  });
+
+  factory BusOccupancyModel.fromJson(Map<String, dynamic> json) {
+    return BusOccupancyModel(
+      currentOnboardCount:
+          (json['current_onboard_count'] as num?)?.toInt() ?? 0,
+      totalTripChildren: (json['total_trip_children'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  String get displayOccupancy => '$currentOnboardCount / $totalTripChildren';
+}
+
+class ChildAddressModel {
+  final String title;
+  final String? street;
+  final double lat;
+  final double lng;
+
+  const ChildAddressModel({
+    required this.title,
+    this.street,
+    required this.lat,
+    required this.lng,
+  });
+
+  factory ChildAddressModel.fromJson(Map<String, dynamic> json) {
+    return ChildAddressModel(
+      title: json['title']?.toString() ?? '',
+      street: json['street']?.toString(),
+      lat:
+          (json['lat'] as num?)?.toDouble() ??
+          (json['latitude'] as num?)?.toDouble() ??
+          0.0,
+      lng:
+          (json['lng'] as num?)?.toDouble() ??
+          (json['longitude'] as num?)?.toDouble() ??
+          0.0,
+    );
+  }
+}
+
+class ChildSchoolModel {
+  final int id;
+  final String name;
+  final String? branch;
+  final String? address;
+  final double lat;
+  final double lng;
+
+  const ChildSchoolModel({
+    required this.id,
+    required this.name,
+    this.branch,
+    this.address,
+    required this.lat,
+    required this.lng,
+  });
+
+  factory ChildSchoolModel.fromJson(Map<String, dynamic> json) {
+    return ChildSchoolModel(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      name: json['name']?.toString() ?? '',
+      branch: json['branch']?.toString(),
+      address: json['address']?.toString(),
+      lat:
+          (json['lat'] as num?)?.toDouble() ??
+          (json['latitude'] as num?)?.toDouble() ??
+          0.0,
+      lng:
+          (json['lng'] as num?)?.toDouble() ??
+          (json['longitude'] as num?)?.toDouble() ??
+          0.0,
+    );
   }
 }
 
@@ -51,6 +136,8 @@ class TripChildInfo {
   final String? pickupTime;
   final String? dropoffTime;
   final String? direction;
+  final ChildAddressModel? homeAddress;
+  final ChildSchoolModel? school;
 
   const TripChildInfo({
     required this.childId,
@@ -60,17 +147,39 @@ class TripChildInfo {
     this.pickupTime,
     this.dropoffTime,
     this.direction,
+    this.homeAddress,
+    this.school,
   });
 
   factory TripChildInfo.fromJson(Map<String, dynamic> json) {
+    ChildAddressModel? home;
+    if (json['home_address'] is Map<String, dynamic>) {
+      home = ChildAddressModel.fromJson(
+        json['home_address'] as Map<String, dynamic>,
+      );
+    }
+
+    ChildSchoolModel? schoolObj;
+    if (json['school'] is Map<String, dynamic>) {
+      schoolObj = ChildSchoolModel.fromJson(
+        json['school'] as Map<String, dynamic>,
+      );
+    }
+
     return TripChildInfo(
       childId: json['child_id'] as int? ?? json['id'] as int? ?? 0,
-      childName: json['child_name']?.toString() ?? json['name']?.toString() ?? '',
+      childName:
+          json['child_name']?.toString() ?? json['name']?.toString() ?? '',
       childPhoto: json['child_photo']?.toString() ?? json['photo']?.toString(),
-      childStatus: json['child_status']?.toString() ?? json['status']?.toString() ?? '',
-      pickupTime: json['pickup_time']?.toString() ?? json['onboard_time']?.toString(),
-      dropoffTime: json['dropoff_time']?.toString() ?? json['arrival_time']?.toString(),
+      childStatus:
+          json['child_status']?.toString() ?? json['status']?.toString() ?? '',
+      pickupTime:
+          json['pickup_time']?.toString() ?? json['onboard_time']?.toString(),
+      dropoffTime:
+          json['dropoff_time']?.toString() ?? json['arrival_time']?.toString(),
       direction: json['direction']?.toString(),
+      homeAddress: home,
+      school: schoolObj,
     );
   }
 }
@@ -92,8 +201,14 @@ class DestinationInfo {
     return DestinationInfo(
       name: json['name']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
-      lat: (json['lat'] as num?)?.toDouble() ?? (json['latitude'] as num?)?.toDouble() ?? 0.0,
-      lng: (json['lng'] as num?)?.toDouble() ?? (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      lat:
+          (json['lat'] as num?)?.toDouble() ??
+          (json['latitude'] as num?)?.toDouble() ??
+          0.0,
+      lng:
+          (json['lng'] as num?)?.toDouble() ??
+          (json['longitude'] as num?)?.toDouble() ??
+          0.0,
     );
   }
 }
@@ -106,6 +221,7 @@ class ActiveTripModel {
   final String startedAt;
   final DriverInfo driver;
   final VehicleInfoModel vehicle;
+  final BusOccupancyModel? busOccupancy;
   final List<TripChildInfo> children;
   final DestinationInfo destination;
   final String? waitingTimer;
@@ -118,6 +234,7 @@ class ActiveTripModel {
     required this.startedAt,
     required this.driver,
     required this.vehicle,
+    this.busOccupancy,
     required this.children,
     required this.destination,
     this.waitingTimer,
@@ -129,7 +246,33 @@ class ActiveTripModel {
   String get vehicleInfo => vehicle.info;
   int get childId => children.isNotEmpty ? children.first.childId : 0;
   String get childName => children.isNotEmpty ? children.first.childName : '';
-  String get childStatus => children.isNotEmpty ? children.first.childStatus : '';
+  String get childStatus =>
+      children.isNotEmpty ? children.first.childStatus : '';
+
+  /// جلب المدارس الفريدة للأطفال في هذه الرحلة
+  List<ChildSchoolModel> get uniqueSchools {
+    final Map<String, ChildSchoolModel> map = {};
+    for (final c in children) {
+      if (c.school != null) {
+        final key = '${c.school!.id}_${c.school!.lat}_${c.school!.lng}';
+        map[key] = c.school!;
+      }
+    }
+    return map.values.toList();
+  }
+
+  /// جلب عناوين المنازل الفريدة للأطفال في هذه الرحلة
+  List<ChildAddressModel> get uniqueHomeAddresses {
+    final Map<String, ChildAddressModel> map = {};
+    for (final c in children) {
+      if (c.homeAddress != null) {
+        final key =
+            '${c.homeAddress!.title}_${c.homeAddress!.lat}_${c.homeAddress!.lng}';
+        map[key] = c.homeAddress!;
+      }
+    }
+    return map.values.toList();
+  }
 
   factory ActiveTripModel.fromJson(Map<String, dynamic> json) {
     DriverInfo driverObj;
@@ -144,7 +287,16 @@ class ActiveTripModel {
       );
     }
 
-    VehicleInfoModel vehicleObj = VehicleInfoModel.fromJson(json['vehicle'] ?? json['vehicle_info']);
+    VehicleInfoModel vehicleObj = VehicleInfoModel.fromJson(
+      json['vehicle'] ?? json['vehicle_info'],
+    );
+
+    BusOccupancyModel? occupancy;
+    if (json['bus_occupancy'] is Map<String, dynamic>) {
+      occupancy = BusOccupancyModel.fromJson(
+        json['bus_occupancy'] as Map<String, dynamic>,
+      );
+    }
 
     List<TripChildInfo> childrenList = [];
     if (json['children'] is List) {
@@ -158,13 +310,15 @@ class ActiveTripModel {
           childName: json['child_name']?.toString() ?? '',
           childPhoto: json['child_photo']?.toString(),
           childStatus: json['child_status']?.toString() ?? '',
-        )
+        ),
       ];
     }
 
     DestinationInfo destObj;
     if (json['destination'] is Map<String, dynamic>) {
-      destObj = DestinationInfo.fromJson(json['destination'] as Map<String, dynamic>);
+      destObj = DestinationInfo.fromJson(
+        json['destination'] as Map<String, dynamic>,
+      );
     } else {
       destObj = DestinationInfo(
         name: json['destination_name']?.toString() ?? '',
@@ -182,6 +336,7 @@ class ActiveTripModel {
       startedAt: json['started_at']?.toString() ?? '',
       driver: driverObj,
       vehicle: vehicleObj,
+      busOccupancy: occupancy,
       children: childrenList,
       destination: destObj,
       waitingTimer: json['waiting_timer']?.toString(),

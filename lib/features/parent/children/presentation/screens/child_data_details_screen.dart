@@ -38,7 +38,9 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
     });
     try {
       final cubit = context.read<ChildrenCubit>();
-      final (result, error) = await cubit.getChildDetails(widget.child.id.toString());
+      final (result, error) = await cubit.getChildDetails(
+        widget.child.id.toString(),
+      );
       if (mounted) {
         if (error != null) {
           setState(() {
@@ -62,11 +64,12 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
     }
   }
 
-  void _openEdit() async {
+  void _openEditPersonalData() async {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => AddChildStep1Screen(child: childDetails ?? widget.child),
+        builder: (_) =>
+            AddChildStep1Screen(child: childDetails ?? widget.child),
       ),
     );
     _fetchChildDetails();
@@ -75,14 +78,12 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final activeChild = childDetails ?? widget.child;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (isLoading) {
       return Scaffold(
         backgroundColor: context.backgroundSurface,
-        appBar: AppBar(
-          title: const Text('بيانات الطفل'),
-          elevation: 0,
-        ),
+        appBar: AppBar(title: const Text('تفاصيل الطفل'), elevation: 0),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -90,10 +91,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
     if (errorMessage != null) {
       return Scaffold(
         backgroundColor: context.backgroundSurface,
-        appBar: AppBar(
-          title: const Text('بيانات الطفل'),
-          elevation: 0,
-        ),
+        appBar: AppBar(title: const Text('تفاصيل الطفل'), elevation: 0),
         body: InkWell(
           onTap: _fetchChildDetails,
           child: Center(
@@ -137,15 +135,14 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
       backgroundColor: context.backgroundSurface,
       body: CustomScrollView(
         slivers: [
-          // ── SliverAppBar مع صورة الطفل ──
+          // ── SliverAppBar تدرج الألوان مع البروفايل ──
           SliverAppBar(
-            expandedHeight: 200.h,
+            expandedHeight: 190.h,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // خلفية متدرجة
                   Container(
                     decoration: BoxDecoration(
                       gradient: AppTheme.linearGradient(
@@ -155,7 +152,6 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                       ),
                     ),
                   ),
-                  // صورة الطفل في المنتصف
                   Positioned(
                     bottom: 16.h,
                     left: 0,
@@ -163,18 +159,21 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                     child: Column(
                       children: [
                         Container(
-                          width: 88.w,
-                          height: 88.h,
+                          width: 80.w,
+                          height: 80.h,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: activeChild.gender == 'male'
                                 ? context.maleBlueBg
                                 : context.femalePinkBg,
-                            border: Border.all(color: Colors.white, width: 3.w),
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2.5.w,
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: 12.r,
+                                blurRadius: 10.r,
                                 offset: Offset(0, 4.h),
                               ),
                             ],
@@ -194,7 +193,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                                     ),
                                     errorWidget: (context, url, error) => Icon(
                                       Icons.person_rounded,
-                                      size: 44.r,
+                                      size: 40.r,
                                       color: activeChild.gender == 'male'
                                           ? context.genderMaleColor
                                           : context.genderFemaleColor,
@@ -203,20 +202,30 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                                 )
                               : Icon(
                                   Icons.person_rounded,
-                                  size: 44.r,
+                                  size: 40.r,
                                   color: activeChild.gender == 'male'
                                       ? context.genderMaleColor
                                       : context.genderFemaleColor,
                                 ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         Text(
                           activeChild.fullName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
-                            fontSize: 18,
+                            fontSize: 17.sp,
                             fontWeight: FontWeight.bold,
-                            shadows: [Shadow(color: Colors.black26, blurRadius: 4)],
+                            shadows: const [
+                              Shadow(color: Colors.black26, blurRadius: 4),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          activeChild.gradeDisplay,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 12.5.sp,
                           ),
                         ),
                       ],
@@ -225,14 +234,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                 ],
               ),
             ),
-            title: const Text('بيانات الطفل'),
-            actions: [
-              IconButton(
-                onPressed: _openEdit,
-                icon: const Icon(Icons.edit_outlined),
-                tooltip: 'تعديل',
-              ),
-            ],
+            title: const Text('تفاصيل الطفل'),
           ),
 
           // ── المحتوى ──
@@ -241,59 +243,229 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
               padding: EdgeInsets.all(16.w),
               child: Column(
                 children: [
-                  // ── المعلومات الشخصية ──
-                  _buildSectionCard(
-                    context: context,
-                    title: 'المعلومات الشخصية',
-                    icon: Icons.person_outline_rounded,
-                    children: [
-                      _buildField(
-                        label: 'الاسم الكامل',
-                        value: activeChild.fullName,
-                      ),
-                      _buildField(
-                        label: 'الجنس',
-                        value: activeChild.gender == 'male' ? 'ذكر' : 'أنثى',
-                      ),
-                      _buildField(
-                        label: 'تاريخ الميلاد',
-                        value: DateFormat('yyyy/MM/dd').format(activeChild.birthDate),
-                      ),
-                      _buildField(
-                        label: 'العمر',
-                        value: '${activeChild.calculatedAge} سنة',
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16.h),
-
-                  // ── البيانات الأكاديمية ──
-                  _buildSectionCard(
-                    context: context,
-                    title: 'البيانات الأكاديمية',
-                    icon: Icons.school_outlined,
-                    children: [
-                      _buildField(
-                        label: 'المرحلة والصف الدراسي',
-                        value: activeChild.fullStageAndGradeDisplay,
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16.h),
-
-                  // ── الملاحظات الطبية ──
-                  if (activeChild.medicalNotes != null && activeChild.medicalNotes!.isNotEmpty)
-                    _buildSectionCard(
-                      context: context,
-                      title: 'الملاحظات الطبية',
-                      icon: Icons.medical_services_outlined,
-                      children: [
-                        Text(
-                          activeChild.medicalNotes!,
-                          style: AppTextStyles.style(fontSize: 14.sp, color: context.textMuted),
+                  // ── 1. كارد البيانات الشخصية (عرض 👀 وتعديل ✏️) ──
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(16.w),
+                    decoration: AppTheme.boxDecoration(
+                      color: isDark ? AppColors.darkCard : AppColors.white,
+                      borderRadius: AppTheme.radius(16.r),
+                      border: AppTheme.border(color: AppColors.grey200),
+                      boxShadow: [
+                        AppTheme.boxShadow(
+                          color: AppColors.black.withValues(
+                            alpha: isDark ? 0.2 : 0.04,
+                          ),
+                          blurRadius: 8.r,
+                          offset: Offset(0, 2.h),
                         ),
                       ],
                     ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.person_outline_rounded,
+                              color: context.primaryColor,
+                              size: 20.r,
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              'البيانات الشخصية',
+                              style: AppTextStyles.style(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            IconButton(
+                              onPressed: _openEditPersonalData,
+                              icon: Icon(
+                                Icons.edit_outlined,
+                                color: context.primaryColor,
+                                size: 20.r,
+                              ),
+                              tooltip: 'تعديل البيانات الشخصية',
+                            ),
+                          ],
+                        ),
+                        Divider(height: 16.h),
+                        _buildField(
+                          label: 'الاسم الكامل',
+                          value: activeChild.fullName,
+                        ),
+                        SizedBox(height: 10.h),
+                        _buildField(
+                          label: 'الجنس',
+                          value: activeChild.gender == 'male' ? 'ذكر' : 'أنثى',
+                        ),
+                        SizedBox(height: 10.h),
+                        _buildField(
+                          label: 'تاريخ الميلاد',
+                          value: DateFormat(
+                            'yyyy/MM/dd',
+                          ).format(activeChild.birthDate),
+                        ),
+                        SizedBox(height: 10.h),
+                        _buildField(
+                          label: 'العمر',
+                          value: '${activeChild.calculatedAge} سنوات ',
+                        ),
+                        SizedBox(height: 10.h),
+                        _buildField(
+                          label: 'المرحلة والصف الدراسي',
+                          value: activeChild.fullStageAndGradeDisplay,
+                        ),
+                        if (activeChild.medicalNotes != null &&
+                            activeChild.medicalNotes!.isNotEmpty) ...[
+                          SizedBox(height: 10.h),
+                          _buildField(
+                            label: 'الملاحظات الطبية',
+                            value: activeChild.medicalNotes!,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+
+                  // ── 2. كارد بيانات النقل الحالية (عرض فقط 👀 + تنبيه أصفر داخلي) ──
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(16.w),
+                    decoration: AppTheme.boxDecoration(
+                      color: isDark ? AppColors.darkCard : AppColors.white,
+                      borderRadius: AppTheme.radius(16.r),
+                      border: AppTheme.border(color: AppColors.grey200),
+                      boxShadow: [
+                        AppTheme.boxShadow(
+                          color: AppColors.black.withValues(
+                            alpha: isDark ? 0.2 : 0.04,
+                          ),
+                          blurRadius: 8.r,
+                          offset: Offset(0, 2.h),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.directions_bus_outlined,
+                              color: context.primaryColor,
+                              size: 20.r,
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              'بيانات النقل الحالية',
+                              style: AppTextStyles.style(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 4.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppColors.grey800
+                                    : AppColors.grey100,
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Text(
+                                'عرض فقط',
+                                style: AppTextStyles.style(
+                                  fontSize: 11.sp,
+                                  color: context.textMuted,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Divider(height: 16.h),
+
+                        // ⚠️ التنبيه الأصفر/الليمي في أعلى كارد النقل نفسه
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(12.w),
+                          margin: EdgeInsets.only(bottom: 14.h),
+                          decoration: BoxDecoration(
+                            color: AppColors.orange.withValues(
+                              alpha: isDark ? 0.12 : 0.08,
+                            ),
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(
+                              color: AppColors.orange.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                color: AppColors.orange,
+                                size: 18.r,
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: Text(
+                                  'يمكنك مراجعتها الان ، وعند البحث عن سائق يمكنك تعديلها حسب احتياجك.',
+                                  style: AppTextStyles.style(
+                                    fontSize: 12.sp,
+                                    color: isDark
+                                        ? AppColors.grey300
+                                        : AppColors.textDark,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        _buildField(
+                          label: 'المدرسة والفرع',
+                          value: activeChild.schoolName,
+                        ),
+                        SizedBox(height: 10.h),
+                        _buildField(
+                          label: 'عنوان المنزل',
+                          value: activeChild.addressName,
+                        ),
+                        SizedBox(height: 10.h),
+                        _buildField(
+                          label: 'اتجاه الرحلة',
+                          value: activeChild.transportPref.serviceTypeDisplay,
+                        ),
+                        SizedBox(height: 10.h),
+                        _buildField(
+                          label: 'الفترة',
+                          value: activeChild.transportPref.periodDisplay,
+                        ),
+                        SizedBox(height: 10.h),
+                        _buildField(
+                          label: 'نوع الاشتراك',
+                          value:
+                              activeChild.transportPref.subscriptionTypeDisplay,
+                        ),
+                        SizedBox(height: 10.h),
+                        _buildField(
+                          label: 'فترة الاشتراك',
+                          value: activeChild
+                              .transportPref
+                              .subscriptionDatePeriodDisplay,
+                        ),
+                      ],
+                    ),
+                  ),
 
                   SizedBox(height: 32.h),
                 ],
@@ -305,51 +477,22 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
     );
   }
 
-  Widget _buildSectionCard({
-    required BuildContext context,
-    required String title,
-    required IconData icon,
-    required List<Widget> children,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16.w),
-      decoration: AppTheme.boxDecoration(
-        color: context.isDarkMode ? AppColors.darkCard : AppColors.white,
-        borderRadius: AppTheme.radius(16.r),
-        border: AppTheme.border(color: AppColors.grey200),
-        boxShadow: [
-          AppTheme.boxShadow(
-            color: AppColors.black.withValues(alpha: context.isDarkMode ? 0.2 : 0.04),
-            blurRadius: 8.r,
-            offset: Offset(0, 2.h),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: context.primaryColor, size: 20.r),
-              SizedBox(width: 8.w),
-              Text(title, style: AppTextStyles.style(fontSize: 15.sp, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          Divider(height: 20.h),
-          ...children.map((w) => Padding(padding: EdgeInsets.only(bottom: 12.h), child: w)),
-        ],
-      ),
-    );
-  }
-
   Widget _buildField({required String label, required String value}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTextStyles.style(color: AppColors.grey500, fontSize: 12.sp)),
-        SizedBox(height: 4.h),
-        Text(value, style: AppTextStyles.style(fontWeight: FontWeight.w600, fontSize: 15.sp)),
+        Text(
+          label,
+          style: AppTextStyles.style(color: AppColors.grey500, fontSize: 12.sp),
+        ),
+        SizedBox(height: 3.h),
+        Text(
+          value,
+          style: AppTextStyles.style(
+            fontWeight: FontWeight.w600,
+            fontSize: 14.5.sp,
+          ),
+        ),
       ],
     );
   }

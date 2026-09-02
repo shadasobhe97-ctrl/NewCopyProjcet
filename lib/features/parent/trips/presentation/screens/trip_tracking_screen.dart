@@ -6,11 +6,13 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import '../../data/models/active_trip_model.dart';
 import '../../logic/trip_tracking_cubit/trip_tracking_cubit.dart';
 import '../../logic/trip_tracking_cubit/trip_tracking_state.dart';
 import '../widgets/messenger_children_bar.dart';
 import '../widgets/tracking_map_widget.dart';
+import '../widgets/child_trip_progress_stepper.dart';
 import '../widgets/driver_card.dart';
 import '../widgets/trip_status_chip.dart';
 import 'full_tracking_map_screen.dart';
@@ -353,6 +355,17 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                           color: AppColors.textMuted,
                         ),
                       ),
+                      if (trip.busOccupancy != null) ...[
+                        SizedBox(height: 2.h),
+                        Text(
+                          'ركاب الحافلة: ${trip.busOccupancy!.displayOccupancy}',
+                          style: AppTextStyles.style(
+                            fontSize: 9.5.sp,
+                            fontWeight: FontWeight.bold,
+                            color: context.primaryColor,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -388,9 +401,9 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CircleAvatar(
-                          radius: 8.r,
-                          child: Icon(Icons.person, size: 8.r),
+                        AppUserAvatar(
+                          imageUrl: c.childPhoto,
+                          radius: 9.r,
                         ),
                         SizedBox(width: 4.w),
                         Text(
@@ -413,7 +426,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     );
   }
 
-  // MODE 2 CONTENT: Single Child Trip View inside Bottom Sheet without page navigation
+  // MODE 2 CONTENT: Single Child Trip View inside Bottom Sheet with Children Progress List
   Widget _buildSingleChildTripContent(
     BuildContext context,
     MessengerChildItem? childItem,
@@ -437,19 +450,44 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     return ListView(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
       children: [
-        // 1) 3 METRIC CARDS ROW
+        // 0) CHILD PROGRESS STEPPER BAR (TOP OF CARD FOR SELECTED CHILD)
+        ChildTripProgressStepperWidget(
+          childName: childItem.childName,
+          childStatus: childInfo.childStatus,
+          tripDirection: trip.direction,
+          pickupTime: childInfo.pickupTime,
+        ),
+        SizedBox(height: 12.h),
+
+        // 1) TRIP METRICS ROW: Departure Time & Total Children/Occupancy
         Row(
           children: [
             _buildMetricCard(context, Icons.flag_rounded, 'وقت الانطلاق', trip.startedAt),
+            SizedBox(width: 8.w),
+            _buildMetricCard(
+              context,
+              Icons.groups_rounded,
+              'أطفال الرحلة',
+              '${trip.children.length} أطفال',
+            ),
+            if (trip.busOccupancy != null) ...[
+              SizedBox(width: 8.w),
+              _buildMetricCard(
+                context,
+                Icons.directions_bus_rounded,
+                'على متن الحافلة',
+                '${trip.busOccupancy!.currentOnboardCount} من ${trip.busOccupancy!.totalTripChildren}',
+              ),
+            ],
           ],
         ),
         SizedBox(height: 12.h),
 
-        // 2) DRIVER CARD WITH CALL / CHAT BUTTONS
+        // 2) DRIVER CARD (Tap driver photo/name to view Profile)
         DriverCard(driver: trip.driver),
         SizedBox(height: 12.h),
 
-        // 3) CHILD STATUS CARD IN TRIP
+        // 3) ALL CHILDREN & PROGRESS IN THIS TRIP SECTION
         Container(
           padding: EdgeInsets.all(12.r),
           decoration: BoxDecoration(
@@ -462,59 +500,101 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'حالة ${childItem.childName.split(" ")[0]} في الرحلة',
-                style: AppTextStyles.style(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.bold,
-                  color: context.textPrimary,
-                ),
-              ),
-              SizedBox(height: 8.h),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.check_circle_rounded, size: 16.r, color: AppColors.success),
-                  SizedBox(width: 8.w),
                   Text(
-                    'تم الصعود',
+                    'تقدم أطفال الرحلة (${trip.children.length}):',
                     style: AppTextStyles.style(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.bold,
                       color: context.textPrimary,
                     ),
                   ),
-                  const Spacer(),
-                  Text(
-                    childInfo.pickupTime ?? '-',
-                    style: AppTextStyles.style(
-                      fontSize: 11.sp,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
+                  TripStatusChip.fromStatusString(trip.status),
                 ],
               ),
-              SizedBox(height: 6.h),
-              Row(
-                children: [
-                  Icon(Icons.location_on_rounded, size: 16.r, color: context.primaryColor),
-                  SizedBox(width: 8.w),
-                  Text(
-                    'الوجهة: ',
-                    style: AppTextStyles.style(
-                      fontSize: 11.sp,
-                      color: AppColors.textMuted,
+              SizedBox(height: 8.h),
+              ...trip.children.map((c) {
+                final isSelectedChild = c.childId == childItem.childId;
+                final childSchool = c.school?.name ??
+                    c.homeAddress?.title ??
+                    trip.destination.name;
+
+                return Container(
+                  margin: EdgeInsets.only(bottom: 6.h),
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                  decoration: BoxDecoration(
+                    color: isSelectedChild
+                        ? context.primaryColor.withValues(alpha: isDark ? 0.2 : 0.08)
+                        : (isDark ? AppColors.grey800 : AppColors.white),
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(
+                      color: isSelectedChild
+                          ? context.primaryColor
+                          : (isDark ? AppColors.grey800 : AppColors.grey200),
+                      width: isSelectedChild ? 1.5 : 1.0,
                     ),
                   ),
-                  Text(
-                    trip.destination.name,
-                    style: AppTextStyles.style(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.bold,
-                      color: context.textPrimary,
-                    ),
+                  child: Row(
+                    children: [
+                      AppUserAvatar(
+                        imageUrl: c.childPhoto,
+                        radius: 14.r,
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  c.childName,
+                                  style: AppTextStyles.style(
+                                    fontSize: 11.sp,
+                                    fontWeight: isSelectedChild ? FontWeight.bold : FontWeight.w600,
+                                    color: context.textPrimary,
+                                  ),
+                                ),
+                                if (isSelectedChild) ...[
+                                  SizedBox(width: 6.w),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
+                                    decoration: BoxDecoration(
+                                      color: context.primaryColor,
+                                      borderRadius: BorderRadius.circular(4.r),
+                                    ),
+                                    child: Text(
+                                      'المحدد',
+                                      style: TextStyle(
+                                        fontSize: 8.5.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            if (childSchool.isNotEmpty) ...[
+                              SizedBox(height: 2.h),
+                              Text(
+                                childSchool,
+                                style: AppTextStyles.style(
+                                  fontSize: 9.5.sp,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      TripStatusChip.fromStatusString(c.childStatus),
+                    ],
                   ),
-                ],
-              ),
+                );
+              }),
             ],
           ),
         ),

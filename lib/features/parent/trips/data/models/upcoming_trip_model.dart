@@ -34,20 +34,43 @@ class UpcomingTripChild {
   final String childName;
   final String schoolName;
   final String? childPhoto;
+  final String? costPerChild;
+  final ChildAddressModel? homeLocation;
+  final ChildSchoolModel? schoolLocation;
 
   const UpcomingTripChild({
     required this.childId,
     required this.childName,
     required this.schoolName,
     this.childPhoto,
+    this.costPerChild,
+    this.homeLocation,
+    this.schoolLocation,
   });
 
   factory UpcomingTripChild.fromJson(Map<String, dynamic> json) {
+    ChildAddressModel? home;
+    if (json['home_location'] is Map<String, dynamic>) {
+      home = ChildAddressModel.fromJson(json['home_location'] as Map<String, dynamic>);
+    } else if (json['home_address'] is Map<String, dynamic>) {
+      home = ChildAddressModel.fromJson(json['home_address'] as Map<String, dynamic>);
+    }
+
+    ChildSchoolModel? school;
+    if (json['school_location'] is Map<String, dynamic>) {
+      school = ChildSchoolModel.fromJson(json['school_location'] as Map<String, dynamic>);
+    } else if (json['school'] is Map<String, dynamic>) {
+      school = ChildSchoolModel.fromJson(json['school'] as Map<String, dynamic>);
+    }
+
     return UpcomingTripChild(
       childId: _parseInt(json['child_id']),
       childName: json['child_name']?.toString() ?? '',
-      schoolName: json['school_name']?.toString() ?? '',
+      schoolName: json['school_name']?.toString() ?? school?.name ?? '',
       childPhoto: json['child_photo']?.toString() ?? json['photo']?.toString(),
+      costPerChild: json['cost_per_child']?.toString(),
+      homeLocation: home,
+      schoolLocation: school,
     );
   }
 
@@ -61,19 +84,19 @@ class UpcomingTripChild {
 
 class UpcomingTripPricing {
   final String totalTripCost;
-  final String costPerChild;
+  final String? costPerChild;
   final String currency;
 
   const UpcomingTripPricing({
     required this.totalTripCost,
-    required this.costPerChild,
+    this.costPerChild,
     required this.currency,
   });
 
   factory UpcomingTripPricing.fromJson(Map<String, dynamic> json) {
     return UpcomingTripPricing(
-      totalTripCost: json['total_trip_cost']?.toString() ?? '0.00',
-      costPerChild: json['cost_per_child']?.toString() ?? '0.00',
+      totalTripCost: json['total_trip_cost']?.toString() ?? json['total_cost']?.toString() ?? '0.00',
+      costPerChild: json['cost_per_child']?.toString(),
       currency: json['currency']?.toString() ?? 'LYD',
     );
   }
@@ -108,7 +131,7 @@ class UpcomingTripModel {
           ? 'to_home'
           : 'to_school';
   String get driverName => driver.name;
-  String get schoolName => destination.name;
+  String get schoolName => destination.name.isNotEmpty ? destination.name : (children.isNotEmpty ? children.first.schoolName : '');
   String get childName => children.isNotEmpty ? children.first.childName : '';
   String get scheduledDate => scheduledFor;
   String get scheduledTime => '';
@@ -119,7 +142,7 @@ class UpcomingTripModel {
       tripId: _parseInt(json['trip_id'] ?? json['id']),
       tripType: json['trip_type']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
-      scheduledFor: json['scheduled_for']?.toString() ?? '',
+      scheduledFor: json['scheduled_for']?.toString() ?? json['scheduled_at']?.toString() ?? '',
       driver: UpcomingTripDriver.fromJson(
         (json['driver'] is Map) ? Map<String, dynamic>.from(json['driver'] as Map) : {},
       ),

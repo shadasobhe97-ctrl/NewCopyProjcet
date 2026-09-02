@@ -24,6 +24,14 @@ class QuickServicesWidget extends StatelessWidget {
     // أيقونات ملونة بألوان موجودة في ملف AppColors
     final List<Map<String, dynamic>> services = [
       {
+        'title': 'تغيير الموقع',
+        'subtitle': 'تعديل الاستلام',
+        'icon': Icons.edit_location_alt_outlined,
+        'color': Theme.of(context).primaryColor,
+        'action': () =>
+            Navigator.pushNamed(context, AppRoutes.parentLocationChange),
+      },
+      {
         'title': 'الغياب',
         'subtitle': 'إدارة الغياب',
         'icon': Icons.calendar_month_outlined,

@@ -111,7 +111,7 @@ class ChatRepository {
     );
   }
 
-  /// Uploads media bytes (Uint8List) to Firebase Storage (Cross-platform).
+  /// Uploads media bytes (Uint8List) to Cloudinary (Cross-platform).
   Future<Either<Failure, String>> uploadMediaBytes({
     required String chatRoomId,
     required Uint8List bytes,
@@ -131,7 +131,7 @@ class ChatRepository {
     }
   }
 
-  /// Uploads a media file to Firebase Storage.
+  /// Uploads a media file to Cloudinary.
   Future<Either<Failure, String>> uploadMediaFile({
     required String chatRoomId,
     required File file,

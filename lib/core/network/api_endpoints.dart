@@ -2,7 +2,7 @@ class ApiEndpoints {
   const ApiEndpoints._();
 
   // الرابط الأساسي للسيرفر (يحتوي على /api/)
-  static const String baseUrl = 'https://darby-app-api.loca.lt/api/';
+  static const String baseUrl = 'https://great-snail-19.loca.lt/api/';
 
   //=========================================
   // Auth Endpoints (مسارات المصادقة العامة)
@@ -186,9 +186,36 @@ class ApiEndpoints {
   static const String deleteDeviceToken = 'user/device-token';
   static const String logoutAllDevices = 'user/device-token/logout-all';
 
+  // General Notifications (Parent / Fallback)
   static const String notifications = 'notifications';
   static const String notificationsUnreadCount = 'notifications/unread-count';
   static String markNotificationRead(String id) => 'notifications/$id/read';
   static const String markAllNotificationsRead = 'notifications/read-all';
   static String deleteNotification(String id) => 'notifications/$id';
+
+  // Driver Notifications
+  static const String driverNotifications = 'driver/notifications';
+  static const String driverNotificationsUnreadCount =
+      'driver/notifications/unread-count';
+  static String driverMarkNotificationRead(String id) =>
+      'driver/notifications/$id/read';
+  static const String driverMarkAllNotificationsRead =
+      'driver/notifications/read-all';
+
+  // Parent Notifications
+  static const String parentNotifications = 'parent/notifications';
+  static const String parentNotificationsUnreadCount =
+      'parent/notifications/unread-count';
+  static String parentMarkNotificationRead(String id) =>
+      'parent/notifications/$id/read';
+  static const String parentMarkAllNotificationsRead =
+      'parent/notifications/read-all';
+
+  // Parent Location Change Requests
+  static const String parentLocationChangeOptions =
+      'parent/location-change-requests/options';
+  static const String parentLocationChangePreview =
+      'parent/location-change-requests/preview';
+  static const String parentLocationChangeRequests =
+      'parent/location-change-requests';
 }

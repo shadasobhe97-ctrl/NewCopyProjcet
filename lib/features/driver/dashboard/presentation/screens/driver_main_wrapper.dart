@@ -18,7 +18,6 @@ import 'package:kids_transport/features/driver/trips/logic/driver_trips_cubit/dr
 import 'package:kids_transport/features/driver/trips/presentation/screens/driver_trips_screen.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/core/theme/app_theme.dart';
 
 // ==========================================
 // الحاضن الرئيسي لشاشات السائق (نظير ParentMainWrapper)
@@ -67,10 +66,7 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
       const DriverHomeScreen(),
 
       // شاشة رحلاتي اليوم
-      BlocProvider.value(
-        value: _tripsCubit,
-        child: const DriverTripsScreen(),
-      ),
+      BlocProvider.value(value: _tripsCubit, child: const DriverTripsScreen()),
       BlocProvider(
         create: (_) => driverSl<FinanceCubit>(),
         child: const FinanceDashboardScreen(),
@@ -142,8 +138,9 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
                         vertical: 10,
                       ),
                       duration: const Duration(milliseconds: 300),
-                      tabBackgroundColor:
-                          context.primaryColor.withValues(alpha: 0.1),
+                      tabBackgroundColor: context.primaryColor.withValues(
+                        alpha: 0.1,
+                      ),
                       color: AppColors.grey400,
                       textStyle: AppTextStyles.style(
                         fontSize: 12,
@@ -179,10 +176,7 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
   }
 
   /// بناء الـ AppBar (بسيط مثل واجهة ولي الأمر)
-  PreferredSizeWidget _buildAppBar(
-    BuildContext context,
-    DriverHomeState _,
-  ) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, DriverHomeState _) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(60),
       child: Container(
@@ -226,9 +220,8 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ChatListScreen(
-                          userRole: UserRole.driver,
-                        ),
+                        builder: (context) =>
+                            const ChatListScreen(userRole: UserRole.driver),
                       ),
                     );
                   },
@@ -250,7 +243,10 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
                             size: 22,
                           ),
                           onPressed: () {
-                            Navigator.pushNamed(context, AppRoutes.notifications).then((_) {
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.notifications,
+                            ).then((_) {
                               getIt<NotificationCubit>().updateUnreadCount();
                             });
                           },

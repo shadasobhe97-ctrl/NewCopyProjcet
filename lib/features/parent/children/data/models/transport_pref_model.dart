@@ -24,8 +24,12 @@ class TransportPrefModel {
       subscriptionType: json['subscription_type'] ?? 'monthly',
       period: json['period'] ?? 'morning',
       serviceType: json['service_type'] ?? 'both',
-      startDate: DateTime.tryParse(json['start_date'] as String? ?? '') ?? DateTime.now(),
-      endDate: json['end_date'] != null ? DateTime.tryParse(json['end_date'] as String) : null,
+      startDate:
+          DateTime.tryParse(json['start_date'] as String? ?? '') ??
+          DateTime.now(),
+      endDate: json['end_date'] != null
+          ? DateTime.tryParse(json['end_date'] as String)
+          : null,
       schoolStartTime: json['school_start_time'] ?? '08:00 AM',
       schoolEndTime: json['school_end_time'] ?? '01:30 PM',
     );
@@ -66,4 +70,55 @@ class TransportPrefModel {
       'school_end_time': schoolEndTime,
     };
   }
+
+  String get serviceTypeDisplay {
+    if (serviceType == 'both' || serviceType == 'round_trip')
+      return 'الذهاب والعودة';
+    if (serviceType == 'go' || serviceType == 'one_way_to_school')
+      return 'الذهاب فقط';
+    if (serviceType == 'return' || serviceType == 'one_way_from_school')
+      return 'العودة فقط';
+    return serviceType;
+  }
+
+  String get periodDisplay {
+    final p = period.toLowerCase();
+    if (p == 'morning' || p == 'morning_only' || p.contains('صباح'))
+      return 'صباحية';
+    if (p == 'evening' || p == 'evening_only' || p.contains('مساء'))
+      return 'مسائية';
+
+    return period;
+  }
+
+  String get subscriptionTypeDisplay {
+    if (subscriptionType == 'single_day' || subscriptionType == 'daily') {
+      return 'يومي';
+    }
+    if (subscriptionType == 'multi_day' ||
+        subscriptionType == 'days' ||
+        subscriptionType == 'weekly' ||
+        subscriptionType == 'monthly') {
+      return 'عدة أيام';
+    }
+    return subscriptionType;
+  }
+
+  String get subscriptionDatePeriodDisplay {
+    final startStr =
+        "${startDate.year}/${startDate.month.toString().padLeft(2, '0')}/${startDate.day.toString().padLeft(2, '0')}";
+    if (subscriptionType == 'single_day' ||
+        subscriptionType == 'daily' ||
+        endDate == null) {
+      return startStr;
+    }
+    final endStr =
+        "${endDate!.year}/${endDate!.month.toString().padLeft(2, '0')}/${endDate!.day.toString().padLeft(2, '0')}";
+    if (startStr == endStr) {
+      return startStr;
+    }
+    return "من $startStr إلى $endStr";
+  }
+
+  String get schoolHoursDisplay => '$schoolStartTime - $schoolEndTime';
 }

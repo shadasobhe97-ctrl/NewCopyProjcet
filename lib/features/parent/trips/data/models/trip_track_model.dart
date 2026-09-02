@@ -4,18 +4,40 @@ class TrackingChildInfo {
   final int childId;
   final String childName;
   final String status;
+  final ChildAddressModel? home;
+  final ChildSchoolModel? school;
 
   const TrackingChildInfo({
     required this.childId,
     required this.childName,
     required this.status,
+    this.home,
+    this.school,
   });
 
   factory TrackingChildInfo.fromJson(Map<String, dynamic> json) {
+    ChildAddressModel? homeObj;
+    if (json['home'] is Map<String, dynamic>) {
+      homeObj = ChildAddressModel.fromJson(json['home'] as Map<String, dynamic>);
+    } else if (json['home_location'] is Map<String, dynamic>) {
+      homeObj = ChildAddressModel.fromJson(json['home_location'] as Map<String, dynamic>);
+    } else if (json['home_address'] is Map<String, dynamic>) {
+      homeObj = ChildAddressModel.fromJson(json['home_address'] as Map<String, dynamic>);
+    }
+
+    ChildSchoolModel? schoolObj;
+    if (json['school'] is Map<String, dynamic>) {
+      schoolObj = ChildSchoolModel.fromJson(json['school'] as Map<String, dynamic>);
+    } else if (json['school_location'] is Map<String, dynamic>) {
+      schoolObj = ChildSchoolModel.fromJson(json['school_location'] as Map<String, dynamic>);
+    }
+
     return TrackingChildInfo(
       childId: _parseInt(json['child_id'] ?? json['id']),
       childName: json['child_name']?.toString() ?? json['name']?.toString() ?? '',
-      status: json['status']?.toString() ?? '',
+      status: json['status']?.toString() ?? json['child_status']?.toString() ?? '',
+      home: homeObj,
+      school: schoolObj,
     );
   }
 
@@ -55,6 +77,31 @@ class LiveTrackingModel {
     required this.lastUpdated,
     this.isOnline = true,
   });
+
+  bool get isToSchool => destination?.type.toLowerCase() == 'school';
+  bool get isToHome => destination?.type.toLowerCase() == 'home';
+
+  List<ChildSchoolModel> get uniqueSchools {
+    final Map<String, ChildSchoolModel> map = {};
+    for (final child in children) {
+      if (child.school != null && child.school!.lat != 0.0) {
+        final key = '${child.school!.id}_${child.school!.lat}_${child.school!.lng}';
+        map[key] = child.school!;
+      }
+    }
+    return map.values.toList();
+  }
+
+  List<ChildAddressModel> get uniqueHomeAddresses {
+    final Map<String, ChildAddressModel> map = {};
+    for (final child in children) {
+      if (child.home != null && child.home!.lat != 0.0) {
+        final key = '${child.home!.title}_${child.home!.lat}_${child.home!.lng}';
+        map[key] = child.home!;
+      }
+    }
+    return map.values.toList();
+  }
 
   LiveTrackingModel copyWith({
     int? tripId,

@@ -87,6 +87,8 @@ import 'package:kids_transport/features/parent/trips/presentation/screens/trip_h
 import 'package:kids_transport/features/parent/trips/presentation/screens/trip_details_screen.dart';
 import 'package:kids_transport/features/parent/trips/presentation/screens/trip_timeline_screen.dart';
 import 'package:kids_transport/features/parent/trips/presentation/screens/child_trips_screen.dart';
+import 'package:kids_transport/features/parent/location_change/presentation/screens/parent_location_change_screen.dart';
+import 'package:kids_transport/features/parent/location_change/presentation/screens/location_change_history_screen.dart';
 
 // Complaints
 import 'package:kids_transport/features/parent/complaints/presentation/screens/complaints_list_screen.dart';
@@ -138,6 +140,9 @@ class AppRoutes {
   static const String parentTripDetails = '/parent-trip-details';
   static const String parentTripTimeline = '/parent-trip-timeline';
   static const String parentChildTrips = '/parent-child-trips';
+  static const String parentLocationChange = '/parent-location-change';
+  static const String parentLocationChangeHistory =
+      '/parent-location-change-history';
 
   // Parent Complaints Routes
   static const String parentComplaints = '/parent-complaints';
@@ -343,6 +348,10 @@ class AppRoutes {
       case parentChildTrips:
         final childId = settings.arguments;
         return _route(settings, ChildTripsScreen(childId: childId));
+      case parentLocationChange:
+        return _route(settings, const ParentLocationChangeScreen());
+      case parentLocationChangeHistory:
+        return _route(settings, const LocationChangeHistoryScreen());
       case parentChildTracking:
         final args = settings.arguments as Map<String, dynamic>;
         return _route(

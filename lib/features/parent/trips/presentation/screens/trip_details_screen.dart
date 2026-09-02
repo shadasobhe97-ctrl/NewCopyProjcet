@@ -46,7 +46,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
           return Directionality(
             textDirection: TextDirection.rtl,
             child: Scaffold(
-              backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF8FAFC),
+              backgroundColor: isDark
+                  ? AppColors.backgroundDark
+                  : const Color(0xFFF8FAFC),
               appBar: AppBar(
                 title: Text(
                   'تفاصيل الرحلة',
@@ -74,12 +76,17 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                   ? null
                   : SafeArea(
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 12.h,
+                        ),
                         decoration: BoxDecoration(
                           color: isDark ? context.cardSurface : AppColors.white,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+                              color: Colors.black.withValues(
+                                alpha: isDark ? 0.25 : 0.06,
+                              ),
                               blurRadius: 10,
                               offset: const Offset(0, -3),
                             ),
@@ -182,7 +189,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                           color: isDark ? context.cardSurface : AppColors.white,
                           borderRadius: BorderRadius.circular(16.r),
                           border: Border.all(
-                            color: isDark ? AppColors.grey800 : AppColors.grey200,
+                            color: isDark
+                                ? AppColors.grey800
+                                : AppColors.grey200,
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -217,13 +226,20 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                               children: [
                                 _buildSummaryItem(
                                   'نوع الرحلة',
-                                  trip.tripType == 'morning' ? 'رحلة صباحية' : 'رحلة مسائية',
+                                  trip.tripType == 'morning'
+                                      ? 'رحلة صباحية'
+                                      : 'رحلة مسائية',
                                 ),
                                 _buildSummaryItem(
                                   'الاتجاه',
-                                  trip.direction == 'to_school' ? 'إلى المدرسة' : 'إلى المنزل',
+                                  trip.direction == 'to_school'
+                                      ? 'إلى المدرسة'
+                                      : 'إلى المنزل',
                                 ),
-                                _buildSummaryItem('وقت الانطلاق', trip.startedAt),
+                                _buildSummaryItem(
+                                  'وقت الانطلاق',
+                                  trip.startedAt,
+                                ),
                               ],
                             ),
                           ],
@@ -257,7 +273,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                             color: isDark ? AppColors.grey900 : AppColors.white,
                             borderRadius: BorderRadius.circular(12.r),
                             border: Border.all(
-                              color: isDark ? AppColors.grey800 : AppColors.grey200,
+                              color: isDark
+                                  ? AppColors.grey800
+                                  : AppColors.grey200,
                             ),
                           ),
                           child: Row(
@@ -290,7 +308,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                                   ],
                                 ),
                               ),
-                              TripStatusChip.fromStatusString(child.childStatus),
+                              TripStatusChip.fromStatusString(
+                                child.childStatus,
+                              ),
                             ],
                           ),
                         );

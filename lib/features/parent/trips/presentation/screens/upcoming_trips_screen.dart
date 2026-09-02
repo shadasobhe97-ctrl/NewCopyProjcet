@@ -286,6 +286,9 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
           ),
           SizedBox(height: 6.h),
           ...trip.children.map((c) {
+            final childSchool = c.schoolName.isNotEmpty ? c.schoolName : (c.schoolLocation?.name ?? trip.destination.name);
+            final childPrice = c.costPerChild ?? trip.pricing.costPerChild;
+
             return Padding(
               padding: EdgeInsets.only(bottom: 6.h),
               child: Row(
@@ -304,16 +307,33 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                             color: context.textPrimary,
                           ),
                         ),
-                        Text(
-                          trip.destination.name,
-                          style: AppTextStyles.style(
-                            fontSize: 9.sp,
-                            color: AppColors.textMuted,
+                        if (childSchool.isNotEmpty)
+                          Text(
+                            childSchool,
+                            style: AppTextStyles.style(
+                              fontSize: 9.sp,
+                              color: AppColors.textMuted,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
+                  if (childPrice != null)
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.grey800 : AppColors.grey100,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Text(
+                        '$childPrice ${trip.pricing.currency}',
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.bold,
+                          color: context.primaryColor,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             );
@@ -335,7 +355,7 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'تفاصيل التكلفة والتسعير:',
+                    'تفاصيل التكلفة والتسعير لكل طفل:',
                     style: AppTextStyles.style(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.bold,
@@ -344,6 +364,7 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                   ),
                   SizedBox(height: 6.h),
                   ...trip.children.map((c) {
+                    final price = c.costPerChild ?? trip.pricing.costPerChild ?? '0.00';
                     return Padding(
                       padding: EdgeInsets.only(bottom: 4.h),
                       child: Row(
@@ -357,7 +378,7 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                             ),
                           ),
                           Text(
-                            '${trip.pricing.costPerChild} ${trip.pricing.currency}',
+                            '$price ${trip.pricing.currency}',
                             style: AppTextStyles.style(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.bold,
@@ -374,59 +395,39 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
             SizedBox(height: 10.h),
           ],
 
-          // Total Cost & Expand Button Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
+          // Expand Button Row
+          Align(
+            alignment: Alignment.centerLeft,
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  if (isExpanded) {
+                    _expandedTripIds.remove(trip.tripId);
+                  } else {
+                    _expandedTripIds.add(trip.tripId);
+                  }
+                });
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'إجمالي الرحلة: ',
+                    isExpanded ? 'عرض أقل' : 'تفاصيل أطفال الرحلة',
                     style: AppTextStyles.style(
                       fontSize: 11.sp,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                  Text(
-                    '${trip.pricing.totalTripCost} ${trip.pricing.currency}',
-                    style: AppTextStyles.style(
-                      fontSize: 12.sp,
                       fontWeight: FontWeight.bold,
                       color: context.primaryColor,
                     ),
                   ),
+                  SizedBox(width: 4.w),
+                  Icon(
+                    isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                    size: 18.r,
+                    color: context.primaryColor,
+                  ),
                 ],
               ),
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    if (isExpanded) {
-                      _expandedTripIds.remove(trip.tripId);
-                    } else {
-                      _expandedTripIds.add(trip.tripId);
-                    }
-                  });
-                },
-                child: Row(
-                  children: [
-                    Text(
-                      isExpanded ? 'عرض أقل' : 'عرض المزيد',
-                      style: AppTextStyles.style(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.bold,
-                        color: context.primaryColor,
-                      ),
-                    ),
-                    SizedBox(width: 4.w),
-                    Icon(
-                      isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-                      size: 18.r,
-                      color: context.primaryColor,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),

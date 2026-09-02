@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/app_user_avatar.dart';
+import 'package:kids_transport/features/parent/search/data/repositories/search_repository.dart';
+import 'package:kids_transport/features/parent/search/presentation/screens/driver_profile_view.dart';
 import '../../data/models/active_trip_model.dart';
 import 'online_badge.dart';
 
@@ -12,6 +15,7 @@ class DriverCard extends StatelessWidget {
   final bool isOnline;
   final VoidCallback? onCallPressed;
   final VoidCallback? onChatPressed;
+  final VoidCallback? onProfilePressed;
 
   const DriverCard({
     super.key,
@@ -19,6 +23,7 @@ class DriverCard extends StatelessWidget {
     this.isOnline = true,
     this.onCallPressed,
     this.onChatPressed,
+    this.onProfilePressed,
   });
 
   void _defaultCall(BuildContext context) {
@@ -39,6 +44,46 @@ class DriverCard extends StatelessWidget {
     );
   }
 
+  void _openDriverProfile(BuildContext context) async {
+    if (onProfilePressed != null) {
+      onProfilePressed!();
+      return;
+    }
+
+    final driverId = driver.id;
+    if (driverId <= 0) return;
+
+    final searchRepo = getIt<SearchRepository>();
+    final (drivers, error) = await searchRepo.searchDrivers({'search_query': driverId.toString()});
+
+    if (!context.mounted) return;
+
+    if (drivers != null && drivers.isNotEmpty) {
+      final driverModel = drivers.firstWhere(
+        (d) => d.driverId == driverId,
+        orElse: () => drivers.first,
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DriverProfileView(
+            driver: driverModel,
+            availableKids: const [],
+            showPricing: false,
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error ?? 'تعذر تحميل ملف السائق.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
@@ -54,40 +99,50 @@ class DriverCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          AppUserAvatar(
-            imageUrl: driver.photo,
-            radius: 24.r,
-            backgroundColor: context.primaryColor.withValues(alpha: 0.1),
-            iconColor: context.primaryColor,
-          ),
-          SizedBox(width: 12.w),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      driver.name.isNotEmpty ? driver.name : 'سائق الحافلة',
-                      style: AppTextStyles.style(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: context.textPrimary,
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    OnlineBadge(isOnline: isOnline),
-                  ],
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  driver.phone.isNotEmpty ? driver.phone : 'رقم الهاتف غير متاح',
-                  style: AppTextStyles.style(
-                    fontSize: 12.sp,
-                    color: AppColors.textMuted,
+            child: InkWell(
+              onTap: () => _openDriverProfile(context),
+              borderRadius: BorderRadius.circular(12.r),
+              child: Row(
+                children: [
+                  AppUserAvatar(
+                    imageUrl: driver.photo,
+                    radius: 24.r,
+                    backgroundColor: context.primaryColor.withValues(alpha: 0.1),
+                    iconColor: context.primaryColor,
                   ),
-                ),
-              ],
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              driver.name.isNotEmpty ? driver.name : 'سائق الحافلة',
+                              style: AppTextStyles.style(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                                color: context.textPrimary,
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            OnlineBadge(isOnline: isOnline),
+                          ],
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          driver.phone.isNotEmpty ? driver.phone : 'رقم الهاتف غير متاح',
+                          style: AppTextStyles.style(
+                            fontSize: 12.sp,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           if (driver.phone.isNotEmpty) ...[
@@ -132,3 +187,4 @@ class DriverCard extends StatelessWidget {
     );
   }
 }
+

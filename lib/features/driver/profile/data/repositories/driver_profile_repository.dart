@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:kids_transport/core/models/email_verification_info.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import '../data_sources/driver_profile_remote_data_source.dart';
@@ -17,7 +16,7 @@ class DriverProfileRepository {
   /// جلب بيانات السائق من السيرفر وتحديث الكاش المحلي عند النجاح (Cache-First Support)
   Future<DriverModel> getDriverProfile() async {
     final driver = await remoteDataSource.getDriverProfile();
-    
+
     // تحديث البيانات المحلية محلياً فور النجاح
     await sessionRepository.saveUserSession(
       token: sessionRepository.getToken() ?? '',
@@ -29,7 +28,7 @@ class DriverProfileRepository {
       phoneNumber: driver.phoneNumber,
       isActive: sessionRepository.getIsActive() ?? true,
     );
-    
+
     return driver;
   }
 
@@ -58,9 +57,15 @@ class DriverProfileRepository {
       tokenType: 'Bearer',
       roleId: sessionRepository.getRoleId() ?? driver.roleId,
       roleName: 'driver',
-      userId: driver.userId > 0 ? driver.userId : (int.tryParse(sessionRepository.getUserId() ?? '') ?? 0),
-      fullName: driver.fullName.isNotEmpty ? driver.fullName : (sessionRepository.getFullName() ?? ''),
-      phoneNumber: driver.phoneNumber.isNotEmpty ? driver.phoneNumber : (sessionRepository.getPhoneNumber() ?? ''),
+      userId: driver.userId > 0
+          ? driver.userId
+          : (int.tryParse(sessionRepository.getUserId() ?? '') ?? 0),
+      fullName: driver.fullName.isNotEmpty
+          ? driver.fullName
+          : (sessionRepository.getFullName() ?? ''),
+      phoneNumber: driver.phoneNumber.isNotEmpty
+          ? driver.phoneNumber
+          : (sessionRepository.getPhoneNumber() ?? ''),
       isActive: driver.isActive,
     );
 

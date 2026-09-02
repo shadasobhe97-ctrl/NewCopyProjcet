@@ -6,7 +6,8 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/transport_details_screen.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/child_data_details_screen.dart';
+import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step1_screen.dart';
+import 'child_selection_card_widget.dart';
 import 'driver_search_card_widget.dart';
 import 'warning_card.dart';
 import 'filter_sheet.dart';
@@ -50,82 +51,30 @@ class ByChildrenSearchWidget extends StatelessWidget {
     required this.onResetFilters,
   });
 
-  void _showEditChoiceDialog(BuildContext context, ChildModel kid) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
-          title: Text(
-            "ماذا تود أن تعدل؟",
-            style: AppTextStyles.style(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: isDark ? AppColors.white : AppColors.textDark,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                leading: Icon(Icons.edit_road_rounded, color: theme.colorScheme.primary),
-                title: Text(
-                  "بيانات النقل",
-                  style: AppTextStyles.style(
-                    fontSize: 14,
-                    color: isDark ? AppColors.grey200 : AppColors.textDark,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TransportDetailsScreen(child: kid),
-                    ),
-                  ).then((_) {
-                    if (context.mounted) {
-                      context.read<ChildrenCubit>().fetchChildren();
-                    }
-                  });
-                },
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                leading: Icon(Icons.person_outline_rounded, color: theme.colorScheme.primary),
-                title: Text(
-                  "بيانات الطفل",
-                  style: AppTextStyles.style(
-                    fontSize: 14,
-                    color: isDark ? AppColors.grey200 : AppColors.textDark,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChildDataDetailsScreen(child: kid),
-                    ),
-                  ).then((_) {
-                    if (context.mounted) {
-                      context.read<ChildrenCubit>().fetchChildren();
-                    }
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
+  void _openEditPersonalData(BuildContext context, ChildModel kid) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddChildStep1Screen(child: kid),
       ),
-    );
+    ).then((_) {
+      if (context.mounted) {
+        context.read<ChildrenCubit>().fetchChildren();
+      }
+    });
+  }
+
+  void _openEditTransportData(BuildContext context, ChildModel kid) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TransportDetailsScreen(child: kid),
+      ),
+    ).then((_) {
+      if (context.mounted) {
+        context.read<ChildrenCubit>().fetchChildren();
+      }
+    });
   }
 
   void _showFilterBottomSheet(BuildContext context) {
@@ -182,22 +131,65 @@ class ByChildrenSearchWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // عنوان الصفحة
-          Text(
-            "اختر الأطفال",
-            style: AppTextStyles.style(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: isDark ? AppColors.white : AppColors.textDark,
-            ),
-          ),
           const SizedBox(height: 16),
 
           // بطاقة التنبيه العلوي ℹ️
-          WarningCard(
-            icon: Icons.info_outline_rounded,
-            color: theme.colorScheme.primary,
-            message: "سيتم البحث اعتمادًا على بيانات النقل الخاصة بالأطفال الذين ستحددهم.",
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(
+                alpha: isDark ? 0.12 : 0.08,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: theme.colorScheme.primary.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.info_outline_rounded,
+                    color: theme.colorScheme.primary,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "راجع بيانات النقل قبل المتابعة",
+                        style: AppTextStyles.style(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13.5,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        "سيبحث النظام عن السائق المناسب بناءً على بيانات النقل المحددة لكل طفل.",
+                        style: AppTextStyles.style(
+                          fontSize: 12,
+                          color: isDark
+                              ? AppColors.grey300
+                              : AppColors.textDark,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -209,83 +201,13 @@ class ByChildrenSearchWidget extends StatelessWidget {
             itemBuilder: (context, i) {
               final kid = kids[i];
               final isSelected = selectedKidsIds.contains(kid.id);
-              final isMale = kid.gender.toLowerCase() == 'male';
 
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.1 : 0.04)
-                      : (isDark ? AppColors.surfaceDark : AppColors.white),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: isSelected
-                        ? theme.colorScheme.primary
-                        : (isDark ? AppColors.grey800 : AppColors.grey200),
-                    width: isSelected ? 1.5 : 1,
-                  ),
-                ),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(18),
-                  onTap: () => onKidToggle(kid.id ?? 0, !isSelected),
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        Checkbox(
-                          value: isSelected,
-                          activeColor: theme.colorScheme.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                          onChanged: (val) => onKidToggle(kid.id ?? 0, val ?? false),
-                        ),
-                        const SizedBox(width: 8),
-
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: (isMale ? theme.colorScheme.primary : AppColors.femalePink)
-                              .withValues(alpha: 0.1),
-                          child: Icon(
-                            isMale ? Icons.face_rounded : Icons.face_4_rounded,
-                            color: isMale ? theme.colorScheme.primary : AppColors.femalePink,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                kid.name,
-                                style: AppTextStyles.style(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: isDark ? AppColors.white : AppColors.textDark,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                kid.schoolName,
-                                style: AppTextStyles.style(
-                                  fontSize: 12,
-                                  color: isDark ? AppColors.grey400 : AppColors.textMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        IconButton(
-                          icon: Icon(Icons.edit_rounded, size: 20, color: theme.colorScheme.primary),
-                          onPressed: () => _showEditChoiceDialog(context, kid),
-                          tooltip: 'تعديل',
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              return ChildSelectionCardWidget(
+                kid: kid,
+                isSelected: isSelected,
+                onKidToggle: onKidToggle,
+                onEditPersonalData: (k) => _openEditPersonalData(context, k),
+                onEditTransportData: (k) => _openEditTransportData(context, k),
               );
             },
           ),
@@ -295,7 +217,8 @@ class ByChildrenSearchWidget extends StatelessWidget {
           WarningCard(
             icon: Icons.warning_amber_rounded,
             color: AppColors.orange,
-            message: "يمكنك اختيار سائق مختلف لكل طفل.\nإذا حددت أكثر من طفل وأرسلت طلبًا واحدًا، فسيتم قبولهم أو رفضهم معًا.",
+            message:
+                "يمكنك اختيار سائق مختلف لكل طفل.\nإذا حددت أكثر من طفل وأرسلت طلبًا واحدًا، فسيتم قبولهم أو رفضهم معًا.",
           ),
           const SizedBox(height: 24),
 
@@ -321,7 +244,9 @@ class ByChildrenSearchWidget extends StatelessWidget {
                       backgroundColor: AppColors.error,
                       behavior: SnackBarBehavior.floating,
                       margin: const EdgeInsets.all(16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   );
                 } else {
@@ -332,7 +257,9 @@ class ByChildrenSearchWidget extends StatelessWidget {
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               child: Text(
                 'ابحث عن سائقين',
@@ -361,8 +288,7 @@ class ByChildrenSearchWidget extends StatelessWidget {
         .map((k) => k.name.split(' ')[0])
         .toList();
 
-    final bool hasActiveFilter =
-        selectedGender != 'ALL' || hasAcOnly;
+    final bool hasActiveFilter = selectedGender != 'ALL' || hasAcOnly;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
@@ -381,7 +307,8 @@ class ByChildrenSearchWidget extends StatelessWidget {
           WarningCard(
             icon: Icons.info_outline_rounded,
             color: theme.colorScheme.primary,
-            message: "يمكنك إرسال طلبات اشتراك لأكثر من سائق في نفس الوقت. بمجرد قبول أحد السائقين لطلبك، سيتم إلغاء بقية الطلبات تلقائيًا تفاديًا للازدواجية.",
+            message:
+                "يمكنك إرسال طلبات اشتراك لأكثر من سائق في نفس الوقت. بمجرد قبول أحد السائقين لطلبك، سيتم إلغاء بقية الطلبات تلقائيًا تفاديًا للازدواجية.",
           ),
           const SizedBox(height: 20),
 
@@ -464,10 +391,14 @@ class ByChildrenSearchWidget extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.08),
+                color: theme.colorScheme.primary.withValues(
+                  alpha: isDark ? 0.15 : 0.08,
+                ),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.3 : 0.2),
+                  color: theme.colorScheme.primary.withValues(
+                    alpha: isDark ? 0.3 : 0.2,
+                  ),
                 ),
               ),
               child: Row(
@@ -509,7 +440,11 @@ class ByChildrenSearchWidget extends StatelessWidget {
         icon: Stack(
           clipBehavior: Clip.none,
           children: [
-            Icon(Icons.tune_rounded, size: 18, color: theme.colorScheme.primary),
+            Icon(
+              Icons.tune_rounded,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
             if (hasActiveFilter)
               Positioned(
                 top: -3,
@@ -544,7 +479,9 @@ class ByChildrenSearchWidget extends StatelessWidget {
           backgroundColor: hasActiveFilter
               ? AppColors.orange.withValues(alpha: isDark ? 0.08 : 0.04)
               : null,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );

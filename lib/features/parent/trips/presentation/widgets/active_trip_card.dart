@@ -75,7 +75,9 @@ class ActiveTripCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      trip.driver.name.isNotEmpty ? trip.driver.name : 'سائق الحافلة',
+                      trip.driver.name.isNotEmpty
+                          ? trip.driver.name
+                          : 'سائق الحافلة',
                       style: AppTextStyles.style(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.bold,
@@ -84,7 +86,9 @@ class ActiveTripCard extends StatelessWidget {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      trip.driver.phone.isNotEmpty ? trip.driver.phone : 'رقم الهاتف غير متاح',
+                      trip.driver.phone.isNotEmpty
+                          ? trip.driver.phone
+                          : 'رقم الهاتف غير متاح',
                       style: AppTextStyles.style(
                         fontSize: 11.sp,
                         color: AppColors.textMuted,
@@ -130,13 +134,20 @@ class ActiveTripCard extends StatelessWidget {
           ),
 
           SizedBox(height: 12.h),
-          Divider(height: 1, color: isDark ? AppColors.grey800 : AppColors.grey200),
+          Divider(
+            height: 1,
+            color: isDark ? AppColors.grey800 : AppColors.grey200,
+          ),
           SizedBox(height: 12.h),
 
-          // 2) VEHICLE & DESTINATION ROW
+          // 2) VEHICLE & BUS OCCUPANCY ROW
           Row(
             children: [
-              Icon(Icons.directions_bus_rounded, size: 18.r, color: context.primaryColor),
+              Icon(
+                Icons.directions_bus_rounded,
+                size: 18.r,
+                color: context.primaryColor,
+              ),
               SizedBox(width: 6.w),
               Expanded(
                 child: Text(
@@ -148,7 +159,8 @@ class ActiveTripCard extends StatelessWidget {
                   ),
                 ),
               ),
-              if (trip.vehicle.plateNumber != null && trip.vehicle.plateNumber!.isNotEmpty)
+              if (trip.vehicle.plateNumber != null &&
+                  trip.vehicle.plateNumber!.isNotEmpty)
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                   decoration: BoxDecoration(
@@ -167,36 +179,108 @@ class ActiveTripCard extends StatelessWidget {
             ],
           ),
 
+          // 🚌 BUS OCCUPANCY BADGE
+          if (trip.busOccupancy != null) ...[
+            SizedBox(height: 8.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: context.primaryColor.withValues(
+                  alpha: isDark ? 0.18 : 0.08,
+                ),
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(
+                  color: context.primaryColor.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.groups_rounded,
+                    size: 16.r,
+                    color: context.primaryColor,
+                  ),
+                  SizedBox(width: 6.w),
+                  Text(
+                    'على متن الحافلة حالياً: ${trip.busOccupancy!.currentOnboardCount} من إجمالي ${trip.busOccupancy!.totalTripChildren} أطفال',
+                    style: AppTextStyles.style(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.bold,
+                      color: context.primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           SizedBox(height: 8.h),
 
-          // 3) DESTINATION INFO
-          Row(
-            children: [
-              Icon(
-                trip.destination.type == 'home' ? Icons.home_rounded : Icons.school_rounded,
-                size: 18.r,
-                color: AppColors.amber,
-              ),
-              SizedBox(width: 6.w),
-              Text(
-                'الوجهة: ',
-                style: AppTextStyles.style(
-                  fontSize: 12.sp,
-                  color: AppColors.textMuted,
+          // 3) DESTINATION / SCHOOL INFO
+          if (trip.uniqueSchools.isNotEmpty)
+            ...trip.uniqueSchools.map(
+              (school) => Padding(
+                padding: EdgeInsets.only(bottom: 4.h),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.school_rounded,
+                      size: 16.r,
+                      color: AppColors.amber,
+                    ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      'المدرسة: ',
+                      style: AppTextStyles.style(
+                        fontSize: 11.sp,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        '${school.name}${school.branch != null && school.branch!.isNotEmpty ? ' (${school.branch})' : ''}',
+                        style: AppTextStyles.style(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Expanded(
-                child: Text(
-                  trip.destination.name,
+            )
+          else
+            Row(
+              children: [
+                Icon(
+                  trip.destination.type == 'home'
+                      ? Icons.home_rounded
+                      : Icons.school_rounded,
+                  size: 18.r,
+                  color: AppColors.amber,
+                ),
+                SizedBox(width: 6.w),
+                Text(
+                  'الوجهة: ',
                   style: AppTextStyles.style(
                     fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
-                    color: context.textPrimary,
+                    color: AppColors.textMuted,
                   ),
                 ),
-              ),
-            ],
-          ),
+                Expanded(
+                  child: Text(
+                    trip.destination.name,
+                    style: AppTextStyles.style(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
 
           SizedBox(height: 12.h),
 
@@ -213,7 +297,9 @@ class ActiveTripCard extends StatelessWidget {
           Wrap(
             spacing: 8.w,
             runSpacing: 8.h,
-            children: trip.children.map((child) => _buildChildChip(context, child, isDark)).toList(),
+            children: trip.children
+                .map((child) => _buildChildChip(context, child, isDark))
+                .toList(),
           ),
 
           SizedBox(height: 14.h),
@@ -277,7 +363,11 @@ class ActiveTripCard extends StatelessWidget {
     );
   }
 
-  Widget _buildChildChip(BuildContext context, TripChildInfo child, bool isDark) {
+  Widget _buildChildChip(
+    BuildContext context,
+    TripChildInfo child,
+    bool isDark,
+  ) {
     Color statusColor = AppColors.success;
 
     final s = child.childStatus.toLowerCase();
