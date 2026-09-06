@@ -5,7 +5,7 @@ import 'package:kids_transport/core/utils/subscription_enums.dart';
 
 class DriverRequestModel {
   final int id;
-  final int parentId;
+  final int userId;
   final int? driverId;
   final int schoolId;
   final String timing; // MORNING | AFTERNOON | BOTH
@@ -41,7 +41,7 @@ class DriverRequestModel {
 
   const DriverRequestModel({
     required this.id,
-    required this.parentId,
+    required this.userId,
     this.driverId,
     required this.schoolId,
     required this.timing,
@@ -129,7 +129,7 @@ class DriverRequestModel {
 
     return DriverRequestModel(
       id: _parseInt(json['id']) ?? 0,
-      parentId: _parseInt(json['parent_id']) ?? 0,
+      userId: _parseInt(json['user_id'] ?? json['id_user']) ?? 0,
       driverId: _parseInt(json['driver_id']),
       schoolId: _parseInt(json['school_id']) ?? 0,
       timing: json['timing']?.toString() ?? firstDetails?.timing ?? SubscriptionEnums.bothTimings,
@@ -261,7 +261,7 @@ class DriverReqSchool {
 // ── الطفل (مع بيانات الـ pivot) ──
 class DriverReqChild {
   final int id;
-  final int? parentId;
+  final int? userId;
   final int? schoolId;
   final int? addressId;
   final String name;
@@ -287,7 +287,7 @@ class DriverReqChild {
 
   const DriverReqChild({
     required this.id,
-    this.parentId,
+    this.userId,
     this.schoolId,
     this.addressId,
     required this.name,
@@ -339,7 +339,7 @@ class DriverReqChild {
 
     return DriverReqChild(
       id: DriverRequestModel._parseInt(json['id']) ?? 0,
-      parentId: DriverRequestModel._parseInt(json['parent_id']),
+      userId: DriverRequestModel._parseInt(json['user_id']),
       schoolId: DriverRequestModel._parseInt(json['school_id']) ??
           (json['school'] is Map
               ? DriverRequestModel._parseInt((json['school'] as Map)['id'])

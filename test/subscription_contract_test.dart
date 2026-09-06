@@ -294,21 +294,17 @@ void main() {
 
       expect(kids[0], {
         'child_id': 144,
-        'school_id': 1,
         'subscription_type': 'multi_day',
         'trip_direction': 'both',
         'timing': 'MORNING',
         'start_date': '2026-08-27',
         'end_date': '2026-09-30',
-        'pickup_address_id': 37,
-        'dropoff_address_id': 4,
-        'price_per_child': 350.0,
       });
 
       expect((kids[1] as Map)['subscription_type'], 'single_day');
       expect((kids[1] as Map)['trip_direction'], 'return');
       expect((kids[1] as Map)['timing'], 'EVENING');
-      expect((kids[1] as Map)['end_date'], '2026-08-27');
+      expect((kids[1] as Map).containsKey('end_date'), isFalse);
     });
 
     test('يطبع القيم القديمة قبل الإرسال', () {
@@ -344,7 +340,7 @@ void main() {
 
       expect(daily.subscriptionType, 'single_day');
       expect(daily.tripDirection, 'return');
-      expect(daily.endDate, '2026-08-27');
+      expect(daily.endDate, isNull);
     });
   });
 

@@ -48,13 +48,12 @@ class ParentProfileRepository {
   }
 
   Future<void> _cacheParentProfile(ParentModel parent) async {
-    await sessionRepository.saveParentId(parent.parentId);
     await sessionRepository.saveUserSession(
       token: sessionRepository.getToken() ?? '',
       tokenType: 'Bearer',
       roleId: sessionRepository.getRoleId() ?? 3,
       roleName: 'parent',
-      userId: int.tryParse(sessionRepository.getUserId() ?? '') ?? 0,
+      userId: parent.userId,
       fullName: parent.fullName,
       phoneNumber: parent.phoneNumber,
       isActive: sessionRepository.getIsActive() ?? true,

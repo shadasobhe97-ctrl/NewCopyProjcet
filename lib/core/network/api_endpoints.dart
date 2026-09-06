@@ -2,7 +2,7 @@ class ApiEndpoints {
   const ApiEndpoints._();
 
   // الرابط الأساسي للسيرفر (يحتوي على /api/)
-  static const String baseUrl = 'https://great-snail-19.loca.lt/api/';
+  static const String baseUrl = 'https://darby-app-api.loca.lt/api/';
 
   //=========================================
   // Auth Endpoints (مسارات المصادقة العامة)
@@ -121,8 +121,8 @@ class ApiEndpoints {
   static const String guardianRequests = 'guardian/requests';
   static String guardianRequestDetail(int id) => 'guardian/requests/$id';
   static String guardianRequestCancel(int id) => 'guardian/requests/$id/cancel';
-  //طلب الاشتراك مع سوااق
-  static const String parentrequestSubscription = 'parent';
+  // طلب الاشتراك مع سائق
+  static const String parentrequestSubscription = 'parent/requests';
   static const String parentActiveSubscriptions = 'parent/active-subscriptions';
   static String parentSubscriptionDetail(int id) =>
       'parent/active-subscriptions/$id';

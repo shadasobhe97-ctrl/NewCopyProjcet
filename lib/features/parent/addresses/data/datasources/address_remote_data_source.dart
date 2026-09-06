@@ -3,6 +3,7 @@ import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/features/driver/driver_preferences/data/models/zone_model.dart';
 import 'package:kids_transport/features/parent/addresses/data/models/address_model.dart';
 
 class AddressRemoteDataSource {
@@ -32,6 +33,58 @@ class AddressRemoteDataSource {
     return const [];
   }
 
+  /// استخراج المناطق من مختلف هياكل البيانات المحتملة
+  List<ZoneModel> _extractZones(dynamic data) {
+    final List<ZoneModel> result = [];
+    final Set<int> seenIds = {};
+
+    void addZone(dynamic z) {
+      if (z is Map) {
+        final zone = ZoneModel.fromJson(Map<String, dynamic>.from(z));
+        if (zone.id > 0 && !seenIds.contains(zone.id)) {
+          seenIds.add(zone.id);
+          result.add(zone);
+        }
+      }
+    }
+
+    void traverse(dynamic node) {
+      if (node == null) return;
+      if (node is List) {
+        for (final item in node) {
+          traverse(item);
+        }
+      } else if (node is Map) {
+        if (node['zones'] is List) {
+          for (final z in node['zones'] as List) {
+            addZone(z);
+          }
+        }
+        if (node.containsKey('id') &&
+            node.containsKey('name') &&
+            !node.containsKey('sub_municipalities') &&
+            !node.containsKey('zones')) {
+          addZone(node);
+        }
+        if (node['sub_municipalities'] is List) {
+          traverse(node['sub_municipalities']);
+        }
+        if (node['geography_tree'] != null) {
+          traverse(node['geography_tree']);
+        }
+        if (node['zones_tree'] != null) {
+          traverse(node['zones_tree']);
+        }
+        if (node['data'] != null) {
+          traverse(node['data']);
+        }
+      }
+    }
+
+    traverse(data);
+    return result;
+  }
+
   /// يتحقق من نجاح الطلب. بعض الردود (401 / 422 / رسائل بدون success)
   /// لا تحتوي success:false صراحة، فنطبع تحذيراً بدل تجاهلها بصمت.
   void _checkSuccess(dynamic data, String fallbackMessage) {
@@ -47,6 +100,38 @@ class AddressRemoteDataSource {
         );
       }
     }
+  }
+
+  /// GET /api/admin/zones-tree أو defaults لجلب قائمة المناطق
+  Future<List<ZoneModel>> getZones() async {
+    try {
+      final response = await _client.get(
+        ApiEndpoints.adminZonesTree,
+        headers: _authHeader,
+      );
+      final data = response.data;
+      debugPrint('📥 [Addresses API] GET /admin/zones-tree => $data');
+      final zones = _extractZones(data);
+      if (zones.isNotEmpty) return zones;
+    } catch (e) {
+      debugPrint(
+        '⚠️ [Addresses API] فشل جلب admin/zones-tree: $e, المحاولة من defaults...',
+      );
+    }
+
+    try {
+      final response = await _client.get(
+        ApiEndpoints.driverPreferenceDefaults,
+        headers: _authHeader,
+      );
+      final data = response.data;
+      final zones = _extractZones(data);
+      if (zones.isNotEmpty) return zones;
+    } catch (e) {
+      debugPrint('⚠️ [Addresses API] فشل جلب driverPreferenceDefaults: $e');
+    }
+
+    return const [];
   }
 
   /// GET /api/parent/addresses
@@ -73,11 +158,7 @@ class AddressRemoteDataSource {
 
   /// POST /api/parent/addresses
   Future<String> addAddress(AddressModel address) async {
-    final parentId = StorageService.getParentId();
     final payload = address.toJson();
-    if (parentId != null && payload['parent_id'] == null) {
-      payload['parent_id'] = parentId;
-    }
 
     final response = await _client.post(
       ApiEndpoints.parentAddresses,

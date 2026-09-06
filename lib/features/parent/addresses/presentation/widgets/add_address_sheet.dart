@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/features/driver/driver_preferences/data/models/zone_model.dart';
 import 'package:kids_transport/features/parent/addresses/data/models/address_model.dart';
+import 'package:kids_transport/features/parent/addresses/data/repositories/address_repository.dart';
 
 /// Bottom Sheet إضافة / تعديل عنوان بالخريطة.
 class AddAddressSheet extends StatefulWidget {
@@ -28,8 +31,16 @@ class AddAddressSheet extends StatefulWidget {
 class _AddAddressSheetState extends State<AddAddressSheet> {
   final MapController _mapController = MapController();
   final _labelController = TextEditingController();
+  final _streetController = TextEditingController();
   late LatLng _currentCenter;
   bool _isLoading = false;
+
+  // إدارة المناطق
+  List<ZoneModel> _zones = [];
+  bool _isLoadingZones = true;
+  String? _zonesError;
+  int? _selectedZoneId;
+  String? _selectedZoneName;
 
   bool get _isEditMode => widget.initialAddress != null;
 
@@ -39,11 +50,54 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
     final addr = widget.initialAddress;
     if (addr != null) {
       _labelController.text = addr.title;
+      _streetController.text = addr.streetAddress ?? '';
+      _selectedZoneId = addr.zoneId;
+      _selectedZoneName = addr.zoneName;
       _currentCenter = LatLng(addr.latitude, addr.longitude);
     } else {
       _currentCenter = const LatLng(32.8872, 13.1913);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _getUserLocation();
+      });
+    }
+
+    _loadZones();
+  }
+
+  Future<void> _loadZones() async {
+    setState(() {
+      _isLoadingZones = true;
+      _zonesError = null;
+    });
+
+    try {
+      final repository = getIt<AddressRepository>();
+      final (zones, error) = await repository.getZones();
+
+      if (!mounted) return;
+
+      if (error != null || zones == null) {
+        setState(() {
+          _isLoadingZones = false;
+          _zonesError = error ?? 'تعذر تحميل المناطق';
+        });
+      } else {
+        setState(() {
+          _isLoadingZones = false;
+          _zones = zones;
+          if (_selectedZoneId != null) {
+            final match = _zones.where((z) => z.id == _selectedZoneId);
+            if (match.isNotEmpty) {
+              _selectedZoneName = match.first.name;
+            }
+          }
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingZones = false;
+        _zonesError = 'تعذر تحميل المناطق';
       });
     }
   }
@@ -83,17 +137,19 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
   void dispose() {
     _mapController.dispose();
     _labelController.dispose();
+    _streetController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.85,
+        height: MediaQuery.of(context).size.height * 0.90,
         decoration: AppTheme.boxDecoration(
           color: isDark ? AppColors.darkSurface : AppColors.white,
           borderRadius: AppTheme.verticalRadius(top: AppTheme.cornerRadius(24)),
@@ -137,6 +193,7 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
 
             // الخريطة
             Expanded(
+              flex: 5,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -164,7 +221,7 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
                     child: Icon(
                       Icons.location_on_rounded,
                       size: 45,
-                      color: Theme.of(context).primaryColor,
+                      color: primaryColor,
                     ),
                   ),
                   // إرشاد فوق الخريطة
@@ -196,58 +253,86 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
             ),
 
             // نموذج البيانات
-            Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-                top: 16,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: _labelController,
-                    textAlign: TextAlign.right,
-                    enabled: !_isLoading,
-                    decoration: AppTheme.inputDecoration(
-                      context,
-                      labelText: 'اسم العنوان (مثال: العمل، بيت الجدة)',
-                      prefixIcon: const Icon(
-                        Icons.label_outline_rounded,
-                        color: AppColors.primaryLight,
+            Expanded(
+              flex: 6,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                  top: 14,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // حقل اسم العنوان
+                    TextFormField(
+                      controller: _labelController,
+                      textAlign: TextAlign.right,
+                      enabled: !_isLoading,
+                      decoration: AppTheme.inputDecoration(
+                        context,
+                        labelText: 'اسم العنوان (مثال: المنزل، العمل، المدرسة)',
+                        prefixIcon: const Icon(
+                          Icons.label_outline_rounded,
+                          color: AppColors.primaryLight,
+                        ),
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 12),
 
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _save,
-                    style: AppTheme.elevatedButtonStyle(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      backgroundColor: _isLoading ? AppColors.grey400 : AppColors.primaryLight,
-                      foregroundColor: AppColors.white,
+                    // حقل وصف العنوان / الشارع
+                    TextFormField(
+                      controller: _streetController,
+                      textAlign: TextAlign.right,
+                      enabled: !_isLoading,
+                      decoration: AppTheme.inputDecoration(
+                        context,
+                        labelText: 'وصف العنوان / الشارع (مثال: شارع بن عاشور)',
+                        prefixIcon: const Icon(
+                          Icons.signpost_outlined,
+                          color: AppColors.primaryLight,
+                        ),
+                      ),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.white,
+                    const SizedBox(height: 12),
+
+                    // اختيار المنطقة
+                    _buildZoneSelector(context),
+
+                    const SizedBox(height: 16),
+
+                    // زر الحفظ
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _save,
+                      style: AppTheme.elevatedButtonStyle(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: _isLoading
+                            ? AppColors.grey400
+                            : AppColors.primaryLight,
+                        foregroundColor: AppColors.white,
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.white,
+                              ),
+                            )
+                          : Text(
+                              _isEditMode ? 'تحديث العنوان' : 'حفظ العنوان',
+                              style: AppTextStyles.style(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: AppColors.white,
+                              ),
                             ),
-                          )
-                        : Text(
-                            _isEditMode ? 'تحديث العنوان' : 'حفظ العنوان',
-                            style: AppTextStyles.style(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: AppColors.white,
-                            ),
-                          ),
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -256,12 +341,132 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
     );
   }
 
+  Widget _buildZoneSelector(BuildContext context) {
+    if (_isLoadingZones) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: AppTheme.boxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkCard
+              : AppColors.grey50,
+          borderRadius: AppTheme.radius(12),
+          border: AppTheme.border(color: AppColors.grey300, width: 1),
+        ),
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'جاري تحميل المناطق...',
+              style: AppTextStyles.style(
+                color: AppColors.textMuted,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_zonesError != null && _zones.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: AppTheme.boxDecoration(
+          color: AppColors.errorLight.withValues(alpha: 0.1),
+          borderRadius: AppTheme.radius(12),
+          border: AppTheme.border(color: AppColors.errorLight, width: 1),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.error_outline_rounded,
+                color: AppColors.error, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'تعذر تحميل المناطق',
+                style: AppTextStyles.style(
+                  color: AppColors.error,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: _loadZones,
+              child: const Text('إعادة المحاولة'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return DropdownButtonFormField<int>(
+      initialValue: _selectedZoneId != null &&
+              _zones.any((z) => z.id == _selectedZoneId)
+          ? _selectedZoneId
+          : null,
+      decoration: AppTheme.inputDecoration(
+        context,
+        labelText: 'المنطقة',
+        prefixIcon: const Icon(
+          Icons.map_outlined,
+          color: AppColors.primaryLight,
+        ),
+      ),
+      hint: Text(
+        'اختر المنطقة',
+        style: AppTextStyles.style(
+          color: AppColors.textMuted,
+          fontSize: 14,
+        ),
+      ),
+      isExpanded: true,
+      items: _zones.map((zone) {
+        return DropdownMenuItem<int>(
+          value: zone.id,
+          child: Text(
+            zone.name,
+            style: AppTextStyles.style(
+              fontSize: 14,
+            ),
+          ),
+        );
+      }).toList(),
+      onChanged: _isLoading
+          ? null
+          : (val) {
+              setState(() {
+                _selectedZoneId = val;
+                if (val != null) {
+                  final match = _zones.where((z) => z.id == val);
+                  _selectedZoneName =
+                      match.isNotEmpty ? match.first.name : null;
+                }
+              });
+            },
+    );
+  }
+
   Future<void> _save() async {
-    final labelText = _labelController.text.trim();
-    if (labelText.isEmpty) {
+    final titleText = _labelController.text.trim();
+    if (titleText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('اسم العنوان مطلوب'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    final streetText = _streetController.text.trim();
+    if (streetText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يرجى إدخال وصف العنوان / الشارع'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -291,13 +496,27 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
       return;
     }
 
+    if (_selectedZoneId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يرجى اختيار المنطقة التي يتبع لها العنوان'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     final address = AddressModel(
       id: widget.initialAddress?.id,
-      label: labelText,
-      lat: lat,
-      lng: lng,
+      title: titleText,
+      streetAddress: streetText,
+      latitude: lat,
+      longitude: lng,
+      zoneId: _selectedZoneId,
+      zoneName: _selectedZoneName,
+      isDefault: widget.initialAddress?.isDefault ?? false,
     );
 
     final errorMsg = await widget.onSave(address);

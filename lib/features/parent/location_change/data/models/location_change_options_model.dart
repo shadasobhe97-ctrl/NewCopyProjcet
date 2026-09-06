@@ -1,13 +1,13 @@
 class SavedAddressModel {
   final int id;
-  final int? parentId;
+  final int? userId;
   final String label;
   final double lat;
   final double lng;
 
   SavedAddressModel({
     required this.id,
-    this.parentId,
+    this.userId,
     required this.label,
     required this.lat,
     required this.lng,
@@ -16,8 +16,8 @@ class SavedAddressModel {
   factory SavedAddressModel.fromJson(Map<String, dynamic> json) {
     return SavedAddressModel(
       id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
-      parentId: json['parent_id'] != null
-          ? int.tryParse(json['parent_id'].toString())
+      userId: json['user_id'] != null
+          ? int.tryParse(json['user_id'].toString())
           : null,
       label: json['label']?.toString() ?? '',
       lat: double.tryParse(json['lat']?.toString() ?? '') ?? 0.0,

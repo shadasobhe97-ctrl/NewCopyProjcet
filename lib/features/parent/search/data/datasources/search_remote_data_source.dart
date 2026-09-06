@@ -16,13 +16,13 @@ class SearchRemoteDataSource {
     return {'Authorization': token ?? ''};
   }
 
-  /// POST /api/parent/drivers/search
+  /// GET /api/parent/drivers/search
   Future<List<DriverSearchModel>> searchDrivers(
     Map<String, dynamic> queryParameters,
   ) async {
-    final response = await _client.post(
+    final response = await _client.get(
       ApiEndpoints.parentDriversSearch,
-      data: queryParameters,
+      queryParameters: queryParameters.isNotEmpty ? queryParameters : null,
       headers: _authHeader,
     );
     final data = response.data;
@@ -55,7 +55,7 @@ class SearchRemoteDataSource {
     debugPrint('╚══════════════════════════════════════════════════╝');
 
     final fullUrl =
-        '${ApiEndpoints.baseUrl}${ApiEndpoints.parentrequestSubscription}';
+        '${ApiEndpoints.baseUrl}${ApiEndpoints.parentRequests}';
     debugPrint('📍  الرابط الكامل: POST $fullUrl');
 
     final authHeader = _authHeader;
@@ -75,7 +75,7 @@ class SearchRemoteDataSource {
     debugPrint('');
 
     final response = await _client.post(
-      ApiEndpoints.parentrequestSubscription,
+      ApiEndpoints.parentRequests,
       data: jsonBody,
       headers: authHeader,
     );

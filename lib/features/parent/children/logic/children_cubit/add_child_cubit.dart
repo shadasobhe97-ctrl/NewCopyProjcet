@@ -123,7 +123,7 @@ class AddChildCubit extends Cubit<AddChildState> {
 
     final childToSubmit = ChildModel(
       id: activeChild?.id,
-      parentId: activeChild?.parentId,
+      userId: activeChild?.userId,
       schoolId: schoolId!,
       addressId: addressId!,
       fullName: fullName!,
@@ -168,7 +168,7 @@ class AddChildCubit extends Cubit<AddChildState> {
 
     final childToSubmit = ChildModel(
       id: existingChild.id,
-      parentId: existingChild.parentId,
+      userId: existingChild.userId,
       schoolId: existingChild.schoolId,
       addressId: existingChild.addressId,
       fullName: fullName!,

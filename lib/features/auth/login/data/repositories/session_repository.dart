@@ -7,9 +7,6 @@ class SessionRepository {
   String? getFullName() => StorageService.getFullName();
   String? getPhoneNumber() => StorageService.getPhoneNumber();
   String? getUserId() => StorageService.getUserId()?.toString();
-  int? getParentId() => StorageService.getParentId();
-  Future<void> saveParentId(int parentId) =>
-      StorageService.saveParentId(parentId);
   int? getDriverId() => StorageService.getDriverId();
   Future<void> saveDriverId(int driverId) =>
       StorageService.saveDriverId(driverId);

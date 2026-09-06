@@ -220,9 +220,6 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     ).then((_) => _loadingShowing = false);
 
         final List<SubscriptionChildRequest> childrenRequestList = [];
-    // أطفال ينقصهم عنوان منزل أو مدرسة — لا يجوز إرسالهم بالرقم 0
-    final List<String> kidsMissingAddress = [];
-    final List<String> kidsMissingSchool = [];
     debugPrint('>>> بيانات كل طفل على حدة (كل طفل بإعداداته الخاصة):');
     for (final kid in _selectedKids) {
       final pref = kid.transportPref;
@@ -253,58 +250,27 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       final childEnd = pref.endDate?.toIso8601String().split('T').first;
 
       debugPrint('  child_id            = ${kid.id} (${kid.name})');
-      debugPrint('  school_id           = ${kid.schoolId}');
       debugPrint('  subscription_type   = $childType');
       debugPrint('  trip_direction      = $childDirection');
       debugPrint('  timing              = $childTiming');
       debugPrint('  start_date          = $childStart');
       debugPrint('  end_date            = $childEnd');
-      debugPrint('  pickup_address_id   = ${kid.addressId}');
-      debugPrint('  dropoff_address_id  = ${kid.schoolId}');
-      debugPrint('  price_per_child     = ${breakdownItem.childPrice}');
       debugPrint('  ---');
-
-      final pickupId = int.tryParse(kid.addressId) ?? 0;
-      if (pickupId <= 0) kidsMissingAddress.add(kid.name);
-      if (kid.schoolId <= 0) kidsMissingSchool.add(kid.name);
 
       childrenRequestList.add(
         SubscriptionChildRequest(
           childId: kid.id ?? 0,
-          schoolId: kid.schoolId,
           subscriptionType: childType,
           tripDirection: childDirection,
           timing: childTiming,
           startDate: childStart,
           endDate: childEnd,
-          pickupAddressId: pickupId,
-          dropoffAddressId: kid.schoolId,
-          pricePerChild: breakdownItem.childPrice,
-          childNotes: kid.medicalNotes ?? '',
         ),
       );
     }
 
-    if (kidsMissingAddress.isNotEmpty || kidsMissingSchool.isNotEmpty) {
-      if (_loadingShowing) Navigator.of(context).pop();
-      final parts = <String>[];
-      if (kidsMissingAddress.isNotEmpty) {
-        parts.add('لا يوجد عنوان منزل محدد لـ: ${kidsMissingAddress.join('، ')}');
-      }
-      if (kidsMissingSchool.isNotEmpty) {
-        parts.add('لا توجد مدرسة محددة لـ: ${kidsMissingSchool.join('، ')}');
-      }
-      _showSnack(
-        '${parts.join('\n')}\nيرجى استكمال بيانات الطفل قبل إرسال الطلب.',
-        AppColors.error,
-        duration: const Duration(seconds: 5),
-      );
-      return;
-    }
-
     final request = SubscriptionRequest(
       driverId: _effectiveDriver.driverId,
-      notes: '',
       children: childrenRequestList,
     );
 
@@ -453,9 +419,11 @@ class _DriverProfileViewState extends State<DriverProfileView> {
 
     if (hasActiveSub) {
       // التوجه مباشرة للشات
-      final parentId = StorageService.getParentId()?.toString() ?? '0';
-      final sessionUserId = getIt<SessionRepository>().getUserId() ?? parentId;
-      final chatRoomId = 'parent_${parentId}_driver_${driver.driverId}';
+      final currentUserId =
+          StorageService.getUserId()?.toString() ??
+          getIt<SessionRepository>().getUserId() ??
+          '0';
+      final chatRoomId = 'parent_${currentUserId}_driver_${driver.driverId}';
 
       Navigator.push(
         context,
@@ -465,7 +433,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             otherUserName: driver.fullName,
             otherUserPhoto: driver.photoUrl,
             canChat: true,
-            currentUserId: sessionUserId,
+            currentUserId: currentUserId,
             currentUserRole: 'parent',
           ),
         ),

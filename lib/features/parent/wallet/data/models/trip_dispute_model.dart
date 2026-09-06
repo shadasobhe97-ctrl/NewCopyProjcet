@@ -1,7 +1,7 @@
 class TripDisputeModel {
   final int id;
   final int tripId;
-  final int parentId;
+  final int userId;
   final int? driverId;
   final String reason;
   final String status;
@@ -10,7 +10,7 @@ class TripDisputeModel {
   TripDisputeModel({
     required this.id,
     required this.tripId,
-    required this.parentId,
+    required this.userId,
     this.driverId,
     required this.reason,
     required this.status,
@@ -21,7 +21,7 @@ class TripDisputeModel {
     return TripDisputeModel(
       id: json['id'] ?? 0,
       tripId: json['trip_id'] ?? 0,
-      parentId: json['parent_id'] ?? 0,
+      userId: json['user_id'] ?? 0,
       driverId: json['driver_id'],
       reason: json['reason']?.toString() ?? '',
       status: json['status']?.toString() ?? 'open',

@@ -27,6 +27,12 @@ class AddressCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
 
+    final title = address['title']?.toString() ?? 'عنوان بدون اسم';
+    final streetAddress = address['street_address']?.toString() ??
+        address['streetAddress']?.toString();
+    final zoneName =
+        address['zone_name']?.toString() ?? address['zoneName']?.toString();
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: AppTheme.boxDecoration(
@@ -53,6 +59,7 @@ class AddressCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CircleAvatar(
                     radius: 20,
@@ -68,17 +75,71 @@ class AddressCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          address['title']?.toString() ?? 'عنوان بدون اسم',
+                          title,
                           style: AppTextStyles.style(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),
                         ),
+                        if (streetAddress != null &&
+                            streetAddress.trim().isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.signpost_outlined,
+                                size: 14,
+                                color:
+                                    AppColors.textMuted.withValues(alpha: 0.8),
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  streetAddress.trim(),
+                                  style: AppTextStyles.style(
+                                    color: isDark
+                                        ? AppColors.grey300
+                                        : AppColors.grey700,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (zoneName != null &&
+                            zoneName.trim().isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.location_city_outlined,
+                                size: 14,
+                                color: primaryColor,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  'المنطقة: ${zoneName.trim()}',
+                                  style: AppTextStyles.style(
+                                    color: primaryColor,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: 4),
                         Text(
                           _formatCoords(
-                            address['latitude'],
-                            address['longitude'],
+                            address['latitude'] ?? address['lat'],
+                            address['longitude'] ?? address['lng'],
                           ),
                           style: AppTextStyles.style(
                             color: AppColors.textMuted.withValues(alpha: 0.7),

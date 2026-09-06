@@ -112,10 +112,7 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
     if (widget.selectedKids.isEmpty) return;
 
     debugPrint('\n================= SUBMIT SUBSCRIPTION =================');
-        final List<SubscriptionChildRequest> childrenRequestList = [];
-    // أطفال ينقصهم عنوان منزل أو مدرسة — لا يجوز إرسالهم بالرقم 0
-    final List<String> kidsMissingAddress = [];
-    final List<String> kidsMissingSchool = [];
+    final List<SubscriptionChildRequest> childrenRequestList = [];
     debugPrint('>>> بيانات كل طفل على حدة (كل طفل بإعداداته الخاصة):');
     for (final kid in widget.selectedKids) {
       final pref = kid.transportPref;
@@ -146,46 +143,27 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
       final childEnd = pref.endDate?.toIso8601String().split('T').first;
 
       debugPrint('  child_id            = ${kid.id} (${kid.name})');
-      debugPrint('  school_id           = ${kid.schoolId}');
       debugPrint('  subscription_type   = $childType');
       debugPrint('  trip_direction      = $childDirection');
       debugPrint('  timing              = $childTiming');
       debugPrint('  start_date          = $childStart');
       debugPrint('  end_date            = $childEnd');
-      debugPrint('  pickup_address_id   = ${kid.addressId}');
-      debugPrint('  dropoff_address_id  = ${kid.schoolId}');
-      debugPrint('  price_per_child     = ${breakdownItem.childPrice}');
       debugPrint('  ---');
-
-      final pickupId = int.tryParse(kid.addressId) ?? 0;
-      if (pickupId <= 0) kidsMissingAddress.add(kid.name);
-      if (kid.schoolId <= 0) kidsMissingSchool.add(kid.name);
 
       childrenRequestList.add(
         SubscriptionChildRequest(
           childId: kid.id ?? 0,
-          schoolId: kid.schoolId,
           subscriptionType: childType,
           tripDirection: childDirection,
           timing: childTiming,
           startDate: childStart,
           endDate: childEnd,
-          pickupAddressId: pickupId,
-          dropoffAddressId: kid.schoolId,
-          pricePerChild: breakdownItem.childPrice,
-          childNotes: kid.medicalNotes ?? '',
         ),
       );
     }
 
-    if (kidsMissingAddress.isNotEmpty || kidsMissingSchool.isNotEmpty) {
-      _showValidationError(kidsMissingAddress, kidsMissingSchool);
-      return;
-    }
-
     final request = SubscriptionRequest(
       driverId: widget.driver.driverId,
-      notes: '',
       children: childrenRequestList,
     );
 
@@ -279,38 +257,6 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
     );
   }
 
-  /// يمنع إرسال الطلب بمعرّفات ناقصة (تصل للباك كصفر فيُرفض الطلب بلا سبب واضح)
-  void _showValidationError(
-    List<String> missingAddress,
-    List<String> missingSchool,
-  ) {
-    final parts = <String>[];
-    if (missingAddress.isNotEmpty) {
-      parts.add('لا يوجد عنوان منزل محدد لـ: ${missingAddress.join('، ')}');
-    }
-    if (missingSchool.isNotEmpty) {
-      parts.add('لا توجد مدرسة محددة لـ: ${missingSchool.join('، ')}');
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Directionality(
-          textDirection: TextDirection.rtl,
-          child: Text(
-            '${parts.join('\n')}\nيرجى استكمال بيانات الطفل قبل إرسال الطلب.',
-            style: AppTextStyles.style(
-              color: AppColors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.all(16.w),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-        duration: const Duration(seconds: 5),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

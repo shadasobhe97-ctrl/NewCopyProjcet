@@ -22,15 +22,11 @@ class ReviewCard extends StatelessWidget {
   });
 
   bool get _isOwnReview {
-    final parentId = getIt<SessionRepository>().getParentId();
     final userId = getIt<SessionRepository>().getUserId();
     
     if (review.parent == null) return false;
     
-    final isMatchingParent = parentId != null && review.parent!.id == parentId;
-    final isMatchingUser = userId != null && review.parent!.userId.toString() == userId;
-    
-    return isMatchingParent || isMatchingUser;
+    return userId != null && review.parent!.userId.toString() == userId;
   }
 
   String _fmtDate(String raw) {

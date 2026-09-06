@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
+import 'package:kids_transport/features/driver/driver_preferences/data/models/zone_model.dart';
 import 'package:kids_transport/features/parent/addresses/data/datasources/address_remote_data_source.dart';
 import 'package:kids_transport/features/parent/addresses/data/models/address_model.dart';
 import 'package:kids_transport/data/local/address_local_data_source.dart';
@@ -9,6 +10,20 @@ class AddressRepository {
   final AddressLocalDataSource _localDataSource;
 
   AddressRepository(this._dataSource, this._localDataSource);
+
+  /// جلب قائمة المناطق المتاحة
+  Future<(List<ZoneModel>?, String?)> getZones() async {
+    try {
+      final zones = await _dataSource.getZones();
+      return (zones, null);
+    } on ApiException catch (e) {
+      debugPrint('❌ [AddressRepository] getZones ApiException: ${e.message}');
+      return (null, e.message);
+    } catch (e) {
+      debugPrint('❌ [AddressRepository] getZones unexpected error: $e');
+      return (null, 'تعذر تحميل قائمة المناطق.');
+    }
+  }
 
   /// جلب العناوين المخزنة محلياً من كاش Hive
   Future<(List<AddressModel>?, String?)> getCachedAddresses() async {

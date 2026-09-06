@@ -7,7 +7,7 @@ import 'transport_pref_model.dart';
 
 class ChildModel {
   final int? id;
-  final int? parentId;
+  final int? userId;
   final int schoolId;
   final String addressId;
   final String fullName;
@@ -27,7 +27,7 @@ class ChildModel {
 
   ChildModel({
     this.id,
-    this.parentId,
+    this.userId,
     required this.schoolId,
     required this.addressId,
     required this.fullName,
@@ -168,10 +168,10 @@ class ChildModel {
     }
     debugPrint('📸 [ChildModel] resolved photoUrl: $resolvedPhotoUrl');
 
-    final rawParentId = json['parent_id'];
-    final parsedParentId = rawParentId is int
-        ? rawParentId
-        : int.tryParse(rawParentId?.toString() ?? '');
+    final rawUserId = json['user_id'];
+    final parsedUserId = rawUserId is int
+        ? rawUserId
+        : int.tryParse(rawUserId?.toString() ?? '');
 
     final rawSchoolId = json['school_id'];
     final parsedSchoolId = rawSchoolId is int
@@ -180,7 +180,7 @@ class ChildModel {
 
     return ChildModel(
       id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? ''),
-      parentId: parsedParentId,
+      userId: parsedUserId,
       schoolId: parsedSchoolId,
       addressId: json['address_id']?.toString() ?? '',
       fullName: json['full_name']?.toString() ?? json['name']?.toString() ?? '',
@@ -212,7 +212,7 @@ class ChildModel {
   Map<String, dynamic> toJson() {
     return {
       if (id != null) 'id': id,
-      if (parentId != null) 'parent_id': parentId,
+      if (userId != null) 'user_id': userId,
       'school_id': schoolId,
       'address_id': addressId,
       'full_name': fullName,

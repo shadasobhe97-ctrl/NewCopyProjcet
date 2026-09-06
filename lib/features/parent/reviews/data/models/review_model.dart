@@ -13,14 +13,14 @@ class ReviewParentModel {
 
   factory ReviewParentModel.fromJson(Map<String, dynamic> json) {
     final userMap = json['user'] is Map ? Map<String, dynamic>.from(json['user'] as Map) : null;
-    final parentId = json['id'] ?? json['parent_id'] ?? 0;
-    final userId = json['user_id'] ?? userMap?['id'] ?? 0;
+    final userId = json['user_id'] ?? json['id'] ?? userMap?['id'] ?? 0;
     final fullName = json['full_name'] ?? json['name'] ?? userMap?['full_name'] ?? userMap?['name'] ?? 'ولي أمر';
     final avatarUrl = json['avatar_url'] ?? json['photo_url'] ?? userMap?['avatar_url'] ?? userMap?['photo_url'];
 
+    final parsedUserId = userId is num ? userId.toInt() : int.tryParse(userId.toString()) ?? 0;
     return ReviewParentModel(
-      id: parentId is num ? parentId.toInt() : int.tryParse(parentId.toString()) ?? 0,
-      userId: userId is num ? userId.toInt() : int.tryParse(userId.toString()) ?? 0,
+      id: parsedUserId,
+      userId: parsedUserId,
       fullName: fullName.toString(),
       avatarUrl: avatarUrl?.toString(),
     );

@@ -1,5 +1,4 @@
 class ParentModel {
-  final int parentId;
   final int userId;
   final String fullName;
   final String email;
@@ -9,7 +8,6 @@ class ParentModel {
   final bool emailChangePending;
 
   ParentModel({
-    required this.parentId,
     required this.userId,
     required this.fullName,
     required this.email,
@@ -31,9 +29,7 @@ class ParentModel {
     final data = (json['user'] is Map) ? Map<String, dynamic>.from(json['user'] as Map) : json;
 
     return ParentModel(
-      // مطابقة المفاتيح مع رد الـ API الفعلي القادم من الباك
-      parentId: _parseInt(data['parent_id'] ?? data['id'] ?? data['id_user']),
-      userId: _parseInt(data['account_id'] ?? data['user_id'] ?? data['id_user']),
+      userId: _parseInt(data['id'] ?? data['user_id']),
       fullName: (data['full_name'] ?? data['name'] ?? '').toString(),
       email: (data['email'] ?? '').toString(),
       phoneNumber: (data['phone_number'] ?? '').toString(),
@@ -53,8 +49,8 @@ class ParentModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': parentId,
-      'account_id': userId,
+      'id': userId,
+      'user_id': userId,
       'full_name': fullName,
       'email': email,
       'phone_number': phoneNumber,

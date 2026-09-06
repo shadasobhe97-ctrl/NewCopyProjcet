@@ -39,7 +39,7 @@ class AddressLocalDataSourceImpl implements AddressLocalDataSource {
     await box.clear();
     for (var address in addresses) {
       if (address.id != null) {
-        await box.put(address.id, address.toJson());
+        await box.put(address.id, address.toDisplayMap());
       }
     }
   }
@@ -48,7 +48,7 @@ class AddressLocalDataSourceImpl implements AddressLocalDataSource {
   Future<void> cacheAddress(AddressModel address) async {
     final box = HiveHelper.addressesBox;
     if (address.id != null) {
-      await box.put(address.id, address.toJson());
+      await box.put(address.id, address.toDisplayMap());
     }
   }
 

@@ -33,7 +33,6 @@ class ParentRegisterResponse {
   }
 
   int get id => user.id;
-  int? get parentId => user.parentId;
   String get fullName => user.fullName;
   String get email => user.email ?? '';
   String get phoneNumber => user.phoneNumber;

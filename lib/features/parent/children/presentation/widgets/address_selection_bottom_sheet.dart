@@ -272,10 +272,40 @@ class _AddressSelectionBottomSheetState
                                                   : null,
                                             ),
                                           ),
+                                          if (address.streetAddress != null &&
+                                              address.streetAddress!.trim().isNotEmpty) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              address.streetAddress!.trim(),
+                                              style: AppTextStyles.style(
+                                                fontSize: 12,
+                                                color: isSelected
+                                                    ? context.primaryColor.withValues(alpha: 0.8)
+                                                    : (context.isDarkMode ? AppColors.grey300 : AppColors.grey700),
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                          if (address.zoneName != null &&
+                                              address.zoneName!.trim().isNotEmpty) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'المنطقة: ${address.zoneName!.trim()}',
+                                              style: AppTextStyles.style(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: context.primaryColor,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                          const SizedBox(height: 2),
                                           Text(
                                             'إحداثيات: (${address.lat.toStringAsFixed(4)}, ${address.lng.toStringAsFixed(4)})',
                                             style: AppTextStyles.style(
-                                              fontSize: 12,
+                                              fontSize: 11,
                                               color: AppColors.grey400,
                                             ),
                                             maxLines: 1,

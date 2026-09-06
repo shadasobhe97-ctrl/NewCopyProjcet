@@ -1,28 +1,40 @@
 class AddressModel {
   final String? id;
-  final int? parentId;
-  final String label;
-  final double lat;
-  final double lng;
+  final String title;
+  final String? streetAddress;
+  final double latitude;
+  final double longitude;
   final bool isDefault;
+  final int? zoneId;
+  final String? zoneName;
+  final String? createdAt;
 
   AddressModel({
     this.id,
-    this.parentId,
-    required this.label,
-    required this.lat,
-    required this.lng,
+    String? title,
+    String? label,
+    this.streetAddress,
+    double? latitude,
+    double? lat,
+    double? longitude,
+    double? lng,
     this.isDefault = false,
-  });
+    this.zoneId,
+    this.zoneName,
+    this.createdAt,
+    @Deprecated('user_id is no longer required') int? userId,
+  })  : title = title ?? label ?? '',
+        latitude = latitude ?? lat ?? 0.0,
+        longitude = longitude ?? lng ?? 0.0;
 
-  // UI Getters for compatibility
-  String get title => label;
-  double get latitude => lat;
-  double get longitude => lng;
+  // Compatibility getters
+  String get label => title;
+  double get lat => latitude;
+  double get lng => longitude;
 
   factory AddressModel.fromJson(Map<String, dynamic> json) {
-    final rawLat = json['lat'] ?? json['latitude'];
-    final rawLng = json['lng'] ?? json['longitude'];
+    final rawLat = json['latitude'] ?? json['lat'];
+    final rawLng = json['longitude'] ?? json['lng'];
 
     double parsedLat = 0.0;
     if (rawLat != null) {
@@ -38,48 +50,57 @@ class AddressModel {
           : double.tryParse(rawLng.toString()) ?? 0.0;
     }
 
-    // نستخدم toString() بدل as String? عشان ما تنكسر لو السيرفر رجّع
-    // القيمة برقم أو بنوع غير متوقع
-    final rawLabel = json['label'] ?? json['title'];
+    final rawTitle = json['title'] ?? json['label'];
+    final rawStreet = json['street_address'] ?? json['streetAddress'];
+    final rawZoneId = json['zone_id'] ?? json['zoneId'];
+    final rawZoneName = json['zone_name'] ?? json['zoneName'];
+    final rawCreatedAt = json['created_at'] ?? json['createdAt'];
 
-    final rawParentId = json['parent_id'];
-    final parentId = rawParentId is int
-        ? rawParentId
-        : int.tryParse(rawParentId?.toString() ?? '');
+    final zoneId = rawZoneId is int
+        ? rawZoneId
+        : int.tryParse(rawZoneId?.toString() ?? '');
 
     return AddressModel(
       id: json['id']?.toString(),
-      parentId: parentId,
-      label: rawLabel?.toString() ?? '',
-      lat: parsedLat,
-      lng: parsedLng,
-      isDefault:
-          json['is_default'] == true ||
+      title: rawTitle?.toString() ?? '',
+      streetAddress: rawStreet?.toString(),
+      latitude: parsedLat,
+      longitude: parsedLng,
+      isDefault: json['is_default'] == true ||
           json['is_default'] == 1 ||
           json['is_default'].toString() == '1',
+      zoneId: zoneId,
+      zoneName: rawZoneName?.toString(),
+      createdAt: rawCreatedAt?.toString(),
     );
   }
 
+  /// يطابق Backend API Contract بدقة (POST /api/parent/addresses)
+  /// بدون parent_id / parentId / user_id
   Map<String, dynamic> toJson() {
     return {
-      if (parentId != null) 'parent_id': parentId,
-      'label': label,
-      'lat': lat,
-      'lng': lng,
+      'title': title,
+      if (streetAddress != null && streetAddress!.isNotEmpty)
+        'street_address': streetAddress,
+      'latitude': latitude,
+      'longitude': longitude,
+      if (zoneId != null) 'zone_id': zoneId,
       'is_default': isDefault,
     };
   }
 
-  /// تحويل من Map للتوافق مع AddressCard الحالية
+  /// تحويل لـ Map للتوافق مع شاشات العرض والتخزين المحلي
   Map<String, dynamic> toDisplayMap() {
     return {
       'id': id,
-      'parent_id': parentId,
-      'title': label,
-      'latitude': lat,
-      'longitude': lng,
+      'title': title,
+      'street_address': streetAddress,
+      'latitude': latitude,
+      'longitude': longitude,
       'is_default': isDefault,
-      'details': '',
+      'zone_id': zoneId,
+      'zone_name': zoneName,
+      'created_at': createdAt,
     };
   }
 }

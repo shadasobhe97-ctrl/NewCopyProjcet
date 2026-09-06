@@ -1,6 +1,6 @@
 class RechargeResponseModel {
   final int id;
-  final int parentId;
+  final int userId;
   final String amount;
   final String paymentMethod;
   final String? referenceNumber;
@@ -10,7 +10,7 @@ class RechargeResponseModel {
 
   RechargeResponseModel({
     required this.id,
-    required this.parentId,
+    required this.userId,
     required this.amount,
     required this.paymentMethod,
     this.referenceNumber,
@@ -22,7 +22,7 @@ class RechargeResponseModel {
   factory RechargeResponseModel.fromJson(Map<String, dynamic> json) {
     return RechargeResponseModel(
       id: json['id'] ?? 0,
-      parentId: json['parent_id'] ?? 0,
+      userId: json['user_id'] ?? 0,
       amount: json['amount']?.toString() ?? '0.0',
       paymentMethod: json['payment_method']?.toString() ?? '',
       referenceNumber: json['reference_number']?.toString(),

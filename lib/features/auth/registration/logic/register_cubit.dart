@@ -186,12 +186,6 @@ class RegisterCubit extends Cubit<RegisterState> {
         isActive: response.user.isActive,
       );
 
-      // حفظ parent_id فوراً لاستخدامه في إضافة الأطفال والعناوين
-      final pid = response.parentId;
-      if (pid != null && pid > 0) {
-        await StorageService.saveParentId(pid);
-      }
-
       emit(
         ParentRegisterSuccess(
           response.fullName.isNotEmpty

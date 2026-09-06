@@ -18,21 +18,23 @@ class SearchCubit extends Cubit<SearchState> {
   }) async {
     emit(SearchLoading());
 
-    final Map<String, dynamic> body = {};
+    final Map<String, dynamic> queryParams = {};
     if (searchQuery != null && searchQuery.trim().isNotEmpty) {
-      body['search_query'] = searchQuery.trim();
+      queryParams['search'] = searchQuery.trim();
     }
-    if (driverGender != null && driverGender != 'ALL') {
-      body['driver_gender'] = driverGender.toLowerCase();
+    if (driverGender != null &&
+        driverGender.trim().isNotEmpty &&
+        driverGender.toUpperCase() != 'ALL') {
+      queryParams['gender'] = driverGender.toLowerCase();
     }
-    if (hasAc != null && hasAc) {
-      body['has_ac'] = hasAc;
+    if (hasAc == true) {
+      queryParams['has_ac'] = 1;
     }
     if (childIds != null && childIds.isNotEmpty) {
-      body['child_ids'] = childIds;
+      queryParams['child_ids[]'] = childIds;
     }
 
-    final (list, error) = await _repository.searchDrivers(body);
+    final (list, error) = await _repository.searchDrivers(queryParams);
 
     if (error != null) {
       emit(SearchError(error));
@@ -47,12 +49,12 @@ class SearchCubit extends Cubit<SearchState> {
   }) async {
     emit(PricingLoading());
 
-    final body = <String, dynamic>{
-      'search_query': searchQuery.trim(),
-      'child_ids': childIds,
+    final queryParams = <String, dynamic>{
+      if (searchQuery.trim().isNotEmpty) 'search': searchQuery.trim(),
+      if (childIds.isNotEmpty) 'child_ids[]': childIds,
     };
 
-    final (list, error) = await _repository.searchDrivers(body);
+    final (list, error) = await _repository.searchDrivers(queryParams);
 
     if (error != null) {
       emit(PricingError(error));
@@ -73,7 +75,7 @@ class SearchCubit extends Cubit<SearchState> {
     if (childIds.isEmpty) return null;
 
     final (list, error) =
-        await _repository.searchDrivers({'child_ids': childIds});
+        await _repository.searchDrivers({'child_ids[]': childIds});
 
     if (error != null || list == null || list.isEmpty) return null;
 

@@ -35,7 +35,6 @@ class LoginResponseModel {
     final finalUser = user.roleId != roleId
         ? UserModel(
             id: user.id,
-            parentId: user.parentId,
             driverId: user.driverId,
             fullName: user.fullName,
             email: user.email,
@@ -66,7 +65,6 @@ class LoginResponseModel {
 
 class UserModel {
   final int id;
-  final int? parentId;
   final int? driverId;
   final String fullName;
   final String? email;
@@ -81,7 +79,6 @@ class UserModel {
 
   UserModel({
     required this.id,
-    this.parentId,
     this.driverId,
     required this.fullName,
     this.email,
@@ -96,7 +93,7 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    final id = _readInt(json['id_user'] ?? json['id'] ?? json['user_id']);
+    final id = _readInt(json['id'] ?? json['user_id']);
     final rawRole = json['role']?.toString() ??
         json['role_name']?.toString() ??
         json['roleName']?.toString() ??
@@ -112,11 +109,6 @@ class UserModel {
       roleId = rawRoleId;
     }
 
-    final rawParentId = json['parent_id'] ?? json['parentId'];
-    final parentId = rawParentId is int
-        ? rawParentId
-        : int.tryParse(rawParentId?.toString() ?? '');
-
     final rawDriverId = json['driver_id'] ?? json['driverId'];
     final driverId = rawDriverId is int
         ? rawDriverId
@@ -124,7 +116,6 @@ class UserModel {
 
     return UserModel(
       id: id,
-      parentId: parentId,
       driverId: driverId,
       fullName: json['full_name']?.toString() ?? json['name']?.toString() ?? '',
       email: json['email']?.toString(),

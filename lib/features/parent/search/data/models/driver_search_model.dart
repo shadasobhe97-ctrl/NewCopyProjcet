@@ -152,7 +152,10 @@ class VehicleModelInfo {
     required this.plateNumber,
   });
 
+  int get capacity => capacityManual;
+
   factory VehicleModelInfo.fromJson(Map<String, dynamic> json) {
+    final rawCapacity = json['capacity'] ?? json['capacity_manual'];
     return VehicleModelInfo(
       brand: json['brand']?.toString() ?? '',
       model: json['model']?.toString() ?? '',
@@ -160,7 +163,7 @@ class VehicleModelInfo {
       color: json['color']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
       hasAc: _readBool(json['has_ac']),
-      capacityManual: _readInt(json['capacity_manual']),
+      capacityManual: _readInt(rawCapacity),
       plateNumber: json['plate_number']?.toString() ?? '',
     );
   }
@@ -184,24 +187,46 @@ class WorkingZoneModelInfo {
 }
 
 class PricingModelInfo {
+  final double? tripPrice;
+  final String totalPriceFormatted;
   final double totalPrice;
-  final int totalPriceRaw;
+  final double totalPriceRaw;
+  final int? workingDays;
+  final double? distanceKm;
   final bool hasAc;
   final double pricePerKm;
   final int childrenCount;
 
   PricingModelInfo({
+    this.tripPrice,
+    this.totalPriceFormatted = '',
     required this.totalPrice,
     required this.totalPriceRaw,
+    this.workingDays,
+    this.distanceKm,
     required this.hasAc,
     required this.pricePerKm,
     required this.childrenCount,
   });
 
   factory PricingModelInfo.fromJson(Map<String, dynamic> json) {
+    final rawTotalPrice = json['total_price'];
+    final formattedPrice = rawTotalPrice is String
+        ? rawTotalPrice
+        : rawTotalPrice != null
+            ? '${_parsePriceString(rawTotalPrice).toStringAsFixed(2)} د.ل'
+            : '';
+
     return PricingModelInfo(
-      totalPrice: _parsePriceString(json['total_price']),
-      totalPriceRaw: _readInt(json['total_price_raw']),
+      tripPrice:
+          json['trip_price'] != null ? _readDouble(json['trip_price']) : null,
+      totalPriceFormatted: formattedPrice,
+      totalPrice: _parsePriceString(rawTotalPrice),
+      totalPriceRaw: _readDouble(json['total_price_raw']),
+      workingDays:
+          json['working_days'] != null ? _readInt(json['working_days']) : null,
+      distanceKm:
+          json['distance_km'] != null ? _readDouble(json['distance_km']) : null,
       hasAc: _readBool(json['has_ac']),
       pricePerKm: _readDouble(json['price_per_km']),
       childrenCount: _readInt(json['children_count']),

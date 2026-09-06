@@ -19,52 +19,10 @@ class ChildrenRemoteDataSource {
     return {'Authorization': token ?? ''};
   }
 
-  Future<int> _resolveParentId() async {
-    int? parentId = StorageService.getParentId();
-    if (parentId == null || parentId == 0) {
-      try {
-        final profileResponse = await _client.get(
-          ApiEndpoints.parentProfile,
-          headers: _authHeader,
-        );
-        final profileData = profileResponse.data;
-        if (profileData is Map) {
-          final payload = profileData['data'] ?? profileData;
-          if (payload is Map<String, dynamic>) {
-            // بعض APIs تحط البيانات داخل مفتاح 'user'
-            final data = (payload['user'] is Map)
-                ? Map<String, dynamic>.from(payload['user'] as Map)
-                : payload;
-            parentId = _parseParentId(data);
-            if (parentId != null && parentId > 0) {
-              StorageService.saveParentId(parentId);
-            }
-          }
-        }
-      } catch (e) {
-        debugPrint('⚠️ _resolveParentId error: $e');
-      }
-    }
-    if (parentId == null || parentId == 0) {
-      throw const ApiException('لم يتم العثور على معرف ولي الأمر.');
-    }
-    return parentId;
-  }
-
-  int? _parseParentId(Map<String, dynamic> data) {
-    // يدعم كل الصيغ الممكنة من الباك إند
-    final raw = data['parent_id'] ?? data['id'] ?? data['id_user'];
-    if (raw is int) return raw;
-    if (raw is num) return raw.toInt();
-    return int.tryParse(raw?.toString() ?? '');
-  }
-
   Future<List<ChildModel>> getChildren() async {
     debugPrint('getChildren()');
-    final parentId = await _resolveParentId();
-    debugPrint('parentId: $parentId');
     final response = await _client.get(
-      '${ApiEndpoints.parentChildren}?parent_id=$parentId',
+      ApiEndpoints.parentChildren,
       headers: _authHeader,
     );
     final data = response.data;
@@ -208,7 +166,6 @@ class ChildrenRemoteDataSource {
     ChildModel child,
     String? localImagePath,
   ) async {
-    final parentId = await _resolveParentId();
     final hasLocalImage = _isLocalImagePath(localImagePath);
     debugPrint('📤 [addChild] localImagePath: $localImagePath');
     debugPrint('📤 [addChild] hasLocalImage: $hasLocalImage');
@@ -234,7 +191,6 @@ class ChildrenRemoteDataSource {
     final dropoffTimeStr = _formatTimeToHHMM24(rawDropoff);
 
     final flatPayload = <String, dynamic>{
-      'parent_id': parentId,
       'school_id': child.schoolId,
       'address_id': int.tryParse(child.addressId) ?? child.addressId,
       'full_name': child.fullName,
@@ -328,13 +284,11 @@ class ChildrenRemoteDataSource {
     ChildModel child,
     String? localImagePath,
   ) async {
-    final parentId = await _resolveParentId();
     final hasLocalImage = _isLocalImagePath(localImagePath);
 
     dynamic requestData;
 
     final flatPayload = <String, dynamic>{
-      'parent_id': parentId,
       'full_name': child.fullName,
       'gender': child.gender,
       'birth_date': child.birthDate.toIso8601String().split('T').first,
@@ -410,8 +364,6 @@ class ChildrenRemoteDataSource {
     String? pickupTime,
     String? dropoffTime,
   }) async {
-    final parentId = await _resolveParentId();
-
     final startDateStr = startDate.toIso8601String().split('T').first;
     final endDateStr = endDate != null
         ? endDate.toIso8601String().split('T').first
@@ -421,7 +373,6 @@ class ChildrenRemoteDataSource {
     final dropoffTimeStr = _formatTimeToHHMM24(dropoffTime);
 
     final flatPayload = <String, dynamic>{
-      'parent_id': parentId,
       'school_id': schoolId,
       'address_id': int.tryParse(addressId.toString()) ?? addressId,
       'preferred_time_slot': preferredTimeSlot,
