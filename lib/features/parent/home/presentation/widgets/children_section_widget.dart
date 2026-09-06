@@ -103,7 +103,7 @@ class ChildrenSectionWidget extends StatelessWidget {
 
             // قائمة أفقية: كارد "إضافة طفل" ثابت على اليمين (Index 0)، يليه كروت الأطفال
             SizedBox(
-              height: 120.h,
+              height: 128.h,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
@@ -129,7 +129,7 @@ class ChildrenSectionWidget extends StatelessWidget {
     );
   }
 
-  // كارد الطفل (عرض الاسم الأول والصورة فقط)
+  // كارد الطفل (عرض الاسم الأول والصورة وحالة الاشتراك)
   Widget _buildChildCard(
     BuildContext context, {
     required ChildModel child,
@@ -145,6 +145,11 @@ class ChildrenSectionWidget extends StatelessWidget {
     final avatarIconColor =
         isFemale ? context.genderFemaleColor : context.genderMaleColor;
 
+    // حالة الاشتراك (افتراضية نشطة إذا وجد خيار أو غير نشطة)
+    final bool hasSubscription = child.id != null; 
+    final statusText = hasSubscription ? 'اشتراك نشط' : 'لا يوجد اشتراك';
+    final statusColor = hasSubscription ? AppColors.accentGreen : AppColors.textMuted;
+
     return InkWell(
       onTap: () {
         Navigator.pushNamed(
@@ -155,9 +160,9 @@ class ChildrenSectionWidget extends StatelessWidget {
       },
       borderRadius: BorderRadius.circular(16.r),
       child: Container(
-        width: 92.w,
+        width: 98.w,
         margin: EdgeInsets.only(left: 10.w),
-        padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 6.w),
+        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 6.w),
         decoration: BoxDecoration(
           color: isDark ? AppColors.grey900 : AppColors.white,
           borderRadius: BorderRadius.circular(16.r),
@@ -177,11 +182,11 @@ class ChildrenSectionWidget extends StatelessWidget {
           children: [
             AppUserAvatar(
               imageUrl: child.photoUrl,
-              radius: 22.r,
+              radius: 20.r,
               backgroundColor: avatarBgColor,
               iconColor: avatarIconColor,
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: 6.h),
             Text(
               firstName,
               maxLines: 1,
@@ -190,6 +195,22 @@ class ChildrenSectionWidget extends StatelessWidget {
                 fontSize: 12.sp,
                 fontWeight: FontWeight.bold,
                 color: isDark ? AppColors.white : AppColors.textDark,
+              ),
+            ),
+            SizedBox(height: 2.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Text(
+                statusText,
+                style: AppTextStyles.style(
+                  fontSize: 8.5.sp,
+                  fontWeight: FontWeight.w600,
+                  color: statusColor,
+                ),
               ),
             ),
           ],
