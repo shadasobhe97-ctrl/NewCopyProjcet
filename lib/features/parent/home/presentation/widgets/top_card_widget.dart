@@ -16,63 +16,82 @@ class TopCardWidget extends StatelessWidget {
     required this.hasTrips,
     this.onTrackTrips,
     this.onViewUpcoming,
-    this.activeTripsCount = 2,
+    this.activeTripsCount = 1,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
-
-    // استخراج درجة أغمق قليلاً من لون الثيم الأساسي الخاص بك
     final darkerPrimary = Color.lerp(primaryColor, Colors.black, 0.18)!;
 
     if (hasTrips) {
-      // 🟢 الحالة الأولى: يوجد رحلات (صورة hastrips.png)
+      // 🟢 الحالة الأولى: يوجد رحلات نشطة
       return Container(
-        height: 155.h,
+        height: 145.h,
         width: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: isDark
                 ? [const Color(0xFF0F626B), const Color(0xFF063A40)]
-                : [darkerPrimary, primaryColor], // استخدام الدرجة الأغمق هنا
+                : [darkerPrimary, primaryColor],
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
           ),
           borderRadius: BorderRadius.circular(18.r),
           boxShadow: [
             BoxShadow(
-              color: primaryColor.withValues(alpha: isDark ? 0.35 : 0.25),
-              blurRadius: 14,
-              offset: const Offset(0, 5),
+              color: primaryColor.withValues(alpha: isDark ? 0.35 : 0.22),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // النصوص وزر الإجراء
             Positioned(
               right: 16.w,
               top: 0,
               bottom: 0,
-              left: 150.w, // ترك مساحة 150 للصورة على اليسار
+              left: 140.w,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 8.r,
+                        height: 8.r,
+                        decoration: const BoxDecoration(
+                          color: AppColors.accentGreen,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      SizedBox(width: 6.w),
+                      Text(
+                        'رحلة نشطة حالياً',
+                        style: AppTextStyles.style(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 4.h),
                   Text(
-                    'لديك رحلات نشطة',
+                    'لديك رحلة نشطة',
                     style: AppTextStyles.style(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.bold,
                       color: AppColors.white,
                     ),
                   ),
-                  SizedBox(height: 3.h),
+                  SizedBox(height: 2.h),
                   Text(
-                    'تابع رحلات أطفالك الآن',
+                    'تابعي رحلة طفلك الآن مباشرة',
                     style: AppTextStyles.style(
                       fontSize: 10.5.sp,
                       color: AppColors.white.withValues(alpha: 0.88),
@@ -108,7 +127,7 @@ class TopCardWidget extends StatelessWidget {
                         color: primaryColor,
                       ),
                       label: Text(
-                        'تتبع الآن',
+                        'تتبع الرحلة',
                         style: AppTextStyles.style(
                           fontSize: 11.sp,
                           fontWeight: FontWeight.bold,
@@ -120,21 +139,18 @@ class TopCardWidget extends StatelessWidget {
                 ],
               ),
             ),
-
-            // الصورة (أعطيناها مساحة طولية وعرضية باش تتمدد براحتها بدون تشويه)
             Positioned(
               left: 5.w,
               top: 10.h,
               bottom: 10.h,
-              width: 140.w, // عرض ثابت لاحتواء الصورة العريضة
+              width: 130.w,
               child: Image.asset(
                 'assets/images/hastrips.png',
-                fit: BoxFit
-                    .contain, // يخلي الصورة تاخذ حجمها الطبيعي داخل المربع
+                fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
                   return Icon(
                     Icons.directions_bus_filled_rounded,
-                    size: 70.r,
+                    size: 60.r,
                     color: AppColors.white.withValues(alpha: 0.4),
                   );
                 },
@@ -144,120 +160,55 @@ class TopCardWidget extends StatelessWidget {
         ),
       );
     } else {
-      // ⚪ الحالة الثانية: لا يوجد رحلات (صورة nothastrips.png)
+      // ⚪ الحالة الثانية: لا توجد رحلة نشطة (حالة بسيطة وخفيفة جداً تمنع هدر المساحة)
       return Container(
-        height: 155.h,
         width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
         decoration: BoxDecoration(
           color: isDark
               ? AppColors.grey900
-              : primaryColor.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(18.r),
+              : primaryColor.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(14.r),
           border: Border.all(
             color: isDark
                 ? AppColors.grey800
-                : primaryColor.withValues(alpha: 0.2),
+                : primaryColor.withValues(alpha: 0.15),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
-        child: Stack(
-          clipBehavior: Clip.none,
+        child: Row(
           children: [
-            Positioned(
-              right: 16.w,
-              top: 0,
-              bottom: 0,
-              left: 150.w,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'لا توجد رحلات نشطة',
-                    style: AppTextStyles.style(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppColors.white : AppColors.textDark,
-                    ),
-                  ),
-                  SizedBox(height: 3.h),
-                  Text(
-                    'يمكنك تتبع رحلات أطفالك لاحقاً',
-                    style: AppTextStyles.style(
-                      fontSize: 10.5.sp,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-                  SizedBox(
-                    height: 34.h,
-                    child: OutlinedButton.icon(
-                      onPressed:
-                          onViewUpcoming ??
-                          () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const UpcomingTripsScreen(),
-                              ),
-                            );
-                          },
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: isDark
-                            ? Colors.transparent
-                            : AppColors.white,
-                        foregroundColor: primaryColor,
-                        side: BorderSide(
-                          color: primaryColor.withValues(alpha: 0.5),
-                        ),
-                        padding: EdgeInsets.symmetric(horizontal: 12.w),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
-                        elevation: 0,
-                      ),
-                      icon: Icon(
-                        Icons.calendar_month_outlined,
-                        size: 14.r,
-                        color: primaryColor,
-                      ),
-                      label: Text(
-                        'عرض الرحلات',
-                        style: AppTextStyles.style(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.bold,
-                          color: primaryColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+            Icon(
+              Icons.directions_bus_outlined,
+              color: AppColors.textMuted,
+              size: 18.r,
+            ),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(
+                'لا توجد رحلة نشطة حالياً',
+                style: AppTextStyles.style(
+                  fontSize: 11.5.sp,
+                  color: AppColors.textMuted,
+                ),
               ),
             ),
-
-            // الصورة الفارغة
-            Positioned(
-              left: 5.w,
-              top: 10.h,
-              bottom: 10.h,
-              width: 140.w,
-              child: Image.asset(
-                'assets/images/nothastrips.png',
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Icon(
-                    Icons.nature_people_rounded,
-                    size: 70.r,
-                    color: primaryColor.withValues(alpha: 0.3),
-                  );
-                },
+            InkWell(
+              onTap: onViewUpcoming ??
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const UpcomingTripsScreen(),
+                      ),
+                    );
+                  },
+              child: Text(
+                'عرض جدول الرحلات',
+                style: AppTextStyles.style(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
               ),
             ),
           ],
@@ -266,3 +217,4 @@ class TopCardWidget extends StatelessWidget {
     }
   }
 }
+

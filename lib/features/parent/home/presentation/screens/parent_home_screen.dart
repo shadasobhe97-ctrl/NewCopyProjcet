@@ -5,12 +5,14 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
 
+import 'package:kids_transport/features/parent/home/presentation/widgets/welcome_header_widget.dart';
+import 'package:kids_transport/features/parent/home/presentation/widgets/search_action_cards_widget.dart';
 import 'package:kids_transport/features/parent/home/presentation/widgets/top_card_widget.dart';
 import 'package:kids_transport/features/parent/home/presentation/widgets/children_section_widget.dart';
 import 'package:kids_transport/features/parent/home/presentation/widgets/quick_services_widget.dart';
 import 'package:kids_transport/features/parent/home/presentation/widgets/notifications_widget.dart';
 
-/// الشاشة الأساسية (نفس الاسم اللي يدور عليه الـ Router والـ Wrapper)
+/// الشاشة الأساسية (نفس الاسم الذي يبحث عنه الـ Router والـ Wrapper)
 class ParentHomeScreen extends StatelessWidget {
   const ParentHomeScreen({super.key});
 
@@ -72,23 +74,32 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
         ),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         children: [
-          // 🧠 1) الكارد العلوي
+          // 👋 1) قسم الترحيب البسيط
+          const WelcomeHeaderWidget(),
+          SizedBox(height: 16.h),
+
+          // 🔍 2) إجراءات البحث الرئيسية (البحث عن سائق للاشتراك + البحث السريع لليوم)
+          const SearchActionCardsWidget(),
+          SizedBox(height: 18.h),
+
+          // 🧠 3) قسم الرحلة النشطة (يعرض الكارد فقط عند وجود رحلة نشطة، وحالة خفيفة جداً عند عدم وجودها)
           const TopCardWidget(hasTrips: hasTrips),
-          SizedBox(height: 22.h),
+          SizedBox(height: 18.h),
 
-          // 👶 2) قسم الأطفال (ديناميكي يرتبط بـ ChildrenCubit)
+          // 👶 4) قسم الأطفال (ديناميكي مع إظهار حالة الاشتراك)
           const ChildrenSectionWidget(),
-          SizedBox(height: 22.h),
+          SizedBox(height: 18.h),
 
-          // ⚡ 3) قسم الخدمات السريعة
-          const QuickServicesWidget(),
-          SizedBox(height: 22.h),
-
-          // 🔔 4) قسم الإشعارات
+          // 🔔 5) قسم الإشعارات المهمة
           const NotificationsWidget(hasNotifications: hasNotifications),
-          SizedBox(height: 20.h),
+          SizedBox(height: 18.h),
+
+          // ⚡ 6) قسم الخدمات السريعة (محفوظ بكامله دون حذف)
+          const QuickServicesWidget(),
+          SizedBox(height: 24.h),
         ],
       ),
     );
   }
 }
+
