@@ -51,7 +51,7 @@ class ParentProfileRepository {
     await sessionRepository.saveUserSession(
       token: sessionRepository.getToken() ?? '',
       tokenType: 'Bearer',
-      roleId: sessionRepository.getRoleId() ?? 3,
+      roleId: sessionRepository.getRoleId() ?? 7,
       roleName: 'parent',
       userId: parent.userId,
       fullName: parent.fullName,

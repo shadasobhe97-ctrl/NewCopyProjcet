@@ -193,7 +193,7 @@ class TripChildActionCard extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: manualEnabled ? onManualConfirm : null,
                 icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
-                label: Text(manualLabel, style: const TextStyle(fontSize: 12)),
+                label: Text(manualLabel, style: AppTextStyles.style(fontSize: 12)),
                 style: AppTheme.outlinedButtonStyle(
                   minimumSize: const Size(0, 42),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

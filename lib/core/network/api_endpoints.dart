@@ -33,7 +33,8 @@ class ApiEndpoints {
   // POST /api/parent/register  → التسجيل النهائي (يحتوي على OTP)
   static const String parentRegister = 'parent/register';
 
-  // مسارات إدارة العناوين (تتطلب Bearer token)
+  // مسارات إدارة العناوين والمناطق (تتطلب Bearer token)
+  static const String parentZones = 'parent/zones';
   static const String parentAddresses = 'parent/addresses';
   static String parentAddressById(String id) => 'parent/addresses/$id';
 
@@ -49,6 +50,7 @@ class ApiEndpoints {
   static const String driverPreferenceDefaults =
       'v1/driver/preferences/defaults';
   static const String driverPreferences = 'v1/driver/preferences';
+  static const String adminZones = 'admin/zones';
   static const String adminZonesTree = 'admin/zones-tree';
   static const String adminMunicipalities = 'admin/municipalities';
   static const String adminSubMunicipalities = 'admin/sub-municipalities';

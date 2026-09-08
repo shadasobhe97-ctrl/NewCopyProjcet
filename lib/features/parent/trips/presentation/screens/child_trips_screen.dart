@@ -179,7 +179,7 @@ class _ChildTripsScreenState extends State<ChildTripsScreen> {
                         ),
                         child: Text(
                           'نشطة الآن',
-                          style: TextStyle(fontSize: 10.sp, color: AppColors.success, fontWeight: FontWeight.bold),
+                          style: AppTextStyles.style(fontSize: 10.sp, color: AppColors.success, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -276,7 +276,7 @@ class _ChildTripsScreenState extends State<ChildTripsScreen> {
                           ],
                         ),
                       ),
-                      Text(hist.actionType, style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.success)),
+                      Text(hist.actionType, style: AppTextStyles.style(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.success)),
                     ],
                   ),
                 )),

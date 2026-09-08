@@ -183,9 +183,9 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'يرجى كتابة سبب العطل بشكل دقيق للإدارة والسائقين البدلاء قبل إرسال بلاغ الطوارئ:',
-                style: TextStyle(fontSize: 13),
+                style: AppTextStyles.style(fontSize: 13),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -296,7 +296,7 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
                 result.isBroadcasted
                     ? 'تم بث بلاغ الطوارئ'
                     : (result.isNoSubstitutes ? 'تنبيه السائقين البدلاء' : 'نتيجة بلاغ الطوارئ'),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -305,19 +305,19 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(result.message, style: const TextStyle(fontSize: 14)),
+            Text(result.message, style: AppTextStyles.style(fontSize: 14)),
             if (result.strandedChildrenCount > 0) ...[
               const SizedBox(height: 10),
               Text(
                 'عدد الأطفال المتأثرين بالتعطل: ${result.strandedChildrenCount}',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                style: AppTextStyles.style(fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ],
             if (result.isBroadcasted && result.candidatesCount > 0) ...[
               const SizedBox(height: 6),
               Text(
                 'عدد السائقين المتاحين بالمنطقة: ${result.candidatesCount}',
-                style: const TextStyle(fontSize: 13, color: AppColors.primary),
+                style: AppTextStyles.style(fontSize: 13, color: AppColors.primary),
               ),
             ],
           ],

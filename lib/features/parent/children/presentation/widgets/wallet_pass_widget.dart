@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/theme/text_styles.dart';
 import '../../../../../core/utils/theme_context.dart';
 
 class WalletPassWidget extends StatelessWidget {
@@ -39,7 +40,7 @@ class WalletPassWidget extends StatelessWidget {
               children: [
                 const Icon(Icons.directions_bus, color: Colors.white, size: 30),
                 const SizedBox(width: 10),
-                Text(childName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                Text(childName, style: AppTextStyles.style(color: AppColors.white, fontWeight: FontWeight.bold, fontSize: 18)),
               ],
             ),
           ),
@@ -52,9 +53,9 @@ class WalletPassWidget extends StatelessWidget {
               backgroundColor: Colors.white,
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(bottom: 20),
-            child: Text("بطاقة صعود دربي المعتمدة", style: TextStyle(color: Colors.grey)),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Text("بطاقة صعود دربي المعتمدة", style: AppTextStyles.style(color: AppColors.grey)),
           )
         ],
       ),

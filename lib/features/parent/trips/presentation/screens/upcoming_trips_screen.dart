@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -248,7 +248,7 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                 ),
                 child: Text(
                   trip.scheduledFor,
-                  style: TextStyle(
+                  style: AppTextStyles.style(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.bold,
                     color: isToSchool ? context.primaryColor : AppColors.pending,
@@ -327,7 +327,7 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                       ),
                       child: Text(
                         '$childPrice ${trip.pricing.currency}',
-                        style: TextStyle(
+                        style: AppTextStyles.style(
                           fontSize: 10.sp,
                           fontWeight: FontWeight.bold,
                           color: context.primaryColor,

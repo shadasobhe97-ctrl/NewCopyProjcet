@@ -75,6 +75,12 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
     _fetchChildDetails();
   }
 
+  String _getPreferredSlotText(ChildModel child) {
+    final slot = child.logistics?.preferredTimeSlot;
+    if (slot == 'evening') return 'مسائي';
+    return 'صباحي';
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeChild = childDetails ?? widget.child;
@@ -211,7 +217,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                         SizedBox(height: 8.h),
                         Text(
                           activeChild.fullName,
-                          style: TextStyle(
+                          style: AppTextStyles.style(
                             color: Colors.white,
                             fontSize: 17.sp,
                             fontWeight: FontWeight.bold,
@@ -223,7 +229,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                         SizedBox(height: 2.h),
                         Text(
                           activeChild.gradeDisplay,
-                          style: TextStyle(
+                          style: AppTextStyles.style(
                             color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 12.5.sp,
                           ),
@@ -243,7 +249,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
               padding: EdgeInsets.all(16.w),
               child: Column(
                 children: [
-                  // ── 1. كارد البيانات الشخصية (عرض 👀 وتعديل ✏️) ──
+                  // ── كارد البيانات الشخصية والتعليمية (عرض 👀 وتعديل ✏️) ──
                   Container(
                     width: double.infinity,
                     padding: EdgeInsets.all(16.w),
@@ -273,7 +279,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                             ),
                             SizedBox(width: 8.w),
                             Text(
-                              'البيانات الشخصية',
+                              'بيانات الطفل الأساسية',
                               style: AppTextStyles.style(
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.bold,
@@ -287,7 +293,7 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                                 color: context.primaryColor,
                                 size: 20.r,
                               ),
-                              tooltip: 'تعديل البيانات الشخصية',
+                              tooltip: 'تعديل بيانات الطفل',
                             ),
                           ],
                         ),
@@ -311,12 +317,31 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                         SizedBox(height: 10.h),
                         _buildField(
                           label: 'العمر',
-                          value: '${activeChild.calculatedAge} سنوات ',
+                          value: '${activeChild.calculatedAge} سنوات',
                         ),
                         SizedBox(height: 10.h),
                         _buildField(
                           label: 'المرحلة والصف الدراسي',
                           value: activeChild.fullStageAndGradeDisplay,
+                        ),
+                        SizedBox(height: 10.h),
+                        _buildField(
+                          label: 'المدرسة والفرع',
+                          value: activeChild.schoolName.isNotEmpty
+                              ? activeChild.schoolName
+                              : 'غير محددة',
+                        ),
+                        SizedBox(height: 10.h),
+                        _buildField(
+                          label: 'عنوان المنزل الرئيسي',
+                          value: (activeChild.address != null && activeChild.address!.title.isNotEmpty)
+                              ? "${activeChild.address!.title}${activeChild.address!.zoneName != null && activeChild.address!.zoneName!.isNotEmpty ? ' (${activeChild.address!.zoneName})' : ''}"
+                              : (activeChild.addressName.isNotEmpty ? activeChild.addressName : 'العنوان الرئيسي المعتمد'),
+                        ),
+                        SizedBox(height: 10.h),
+                        _buildField(
+                          label: 'فترة التوصيل المفضلة',
+                          value: _getPreferredSlotText(activeChild),
                         ),
                         if (activeChild.medicalNotes != null &&
                             activeChild.medicalNotes!.isNotEmpty) ...[
@@ -329,144 +354,6 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                       ],
                     ),
                   ),
-                  SizedBox(height: 16.h),
-
-                  // ── 2. كارد بيانات النقل الحالية (عرض فقط 👀 + تنبيه أصفر داخلي) ──
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(16.w),
-                    decoration: AppTheme.boxDecoration(
-                      color: isDark ? AppColors.darkCard : AppColors.white,
-                      borderRadius: AppTheme.radius(16.r),
-                      border: AppTheme.border(color: AppColors.grey200),
-                      boxShadow: [
-                        AppTheme.boxShadow(
-                          color: AppColors.black.withValues(
-                            alpha: isDark ? 0.2 : 0.04,
-                          ),
-                          blurRadius: 8.r,
-                          offset: Offset(0, 2.h),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.directions_bus_outlined,
-                              color: context.primaryColor,
-                              size: 20.r,
-                            ),
-                            SizedBox(width: 8.w),
-                            Text(
-                              'بيانات النقل الحالية',
-                              style: AppTextStyles.style(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 4.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? AppColors.grey800
-                                    : AppColors.grey100,
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              child: Text(
-                                'عرض فقط',
-                                style: AppTextStyles.style(
-                                  fontSize: 11.sp,
-                                  color: context.textMuted,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Divider(height: 16.h),
-
-                        // ⚠️ التنبيه الأصفر/الليمي في أعلى كارد النقل نفسه
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(12.w),
-                          margin: EdgeInsets.only(bottom: 14.h),
-                          decoration: BoxDecoration(
-                            color: AppColors.orange.withValues(
-                              alpha: isDark ? 0.12 : 0.08,
-                            ),
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(
-                              color: AppColors.orange.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.info_outline_rounded,
-                                color: AppColors.orange,
-                                size: 18.r,
-                              ),
-                              SizedBox(width: 8.w),
-                              Expanded(
-                                child: Text(
-                                  'يمكنك مراجعتها الان ، وعند البحث عن سائق يمكنك تعديلها حسب احتياجك.',
-                                  style: AppTextStyles.style(
-                                    fontSize: 12.sp,
-                                    color: isDark
-                                        ? AppColors.grey300
-                                        : AppColors.textDark,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        _buildField(
-                          label: 'المدرسة والفرع',
-                          value: activeChild.schoolName,
-                        ),
-                        SizedBox(height: 10.h),
-                        _buildField(
-                          label: 'عنوان المنزل',
-                          value: activeChild.addressName,
-                        ),
-                        SizedBox(height: 10.h),
-                        _buildField(
-                          label: 'اتجاه الرحلة',
-                          value: activeChild.transportPref.serviceTypeDisplay,
-                        ),
-                        SizedBox(height: 10.h),
-                        _buildField(
-                          label: 'الفترة',
-                          value: activeChild.transportPref.periodDisplay,
-                        ),
-                        SizedBox(height: 10.h),
-                        _buildField(
-                          label: 'نوع الاشتراك',
-                          value:
-                              activeChild.transportPref.subscriptionTypeDisplay,
-                        ),
-                        SizedBox(height: 10.h),
-                        _buildField(
-                          label: 'فترة الاشتراك',
-                          value: activeChild
-                              .transportPref
-                              .subscriptionDatePeriodDisplay,
-                        ),
-                      ],
-                    ),
-                  ),
-
                   SizedBox(height: 32.h),
                 ],
               ),

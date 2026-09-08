@@ -57,10 +57,7 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                     backgroundColor: AppColors.error,
                     padding: EdgeInsets.symmetric(vertical: 12.h),
                   ),
-                  child: const Text(
-                    'حذف',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  child: const Text('حذف'),
                 ),
               ),
               SizedBox(width: 12.w),

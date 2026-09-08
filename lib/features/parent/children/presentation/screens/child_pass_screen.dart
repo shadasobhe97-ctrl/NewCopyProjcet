@@ -275,7 +275,7 @@ class ChildPassScreen extends StatelessWidget {
                   ),
                   child: Text(
                     'حسناً، تم',
-                    style: TextStyle(
+                    style: AppTextStyles.style(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,
                       color: AppColors.white,

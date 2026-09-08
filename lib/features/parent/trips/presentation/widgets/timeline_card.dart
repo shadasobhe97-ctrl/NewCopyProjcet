@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
@@ -220,7 +220,7 @@ class _TimelineCardState extends State<TimelineCard>
                           ),
                           child: Text(
                             'مباشر',
-                            style: TextStyle(
+                            style: AppTextStyles.style(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.bold,
                               color: AppColors.amber,

@@ -10,7 +10,6 @@ import 'package:kids_transport/features/parent/home/presentation/screens/parent_
 import 'package:kids_transport/features/parent/children/presentation/screens/my_children_screen.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/features/parent/search/presentation/screens/parent_search_screen.dart';
 import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscriptions_screen.dart';
 import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profile_cubit.dart';
 import 'package:kids_transport/features/parent/trips/presentation/screens/trips_home_screen.dart';
@@ -67,10 +66,8 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
       case 1:
         return 'أطفالي';
       case 2:
-        return 'البحث عن سائق';
-      case 3:
         return 'اشتراكاتي';
-      case 4:
+      case 3:
         return 'الرحلات والتتبع';
       default:
         return 'داربي';
@@ -89,7 +86,6 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
     _screens = [
       const ParentHomeScreen(),
       const MyChildrenScreen(),
-      const ParentSearchScreen(),
       const SubscriptionsScreen(),
       const TripsHomeScreen(),
     ];
@@ -109,7 +105,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
         drawer: const ParentDrawer(),
 
         body: IndexedStack(
-          index: _selectedIndex,
+          index: _selectedIndex < _screens.length ? _selectedIndex : 0,
           children: _screens.map((s) => _KeepAliveWrapper(child: s)).toList(),
         ),
 
@@ -137,7 +133,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                 activeColor: context.primaryColor,
                 iconSize: 22,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
+                  horizontal: 14,
                   vertical: 10,
                 ),
                 duration: const Duration(milliseconds: 300),
@@ -148,14 +144,13 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                   fontWeight: FontWeight.bold,
                   color: context.primaryColor,
                 ),
-                selectedIndex: _selectedIndex,
+                selectedIndex: _selectedIndex < 4 ? _selectedIndex : 0,
                 onTabChange: (index) {
                   setState(() => _selectedIndex = index);
                 },
                 tabs: const [
                   GButton(icon: Icons.home_rounded, text: 'الرئيسية'),
                   GButton(icon: Icons.people_alt_rounded, text: 'أطفالي'),
-                  GButton(icon: Icons.search_rounded, text: 'البحث'),
                   GButton(icon: Icons.description_rounded, text: 'اشتراكاتي'),
                   GButton(icon: Icons.map_outlined, text: 'الرحلات'),
                 ],
@@ -271,8 +266,8 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                               child: Center(
                                 child: Text(
                                   unreadCount.toString(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: AppTextStyles.style(
+                                    color: AppColors.white,
                                     fontSize: 8,
                                     fontWeight: FontWeight.bold,
                                   ),

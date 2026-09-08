@@ -47,6 +47,7 @@ dependencies:
   connectivity_plus: ^7.3.0
   flutter_svg: ^2.3.0
   flutter_animate: ^4.5.2
+  google_fonts: ^6.2.1
   flutter_rating_bar: ^4.0.1
   firebase_core: ^4.12.1
   cloud_firestore: ^6.7.1

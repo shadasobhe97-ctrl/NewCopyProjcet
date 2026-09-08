@@ -8,9 +8,15 @@ class ZoneModel {
   });
 
   factory ZoneModel.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final parsedId = rawId is int
+        ? rawId
+        : (rawId != null ? int.tryParse(rawId.toString()) ?? 0 : 0);
+    final rawName = json['name'] ?? json['zone_name'];
+
     return ZoneModel(
-      id: json['id'] as int? ?? 0,
-      name: json['name'] as String? ?? '',
+      id: parsedId,
+      name: rawName?.toString() ?? '',
     );
   }
 

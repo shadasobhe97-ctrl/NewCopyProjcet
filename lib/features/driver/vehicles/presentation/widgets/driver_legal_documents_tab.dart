@@ -239,9 +239,9 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Text(
+                    child: Text(
                       'موافق وإرسال',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: AppTextStyles.style(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -661,9 +661,9 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
+                          : Text(
                               'إرسال التعديلات والوثائق',
-                              style: TextStyle(
+                              style: AppTextStyles.style(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -871,14 +871,14 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                           color: Colors.black.withValues(alpha: 0.6),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
                             Icon(Icons.zoom_in, color: Colors.white, size: 14),
                             SizedBox(width: 4),
                             Text(
                               'اضغط التكبير',
                               style:
-                                  TextStyle(color: Colors.white, fontSize: 11),
+                                  AppTextStyles.style(color: Colors.white, fontSize: 11),
                             ),
                           ],
                         ),

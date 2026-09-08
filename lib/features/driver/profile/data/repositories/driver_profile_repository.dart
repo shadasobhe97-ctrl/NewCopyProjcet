@@ -21,7 +21,7 @@ class DriverProfileRepository {
     await sessionRepository.saveUserSession(
       token: sessionRepository.getToken() ?? '',
       tokenType: 'Bearer',
-      roleId: sessionRepository.getRoleId() ?? 4,
+      roleId: sessionRepository.getRoleId() ?? 8,
       roleName: 'driver',
       userId: int.tryParse(sessionRepository.getUserId() ?? '') ?? 0,
       fullName: driver.fullName,

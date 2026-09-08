@@ -79,9 +79,10 @@ class AddressModel {
   /// بدون parent_id / parentId / user_id
   Map<String, dynamic> toJson() {
     return {
+      'label': title.isNotEmpty ? title : (streetAddress ?? 'المنزل الرئيسي'),
       'title': title,
-      if (streetAddress != null && streetAddress!.isNotEmpty)
-        'street_address': streetAddress,
+      'lat': latitude,
+      'lng': longitude,
       'latitude': latitude,
       'longitude': longitude,
       if (zoneId != null) 'zone_id': zoneId,

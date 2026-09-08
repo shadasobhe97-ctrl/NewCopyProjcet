@@ -54,6 +54,7 @@ class ParentRemoteDataSource {
     required double lat,
     required double lng,
     required bool isDefault,
+    int? zoneId,
   }) async {
     final response = await _apiClient.post(
       ApiEndpoints.parentAddresses,
@@ -61,6 +62,7 @@ class ParentRemoteDataSource {
         'label': label,
         'lat': lat,
         'lng': lng,
+        if (zoneId != null) 'zone_id': zoneId,
         'is_default': isDefault,
       },
       headers: {

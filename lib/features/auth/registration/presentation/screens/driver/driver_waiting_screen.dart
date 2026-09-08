@@ -173,9 +173,9 @@ class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           "عرض الموقع على الخريطة",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: AppTextStyles.style(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -206,7 +206,7 @@ class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
                         ),
                         label: Text(
                           "الاتصال بمركز الشركة 0912946277",
-                          style: TextStyle(
+                          style: AppTextStyles.style(
                             fontWeight: FontWeight.bold,
                             color: theme.primaryColor,
                           ),

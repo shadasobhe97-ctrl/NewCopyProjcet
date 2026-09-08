@@ -4,13 +4,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
 import '../../logic/subscriptions_cubit/subscriptions_cubit.dart';
 import '../../logic/requests_cubit/requests_cubit.dart';
 import '../../data/models/active_subscription_model.dart';
 import '../../data/repositories/requests_repository.dart';
 import '../../data/repositories/subscriptions_repository.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
+import 'package:kids_transport/features/parent/search/presentation/screens/parent_search_screen.dart';
 import '../widgets/subscription_card.dart';
 import 'requests_tab.dart';
 
@@ -466,7 +466,12 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
                   height: 36.h,
                   width: 140.w,
                   child: ElevatedButton.icon(
-                    onPressed: () => ParentMainWrapper.changeTab(2),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ParentSearchScreen(),
+                      ),
+                    ),
                     icon: Icon(Icons.search_rounded, size: 14.r),
                     label: Text(
                       'البحث عن سائق',

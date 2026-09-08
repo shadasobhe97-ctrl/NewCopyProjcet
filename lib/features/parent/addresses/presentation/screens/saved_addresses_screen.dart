@@ -238,9 +238,9 @@ class _SavedAddressesView extends StatelessWidget {
                 Navigator.pop(context);
                 context.read<AddressCubit>().deleteAddress(addr.id!);
               },
-              child: const Text(
+              child: Text(
                 'حذف',
-                style: TextStyle(color: AppColors.error),
+                style: AppTextStyles.style(color: AppColors.error),
               ),
             ),
           ],

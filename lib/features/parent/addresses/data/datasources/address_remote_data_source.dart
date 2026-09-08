@@ -34,20 +34,59 @@ class AddressRemoteDataSource {
   }
 
   /// استخراج المناطق من مختلف هياكل البيانات المحتملة
-  List<ZoneModel> _extractZones(dynamic data) {
+  /// يدعم: { data: [{id, zone_name, ...}] } و { data: [{zones:[...]}] } وغيرها
+  List<ZoneModel> _extractZones(dynamic responseData) {
     final List<ZoneModel> result = [];
     final Set<int> seenIds = {};
 
     void addZone(dynamic z) {
-      if (z is Map) {
+      if (z is! Map) return;
+      try {
         final zone = ZoneModel.fromJson(Map<String, dynamic>.from(z));
         if (zone.id > 0 && !seenIds.contains(zone.id)) {
           seenIds.add(zone.id);
           result.add(zone);
         }
-      }
+      } catch (_) {}
     }
 
+    // استخرج قائمة الـ data الرئيسية من الرد
+    dynamic data = responseData;
+    if (responseData is Map) {
+      data = responseData['data'] ?? responseData['zones'] ?? responseData;
+    }
+
+    // الحالة المباشرة: data هي قائمة مناطق (ردّ /admin/zones الجديد)
+    if (data is List) {
+      for (final item in data) {
+        if (item is Map) {
+          // كل عنصر قد يكون منطقة مباشرة أو يحتوي على قائمة zones
+          if (item.containsKey('zones') && item['zones'] is List) {
+            for (final z in item['zones'] as List) {
+              addZone(z);
+            }
+          } else if (item.containsKey('id') &&
+              (item.containsKey('name') || item.containsKey('zone_name'))) {
+            addZone(item);
+          } else if (item.containsKey('sub_municipalities')) {
+            // هيكل municipality → sub_municipalities → zones
+            final subs = item['sub_municipalities'];
+            if (subs is List) {
+              for (final sub in subs) {
+                if (sub is Map && sub['zones'] is List) {
+                  for (final z in sub['zones'] as List) {
+                    addZone(z);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      if (result.isNotEmpty) return result;
+    }
+
+    // الحالة المتداخلة: نبحث بشكل عودي
     void traverse(dynamic node) {
       if (node == null) return;
       if (node is List) {
@@ -61,7 +100,7 @@ class AddressRemoteDataSource {
           }
         }
         if (node.containsKey('id') &&
-            node.containsKey('name') &&
+            (node.containsKey('name') || node.containsKey('zone_name')) &&
             !node.containsKey('sub_municipalities') &&
             !node.containsKey('zones')) {
           addZone(node);
@@ -81,7 +120,7 @@ class AddressRemoteDataSource {
       }
     }
 
-    traverse(data);
+    traverse(responseData);
     return result;
   }
 
@@ -102,36 +141,34 @@ class AddressRemoteDataSource {
     }
   }
 
-  /// GET /api/admin/zones-tree أو defaults لجلب قائمة المناطق
-  Future<List<ZoneModel>> getZones() async {
+  Map<String, dynamic> _buildAuthHeader([String? customToken]) {
+    if (customToken != null && customToken.isNotEmpty) {
+      final token = customToken.startsWith('Bearer ') ? customToken : 'Bearer $customToken';
+      return {'Authorization': token};
+    }
+    final token = StorageService.getAuthorizationHeader();
+    if (token == null || token.isEmpty) return {};
+    return {'Authorization': token};
+  }
+
+  /// GET /api/parent/zones لجلب كافة المناطق المتاحة لأولياء الأمور
+  Future<List<ZoneModel>> getZones({String? token}) async {
+    final headers = _buildAuthHeader(token);
+    debugPrint('🔑 [Addresses API] GET /parent/zones sending Auth Header: ${headers['Authorization'] != null ? 'Bearer ***' : 'EMPTY'}');
     try {
       final response = await _client.get(
-        ApiEndpoints.adminZonesTree,
-        headers: _authHeader,
+        ApiEndpoints.parentZones,
+        headers: headers,
       );
       final data = response.data;
-      debugPrint('📥 [Addresses API] GET /admin/zones-tree => $data');
+      debugPrint('📥 [Addresses API] FULL BACKEND RESPONSE FOR /parent/zones:\n$data');
       final zones = _extractZones(data);
-      if (zones.isNotEmpty) return zones;
+      debugPrint('📍 [Addresses API] تم استخراج ${zones.length} منطقة بنجاح.');
+      return zones;
     } catch (e) {
-      debugPrint(
-        '⚠️ [Addresses API] فشل جلب admin/zones-tree: $e, المحاولة من defaults...',
-      );
+      debugPrint('⚠️ [Addresses API] خطأ أثناء استدعاء GET /parent/zones: $e');
+      return const [];
     }
-
-    try {
-      final response = await _client.get(
-        ApiEndpoints.driverPreferenceDefaults,
-        headers: _authHeader,
-      );
-      final data = response.data;
-      final zones = _extractZones(data);
-      if (zones.isNotEmpty) return zones;
-    } catch (e) {
-      debugPrint('⚠️ [Addresses API] فشل جلب driverPreferenceDefaults: $e');
-    }
-
-    return const [];
   }
 
   /// GET /api/parent/addresses
@@ -172,15 +209,15 @@ class AddressRemoteDataSource {
         'تم إضافة العنوان بنجاح';
   }
 
-  /// POST /api/parent/addresses/{id}
+  /// PUT /api/parent/addresses/{id}
   Future<String> updateAddress(AddressModel address) async {
-    final response = await _client.post(
+    final response = await _client.put(
       ApiEndpoints.parentAddressById(address.id!),
       data: address.toJson(),
       headers: _authHeader,
     );
     final data = response.data;
-    debugPrint('📤 [Addresses API] POST /addresses/${address.id} => $data');
+    debugPrint('📤 [Addresses API] PUT /addresses/${address.id} => $data');
     _checkSuccess(data, 'تعذر تحديث العنوان.');
     return (data is Map ? data['message'] as String? : null) ??
         'تم تحديث العنوان بنجاح';

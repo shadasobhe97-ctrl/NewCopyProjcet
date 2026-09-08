@@ -115,12 +115,12 @@ class _SchoolSearchBottomSheetState extends State<SchoolSearchBottomSheet> {
                               leading: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: context.primaryColor.withOpacity(0.1),
+                                  color: context.primaryColor.withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(Icons.school_rounded, color: context.primaryColor),
                               ),
-                              title: Text(school.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              title: Text(school.name, style: AppTextStyles.style(fontWeight: FontWeight.bold)),
                               subtitle: Text('${school.region} - ${school.address}'),
                               onTap: () {
                                 Navigator.pop(context, school); // إرجاع المدرسة المختارة

@@ -268,8 +268,8 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
                               child: Center(
                                 child: Text(
                                   unreadCount.toString(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: AppTextStyles.style(
+                                    color: AppColors.white,
                                     fontSize: 8,
                                     fontWeight: FontWeight.bold,
                                   ),

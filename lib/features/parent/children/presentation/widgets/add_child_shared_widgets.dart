@@ -74,7 +74,7 @@ class _StepCircle extends StatelessWidget {
                 ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
                 : Text(
                     '$number',
-                    style: TextStyle(
+                    style: AppTextStyles.style(
                       color: isActive ? Colors.white : color,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,

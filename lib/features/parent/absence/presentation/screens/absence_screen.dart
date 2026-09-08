@@ -115,10 +115,10 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text(
+        title: Text(
           'إلغاء الغياب',
           textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: AppTextStyles.style(fontWeight: FontWeight.bold),
         ),
         content: Text(
           'هل تريد إلغاء تسجيل غياب يوم ${absence.date}؟',
@@ -133,9 +133,9 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text(
+            child: Text(
               'تأكيد الإلغاء',
-              style: TextStyle(color: AppColors.white),
+              style: AppTextStyles.style(color: AppColors.white),
             ),
           ),
         ],

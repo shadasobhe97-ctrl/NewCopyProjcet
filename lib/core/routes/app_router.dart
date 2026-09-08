@@ -22,6 +22,8 @@ import 'package:kids_transport/features/auth/registration/presentation/screens/p
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_basic_info_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_email_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_location_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_add_first_child_screen.dart';
+import 'package:kids_transport/features/parent/children/presentation/screens/add_child_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_otp_screen.dart';
 
 import 'package:kids_transport/features/driver/dashboard/presentation/screens/driver_main_wrapper.dart';
@@ -167,6 +169,7 @@ class AppRoutes {
   static const String parentAvatar = '/parentAvatar';
   static const String parentAlternativePhone = '/parentAlternativePhone';
   static const String parentLocation = '/parentLocation';
+  static const String parentAddFirstChild = '/parentAddFirstChild';
 
   static const String driverHome = '/driverHome';
   static const String driverMainWrapper = '/driverMainWrapper';
@@ -267,9 +270,11 @@ class AppRoutes {
         return _route(settings, const MyChildrenScreen());
       case addChild:
       case addChildStep1:
-        return _route(settings, const AddChildStep1Screen());
       case addChildStep2:
-        return _route(settings, const AddChildStep2Screen());
+        final childArg = settings.arguments is ChildModel
+            ? settings.arguments as ChildModel
+            : null;
+        return _route(settings, AddChildScreen(childToEdit: childArg));
       case childDetail:
       case childDataDetails:
         return _childRoute(
@@ -421,6 +426,8 @@ class AppRoutes {
         return _route(settings, const ParentAvatarScreen());
       case parentLocation:
         return _route(settings, const ParentLocationScreen());
+      case parentAddFirstChild:
+        return _route(settings, const ParentAddFirstChildScreen());
       default:
         return null;
     }

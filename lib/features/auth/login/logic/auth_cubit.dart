@@ -155,8 +155,8 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   String _roleNameFromId(int roleId) {
-    if (roleId == 4) return 'سائق';
-    if (roleId == 3) return 'ولي أمر';
+    if (roleId == 8 || roleId == 4) return 'سائق';
+    if (roleId == 7 || roleId == 3) return 'ولي أمر';
     return '';
   }
 

@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 
 class AppTextStyles {
@@ -31,8 +32,7 @@ class AppTextStyles {
     String? package,
     TextOverflow? overflow,
   }) {
-    return TextStyle(
-      inherit: inherit,
+    return GoogleFonts.tajawal(
       color: color,
       backgroundColor: backgroundColor,
       fontSize: fontSize,
@@ -42,28 +42,19 @@ class AppTextStyles {
       wordSpacing: wordSpacing,
       textBaseline: textBaseline,
       height: height,
-      leadingDistribution: leadingDistribution,
       locale: locale,
       foreground: foreground,
       background: background,
       shadows: shadows,
-      fontFeatures: fontFeatures,
-      fontVariations: fontVariations,
       decoration: decoration,
       decorationColor: decorationColor,
       decorationStyle: decorationStyle,
       decorationThickness: decorationThickness,
-      debugLabel: debugLabel,
-      fontFamily: fontFamily ?? 'Tajawal',
-      fontFamilyFallback: fontFamilyFallback,
-      package: package,
-      overflow: overflow,
     );
   }
 
   static TextStyle heading({required Color color}) {
-    return TextStyle(
-      fontFamily: 'Tajawal',
+    return GoogleFonts.tajawal(
       fontSize: 28,
       fontWeight: FontWeight.bold,
       color: color,
@@ -71,8 +62,7 @@ class AppTextStyles {
   }
 
   static TextStyle body({required Color color}) {
-    return TextStyle(
-      fontFamily: 'Tajawal',
+    return GoogleFonts.tajawal(
       fontSize: 16,
       fontWeight: FontWeight.w500,
       color: color,
@@ -80,8 +70,7 @@ class AppTextStyles {
   }
 
   static TextStyle button({required Color color}) {
-    return TextStyle(
-      fontFamily: 'Tajawal',
+    return GoogleFonts.tajawal(
       fontSize: 18,
       fontWeight: FontWeight.bold,
       color: color,
@@ -89,8 +78,7 @@ class AppTextStyles {
   }
 
   static TextStyle inputTextStyle({required Color color}) {
-    return TextStyle(
-      fontFamily: 'Tajawal',
+    return GoogleFonts.tajawal(
       fontSize: 16,
       fontWeight: FontWeight.normal,
       color: color,
@@ -98,11 +86,11 @@ class AppTextStyles {
   }
 
   static TextStyle hintTextStyle() {
-    return TextStyle(
-      fontFamily: 'Tajawal',
+    return GoogleFonts.tajawal(
       fontSize: 14,
       fontWeight: FontWeight.normal,
       color: AppColors.textMuted,
     );
   }
 }
+

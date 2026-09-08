@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 class AppTheme {
@@ -11,6 +12,71 @@ class AppTheme {
     horizontal: 20,
     vertical: 18,
   );
+
+  static TextTheme _buildTextTheme(TextTheme baseTheme) {
+    return GoogleFonts.tajawalTextTheme(baseTheme).copyWith(
+      displayLarge: GoogleFonts.tajawal(
+        fontSize: 32,
+        fontWeight: FontWeight.bold,
+      ),
+      displayMedium: GoogleFonts.tajawal(
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+      ),
+      displaySmall: GoogleFonts.tajawal(
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+      ),
+      headlineLarge: GoogleFonts.tajawal(
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+      ),
+      headlineMedium: GoogleFonts.tajawal(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+      headlineSmall: GoogleFonts.tajawal(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+      ),
+      titleLarge: GoogleFonts.tajawal(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+      ),
+      titleMedium: GoogleFonts.tajawal(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+      titleSmall: GoogleFonts.tajawal(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+      ),
+      bodyLarge: GoogleFonts.tajawal(
+        fontSize: 16,
+        fontWeight: FontWeight.normal,
+      ),
+      bodyMedium: GoogleFonts.tajawal(
+        fontSize: 14,
+        fontWeight: FontWeight.normal,
+      ),
+      bodySmall: GoogleFonts.tajawal(
+        fontSize: 12,
+        fontWeight: FontWeight.normal,
+      ),
+      labelLarge: GoogleFonts.tajawal(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+      ),
+      labelMedium: GoogleFonts.tajawal(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+      ),
+      labelSmall: GoogleFonts.tajawal(
+        fontSize: 10,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
 
   static BorderRadius radius(double value) => BorderRadius.circular(value);
 
@@ -241,7 +307,7 @@ class AppTheme {
       shadowColor: shadowColor,
       surfaceTintColor: surfaceTintColor,
       elevation: elevation,
-      textStyle: textStyle,
+      textStyle: textStyle ?? GoogleFonts.tajawal(fontSize: 16, fontWeight: FontWeight.bold),
       padding: padding,
       minimumSize: minimumSize,
       fixedSize: fixedSize,
@@ -295,7 +361,7 @@ class AppTheme {
       shadowColor: shadowColor,
       surfaceTintColor: surfaceTintColor,
       elevation: elevation,
-      textStyle: textStyle,
+      textStyle: textStyle ?? GoogleFonts.tajawal(fontSize: 16, fontWeight: FontWeight.bold),
       padding: padding,
       minimumSize: minimumSize,
       fixedSize: fixedSize,
@@ -317,8 +383,8 @@ class AppTheme {
   }
 
   static ThemeData get lightTheme {
-    return ThemeData(
-      fontFamily: 'Tajawal',
+    final baseTheme = ThemeData.light();
+    return baseTheme.copyWith(
       useMaterial3: true,
       brightness: Brightness.light,
       primaryColor: AppColors.primaryLight,
@@ -331,6 +397,7 @@ class AppTheme {
         error: AppColors.errorLight,
       ),
       scaffoldBackgroundColor: AppColors.backgroundLight,
+      textTheme: _buildTextTheme(baseTheme.textTheme),
       cardTheme: const CardThemeData(
         color: AppColors.surfaceLight,
         elevation: 2,
@@ -348,7 +415,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.tajawal(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -359,7 +426,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.tajawal(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -385,15 +452,15 @@ class AppTheme {
           borderRadius: BorderRadius.circular(30),
           borderSide: const BorderSide(color: AppColors.errorLight, width: 1.5),
         ),
-        labelStyle: TextStyle(color: AppColors.grey600),
-        hintStyle: TextStyle(color: AppColors.grey400),
+        labelStyle: GoogleFonts.tajawal(color: AppColors.grey600),
+        hintStyle: GoogleFonts.tajawal(color: AppColors.grey400),
       ),
     );
   }
 
   static ThemeData get darkTheme {
-    return ThemeData(
-      fontFamily: 'Tajawal',
+    final baseTheme = ThemeData.dark();
+    return baseTheme.copyWith(
       useMaterial3: true,
       brightness: Brightness.dark,
       primaryColor: AppColors.primaryDark,
@@ -404,6 +471,7 @@ class AppTheme {
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: AppColors.backgroundDark,
+      textTheme: _buildTextTheme(baseTheme.textTheme),
       cardTheme: CardThemeData(
         color: AppColors.surfaceDark,
         elevation: 0,
@@ -421,7 +489,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.tajawal(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -432,7 +500,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.tajawal(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -458,9 +526,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(30),
           borderSide: const BorderSide(color: AppColors.errorLight, width: 1.5),
         ),
-        labelStyle: TextStyle(color: AppColors.grey400),
-        hintStyle: TextStyle(color: AppColors.grey600),
+        labelStyle: GoogleFonts.tajawal(color: AppColors.grey400),
+        hintStyle: GoogleFonts.tajawal(color: AppColors.grey600),
       ),
     );
   }
 }
+

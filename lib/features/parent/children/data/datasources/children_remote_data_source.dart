@@ -164,12 +164,11 @@ class ChildrenRemoteDataSource {
   /// POST /api/parent/children
   Future<(ChildModel, String)> addChild(
     ChildModel child,
-    String? localImagePath,
-  ) async {
-    final hasLocalImage = _isLocalImagePath(localImagePath);
-    debugPrint('📤 [addChild] localImagePath: $localImagePath');
-    debugPrint('📤 [addChild] hasLocalImage: $hasLocalImage');
-    debugPrint('📤 [addChild] child.photoUrl: ${child.photoUrl}');
+    String? localImagePath, {
+    Uint8List? imageBytes,
+  }) async {
+    final hasLocalImage = _isLocalImagePath(localImagePath) || (imageBytes != null && imageBytes.isNotEmpty);
+    debugPrint('📤 [addChild] localImagePath: $localImagePath, imageBytes length: ${imageBytes?.length}');
 
     dynamic requestData;
 
@@ -215,13 +214,21 @@ class ChildrenRemoteDataSource {
         'photo_url': child.photoUrl,
     };
 
-    if (hasLocalImage) {
+    if (imageBytes != null && imageBytes.isNotEmpty) {
+      final fileName = (localImagePath != null && localImagePath.isNotEmpty)
+          ? localImagePath.split('/').last.split('\\').last
+          : 'child_photo.jpg';
+      requestData = FormData.fromMap({
+        ...flatPayload,
+        'photo': MultipartFile.fromBytes(
+          imageBytes,
+          filename: fileName,
+        ),
+      });
+    } else if (hasLocalImage && localImagePath != null) {
       try {
-        final file = await _imageFileFromPath(localImagePath!);
+        final file = await _imageFileFromPath(localImagePath);
         final bytes = await file.readAsBytes();
-        debugPrint(
-          '📤 [addChild] Sending photo file: ${localImagePath.split('/').last.split('\\').last} (${bytes.length} bytes)',
-        );
         requestData = FormData.fromMap({
           ...flatPayload,
           'photo': MultipartFile.fromBytes(
@@ -274,17 +281,19 @@ class ChildrenRemoteDataSource {
   /// POST /api/parent/children/{id} (تحديث كافة البيانات عند الإضافة والتحديث العام)
   Future<(ChildModel, String)> updateChild(
     ChildModel child,
-    String? localImagePath,
-  ) async {
-    return updateChildPersonalData(child, localImagePath);
+    String? localImagePath, {
+    Uint8List? imageBytes,
+  }) async {
+    return updateChildPersonalData(child, localImagePath, imageBytes: imageBytes);
   }
 
   /// POST /api/parent/children/{id} (تحديث البيانات الشخصية للطفل فقط)
   Future<(ChildModel, String)> updateChildPersonalData(
     ChildModel child,
-    String? localImagePath,
-  ) async {
-    final hasLocalImage = _isLocalImagePath(localImagePath);
+    String? localImagePath, {
+    Uint8List? imageBytes,
+  }) async {
+    final hasLocalImage = _isLocalImagePath(localImagePath) || (imageBytes != null && imageBytes.isNotEmpty);
 
     dynamic requestData;
 
@@ -299,9 +308,20 @@ class ChildrenRemoteDataSource {
         'photo_url': child.photoUrl,
     };
 
-    if (hasLocalImage) {
+    if (imageBytes != null && imageBytes.isNotEmpty) {
+      final fileName = (localImagePath != null && localImagePath.isNotEmpty)
+          ? localImagePath.split('/').last.split('\\').last
+          : 'child_photo.jpg';
+      requestData = FormData.fromMap({
+        ...flatPayload,
+        'photo': MultipartFile.fromBytes(
+          imageBytes,
+          filename: fileName,
+        ),
+      });
+    } else if (hasLocalImage && localImagePath != null) {
       try {
-        final file = await _imageFileFromPath(localImagePath!);
+        final file = await _imageFileFromPath(localImagePath);
         final bytes = await file.readAsBytes();
         requestData = FormData.fromMap({
           ...flatPayload,
