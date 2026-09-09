@@ -6,28 +6,33 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/core/utils/subscription_enums.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
 import 'package:kids_transport/features/driver/subscriptions/data/models/driver_subscription_model.dart';
-import 'package:kids_transport/features/parent/subscriptions/data/models/subscription_location_model.dart';
-import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscription_map_screen.dart';
 
+/// شاشة تفاصيل الاشتراك الموحد للسائق
 class DriverSubscriptionDetailsScreen extends StatefulWidget {
   final int subscriptionId;
 
-  const DriverSubscriptionDetailsScreen({super.key, required this.subscriptionId});
+  const DriverSubscriptionDetailsScreen({
+    super.key,
+    required this.subscriptionId,
+  });
 
   @override
-  State<DriverSubscriptionDetailsScreen> createState() => _DriverSubscriptionDetailsScreenState();
+  State<DriverSubscriptionDetailsScreen> createState() =>
+      _DriverSubscriptionDetailsScreenState();
 }
 
-class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDetailsScreen> {
+class _DriverSubscriptionDetailsScreenState
+    extends State<DriverSubscriptionDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<DriverSubscriptionsCubit>().loadSubscriptionDetail(widget.subscriptionId);
+    context
+        .read<DriverSubscriptionsCubit>()
+        .loadSubscriptionDetail(widget.subscriptionId);
   }
 
   Future<void> _makeCall(String phoneNumber) async {
@@ -49,7 +54,8 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
   Future<void> _openMap(double lat, double lng) async {
     final googleMapsUrl = Uri.parse("google.navigation:q=$lat,$lng&mode=d");
     final appleMapsUrl = Uri.parse("https://maps.apple.com/?q=$lat,$lng");
-    final webUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng");
+    final webUrl =
+        Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng");
 
     try {
       if (await canLaunchUrl(googleMapsUrl)) {
@@ -71,7 +77,7 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
   }
 
   String _formatDate(String? raw) {
-    if (raw == null || raw.isEmpty) return 'غير متوفر';
+    if (raw == null || raw.isEmpty) return 'غير محدد';
     try {
       final dt = DateTime.parse(raw);
       return '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
@@ -80,21 +86,24 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
     }
   }
 
-
-  void _confirmCancel(BuildContext context, DriverSubscriptionModel subscription) {
+  void _confirmCancel(
+      BuildContext context, DriverSubscriptionModel subscription) {
     showDialog(
       context: context,
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
           title: Text(
             'إلغاء الاشتراك',
-            style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 16.sp),
+            style: AppTextStyles.style(
+                fontWeight: FontWeight.bold, fontSize: 16.sp),
           ),
           content: Text(
             'هل أنت متأكد من إلغاء هذا الاشتراك؟ سيتم إشعار ولي الأمر فوراً ولا يمكن التراجع عن هذا الإجراء.',
-            style: AppTextStyles.style(fontSize: 13.sp, color: AppColors.textMuted, height: 1.5),
+            style: AppTextStyles.style(
+                fontSize: 13.sp, color: AppColors.textMuted, height: 1.5),
           ),
           actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
           actions: [
@@ -103,9 +112,12 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
                 onPressed: () => Navigator.pop(ctx),
                 style: OutlinedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r)),
                 ),
-                child: Text('تراجع', style: AppTextStyles.style(fontWeight: FontWeight.bold)),
+                child: Text('تراجع',
+                    style:
+                        AppTextStyles.style(fontWeight: FontWeight.bold)),
               ),
             ),
             SizedBox(width: 10.w),
@@ -113,17 +125,21 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(ctx);
-                  context.read<DriverSubscriptionsCubit>().cancelSubscription(subscription);
+                  context
+                      .read<DriverSubscriptionsCubit>()
+                      .cancelSubscription(subscription);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.error,
                   foregroundColor: AppColors.white,
                   padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r)),
                 ),
                 child: Text(
-                  'إلغاء الاشتراك',
-                  style: AppTextStyles.style(fontWeight: FontWeight.bold, color: AppColors.white),
+                  'تأكيد الإلغاء',
+                  style: AppTextStyles.style(
+                      fontWeight: FontWeight.bold, color: AppColors.white),
                 ),
               ),
             ),
@@ -179,11 +195,13 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline_rounded, size: 60.sp, color: AppColors.error),
+                      Icon(Icons.error_outline_rounded,
+                          size: 60.sp, color: AppColors.error),
                       SizedBox(height: 16.h),
                       Text(
                         state.message,
-                        style: AppTextStyles.style(fontSize: 15.sp, fontWeight: FontWeight.w600),
+                        style: AppTextStyles.style(
+                            fontSize: 15.sp, fontWeight: FontWeight.w600),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 20.h),
@@ -211,9 +229,9 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
             }
 
             if (subscription != null) {
-              final child = subscription.child;
-              final parent = subscription.parent;
-              final coords = subscription.coordinates;
+              final isAllowCancel =
+                  subscription.status.toLowerCase() == 'accepted' ||
+                      subscription.status.toLowerCase() == 'active';
 
               return RefreshIndicator(
                 onRefresh: () => context
@@ -225,390 +243,154 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // CARD 1: ملف الطفل (Child Profile)
+                      // 1. شريط الحالة
+                      _StatusBanner(subscription: subscription),
+                      SizedBox(height: 14.h),
+
+                      // 2. بيانات ولي الأمر
                       _SectionCard(
-                        icon: Icons.face_rounded,
-                        iconColor: AppColors.success,
-                        title: 'ملف الطالب',
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 35.r,
-                                  backgroundColor: context.primaryColor.withValues(alpha: 0.1),
-                                  backgroundImage: (child.photoUrl != null && child.photoUrl!.isNotEmpty)
-                                      ? CachedNetworkImageProvider(
-                                          child.photoUrl!.startsWith('http')
-                                              ? child.photoUrl!
-                                              : '${ApiEndpoints.baseUrl.replaceAll('/api/', '')}/storage/${child.photoUrl!}',
-                                        )
-                                      : null,
-                                  child: (child.photoUrl == null || child.photoUrl!.isEmpty)
-                                      ? Text(
-                                          child.avatarInitials,
-                                          style: AppTextStyles.style(
-                                            fontSize: 22.sp,
-                                            fontWeight: FontWeight.bold,
-                                            color: context.primaryColor,
-                                          ),
-                                        )
-                                      : null,
-                                ),
-                                SizedBox(width: 16.w),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        child.displayName,
-                                        style: AppTextStyles.style(
-                                          fontSize: 16.sp,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      SizedBox(height: 6.h),
-                                      Row(
-                                        children: [
-                                          if (child.age != null) ...[
-                                            Text(
-                                              'العمر: ${child.age} سنة',
-                                              style: AppTextStyles.style(
-                                                fontSize: 12.sp,
-                                                color: AppColors.textMuted,
-                                              ),
-                                            ),
-                                            SizedBox(width: 12.w),
-                                          ],
-                                          if (child.grade != null)
-                                            Text(
-                                              'الصف: ${child.grade}',
-                                              style: AppTextStyles.style(
-                                                fontSize: 12.sp,
-                                                color: AppColors.textMuted,
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 16.h),
-                            const Divider(height: 1, thickness: 0.5),
-                            SizedBox(height: 12.h),
-                            _InfoRow(
-                              icon: Icons.wc_rounded,
-                              label: 'الجنس',
-                              value: SubscriptionEnums.genderLabel(child.gender),
-                            ),
-                            _InfoRow(
-                              icon: Icons.note_alt_rounded,
-                              label: 'الملاحظات الطبية',
-                              value: (child.notes == null || child.notes!.trim().isEmpty)
-                                  ? 'لا توجد ملاحظات طبية'
-                                  : child.notes!,
-                            ),
-                          ],
+                        icon: Icons.person_rounded,
+                        iconColor: AppColors.primaryLight,
+                        title: 'بيانات ولي الأمر',
+                        child: _ParentInfoWidget(
+                          parent: subscription.parent,
+                          onCallPhone: _makeCall,
                         ),
                       ),
                       SizedBox(height: 12.h),
 
-                      // CARD 2: معلومات ولي الأمر (Parent Info)
-                      _SectionCard(
-                        icon: Icons.family_restroom_rounded,
-                        iconColor: AppColors.pending,
-                        title: 'معلومات ولي الأمر',
-                        child: Column(
-                          children: [
-                            _InfoRow(
-                              icon: Icons.person_rounded,
-                              label: 'الاسم',
-                              value: parent.name,
-                            ),
-                            if (parent.phone != null && parent.phone!.isNotEmpty)
-                              Padding(
-                                padding: EdgeInsets.only(bottom: 10.h),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.phone_rounded, size: 16.sp, color: AppColors.textMuted),
-                                    SizedBox(width: 8.w),
-                                    Text(
-                                      'الهاتف: ',
-                                      style: AppTextStyles.style(
-                                        fontSize: 13.sp,
-                                        color: AppColors.textMuted,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: InkWell(
-                                        onTap: () => _makeCall(parent.phone!),
-                                        borderRadius: BorderRadius.circular(4.r),
-                                        child: Padding(
-                                          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-                                          child: Text(
-                                            parent.phone!,
-                                            style: AppTextStyles.style(
-                                              fontSize: 13.sp,
-                                              fontWeight: FontWeight.bold,
-                                              color: context.primaryColor,
-                                              decoration: TextDecoration.underline,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: Icon(Icons.phone_in_talk_rounded, size: 18.sp, color: AppColors.success),
-                                      onPressed: () => _makeCall(parent.phone!),
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-
-                      // CARD 3: تفاصيل الرحلة (Trip Details)
-                      _SectionCard(
-                        icon: Icons.directions_bus_rounded,
-                        iconColor: context.primaryColor,
-                        title: 'تفاصيل الرحلة',
-                        child: Column(
-                          children: [
-                            _InfoRow(
-                              icon: Icons.schedule_rounded,
-                              label: 'الفترة',
-                              value: subscription.timingLabel,
-                            ),
-                            _InfoRow(
-                              icon: Icons.alt_route_rounded,
-                              label: 'اتجاه الرحلة',
-                              value: subscription.tripDirectionLabel,
-                            ),
-                            _InfoRow(
-                              icon: Icons.home_rounded,
-                              label: 'نقطة الصعود',
-                              value: subscription.pickupLabel ?? 'غير محدد',
-                            ),
-                            _InfoRow(
-                              icon: Icons.school_rounded,
-                              label: 'نقطة النزول',
-                              value: subscription.dropoffLabel ?? 'غير محدد',
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-
-                      // CARD 4: المواقع (Map Locations)
-                      _SectionCard(
-                        icon: Icons.map_rounded,
-                        iconColor: AppColors.error,
-                        title: 'المواقع الجغرافية',
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // المنزل
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'موقع المنزل',
-                                        style: AppTextStyles.style(
-                                          fontSize: 13.sp,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      SizedBox(height: 4.h),
-                                      Text(
-                                        'العنوان: ${subscription.pickupLabel ?? "غير متوفر"}',
-                                        style: AppTextStyles.style(
-                                          fontSize: 12.sp,
-                                          color: AppColors.textMuted,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                if (coords?.home?.latitude != null && coords?.home?.longitude != null)
-                                  Flexible(
-                                    child: ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.success.withValues(alpha: 0.1),
-                                        foregroundColor: AppColors.success,
-                                        elevation: 0,
-                                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-                                      ),
-                                      icon: Icon(Icons.navigation_rounded, size: 14.sp),
-                                      label: Text('خريطة', style: AppTextStyles.style(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.success)),
-                                      onPressed: () => _openMap(coords!.home!.latitude, coords.home!.longitude),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            SizedBox(height: 12.h),
-                            const Divider(height: 1, thickness: 0.5),
-                            SizedBox(height: 12.h),
-                            // المدرسة
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'موقع المدرسة',
-                                        style: AppTextStyles.style(
-                                          fontSize: 13.sp,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      SizedBox(height: 4.h),
-                                      Text(
-                                        'العنوان: ${subscription.dropoffLabel ?? "غير متوفر"}',
-                                        style: AppTextStyles.style(
-                                          fontSize: 12.sp,
-                                          color: AppColors.textMuted,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                if (coords?.school?.latitude != null && coords?.school?.longitude != null)
-                                  Flexible(
-                                    child: ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.success.withValues(alpha: 0.1),
-                                        foregroundColor: AppColors.success,
-                                        elevation: 0,
-                                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-                                      ),
-                                      icon: Icon(Icons.navigation_rounded, size: 14.sp),
-                                      label: Text('خريطة', style: AppTextStyles.style(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.success)),
-                                      onPressed: () => _openMap(coords!.school!.latitude, coords.school!.longitude),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            SizedBox(height: 12.h),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  final pickup = SubscriptionLocationModel(
-                                    latitude: coords?.home?.latitude,
-                                    longitude: coords?.home?.longitude,
-                                    address: subscription!.pickupLabel,
-                                  );
-                                  final dropoff = SubscriptionLocationModel(
-                                    latitude: coords?.school?.latitude,
-                                    longitude: coords?.school?.longitude,
-                                    address: subscription.dropoffLabel,
-                                  );
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => SubscriptionMapScreen(
-                                        title: 'عرض موقع الاشتراك',
-                                        pickupLocation: pickup,
-                                        dropoffLocation: dropoff,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                icon: Icon(Icons.map_rounded, size: 16.sp, color: context.primaryColor),
-                                label: Text(
-                                  'عرض المواقع على الخريطة',
-                                  style: AppTextStyles.style(
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: context.primaryColor,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-
-                      // CARD 5: المالية (Finance)
+                      // 3. بيانات الاشتراك الموحد
                       _SectionCard(
                         icon: Icons.assignment_rounded,
-                        iconColor: AppColors.primaryLight,
-                        title: 'بيانات الاشتراك والمالية',
-                        child: Column(
-                          children: [
-                            _InfoRow(
-                              icon: Icons.date_range_rounded,
-                              label: 'مدة الاشتراك',
-                              value: '${_formatDate(subscription.startDate)} - ${_formatDate(subscription.endDate)}',
-                            ),
-                            if (subscription.workingDaysCount != null)
-                              _InfoRow(
-                                icon: Icons.calendar_month_rounded,
-                                label: 'عدد أيام العمل',
-                                value: '${subscription.workingDaysCount} يوم',
-                              ),
-                            if (subscription.pricePerChild != null)
-                              _InfoRow(
-                                icon: Icons.receipt_long_rounded,
-                                label: 'سعر اشتراك الطفل',
-                                value: '${subscription.pricePerChild} د.ل',
-                              ),
-                            if (subscription.platformCommission != null)
-                              _InfoRow(
-                                icon: Icons.percent_rounded,
-                                label: 'عمولة المنصة',
-                                value: '${subscription.platformCommission} د.ل',
-                              ),
-                            if (subscription.driverNetPrice != null)
-                              _InfoRow(
-                                icon: Icons.monetization_on_rounded,
-                                label: 'صافي الربح',
-                                value: '${subscription.driverNetPrice} د.ل',
-                              ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-
-                      // CARD 6: معلومات إضافية (Additional Info)
-                      _SectionCard(
-                        icon: Icons.info_rounded,
-                        iconColor: AppColors.grey600,
-                        title: 'معلومات إضافية',
+                        iconColor: context.primaryColor,
+                        title: 'بيانات الاشتراك الموحد',
                         child: Column(
                           children: [
                             _InfoRow(
                               icon: Icons.calendar_today_rounded,
-                              label: 'تاريخ الإنشاء',
-                              value: _formatDate(subscription.createdAt),
+                              label: 'نوع الاشتراك',
+                              value: subscription.typeDisplayLabel,
                             ),
                             _InfoRow(
-                              icon: Icons.check_circle_outline_rounded,
-                              label: 'حالة الاشتراك',
-                              value: subscription.statusDisplayLabel,
+                              icon: Icons.alt_route_rounded,
+                              label: 'اتجاه الرحلة',
+                              value: subscription.directionDisplayLabel,
                             ),
+                            _InfoRow(
+                              icon: Icons.date_range_rounded,
+                              label: 'تاريخ البداية',
+                              value: _formatDate(
+                                  subscription.subscription.startDate),
+                            ),
+                            _InfoRow(
+                              icon: Icons.event_available_rounded,
+                              label: 'تاريخ النهاية',
+                              value: _formatDate(
+                                  subscription.subscription.endDate),
+                            ),
+                            if (subscription.subscription.workingDaysCount !=
+                                null)
+                              _InfoRow(
+                                icon: Icons.calendar_month_rounded,
+                                label: 'عدد أيام العمل',
+                                value:
+                                    '${subscription.subscription.workingDaysCount} يوم',
+                              ),
                           ],
                         ),
                       ),
+                      SizedBox(height: 12.h),
 
-                      if (subscription.status.toLowerCase() == 'accepted') ...[
-                        SizedBox(height: 16.h),
+                      // 4. عنوان الانطلاق
+                      if (subscription.homeAddress != null) ...[
+                        _SectionCard(
+                          icon: Icons.home_rounded,
+                          iconColor: AppColors.warning,
+                          title: 'عنوان الانطلاق',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _InfoRow(
+                                icon: Icons.location_on_rounded,
+                                label: 'العنوان',
+                                value: subscription.homeAddress!.displayName,
+                              ),
+                              if (subscription.homeAddress!.hasCoordinates) ...[
+                                SizedBox(height: 8.h),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _openMap(
+                                      subscription.homeAddress!.lat!,
+                                      subscription.homeAddress!.lng!,
+                                    ),
+                                    icon: Icon(Icons.navigation_rounded,
+                                        size: 16.sp,
+                                        color: context.primaryColor),
+                                    label: Text(
+                                      'عرض موقع الانطلاق على الخريطة',
+                                      style: AppTextStyles.style(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: context.primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
+                      ],
+
+                      // 5. الأطفال المشمولين
+                      _SectionCard(
+                        icon: Icons.child_care_rounded,
+                        iconColor: AppColors.success,
+                        title:
+                            'الأطفال المشمولين (${subscription.children.length})',
+                        child: _ChildrenListWidget(
+                          children: subscription.children,
+                          onOpenMap: _openMap,
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+
+                      // 6. الملخص المالي الموحد للاشتراك
+                      if (subscription.pricing != null) ...[
+                        _SectionCard(
+                          icon: Icons.payments_rounded,
+                          iconColor: AppColors.success,
+                          title: 'الملخص المالي للاشتراك',
+                          child: _OverallPricingWidget(
+                              pricing: subscription.pricing!),
+                        ),
+                        SizedBox(height: 12.h),
+                      ],
+
+                      // 7. الملاحظات العامة
+                      if (subscription.notes != null &&
+                          subscription.notes!.trim().isNotEmpty) ...[
+                        _SectionCard(
+                          icon: Icons.notes_rounded,
+                          iconColor: AppColors.textMuted,
+                          title: 'الملاحظات',
+                          child: Text(
+                            subscription.notes!,
+                            style: AppTextStyles.style(
+                              fontSize: 13.sp,
+                              color: AppColors.textMuted,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
+                      ],
+
+                      // 8. زر إلغاء الاشتراك المفعل
+                      if (isAllowCancel) ...[
+                        SizedBox(height: 10.h),
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
@@ -624,7 +406,8 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
                                       color: AppColors.error,
                                     ),
                                   )
-                                : Icon(Icons.cancel_outlined, size: 18.sp, color: AppColors.error),
+                                : Icon(Icons.cancel_outlined,
+                                    size: 18.sp, color: AppColors.error),
                             label: Text(
                               isCancelling ? 'جارٍ الإلغاء...' : 'إلغاء الاشتراك',
                               style: AppTextStyles.style(
@@ -636,12 +419,13 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: AppColors.error),
                               padding: EdgeInsets.symmetric(vertical: 12.h),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r)),
                             ),
                           ),
                         ),
+                        SizedBox(height: 24.h),
                       ],
-                      SizedBox(height: 24.h),
                     ],
                   ),
                 ),
@@ -668,7 +452,8 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
       centerTitle: false,
       elevation: 0,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back_ios_rounded, color: AppColors.white, size: 20.sp),
+        icon: Icon(Icons.arrow_back_ios_rounded,
+            color: AppColors.white, size: 20.sp),
         onPressed: () => Navigator.of(context).pop(),
       ),
       flexibleSpace: Container(
@@ -684,6 +469,115 @@ class _DriverSubscriptionDetailsScreenState extends State<DriverSubscriptionDeta
   }
 }
 
+// ── شريط الحالة ──
+class _StatusBanner extends StatelessWidget {
+  final DriverSubscriptionModel subscription;
+  const _StatusBanner({required this.subscription});
+
+  Color _getStatusColor() {
+    switch (subscription.status.toLowerCase()) {
+      case 'active':
+      case 'accepted':
+        return AppColors.success;
+      case 'pending':
+      case 'pending_start':
+        return AppColors.pending;
+      case 'completed':
+        return AppColors.primaryLight;
+      case 'cancelled':
+        return AppColors.grey400;
+      default:
+        return AppColors.primaryLight;
+    }
+  }
+
+  IconData _getStatusIcon() {
+    switch (subscription.status.toLowerCase()) {
+      case 'active':
+      case 'accepted':
+        return Icons.check_circle_rounded;
+      case 'pending':
+      case 'pending_start':
+        return Icons.hourglass_empty_rounded;
+      case 'completed':
+        return Icons.task_alt_rounded;
+      case 'cancelled':
+        return Icons.cancel_rounded;
+      default:
+        return Icons.info_rounded;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = context.isDarkMode;
+    final color = _getStatusColor();
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(14.w),
+      decoration: AppTheme.boxDecoration(
+        color: color.withValues(alpha: isDark ? 0.15 : 0.08),
+        borderRadius: AppTheme.radius(16.r),
+        border: AppTheme.border(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44.w,
+            height: 44.h,
+            decoration: AppTheme.boxDecoration(
+              color: color.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(_getStatusIcon(), color: color, size: 24.sp),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'حالة الاشتراك',
+                  style: AppTextStyles.style(
+                    fontSize: 12.sp,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  subscription.statusDisplayLabel,
+                  style: AppTextStyles.style(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+            decoration: AppTheme.boxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: AppTheme.radius(20.r),
+            ),
+            child: Text(
+              'اشتراك #${subscription.id}',
+              style: AppTextStyles.style(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── بطاقة قسم عامة ──
 class _SectionCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
@@ -708,7 +602,9 @@ class _SectionCard extends StatelessWidget {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: AppTheme.radius(16.r),
         border: AppTheme.border(
-          color: isDark ? AppColors.grey800 : AppColors.grey.withValues(alpha: 0.12),
+          color: isDark
+              ? AppColors.grey800
+              : AppColors.grey.withValues(alpha: 0.12),
         ),
         boxShadow: [
           AppTheme.boxShadow(
@@ -750,6 +646,476 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
+// ── معلومات ولي الأمر ──
+class _ParentInfoWidget extends StatelessWidget {
+  final DriverParentModel parent;
+  final Function(String) onCallPhone;
+
+  const _ParentInfoWidget({
+    required this.parent,
+    required this.onCallPhone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _InfoRow(
+          icon: Icons.person_outline_rounded,
+          label: 'الاسم',
+          value: parent.name.isNotEmpty ? parent.name : 'غير محدد',
+        ),
+        if (parent.phone != null && parent.phone!.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.only(bottom: 10.h),
+            child: Row(
+              children: [
+                Icon(Icons.phone_outlined,
+                    size: 16.sp, color: AppColors.textMuted),
+                SizedBox(width: 8.w),
+                Text(
+                  'الهاتف: ',
+                  style: AppTextStyles.style(
+                    fontSize: 13.sp,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                Expanded(
+                  child: InkWell(
+                    onTap: () => onCallPhone(parent.phone!),
+                    child: Text(
+                      parent.phone!,
+                      style: AppTextStyles.style(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                        color: context.primaryColor,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.phone_in_talk_rounded,
+                      size: 18.sp, color: AppColors.success),
+                  onPressed: () => onCallPhone(parent.phone!),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ),
+        if (parent.alternativePhone != null &&
+            parent.alternativePhone!.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.only(bottom: 10.h),
+            child: Row(
+              children: [
+                Icon(Icons.phone_android_rounded,
+                    size: 16.sp, color: AppColors.textMuted),
+                SizedBox(width: 8.w),
+                Text(
+                  'هاتف بديل: ',
+                  style: AppTextStyles.style(
+                    fontSize: 13.sp,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                Expanded(
+                  child: InkWell(
+                    onTap: () => onCallPhone(parent.alternativePhone!),
+                    child: Text(
+                      parent.alternativePhone!,
+                      style: AppTextStyles.style(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                        color: context.primaryColor,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ── قائمة الأطفال ──
+class _ChildrenListWidget extends StatelessWidget {
+  final List<DriverChildModel> children;
+  final Function(double, double) onOpenMap;
+
+  const _ChildrenListWidget({
+    required this.children,
+    required this.onOpenMap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (children.isEmpty) {
+      return Text(
+        'لا يوجد أطفال',
+        style: AppTextStyles.style(fontSize: 13.sp, color: AppColors.textMuted),
+      );
+    }
+
+    return Column(
+      children: children.asMap().entries.map((entry) {
+        final index = entry.key;
+        final child = entry.value;
+        return _ChildCard(
+          child: child,
+          index: index,
+          totalCount: children.length,
+          onOpenMap: onOpenMap,
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _ChildCard extends StatelessWidget {
+  final DriverChildModel child;
+  final int index;
+  final int totalCount;
+  final Function(double, double) onOpenMap;
+
+  const _ChildCard({
+    required this.child,
+    required this.index,
+    required this.totalCount,
+    required this.onOpenMap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = context.isDarkMode;
+    final primaryColor = context.primaryColor;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: index < totalCount - 1 ? 12.h : 0),
+      padding: EdgeInsets.all(14.w),
+      decoration: AppTheme.boxDecoration(
+        color: isDark ? AppColors.grey900 : AppColors.backgroundLight,
+        borderRadius: AppTheme.radius(14.r),
+        border: Border.all(
+          color: primaryColor.withValues(alpha: 0.15),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── رأس البطاقة: الصورة والاسم ──
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 22.r,
+                backgroundColor: primaryColor.withValues(alpha: 0.12),
+                backgroundImage: (child.photoUrl != null &&
+                        child.photoUrl!.isNotEmpty)
+                    ? CachedNetworkImageProvider(
+                        child.photoUrl!.startsWith('http')
+                            ? child.photoUrl!
+                            : '${ApiEndpoints.baseUrl.replaceAll('/api/', '')}/storage/${child.photoUrl!}',
+                      )
+                    : null,
+                child: (child.photoUrl == null || child.photoUrl!.isEmpty)
+                    ? Text(
+                        child.avatarInitials,
+                        style: AppTextStyles.style(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                        ),
+                      )
+                    : null,
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      child.name.isNotEmpty ? child.name : 'غير محدد',
+                      style: AppTextStyles.style(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (child.school != null) ...[
+                      SizedBox(height: 2.h),
+                      Text(
+                        child.school!.name,
+                        style: AppTextStyles.style(
+                          fontSize: 12.sp,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (child.pricing?.priceAfterDiscount != null)
+                Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Text(
+                    child.pricing!.formattedPrice,
+                    style: AppTextStyles.style(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          const Divider(height: 1, thickness: 0.5),
+          SizedBox(height: 10.h),
+
+          // ── بيانات الطفل ──
+          Wrap(
+            spacing: 8.w,
+            runSpacing: 6.h,
+            children: [
+              if (child.gender != null)
+                _buildBadge(
+                  child.genderDisplay,
+                  Icons.wc_rounded,
+                  isDark,
+                ),
+              if (child.age != null)
+                _buildBadge(
+                  '${child.age} سنوات',
+                  Icons.cake_outlined,
+                  isDark,
+                ),
+              if (child.displayGrade.isNotEmpty)
+                _buildBadge(
+                  child.displayGrade,
+                  Icons.school_outlined,
+                  isDark,
+                ),
+              if (child.distanceKm != null)
+                _buildBadge(
+                  '${child.distanceKm} كم',
+                  Icons.straighten_rounded,
+                  isDark,
+                ),
+            ],
+          ),
+
+          // ── مدرسة الطفل مع زر الخريطة ──
+          if (child.school != null) ...[
+            SizedBox(height: 10.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    'المدرسة: ${child.school!.name}',
+                    style: AppTextStyles.style(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (child.school!.hasCoordinates)
+                  TextButton.icon(
+                    onPressed: () =>
+                        onOpenMap(child.school!.lat!, child.school!.lng!),
+                    icon: Icon(Icons.map_rounded, size: 14.sp),
+                    label: Text('خريطة',
+                        style: AppTextStyles.style(fontSize: 11.sp)),
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                  ),
+              ],
+            ),
+          ],
+
+          // ── الملاحظات الطبية ──
+          if (child.medicalNotes != null &&
+              child.medicalNotes!.trim().isNotEmpty) ...[
+            SizedBox(height: 6.h),
+            _InfoRow(
+              icon: Icons.medical_information_outlined,
+              label: 'ملاحظات طبية',
+              value: child.medicalNotes!,
+            ),
+          ],
+
+          // ── تفاصيل سعر الطفل ──
+          if (child.pricing != null) ...[
+            SizedBox(height: 8.h),
+            Container(
+              padding: EdgeInsets.all(8.w),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.surfaceDark : AppColors.white,
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'صافي السائق من الطفل:',
+                    style: AppTextStyles.style(
+                      fontSize: 11.sp,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  Text(
+                    child.pricing!.formattedDriverNet,
+                    style: AppTextStyles.style(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // ── بيانات الاشتراك المفعل للطفل إن وجدت ──
+          if (child.activeSubscription != null) ...[
+            SizedBox(height: 8.h),
+            Container(
+              padding: EdgeInsets.all(8.w),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.check_circle_outline_rounded,
+                          size: 13.sp, color: AppColors.primaryLight),
+                      SizedBox(width: 4.w),
+                      Text(
+                        'اشتراك الطفل المفعل: ${child.activeSubscription!.displayStatus}',
+                        style: AppTextStyles.style(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (child.activeSubscription!.pickupTime != null ||
+                      child.activeSubscription!.dropoffTime != null) ...[
+                    SizedBox(height: 4.h),
+                    Text(
+                      'الصعود: ${child.activeSubscription!.pickupTime ?? "غير محدد"} | النزول: ${child.activeSubscription!.dropoffTime ?? "غير محدد"}',
+                      style: AppTextStyles.style(
+                        fontSize: 11.sp,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBadge(String text, IconData icon, bool isDark) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.grey800 : AppColors.white,
+        borderRadius: BorderRadius.circular(6.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12.sp, color: AppColors.textMuted),
+          SizedBox(width: 4.w),
+          Text(
+            text,
+            style: AppTextStyles.style(
+              fontSize: 11.sp,
+              color: AppColors.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── الملخص المالي الموحد ──
+class _OverallPricingWidget extends StatelessWidget {
+  final DriverSubscriptionPricingModel pricing;
+
+  const _OverallPricingWidget({required this.pricing});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        if (pricing.totalPrice != null)
+          _InfoRow(
+            icon: Icons.receipt_long_rounded,
+            label: 'السعر الإجمالي قبل الخصم',
+            value: '${pricing.totalPrice} د.ل',
+          ),
+        if (pricing.discountAmount != null && pricing.discountAmount! > 0)
+          _InfoRow(
+            icon: Icons.discount_outlined,
+            label: 'قيمة الخصم',
+            value: '- ${pricing.discountAmount} د.ل',
+          ),
+        if (pricing.totalAmountAfterDiscount != null)
+          _InfoRow(
+            icon: Icons.payments_outlined,
+            label: 'الإجمالي بعد الخصم (يدفعه ولي الأمر)',
+            value: pricing.formattedTotal,
+          ),
+        if (pricing.platformCommissionTotal != null)
+          _InfoRow(
+            icon: Icons.percent_rounded,
+            label: 'عمولة المنصة',
+            value: '${pricing.platformCommissionTotal} د.ل',
+          ),
+        const Divider(height: 16, thickness: 0.5),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'صافي أرباح السائق:',
+              style: AppTextStyles.style(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              pricing.formattedDriverNet,
+              style: AppTextStyles.style(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: AppColors.success,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -764,16 +1130,16 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 10.h),
+      padding: EdgeInsets.only(bottom: 8.h),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16.sp, color: AppColors.textMuted),
+          Icon(icon, size: 15.sp, color: AppColors.textMuted),
           SizedBox(width: 8.w),
           Text(
             '$label: ',
             style: AppTextStyles.style(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               color: AppColors.textMuted,
             ),
           ),
@@ -781,7 +1147,7 @@ class _InfoRow extends StatelessWidget {
             child: Text(
               value,
               style: AppTextStyles.style(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
               ),
             ),

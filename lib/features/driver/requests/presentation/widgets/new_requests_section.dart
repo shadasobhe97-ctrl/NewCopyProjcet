@@ -7,7 +7,7 @@ import 'package:kids_transport/features/driver/requests/data/models/driver_reque
 import 'package:kids_transport/features/driver/requests/presentation/screens/driver_request_details_screen.dart';
 
 /// قسم طلبات الاشتراك الجديدة في الصفحة الرئيسية للسائق
-/// يعرض قائمة الطلبات الجديدة مع التركيز على الأطفال والمدارس لتجنب عرض بيانات ولي الأمر كعنوان رئيسي
+/// يعرض قائمة الطلبات الجديدة الموحدة
 class NewRequestsSection extends StatelessWidget {
   final List<DriverRequestModel> requests;
 
@@ -122,7 +122,12 @@ class _HomeRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
-    final hasMultipleKids = request.children.length > 1;
+    final parentName = request.parent.name.isNotEmpty
+        ? request.parent.name
+        : 'طلب اشتراك #${request.id}';
+    final childrenSummary = request.children.isNotEmpty
+        ? request.children.map((c) => c.name).join('، ')
+        : 'لا يوجد أطفال محددين';
 
     return GestureDetector(
       onTap: () {
@@ -151,35 +156,30 @@ class _HomeRequestCard extends StatelessWidget {
           ],
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── معلومات الأطفال والمدرسة ──
+            // ── رأس الكرت: ولي الأمر وعدد الأطفال ──
             Row(
               children: [
                 CircleAvatar(
-                  radius: 24,
+                  radius: 22,
                   backgroundColor:
                       AppColors.primaryLight.withValues(alpha: 0.12),
                   child: const Icon(
-                    Icons.child_care_rounded,
+                    Icons.person_rounded,
                     color: AppColors.primaryLight,
-                    size: 24,
+                    size: 22,
                   ),
                 ),
                 const SizedBox(width: 12),
-
-                // اسم الطفل والمدرسة
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        hasMultipleKids
-                            ? 'الطلاب: ${request.children.map((c) => c.name).join('، ')}'
-                            : (request.children.isNotEmpty
-                                ? request.children.first.name
-                                : 'طلب اشتراك جديد'),
+                        parentName,
                         style: AppTextStyles.style(
-                          fontSize: 14,
+                          fontSize: 15,
                           fontWeight: FontWeight.bold,
                         ),
                         maxLines: 1,
@@ -189,18 +189,19 @@ class _HomeRequestCard extends StatelessWidget {
                       Row(
                         children: [
                           const Icon(
-                            Icons.school_rounded,
+                            Icons.child_care_rounded,
                             color: AppColors.textMuted,
                             size: 13,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              request.school.name,
+                              '${request.childrenCount} أطفال: $childrenSummary',
                               style: AppTextStyles.style(
                                 fontSize: 12,
                                 color: AppColors.textMuted,
                               ),
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -222,23 +223,52 @@ class _HomeRequestCard extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _InfoRow(
-                    icon: Icons.schedule_rounded,
-                    iconColor: AppColors.pending,
-                    text: 'الفترة: ${request.timingDisplayLabel}',
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _InfoItem(
+                        icon: Icons.calendar_today_rounded,
+                        iconColor: AppColors.primaryLight,
+                        label: 'النوع',
+                        value: request.typeDisplayLabel,
+                      ),
+                      _InfoItem(
+                        icon: Icons.alt_route_rounded,
+                        iconColor: context.primaryColor,
+                        label: 'الاتجاه',
+                        value: request.directionDisplayLabel,
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
-                  _InfoRow(
-                    icon: Icons.monetization_on_rounded,
-                    iconColor: AppColors.success,
-                    text: 'التكلفة الإجمالية: ${request.totalPrice} د.ل',
+                  const Divider(height: 1, thickness: 0.5),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'التكلفة الإجمالية:',
+                        style: AppTextStyles.style(
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      Text(
+                        request.totalPriceDisplay,
+                        style: AppTextStyles.style(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.success,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 12),
 
-            // ── عرض التفاصيل والمسار ──
+            // ── عرض التفاصيل ──
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -252,7 +282,7 @@ class _HomeRequestCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'عرض التفاصيل والمسار',
+                      'عرض تفاصيل الطلب',
                       style: AppTextStyles.style(
                         fontSize: 11,
                         color: context.primaryColor,
@@ -276,32 +306,38 @@ class _HomeRequestCard extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
+class _InfoItem extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
-  final String text;
+  final String label;
+  final String value;
 
-  const _InfoRow({
+  const _InfoItem({
     required this.icon,
     required this.iconColor,
-    required this.text,
+    required this.label,
+    required this.value,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, color: iconColor, size: 14),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: AppTextStyles.style(
-              fontSize: 12,
-              color: AppColors.textMuted,
-              fontWeight: FontWeight.w500,
-            ),
-            overflow: TextOverflow.ellipsis,
+        const SizedBox(width: 6),
+        Text(
+          '$label: ',
+          style: AppTextStyles.style(
+            fontSize: 12,
+            color: AppColors.textMuted,
+          ),
+        ),
+        Text(
+          value,
+          style: AppTextStyles.style(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
