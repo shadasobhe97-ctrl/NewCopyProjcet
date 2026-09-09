@@ -137,7 +137,7 @@ class ScheduledAbsenceCard extends StatelessWidget {
       case AbsenceType.dropoff:
         return const Color(0xFF8B5CF6); // بنفسجي
       case AbsenceType.both:
-        return const Color(0xFFF59E0B); // برتقالي
+        return AppColors.secondaryDark;
     }
   }
 }

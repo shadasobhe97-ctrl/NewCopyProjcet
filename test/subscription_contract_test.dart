@@ -5,7 +5,103 @@ import 'package:kids_transport/core/utils/subscription_enums.dart';
 import 'package:kids_transport/features/driver/requests/data/datasources/driver_requests_remote_data_source.dart';
 import 'package:kids_transport/features/driver/requests/data/models/driver_request_model.dart';
 import 'package:kids_transport/features/parent/search/data/models/subscription_request.dart';
+import 'package:kids_transport/features/parent/subscriptions/data/models/active_subscription_model.dart';
 import 'package:kids_transport/features/parent/subscriptions/data/models/request_model.dart';
+
+/// استجابة الباك الجديدة لعرض طلب الاشتراك لولي الأمر
+const _parentRequestJson = '''
+{
+  "id": 105,
+  "status": "pending",
+  "status_label": "قيد الانتظار",
+  "driver": {
+    "id": 45,
+    "name": "أحمد السائق",
+    "phone": "0912345678",
+    "alternative_phone": null,
+    "gender": "male",
+    "photo_url": "https://example.com/avatar.jpg",
+    "vehicle": {
+      "has_ac": true,
+      "capacity": 4,
+      "plate_number": "12345-6"
+    }
+  },
+  "subscription": {
+    "type": "multi_day",
+    "type_label": "عدة أيام",
+    "direction": "both",
+    "direction_label": "ذهاب وعودة",
+    "start_date": "2026-09-10",
+    "end_date": "2026-09-30",
+    "working_days_count": 15
+  },
+  "home_address": {
+    "id": 12,
+    "label": "المنزل - حي الأندلس",
+    "lat": 32.8872,
+    "lng": 13.1913
+  },
+  "children_count": 2,
+  "pricing": {
+    "total_price": 500.00,
+    "discount_amount": 50.00,
+    "total_amount_after_discount": 450.00
+  },
+  "children": [
+    {
+      "child_id": 5,
+      "name": "سارة",
+      "photo_url": null,
+      "age": 8,
+      "gender": "female",
+      "grade": "3",
+      "grade_label": "الصف الثالث",
+      "school": {
+        "id": 3,
+        "name": "مدرسة الأمل الابتدائية",
+        "lat": 32.8900,
+        "lng": 13.1800
+      },
+      "timing": "morning",
+      "distance_km": 4.5,
+      "medical_notes": null,
+      "pricing": {
+        "price_before_discount": 250.00,
+        "discount_percentage": 10.0,
+        "discount_amount": 25.00,
+        "price_after_discount": 225.00
+      }
+    },
+    {
+      "child_id": 8,
+      "name": "علي",
+      "photo_url": null,
+      "age": 10,
+      "gender": "male",
+      "grade": "5",
+      "grade_label": "الصف الخامس",
+      "school": {
+        "id": 4,
+        "name": "مدرسة النور الإعدادية",
+        "lat": 32.8950,
+        "lng": 13.1850
+      },
+      "timing": "morning",
+      "distance_km": 5.2,
+      "medical_notes": "حساسية من الغبار",
+      "pricing": {
+        "price_before_discount": 250.00,
+        "discount_percentage": 10.0,
+        "discount_amount": 25.00,
+        "price_after_discount": 225.00
+      }
+    }
+  ],
+  "notes": "يرجى الحضور في الوقت المحدد",
+  "created_at": "2026-09-08T10:30:00Z"
+}
+''';
 
 /// استجابة حقيقية من الباك (طلب 124) بمفاتيح pickup_location / dropoff_location
 const _requestJson = '''
@@ -125,84 +221,139 @@ const _legacyJson = '''
 
 void main() {
   group('نموذج ولي الأمر — RequestModel', () {
-    final model =
-        RequestModel.fromJson(jsonDecode(_requestJson) as Map<String, dynamic>);
+    final model = RequestModel.fromJson(
+        jsonDecode(_parentRequestJson) as Map<String, dynamic>);
 
-    test('يقرأ الحقول العامة والسعر الإجمالي', () {
-      expect(model.id, 124);
+    test('يقرأ الحقول العامة والسائق وبيانات الاشتراك المشتركة', () {
+      expect(model.id, 105);
       expect(model.status, 'pending');
-      expect(model.totalAmount, 650);
-      expect(model.formattedPrice, '650 د.ل');
+      expect(model.statusDisplayLabel, 'قيد الانتظار');
       expect(model.childrenCount, 2);
-      expect(model.driver.name, 'محمد مسعود الجبالي');
-      expect(model.notes, contains('يرجى التواصل'));
+      expect(model.driver.name, 'أحمد السائق');
+      expect(model.driver.phone, '0912345678');
+      expect(model.driver.vehicle?.hasAc, isTrue);
+      expect(model.driver.vehicle?.plateNumber, '12345-6');
+      expect(model.subscription.type, 'multi_day');
+      expect(model.subscription.typeDisplayLabel, 'عدة أيام');
+      expect(model.subscription.direction, 'both');
+      expect(model.subscription.directionDisplayLabel, 'ذهاب وعودة');
+      expect(model.subscription.workingDaysCount, 15);
+      expect(model.homeAddress?.label, 'المنزل - حي الأندلس');
+      expect(model.notes, contains('يرجى الحضور'));
     });
 
-    test('كل طفل يحمل تفاصيله الخاصة لا تفاصيل الطفل الأول', () {
-      final ayla = model.children[0];
-      final leen = model.children[1];
+    test('يقرأ التسعير الإجمالي والخصم بالشكل المنسق', () {
+      expect(model.pricing?.totalPrice, 500.0);
+      expect(model.pricing?.discountAmount, 50.0);
+      expect(model.pricing?.totalAmountAfterDiscount, 450.0);
+      expect(model.pricing?.hasDiscount, isTrue);
+      expect(model.formattedTotalPrice, '450 د.ل');
+    });
 
-      expect(ayla.subscription.type, 'multi_day');
-      expect(ayla.subscription.tripType, 'both');
-      expect(ayla.subscription.timing, 'MORNING');
-      expect(ayla.subscription.workingDaysCount, 25);
-      expect(ayla.price, 350);
+    test('كل طفل يحمل تسعيره الخاص ومدرسته وبياناته', () {
+      expect(model.children.length, 2);
+      expect(model.childrenNames, 'سارة، علي');
 
-      expect(leen.subscription.type, 'single_day');
-      expect(leen.subscription.tripType, 'return');
-      expect(leen.subscription.timing, 'EVENING');
-      expect(leen.subscription.workingDaysCount, 1);
-      expect(leen.price, 300);
+      final sara = model.children[0];
+      expect(sara.childId, 5);
+      expect(sara.name, 'سارة');
+      expect(sara.gender, 'female');
+      expect(sara.isFemale, isTrue);
+      expect(sara.gradeLabelDisplay, 'الصف الثالث');
+      expect(sara.school.name, 'مدرسة الأمل الابتدائية');
+      expect(sara.pricing?.priceBeforeDiscount, 250.0);
+      expect(sara.pricing?.priceAfterDiscount, 225.0);
+      expect(sara.pricing?.discountPercentage, 10.0);
+      expect(sara.pricing?.hasDiscount, isTrue);
+
+      final ali = model.children[1];
+      expect(ali.childId, 8);
+      expect(ali.name, 'علي');
+      expect(ali.gender, 'male');
+      expect(ali.isFemale, isFalse);
+      expect(ali.gradeLabelDisplay, 'الصف الخامس');
+      expect(ali.school.name, 'مدرسة النور الإعدادية');
+      expect(ali.medicalNotes, 'حساسية من الغبار');
     });
 
     test('التسميات العربية بلا شهري أو أسبوعي', () {
-      expect(model.children[0].subscription.typeDisplayLabel, 'عدة أيام');
-      expect(model.children[1].subscription.typeDisplayLabel, 'يوم واحد');
-      expect(model.children[0].subscription.tripTypeDisplayLabel, 'ذهاب وعودة');
-      expect(model.children[1].subscription.tripTypeDisplayLabel, 'عودة فقط');
-      expect(model.children[0].subscription.timingDisplayLabel, 'صباحاً');
-      expect(model.children[1].subscription.timingDisplayLabel, 'مساءً');
-
-      for (final c in model.children) {
-        expect(c.subscription.typeDisplayLabel, isNot(contains('شهري')));
-        expect(c.subscription.typeDisplayLabel, isNot(contains('أسبوعي')));
-      }
+      expect(model.subscription.typeDisplayLabel, isNot(contains('شهري')));
+      expect(model.subscription.typeDisplayLabel, isNot(contains('أسبوعي')));
+      expect(model.subscription.typeDisplayLabel, 'عدة أيام');
+      expect(model.subscription.directionDisplayLabel, 'ذهاب وعودة');
     });
 
-    test('اسم الموقع يعرض والعنوان البديل يخفى', () {
-      final pickup = model.children[0].pickupLocation!;
-      expect(pickup.displayName, 'منزلي');
-      expect(pickup.hasRealAddress, isFalse);
-      expect(pickup.displayAddress, isNull);
-      expect(pickup.hasValidCoordinates, isTrue);
+    test('يدعم تحويل النموذج إلى JSON واسترجاعه بدقة', () {
+      final json = model.toJson();
+      final restored = RequestModel.fromJson(json);
+      expect(restored.id, model.id);
+      expect(restored.children.length, model.children.length);
+      expect(restored.formattedTotalPrice, model.formattedTotalPrice);
+      expect(restored.children[0].name, 'سارة');
+    });
+  });
+
+  group('نموذج الاشتراك النشط — ActiveSubscriptionModel', () {
+    const activeJson = '''
+{
+  "active_subscription_id": 88,
+  "status": "active",
+  "status_label": "نشط",
+  "driver": {
+    "id": 45,
+    "name": "أحمد السائق",
+    "phone": "0912345678",
+    "vehicle": {
+      "has_ac": true,
+      "plate_number": "12345-6"
+    }
+  },
+  "subscription": {
+    "type": "multi_day",
+    "type_label": "عدة أيام",
+    "direction": "both",
+    "direction_label": "ذهاب وعودة",
+    "start_date": "2026-09-10",
+    "end_date": "2026-09-30",
+    "working_days_count": 15
+  },
+  "home_address": {
+    "id": 12,
+    "label": "المنزل - حي الأندلس"
+  },
+  "child": {
+    "child_id": 5,
+    "name": "سارة",
+    "school": {
+      "name": "مدرسة الأمل الابتدائية"
+    },
+    "pricing": {
+      "price_after_discount": 225.00
+    }
+  },
+  "pickup_time": "07:30",
+  "dropoff_time": "14:00",
+  "created_at": "2026-09-08T10:30:00Z"
+}
+''';
+
+    final model = ActiveSubscriptionModel.fromJson(
+        jsonDecode(activeJson) as Map<String, dynamic>);
+
+    test('يقرأ الحقول العامة والسائق والاشتراك', () {
+      expect(model.id, 88);
+      expect(model.status, 'active');
+      expect(model.statusDisplayLabel, 'نشط');
+      expect(model.driver.name, 'أحمد السائق');
+      expect(model.subscription.typeDisplayLabel, 'عدة أيام');
+      expect(model.pickupTime, '07:30');
+      expect(model.dropoffTime, '14:00');
     });
 
-    test('اسم المدرسة يختلف بين الطفلين', () {
-      expect(model.children[0].schoolName, 'مدرسة النور الابتدائية');
-      expect(model.children[1].schoolName, 'مدرسة الرواد الأهلية');
-      expect(model.children[0].dropoffLocation!.displayAddress,
-          'النوفليين - بجانب المستشفى المركزي');
-    });
-
-    test('يقرأ trip_price و distance_km', () {
-      expect(model.children[0].subscription.tripPrice, 0);
-      expect(model.children[0].subscription.distanceKm, 0);
-    });
-
-    test('يدعم المفاتيح البديلة Home و School', () {
-      final alt = RequestModel.fromJson(
-          jsonDecode(_requestJsonHomeSchool) as Map<String, dynamic>);
-      expect(alt.children[0].pickupLocation!.displayName, 'منزلي');
-      expect(alt.children[0].schoolName, 'مدرسة النور الابتدائية');
-      expect(alt.children[0].dropoffLocation!.displayAddress, 'النوفليين');
-    });
-
-    test('السجلات القديمة لا تنهار ولا تعرض شهري', () {
-      final legacy =
-          RequestModel.fromJson(jsonDecode(_legacyJson) as Map<String, dynamic>);
-      expect(legacy.children[0].subscription.typeDisplayLabel, 'غير متوفر');
-      expect(legacy.children[0].subscription.tripTypeDisplayLabel, 'ذهاب وعودة');
-      expect(legacy.children[1].subscription.tripTypeDisplayLabel, 'عودة فقط');
+    test('يقرأ الطفل والتسعير المنسق', () {
+      expect(model.children.length, 1);
+      expect(model.firstChild?.name, 'سارة');
+      expect(model.formattedPrice, '225 دينار');
     });
   });
 
@@ -243,6 +394,15 @@ void main() {
       expect(model.children[0].details.tripPrice, 0);
     });
 
+    test('يدعم المفاتيح البديلة Home و School في نموذج السائق', () {
+      final alt = DriverRequestModel.fromJson(
+          jsonDecode(_requestJsonHomeSchool) as Map<String, dynamic>);
+      expect(alt.children[0].pickupLocation!.displayName, 'منزلي');
+      expect(alt.children[0].dropoffLocation!.displayName,
+          'مدرسة النور الابتدائية');
+      expect(alt.children[0].dropoffLocation!.displayAddress, 'النوفليين');
+    });
+
     test('لا يعرض شهري حتى لو غابت التفاصيل', () {
       final legacy = DriverRequestModel.fromJson(
           jsonDecode(_legacyJson) as Map<String, dynamic>);
@@ -257,90 +417,48 @@ void main() {
     test('كل طفل يرسل بإعداداته الخاصة ومطابقا للعقد', () {
       final req = SubscriptionRequest(
         driverId: 189,
+        subscriptionType: 'multi_day',
+        tripDirection: 'both',
+        startDate: '2026-08-27',
+        endDate: '2026-09-30',
+        homeAddressId: 37,
         notes: 'يرجى التواصل مع ولي الأمر قبل الانطلاق بـ 10 دقائق.',
         children: [
-          SubscriptionChildRequest(
-            childId: 144,
-            schoolId: 1,
-            subscriptionType: 'multi_day',
-            tripDirection: 'both',
-            timing: 'MORNING',
-            startDate: '2026-08-27',
-            endDate: '2026-09-30',
-            pickupAddressId: 37,
-            dropoffAddressId: 4,
-            pricePerChild: 350.00,
-          ),
-          SubscriptionChildRequest(
-            childId: 145,
-            schoolId: 1,
-            subscriptionType: 'single_day',
-            tripDirection: 'return',
-            timing: 'EVENING',
-            startDate: '2026-08-27',
-            pickupAddressId: 37,
-            dropoffAddressId: 4,
-            pricePerChild: 300.00,
-          ),
+          SubscriptionChildRequest(childId: 144),
+          SubscriptionChildRequest(childId: 145),
         ],
       );
 
       final json = req.toJson();
       expect(json['driver_id'], 189);
+      expect(json['subscription_type'], 'multi_day');
+      expect(json['trip_direction'], 'both');
+      expect(json['start_date'], '2026-08-27');
+      expect(json['end_date'], '2026-09-30');
+      expect(json['home_address_id'], 37);
       expect(json['notes'], contains('يرجى التواصل'));
 
       final kids = json['children'] as List;
       expect(kids.length, 2);
 
-      expect(kids[0], {
-        'child_id': 144,
-        'subscription_type': 'multi_day',
-        'trip_direction': 'both',
-        'timing': 'MORNING',
-        'start_date': '2026-08-27',
-        'end_date': '2026-09-30',
-      });
-
-      expect((kids[1] as Map)['subscription_type'], 'single_day');
-      expect((kids[1] as Map)['trip_direction'], 'return');
-      expect((kids[1] as Map)['timing'], 'EVENING');
-      expect((kids[1] as Map).containsKey('end_date'), isFalse);
+      expect(kids[0], {'child_id': 144});
+      expect(kids[1], {'child_id': 145});
     });
 
-    test('يطبع القيم القديمة قبل الإرسال', () {
-      final child = SubscriptionChildRequest(
-        childId: 1,
-        schoolId: 1,
-        subscriptionType: 'monthly',
-        tripDirection: 'two_way',
-        timing: 'afternoon',
+    test('يطابق قيم الأنواع والتنظيف التلقائي للتواريخ', () {
+      final req = SubscriptionRequest(
+        driverId: 1,
+        subscriptionType: 'single_day',
+        tripDirection: 'go',
         startDate: '2026-08-27',
-        endDate: '2026-09-30',
-        pickupAddressId: 37,
-        dropoffAddressId: 4,
-        pricePerChild: 350,
+        children: [
+          SubscriptionChildRequest(childId: 10),
+        ],
       );
 
-      expect(child.subscriptionType, 'multi_day');
-      expect(child.tripDirection, 'both');
-      expect(child.timing, 'EVENING');
-
-      final daily = SubscriptionChildRequest(
-        childId: 2,
-        schoolId: 1,
-        subscriptionType: 'daily',
-        tripDirection: 'one_way_evening',
-        timing: 'MORNING',
-        startDate: '2026-08-27',
-        endDate: '2026-09-30',
-        pickupAddressId: 37,
-        dropoffAddressId: 4,
-        pricePerChild: 300,
-      );
-
-      expect(daily.subscriptionType, 'single_day');
-      expect(daily.tripDirection, 'return');
-      expect(daily.endDate, isNull);
+      expect(req.subscriptionType, 'single_day');
+      expect(req.tripDirection, 'go');
+      expect(req.toJson()['subscription_type'], 'single_day');
     });
   });
 
@@ -506,7 +624,7 @@ void main() {
     test('يقرأ status ككائن و total_amount والعملة', () {
       expect(model.id, 127);
       expect(model.status, 'pending');
-      expect(model.statusDisplayLabel, 'معلق');
+      expect(model.statusDisplayLabel, 'قيد الانتظار');
       expect(model.totalPrice, '598');
       expect(model.currency, 'د.ل');
       expect(model.createdAtFormatted, '2026-08-26 22:53');

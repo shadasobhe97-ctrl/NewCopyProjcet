@@ -9,9 +9,9 @@ import '../../logic/requests_cubit/requests_cubit.dart';
 import '../../data/models/active_subscription_model.dart';
 import '../../data/repositories/requests_repository.dart';
 import '../../data/repositories/subscriptions_repository.dart';
-import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/features/parent/search/presentation/screens/parent_search_screen.dart';
 import '../widgets/subscription_card.dart';
+import '../screens/subscription_details_screen.dart';
 import 'requests_tab.dart';
 
 class SubscriptionsScreen extends StatefulWidget {
@@ -274,16 +274,20 @@ class _SubscriptionsTabState extends State<_SubscriptionsTab>
             isCancelling: state is SubscriptionsActionLoading &&
                 state.actionId == sub.id,
             onDetailsPressed: () async {
-              final result = await Navigator.pushNamed(
+              final result = await Navigator.push<bool>(
                 context,
-                AppRoutes.subscriptionDetails,
-                arguments: sub.id,
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider.value(
+                    value: context.read<SubscriptionsCubit>(),
+                    child: SubscriptionDetailsScreen(subscription: sub),
+                  ),
+                ),
               );
               if (result == true) {
                 _loadSubscriptions();
               }
             },
-            onCancelPressed: () => _confirmCancel(context, sub.id),
+            onCancelPressed: (id) => _confirmCancel(context, id),
           );
         },
       ),

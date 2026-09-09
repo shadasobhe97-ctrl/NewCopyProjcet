@@ -383,10 +383,9 @@ class AppTheme {
   }
 
   static ThemeData get lightTheme {
-    final baseTheme = ThemeData.light();
-    return baseTheme.copyWith(
-      useMaterial3: true,
+    final baseTheme = ThemeData(
       brightness: Brightness.light,
+      fontFamily: GoogleFonts.tajawal().fontFamily,
       primaryColor: AppColors.primaryLight,
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryLight,
@@ -397,7 +396,10 @@ class AppTheme {
         error: AppColors.errorLight,
       ),
       scaffoldBackgroundColor: AppColors.backgroundLight,
+    );
+    return baseTheme.copyWith(
       textTheme: _buildTextTheme(baseTheme.textTheme),
+      primaryTextTheme: _buildTextTheme(baseTheme.primaryTextTheme),
       cardTheme: const CardThemeData(
         color: AppColors.surfaceLight,
         elevation: 2,
@@ -446,7 +448,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
+          borderSide: const BorderSide(color: AppColors.secondaryDark, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
@@ -455,14 +457,50 @@ class AppTheme {
         labelStyle: GoogleFonts.tajawal(color: AppColors.grey600),
         hintStyle: GoogleFonts.tajawal(color: AppColors.grey400),
       ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.secondary;
+          }
+          return null;
+        }),
+        checkColor: WidgetStateProperty.all(AppColors.onSecondary),
+        side: const BorderSide(color: AppColors.secondaryDark, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.secondary;
+          }
+          return AppColors.secondaryDark;
+        }),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.secondaryDark;
+          }
+          return null;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.secondary;
+          }
+          return null;
+        }),
+      ),
+      chipTheme: const ChipThemeData(
+        selectedColor: AppColors.secondary,
+        side: BorderSide(color: AppColors.secondaryDark, width: 1),
+      ),
     );
   }
 
   static ThemeData get darkTheme {
-    final baseTheme = ThemeData.dark();
-    return baseTheme.copyWith(
-      useMaterial3: true,
+    final baseTheme = ThemeData(
       brightness: Brightness.dark,
+      fontFamily: GoogleFonts.tajawal().fontFamily,
       primaryColor: AppColors.primaryDark,
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primaryDark,
@@ -471,7 +509,10 @@ class AppTheme {
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: AppColors.backgroundDark,
+    );
+    return baseTheme.copyWith(
       textTheme: _buildTextTheme(baseTheme.textTheme),
+      primaryTextTheme: _buildTextTheme(baseTheme.primaryTextTheme),
       cardTheme: CardThemeData(
         color: AppColors.surfaceDark,
         elevation: 0,
@@ -520,7 +561,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: const BorderSide(color: AppColors.primaryDark, width: 2),
+          borderSide: const BorderSide(color: AppColors.secondaryDark, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
@@ -528,6 +569,43 @@ class AppTheme {
         ),
         labelStyle: GoogleFonts.tajawal(color: AppColors.grey400),
         hintStyle: GoogleFonts.tajawal(color: AppColors.grey600),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.secondary;
+          }
+          return null;
+        }),
+        checkColor: WidgetStateProperty.all(AppColors.onSecondary),
+        side: const BorderSide(color: AppColors.secondaryDark, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.secondary;
+          }
+          return AppColors.secondaryDark;
+        }),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.secondaryDark;
+          }
+          return null;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.secondary;
+          }
+          return null;
+        }),
+      ),
+      chipTheme: const ChipThemeData(
+        selectedColor: AppColors.secondary,
+        side: BorderSide(color: AppColors.secondaryDark, width: 1),
       ),
     );
   }

@@ -10,12 +10,12 @@ class SearchRepository {
 
   SearchRepository(this._dataSource);
 
-  Future<(List<DriverSearchModel>?, String?)> searchDrivers(
+  Future<(DriverSearchResponseModel?, String?)> searchDrivers(
     Map<String, dynamic> body,
   ) async {
     try {
-      final list = await _dataSource.searchDrivers(body);
-      return (list, null);
+      final response = await _dataSource.searchDrivers(body);
+      return (response, null);
     } on ApiException catch (e) {
       return (null, e.message);
     } catch (e, stackTrace) {

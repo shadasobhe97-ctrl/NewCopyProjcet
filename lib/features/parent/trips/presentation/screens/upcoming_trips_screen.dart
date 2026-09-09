@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -243,7 +243,7 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                 decoration: BoxDecoration(
-                  color: (isToSchool ? context.primaryColor : AppColors.pending).withValues(alpha: 0.12),
+                  color: (isToSchool ? context.primaryColor : AppColors.secondary).withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Text(
@@ -251,7 +251,7 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                   style: AppTextStyles.style(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.bold,
-                    color: isToSchool ? context.primaryColor : AppColors.pending,
+                    color: isToSchool ? context.primaryColor : AppColors.secondaryDark,
                   ),
                 ),
               ),

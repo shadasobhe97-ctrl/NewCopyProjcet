@@ -419,7 +419,7 @@ class _EditComplaintBottomSheetState extends State<_EditComplaintBottomSheet> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+                      borderSide: const BorderSide(color: AppColors.secondaryDark, width: 1.5),
                     ),
                   ),
                   validator: (val) {

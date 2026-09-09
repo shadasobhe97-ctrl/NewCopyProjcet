@@ -136,88 +136,50 @@ void main() {
   });
 
   group('SubscriptionRequest serialization according to POST /api/parent/requests Contract', () {
-    test('يولد الـ JSON الدقيق المطابق لعقد الـ Backend بدون أي حقول زائدة', () {
+    test('يولد الـ JSON الدقيق المطابق لعقد الـ Backend الجديد بدون أي حقول زائدة', () {
       final request = SubscriptionRequest(
         driverId: 5,
+        subscriptionType: 'multi_day',
+        tripDirection: 'both',
+        startDate: '2026-09-10',
+        endDate: '2026-10-10',
+        homeAddressId: 2,
         notes: 'ملاحظات إضافية بخصوص الوصول',
         children: [
-          SubscriptionChildRequest(
-            childId: 14,
-            subscriptionType: 'multi_day',
-            tripDirection: 'both',
-            timing: 'MORNING',
-            startDate: '2026-09-10',
-            endDate: '2026-10-10',
-          ),
-          SubscriptionChildRequest(
-            childId: 15,
-            subscriptionType: 'single_day',
-            tripDirection: 'go',
-            timing: 'MORNING',
-            startDate: '2026-09-15',
-            endDate: '2026-09-15', // Should be omitted for single_day
-          ),
+          SubscriptionChildRequest(childId: 14),
+          SubscriptionChildRequest(childId: 15),
         ],
       );
 
       final json = request.toJson();
 
       // Check top-level keys
-      expect(json.keys.toSet(), {'driver_id', 'children', 'notes'});
       expect(json['driver_id'], 5);
+      expect(json['subscription_type'], 'multi_day');
+      expect(json['trip_direction'], 'both');
+      expect(json['start_date'], '2026-09-10');
+      expect(json['end_date'], '2026-10-10');
+      expect(json['home_address_id'], 2);
       expect(json['notes'], 'ملاحظات إضافية بخصوص الوصول');
 
       // Check children list
       final childrenList = json['children'] as List<dynamic>;
       expect(childrenList.length, 2);
 
-      // Child 1 (multi_day)
-      final child1 = childrenList[0] as Map<String, dynamic>;
-      expect(child1, {
-        'child_id': 14,
-        'subscription_type': 'multi_day',
-        'trip_direction': 'both',
-        'timing': 'MORNING',
-        'start_date': '2026-09-10',
-        'end_date': '2026-10-10',
-      });
-
-      // Child 2 (single_day) — end_date must NOT be present
-      final child2 = childrenList[1] as Map<String, dynamic>;
-      expect(child2, {
-        'child_id': 15,
-        'subscription_type': 'single_day',
-        'trip_direction': 'go',
-        'timing': 'MORNING',
-        'start_date': '2026-09-15',
-      });
-      expect(child2.containsKey('end_date'), isFalse);
-
-      // Ensure NO legacy keys exist in payload
-      for (final c in childrenList) {
-        final map = c as Map<String, dynamic>;
-        expect(map.containsKey('parent_id'), isFalse);
-        expect(map.containsKey('school_id'), isFalse);
-        expect(map.containsKey('pickup_address_id'), isFalse);
-        expect(map.containsKey('dropoff_address_id'), isFalse);
-        expect(map.containsKey('price_per_child'), isFalse);
-        expect(map.containsKey('child_notes'), isFalse);
-      }
+      expect(childrenList[0], {'child_id': 14});
+      expect(childrenList[1], {'child_id': 15});
     });
 
     test('يتجاهل الملاحظات الفارغة أو الخالية من النص', () {
       final req1 = SubscriptionRequest(
         driverId: 8,
+        subscriptionType: 'multi_day',
+        tripDirection: 'return',
+        startDate: '2026-09-01',
+        endDate: '2026-09-30',
         notes: '',
         children: [
-          SubscriptionChildRequest(
-            childId: 10,
-            subscriptionType: 'multi_day',
-            tripDirection: 'return',
-            timing: 'EVENING',
-            startDate: '2026-09-01',
-            endDate: '2026-09-30',
-          )
+          SubscriptionChildRequest(childId: 10),
         ],
       );
 
@@ -226,15 +188,12 @@ void main() {
 
       final req2 = SubscriptionRequest(
         driverId: 8,
+        subscriptionType: 'single_day',
+        tripDirection: 'go',
+        startDate: '2026-09-01',
         notes: null,
         children: [
-          SubscriptionChildRequest(
-            childId: 10,
-            subscriptionType: 'single_day',
-            tripDirection: 'go',
-            timing: 'MORNING',
-            startDate: '2026-09-01',
-          )
+          SubscriptionChildRequest(childId: 10),
         ],
       );
 

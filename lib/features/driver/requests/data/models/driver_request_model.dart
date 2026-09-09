@@ -532,7 +532,8 @@ class DriverReqChildDetails {
           DriverRequestModel._parseInt(period['working_days_count']),
       // سعر ولي الأمر (بعد الخصم) أولاً — وليس صافي السائق
       pricePerChild: _toDouble(pricing['total_amount_after_discount'] ??
-          pricing['price_per_child']),
+          pricing['price_per_child'] ??
+          pricing['total_price']),
       distanceKm: _toDouble(pricing['distance_km']),
       tripPrice: _toDouble(pricing['trip_price']),
       platformCommission: _toDouble(pricing['platform_commission']),

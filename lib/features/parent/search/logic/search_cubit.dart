@@ -8,6 +8,8 @@ import 'search_state.dart';
 class SearchCubit extends Cubit<SearchState> {
   final SearchRepository _repository;
 
+  SearchContextModel? lastSearchContext;
+
   SearchCubit(this._repository) : super(SearchInitial());
 
   Future<void> searchDrivers({
@@ -15,74 +17,130 @@ class SearchCubit extends Cubit<SearchState> {
     String? driverGender,
     bool? hasAc,
     List<int>? childIds,
+    String? subscriptionType,
+    String? tripDirection,
+    String? startDate,
+    String? endDate,
   }) async {
     emit(SearchLoading());
 
     final Map<String, dynamic> queryParams = {};
-    if (searchQuery != null && searchQuery.trim().isNotEmpty) {
-      queryParams['search'] = searchQuery.trim();
-    }
-    if (driverGender != null &&
-        driverGender.trim().isNotEmpty &&
-        driverGender.toUpperCase() != 'ALL') {
-      queryParams['gender'] = driverGender.toLowerCase();
-    }
-    if (hasAc == true) {
-      queryParams['has_ac'] = 1;
-    }
+
     if (childIds != null && childIds.isNotEmpty) {
       queryParams['child_ids[]'] = childIds;
     }
 
-    final (list, error) = await _repository.searchDrivers(queryParams);
+    if (subscriptionType != null && subscriptionType.trim().isNotEmpty) {
+      queryParams['subscription_type'] = subscriptionType.trim();
+    }
+
+    if (tripDirection != null && tripDirection.trim().isNotEmpty) {
+      queryParams['trip_direction'] = tripDirection.trim();
+    }
+
+    if (startDate != null && startDate.trim().isNotEmpty) {
+      queryParams['start_date'] = startDate.trim();
+    }
+
+    if (endDate != null && endDate.trim().isNotEmpty) {
+      queryParams['end_date'] = endDate.trim();
+    }
+
+    if (driverGender != null &&
+        driverGender.trim().isNotEmpty &&
+        driverGender.toUpperCase() != 'ALL') {
+      queryParams['driver_gender'] = driverGender.toLowerCase();
+    }
+
+    if (hasAc != null) {
+      queryParams['has_ac'] = hasAc;
+    }
+
+    if (searchQuery != null && searchQuery.trim().isNotEmpty) {
+      queryParams['search_query'] = searchQuery.trim();
+    }
+
+    final (response, error) = await _repository.searchDrivers(queryParams);
 
     if (error != null) {
       emit(SearchError(error));
+    } else if (response != null) {
+      lastSearchContext = response.searchContext;
+      emit(SearchLoaded(response.drivers, searchContext: response.searchContext));
     } else {
-      emit(SearchLoaded(list ?? []));
+      emit(SearchLoaded([], searchContext: null));
     }
   }
 
   Future<void> getPricing({
     required String searchQuery,
     required List<int> childIds,
+    String? subscriptionType,
+    String? tripDirection,
+    String? startDate,
+    String? endDate,
   }) async {
     emit(PricingLoading());
 
     final queryParams = <String, dynamic>{
-      if (searchQuery.trim().isNotEmpty) 'search': searchQuery.trim(),
+      if (searchQuery.trim().isNotEmpty) 'search_query': searchQuery.trim(),
       if (childIds.isNotEmpty) 'child_ids[]': childIds,
+      if (subscriptionType != null && subscriptionType.isNotEmpty)
+        'subscription_type': subscriptionType,
+      if (tripDirection != null && tripDirection.isNotEmpty)
+        'trip_direction': tripDirection,
+      if (startDate != null && startDate.isNotEmpty) 'start_date': startDate,
+      if (endDate != null && endDate.isNotEmpty) 'end_date': endDate,
     };
 
-    final (list, error) = await _repository.searchDrivers(queryParams);
+    final (response, error) = await _repository.searchDrivers(queryParams);
 
     if (error != null) {
       emit(PricingError(error));
-    } else if (list != null && list.isNotEmpty) {
-      emit(PricingLoaded(list.first));
+    } else if (response != null && response.drivers.isNotEmpty) {
+      lastSearchContext = response.searchContext;
+      emit(PricingLoaded(response.drivers.first,
+          searchContext: response.searchContext));
     } else {
       emit(PricingError('لم يتم العثور على السائق.'));
     }
   }
 
-  /// يعيد جلب تسعير سائق محدد بناءً على المجموعة الحالية من الأطفال المختارين
-  /// (لا يعتمد على أي بيانات مخزّنة سابقاً)، حتى يعكس خصم الإخوة الصحيح
-  /// عندما يغيّر ولي الأمر عدد/هوية الأطفال بعد نتيجة البحث الأولى.
+  /// يعيد جلب تسعير سائق محدد بناءً على المجموعة الحالية من الأطفال وإعدادات الاشتراك
   Future<DriverSearchModel?> fetchDriverPricing({
     required int driverId,
     required List<int> childIds,
+    String? subscriptionType,
+    String? tripDirection,
+    String? startDate,
+    String? endDate,
   }) async {
     if (childIds.isEmpty) return null;
 
-    final (list, error) =
-        await _repository.searchDrivers({'child_ids[]': childIds});
+    final queryParams = <String, dynamic>{
+      'child_ids[]': childIds,
+      if (subscriptionType != null && subscriptionType.isNotEmpty)
+        'subscription_type': subscriptionType,
+      if (tripDirection != null && tripDirection.isNotEmpty)
+        'trip_direction': tripDirection,
+      if (startDate != null && startDate.isNotEmpty) 'start_date': startDate,
+      if (endDate != null && endDate.isNotEmpty) 'end_date': endDate,
+    };
 
-    if (error != null || list == null || list.isEmpty) return null;
+    final (response, error) = await _repository.searchDrivers(queryParams);
+
+    if (error != null || response == null || response.drivers.isEmpty) {
+      return null;
+    }
+
+    if (response.searchContext != null) {
+      lastSearchContext = response.searchContext;
+    }
 
     try {
-      return list.firstWhere((d) => d.driverId == driverId);
+      return response.drivers.firstWhere((d) => d.driverId == driverId);
     } catch (_) {
-      return list.first;
+      return response.drivers.first;
     }
   }
 

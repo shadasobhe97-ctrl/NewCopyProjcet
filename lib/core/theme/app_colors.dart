@@ -37,174 +37,226 @@ class AppColors {
   static const Color grey = grey500;
 
   // ============================================================
-  // Darbi Brand Colors
-  // Blue / Sky Blue / Turquoise
+  // DARBI BRAND COLORS
   // ============================================================
 
-  // Main brand blue
-  static const Color primary = Color(0xFF1499D5);
+  // Main Brand Blue
+  static const Color primary = Color(0xFF1D5997);
 
-  // Lighter / brighter sky blue
-  static const Color primaryLight = Color(0xFF20B4D8);
+  // Lighter Blue
+  static const Color primaryLight = Color(0xFF2B70B5);
 
-  // Darker brand blue
-  static const Color primaryDark = Color(0xFF20B4D8);
+  // Darker Blue
+  static const Color primaryDark = Color(0xFF154674);
 
-  // Very light blue background
-  static const Color primarySoft = Color(0xFFE0F7FA);
+  // Very Light Blue
+  static const Color primarySoft = Color(0xFFE8F2FA);
 
-  // Blue container
-  static const Color primaryContainer = Color(0xFFD5F3FA);
+  // Blue Container
+  static const Color primaryContainer = Color(0xFFD6E8F5);
 
-  // Text/icon placed on primary
+  // Content on Primary
   static const Color onPrimary = Color(0xFFFFFFFF);
 
   // ============================================================
-  // Darbi Secondary Brand Color
-  // Warm Yellow
+  // DARBI ACCENT
   // ============================================================
 
-  static const Color secondary = Color(0xFFFBBF24);
-  static const Color secondaryDark = Color(0xFFF59E0B);
-  static const Color secondarySoft = Color(0xFFFEF3C7);
+  // Main Lime Green
+  static const Color secondary = Color(0xFFA5E300);
 
-  static const Color onSecondary = Color(0xFF1F2937);
+  // Dark Lime
+  static const Color secondaryDark = Color(0xFF78A600);
+
+  // Light Lime
+  static const Color secondarySoft = Color(0xFFF0FBCF);
+
+  // Green Container
+  static const Color secondaryContainer = Color(0xFFE4F8A8);
+
+  // Content on Secondary
+  static const Color onSecondary = Color(0xFF231F20);
+
+  // ============================================================
+  // BRAND DARK
+  // ============================================================
+
+  static const Color brandDark = Color(0xFF231F20);
 
   // ============================================================
   // Brand Gradients
   // ============================================================
 
-  static const Color primaryGradientStart = Color(0xFF20B4D8);
-  static const Color primaryGradientEnd = Color(0xFF0879B5);
+  static const Color primaryGradientStart = Color(0xFF2B70B5);
+  static const Color primaryGradientEnd = Color(0xFF154674);
 
   // ============================================================
-  // Material / Utility Colors
+  // Utility Colors
   // ============================================================
 
-  static const Color red = Color(0xFFF44336);
+  static const Color red = Color(0xFFEF4444);
 
-  static const Color green = Color(0xFF4CAF50);
-  static const Color green700 = Color(0xFF388E3C);
+  static const Color green = Color(0xFF22C55E);
+  static const Color green700 = Color(0xFF16A34A);
 
-  static const Color orange = Color(0xFFFF9800);
-  static const Color amber = Color(0xFFFFC107);
+  static const Color orange = Color(0xFFF97316);
+  static const Color amber = secondaryDark; // Replaced yellow with Dark Lime
 
-  // Generic utility blue
-  static const Color blue = Color(0xFF1499D5);
-
+  static const Color blue = Color(0xFF1D5997);
   static const Color blueGrey = Color(0xFF607D8B);
 
   // ============================================================
-  // Light Theme
+  // LIGHT THEME
   // ============================================================
 
   static const Color backgroundLight = Color(0xFFF8FAFC);
+
   static const Color surfaceLight = Color(0xFFFFFFFF);
 
-  static const Color primaryLightTheme = Color(0xFF1499D5);
+  static const Color primaryLightTheme = Color(0xFF1D5997);
+
   static const Color onPrimaryLight = Color(0xFFFFFFFF);
 
-  static const Color primaryContainerLight = Color(0xFFD5F3FA);
+  static const Color primaryContainerLight = Color(0xFFD6E8F5);
 
-  static const Color secondaryLight = Color(0xFFFBBF24);
+  static const Color secondaryLight = Color(0xFFA5E300);
 
   static const Color errorLight = Color(0xFFEF4444);
 
-  // Main text colors
-  static const Color textDark = Color(0xFF1A1A1A);
-  static const Color textPrimary = Color(0xFF1E293B);
-  static const Color textSecondary = Color(0xFF64748B);
-  static const Color textMuted = Color(0xFF6B7280);
+  // Text
+  static const Color textDark = Color(0xFF231F20);
+
+  static const Color textPrimary = Color(0xFF231F20);
+
+  static const Color textSecondary = Color(0xFF667085);
+
+  static const Color textMuted = Color(0xFF98A2B3);
 
   // ============================================================
-  // Dark Theme
+  // DARK THEME
   // ============================================================
 
-  static const Color backgroundDark = Color(0xFF081115);
+  // Main background
+  static const Color backgroundDark = Color(0xFF111418);
 
-  static const Color surfaceDark = Color(0xFF111827);
+  // Main surfaces
+  static const Color surfaceDark = Color(0xFF191E24);
 
-  static const Color darkCard = Color(0xFF1E293B);
+  // Cards
+  static const Color darkCard = Color(0xFF20262D);
 
-  static const Color darkBackground = Color(0xFF0F172A);
+  // Elevated cards
+  static const Color darkCardElevated = Color(0xFF272E36);
 
-  static const Color darkSurface = Color(0xFF111827);
+  // Alternative background
+  static const Color darkBackground = Color(0xFF111418);
 
-  static const Color darkGradientStart = Color(0xFF123A4A);
-  static const Color darkGradientEnd = Color(0xFF0B2530);
+  // Alternative surface
+  static const Color darkSurface = Color(0xFF191E24);
 
-  // Dark theme brand colors
-  static const Color primaryDarkTheme = Color(0xFF20B4D8);
-
-  static const Color primaryContainerDark = Color(0xFF164E63);
-
-  static const Color onPrimaryDark = Color(0xFF081115);
+  // Dark gradients
+  static const Color darkGradientStart = Color(0xFF173B5E);
+  static const Color darkGradientEnd = Color(0xFF123A63);
 
   // ============================================================
-  // Status Colors
+  // DARK THEME BRAND
+  // ============================================================
+
+  static const Color primaryDarkTheme = Color(0xFF2B70B5);
+
+  static const Color primaryContainerDark = Color(0xFF173B5E);
+
+  static const Color onPrimaryDark = Color(0xFFFFFFFF);
+
+  // ============================================================
+  // DARK THEME ACCENT
+  // ============================================================
+
+  static const Color secondaryDarkTheme = Color(0xFFA5E300);
+
+  static const Color secondaryContainerDark = Color(0xFF33420F);
+
+  static const Color onSecondaryDark = Color(0xFF231F20);
+
+  // ============================================================
+  // STATUS COLORS
   // ============================================================
 
   static const Color success = Color(0xFF22C55E);
   static const Color successDark = Color(0xFF16A34A);
 
-  static const Color pending = Color(0xFFF59E0B);
+  static const Color pending = secondaryDark;
 
-  static const Color warning = Color(0xFFF59E0B);
+  static const Color warning = secondaryDark;
 
   static const Color info = Color(0xFF3B82F6);
 
   static const Color error = Color(0xFFEF4444);
 
   // ============================================================
-  // Status Backgrounds
+  // STATUS BACKGROUNDS
   // ============================================================
 
   static const Color successBackground = Color(0xFFDCFCE7);
-  static const Color warningBackground = Color(0xFFFEF3C7);
+
+  static const Color warningBackground = secondarySoft;
+
   static const Color errorBackground = Color(0xFFFEE2E2);
+
   static const Color infoBackground = Color(0xFFDBEAFE);
 
   // ============================================================
-  // Branded Accent Colors
+  // CHILD / GENDER COLORS
   // ============================================================
 
-  // Child / gender colors
   static const Color maleBlue = Color(0xFF3B82F6);
   static const Color femalePink = Color(0xFFEC4899);
 
   static const Color maleBlueBg = Color(0xFFEFF6FF);
   static const Color femalePinkBg = Color(0xFFFDF2F8);
 
-  // Optional accents
+  // ============================================================
+  // OPTIONAL ACCENTS
+  // ============================================================
+
   static const Color accentPurple = Color(0xFF8B5CF6);
 
-  // Changed from Indigo to Darbi sky blue
-  static const Color accentBlue = Color(0xFF20B4D8);
+  static const Color accentBlue = Color(0xFF1D5997);
 
-  static const Color accentGreen = Color(0xFF10B981);
-  static const Color accentAmber = Color(0xFFF59E0B);
+  static const Color accentGreen = Color(0xFFA5E300);
+
+  static const Color accentAmber = secondary;
 
   // ============================================================
-  // Text
+  // TEXT
   // ============================================================
 
   static const Color textOnPrimary = Color(0xFFFFFFFF);
+
   static const Color textOnDark = Color(0xFFF8FAFC);
 
+  // Dark secondary text
+  static const Color textSecondaryDark = Color(0xFFB8C1CC);
+
+  static const Color textMutedDark = Color(0xFF687380);
+
   // ============================================================
-  // Borders / Dividers
+  // BORDERS / DIVIDERS
   // ============================================================
 
-  static const Color borderLight = Color(0xFFE2E8F0);
-  static const Color borderDark = Color(0xFF334155);
+  static const Color borderLight = Color(0xFFE5E7EB);
+
+  static const Color borderDark = Color(0xFF303841);
 
   static const Color dividerLight = Color(0xFFE5E7EB);
-  static const Color dividerDark = Color(0xFF273549);
+
+  static const Color dividerDark = Color(0xFF303841);
 
   // ============================================================
-  // Shadows
+  // SHADOWS
   // ============================================================
 
   static const Color shadowLight = Color(0x14000000);
+
   static const Color shadowDark = Color(0x33000000);
 }

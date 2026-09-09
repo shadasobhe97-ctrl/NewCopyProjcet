@@ -56,8 +56,7 @@ import 'package:kids_transport/features/driver/statistics/logic/cubit/driver_sta
 
 import 'package:kids_transport/features/parent/addresses/presentation/screens/saved_addresses_screen.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step1_screen.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step2_screen.dart';
+import 'package:kids_transport/features/parent/subscriptions/data/models/active_subscription_model.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/child_data_details_screen.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/child_pass_screen.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/my_children_screen.dart';
@@ -289,7 +288,17 @@ class AppRoutes {
           (child) => TransportDetailsScreen(child: child),
         );
       case subscriptionDetails:
-        final subscriptionId = settings.arguments as int;
+        final args = settings.arguments;
+        if (args is ActiveSubscriptionModel) {
+          return _route(
+            settings,
+            BlocProvider(
+              create: (_) => getIt<SubscriptionsCubit>(),
+              child: SubscriptionDetailsScreen(subscription: args),
+            ),
+          );
+        }
+        final subscriptionId = args as int? ?? 0;
         return _route(
           settings,
           BlocProvider(

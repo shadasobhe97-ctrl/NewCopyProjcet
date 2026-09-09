@@ -56,13 +56,13 @@ class SearchActionCardsWidget extends StatelessWidget {
                     Container(
                       padding: EdgeInsets.all(8.r),
                       decoration: BoxDecoration(
-                        color: AppColors.pending.withValues(alpha: 0.15),
+                        color: AppColors.secondary.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.flash_on_rounded,
-                        color: AppColors.pending,
-                        size: 22.r,
+                        color: AppColors.secondaryDark,
+                        size: 22,
                       ),
                     ),
                     SizedBox(width: 10.w),
@@ -281,12 +281,12 @@ class SearchActionCardsWidget extends StatelessWidget {
               color: isDark ? AppColors.grey900 : AppColors.white,
               borderRadius: BorderRadius.circular(18.r),
               border: Border.all(
-                color: AppColors.pending.withValues(alpha: isDark ? 0.4 : 0.35),
+                color: AppColors.secondaryDark.withValues(alpha: isDark ? 0.6 : 0.4),
                 width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.pending.withValues(alpha: isDark ? 0.1 : 0.05),
+                  color: AppColors.secondaryDark.withValues(alpha: isDark ? 0.15 : 0.08),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -297,13 +297,13 @@ class SearchActionCardsWidget extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(10.r),
                   decoration: BoxDecoration(
-                    color: AppColors.pending.withValues(alpha: isDark ? 0.2 : 0.12),
+                    color: AppColors.secondary.withValues(alpha: isDark ? 0.25 : 0.18),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.flash_on_rounded,
-                    color: AppColors.pending,
-                    size: 22.r,
+                    color: AppColors.secondaryDark,
+                    size: 22,
                   ),
                 ),
                 SizedBox(width: 12.w),
@@ -338,7 +338,7 @@ class SearchActionCardsWidget extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                   decoration: BoxDecoration(
-                    color: AppColors.pending,
+                    color: AppColors.secondary,
                     borderRadius: BorderRadius.circular(16.r),
                   ),
                   child: Text(
@@ -346,7 +346,7 @@ class SearchActionCardsWidget extends StatelessWidget {
                     style: AppTextStyles.style(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.white,
+                      color: AppColors.onSecondary,
                     ),
                   ),
                 ),

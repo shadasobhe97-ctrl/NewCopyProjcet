@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
@@ -64,7 +64,7 @@ class _TimelineCardState extends State<TimelineCard>
 
   Color _getNodeColor(BuildContext context) {
     if (widget.item.isCompleted) return AppColors.success;
-    if (widget.item.isCurrent) return AppColors.amber;
+    if (widget.item.isCurrent) return AppColors.secondaryDark;
     return AppColors.grey400;
   }
 
@@ -215,7 +215,7 @@ class _TimelineCardState extends State<TimelineCard>
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                           decoration: BoxDecoration(
-                            color: AppColors.amber.withValues(alpha: 0.15),
+                            color: AppColors.secondary.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8.r),
                           ),
                           child: Text(
@@ -223,7 +223,7 @@ class _TimelineCardState extends State<TimelineCard>
                             style: AppTextStyles.style(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.amber,
+                              color: AppColors.secondaryDark,
                             ),
                           ),
                         ),

@@ -1,3 +1,113 @@
+class DriverSearchResponseModel {
+  final bool status;
+  final String? message;
+  final SearchContextModel? searchContext;
+  final SearchMetaModel? meta;
+  final List<DriverSearchModel> drivers;
+
+  DriverSearchResponseModel({
+    required this.status,
+    this.message,
+    this.searchContext,
+    this.meta,
+    required this.drivers,
+  });
+
+  factory DriverSearchResponseModel.fromJson(Map<String, dynamic> json) {
+    final searchContextData = json['search_context'] is Map
+        ? SearchContextModel.fromJson(
+            Map<String, dynamic>.from(json['search_context'] as Map))
+        : null;
+
+    final metaData = json['meta'] is Map
+        ? SearchMetaModel.fromJson(
+            Map<String, dynamic>.from(json['meta'] as Map))
+        : null;
+
+    final rawList = json['data'] is List
+        ? (json['data'] as List)
+        : json['drivers'] is List
+            ? (json['drivers'] as List)
+            : [];
+
+    final driversList = rawList
+        .map((e) => DriverSearchModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+
+    final isSuccess = json['status'] == true || json['success'] == true;
+
+    return DriverSearchResponseModel(
+      status: isSuccess,
+      message: json['message']?.toString(),
+      searchContext: searchContextData,
+      meta: metaData,
+      drivers: driversList,
+    );
+  }
+}
+
+class SearchContextModel {
+  final String subscriptionType;
+  final String startDate;
+  final String endDate;
+  final String tripDirection;
+  final List<int> childIds;
+
+  SearchContextModel({
+    required this.subscriptionType,
+    required this.startDate,
+    required this.endDate,
+    required this.tripDirection,
+    required this.childIds,
+  });
+
+  factory SearchContextModel.fromJson(Map<String, dynamic> json) {
+    final rawChildIds = json['child_ids'];
+    final List<int> parsedChildIds = rawChildIds is List
+        ? rawChildIds.map((e) => _readInt(e)).toList()
+        : [];
+
+    return SearchContextModel(
+      subscriptionType: json['subscription_type']?.toString() ?? 'multi_day',
+      startDate: json['start_date']?.toString() ?? '',
+      endDate: json['end_date']?.toString() ?? '',
+      tripDirection: json['trip_direction']?.toString() ?? 'go',
+      childIds: parsedChildIds,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'subscription_type': subscriptionType,
+        'start_date': startDate,
+        'end_date': endDate,
+        'trip_direction': tripDirection,
+        'child_ids': childIds,
+      };
+}
+
+class SearchMetaModel {
+  final int currentPage;
+  final int lastPage;
+  final int perPage;
+  final int total;
+
+  SearchMetaModel({
+    required this.currentPage,
+    required this.lastPage,
+    required this.perPage,
+    required this.total,
+  });
+
+  factory SearchMetaModel.fromJson(Map<String, dynamic> json) {
+    return SearchMetaModel(
+      currentPage: _readInt(json['current_page']),
+      lastPage: _readInt(json['last_page']),
+      perPage: _readInt(json['per_page']),
+      total: _readInt(json['total']),
+    );
+  }
+}
+
 class DriverSearchModel {
   final DriverModelInfo driver;
   final VehicleModelInfo vehicle;
@@ -45,13 +155,11 @@ class DriverSearchModel {
 
   double get subtotalPrice =>
       breakdown.isEmpty ? price : breakdown.fold(0.0, (sum, b) => sum + b.subtotal);
-  // خصم الإخوة له معنى فقط لو فيه أكثر من طفل بنفس الطلب — حماية إضافية
-  // بحيث ما يظهرش الخصم أبداً لطفل واحد حتى لو وصلت بيانات تسعير غير متوقعة
+
   bool get hasSiblingDiscount =>
       breakdown.length > 1 && breakdown.any((b) => b.hasSiblingDiscount);
 
   factory DriverSearchModel.fromJson(Map<String, dynamic> json) {
-    // drivers fields are flat at the top level, not nested under 'driver'
     final pricingData = json['pricing'] is Map
         ? Map<String, dynamic>.from(json['pricing'] as Map)
         : <String, dynamic>{};
@@ -191,6 +299,8 @@ class PricingModelInfo {
   final String totalPriceFormatted;
   final double totalPrice;
   final double totalPriceRaw;
+  final double? platformFee;
+  final double? driverNetAmount;
   final int? workingDays;
   final double? distanceKm;
   final bool hasAc;
@@ -202,6 +312,8 @@ class PricingModelInfo {
     this.totalPriceFormatted = '',
     required this.totalPrice,
     required this.totalPriceRaw,
+    this.platformFee,
+    this.driverNetAmount,
     this.workingDays,
     this.distanceKm,
     required this.hasAc,
@@ -223,6 +335,12 @@ class PricingModelInfo {
       totalPriceFormatted: formattedPrice,
       totalPrice: _parsePriceString(rawTotalPrice),
       totalPriceRaw: _readDouble(json['total_price_raw']),
+      platformFee: json['platform_fee'] != null
+          ? _readDouble(json['platform_fee'])
+          : null,
+      driverNetAmount: json['driver_net_amount'] != null
+          ? _readDouble(json['driver_net_amount'])
+          : null,
       workingDays:
           json['working_days'] != null ? _readInt(json['working_days']) : null,
       distanceKm:
@@ -237,55 +355,99 @@ class PricingModelInfo {
 class BreakdownModelInfo {
   final int childId;
   final String childName;
+  final String gender;
+  final String schoolStage;
   final String schoolName;
+  final String schoolAddress;
+  final double schoolLat;
+  final double schoolLng;
+  final String homeLabel;
+  final double homeLat;
+  final double homeLng;
+  final String preferredTimeSlot;
   final double distanceKm;
-  final double pricePerKm;
-  final String subscriptionType;
   final int workingDays;
-  final double childPrice;
-  final int childPriceRaw;
   final double subtotal;
   final double discountPercent;
   final double discountAmount;
+  final double finalTotal;
+  final double platformFee;
+  final double driverNet;
+  final String subscriptionTypeLabel;
+  final String childPriceFormatted;
+  final double childPriceRaw;
   final String? error;
 
   BreakdownModelInfo({
     required this.childId,
     required this.childName,
+    this.gender = 'male',
+    this.schoolStage = '',
     required this.schoolName,
+    this.schoolAddress = '',
+    this.schoolLat = 0.0,
+    this.schoolLng = 0.0,
+    this.homeLabel = '',
+    this.homeLat = 0.0,
+    this.homeLng = 0.0,
+    this.preferredTimeSlot = 'morning',
     required this.distanceKm,
-    required this.pricePerKm,
-    required this.subscriptionType,
     required this.workingDays,
-    required this.childPrice,
-    required this.childPriceRaw,
-    double? subtotal,
+    required this.subtotal,
     this.discountPercent = 0,
     this.discountAmount = 0,
+    required this.finalTotal,
+    this.platformFee = 0.0,
+    this.driverNet = 0.0,
+    this.subscriptionTypeLabel = '',
+    this.childPriceFormatted = '',
+    required this.childPriceRaw,
     this.error,
-  }) : subtotal = subtotal ?? childPrice;
+  });
 
+  double get childPrice => finalTotal;
   bool get hasSiblingDiscount => discountPercent > 0 && discountAmount > 0;
 
   factory BreakdownModelInfo.fromJson(Map<String, dynamic> json) {
-    final finalTotal = json.containsKey('final_total')
+    final parsedFinalTotal = json.containsKey('final_total')
         ? _parsePriceString(json['final_total'])
         : _parsePriceString(json['child_price']);
+
+    final schoolLoc = json['school_location'] is Map
+        ? Map<String, dynamic>.from(json['school_location'] as Map)
+        : <String, dynamic>{};
+    final homeLoc = json['home_location'] is Map
+        ? Map<String, dynamic>.from(json['home_location'] as Map)
+        : <String, dynamic>{};
+
     return BreakdownModelInfo(
       childId: _readInt(json['child_id']),
       childName: json['child_name']?.toString() ?? '',
+      gender: json['gender']?.toString() ?? 'male',
+      schoolStage: json['school_stage']?.toString() ?? '',
       schoolName: json['school_name']?.toString() ?? '',
+      schoolAddress: json['school_address']?.toString() ?? '',
+      schoolLat: _readDouble(schoolLoc['lat']),
+      schoolLng: _readDouble(schoolLoc['lng']),
+      homeLabel: json['home_label']?.toString() ?? '',
+      homeLat: _readDouble(homeLoc['lat']),
+      homeLng: _readDouble(homeLoc['lng']),
+      preferredTimeSlot: json['preferred_time_slot']?.toString() ?? 'morning',
       distanceKm: _readDouble(json['distance_km']),
-      pricePerKm: _readDouble(json['price_per_km']),
-      subscriptionType: json['subscription_type']?.toString() ?? 'monthly',
       workingDays: _readInt(json['working_days']),
-      childPrice: finalTotal,
-      childPriceRaw: _readInt(json['child_price_raw']),
       subtotal: _readDouble(json['subtotal']) > 0
           ? _readDouble(json['subtotal'])
-          : finalTotal,
+          : parsedFinalTotal,
       discountPercent: _readDouble(json['discount_percent']),
       discountAmount: _readDouble(json['discount_amount']),
+      finalTotal: parsedFinalTotal,
+      platformFee: _readDouble(json['platform_fee']),
+      driverNet: _readDouble(json['driver_net']),
+      subscriptionTypeLabel: json['subscription_type_label']?.toString() ?? '',
+      childPriceFormatted: json['child_price']?.toString() ?? '',
+      childPriceRaw: _readDouble(json['child_price_raw']) > 0
+          ? _readDouble(json['child_price_raw'])
+          : parsedFinalTotal,
       error: json['error']?.toString(),
     );
   }
@@ -323,3 +485,4 @@ bool _readBool(dynamic value) {
   if (value is String) return value == '1' || value.toLowerCase() == 'true';
   return false;
 }
+
