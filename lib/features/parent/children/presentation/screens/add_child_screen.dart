@@ -522,12 +522,12 @@ class _AddChildScreenState extends State<AddChildScreen> {
                               });
                             });
                           },
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(30),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
                               color: isDark ? AppColors.grey900 : AppColors.grey100,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(30),
                               border: Border.all(
                                 color: modalSelectedZone != null
                                     ? Theme.of(ctx).primaryColor
@@ -1228,7 +1228,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           decoration: AppTheme.boxDecoration(
                             color: isDark ? AppColors.grey900 : AppColors.grey100,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(30),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1357,7 +1357,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(30),
                             ),
                           ),
                           icon: const Icon(Icons.access_time_rounded),
@@ -1375,7 +1375,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(30),
                             ),
                           ),
                           icon: const Icon(Icons.access_time_filled_rounded),

@@ -11,6 +11,7 @@ import '../../data/models/child_model.dart';
 import '../../logic/children_cubit/children_cubit.dart';
 import 'add_child_step1_screen.dart';
 import 'child_pass_screen.dart';
+import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
 
 class MyChildrenScreen extends StatefulWidget {
   const MyChildrenScreen({super.key});
@@ -32,7 +33,11 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AddChildStep1Screen()),
-    );
+    ).then((_) {
+      if (mounted) {
+        context.read<ChildrenCubit>().fetchChildren();
+      }
+    });
   }
 
   void _openEditChild(BuildContext context, ChildModel child) {
@@ -117,23 +122,35 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
         title: const Text('أطفالي'),
         centerTitle: true,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              ParentMainWrapper.changeTab(0);
+            }
+          },
+        ),
       ),
-        body: BlocConsumer<ChildrenCubit, ChildrenState>(
+      body: BlocConsumer<ChildrenCubit, ChildrenState>(
           listener: (context, state) {
             if (state is ChildrenActionSuccess) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: AppColors.success,
+                  backgroundColor: Theme.of(context).primaryColor,
                   behavior: SnackBarBehavior.floating,
+                  margin: EdgeInsets.only(bottom: 80.h, left: 16.w, right: 16.w),
                 ),
               );
             } else if (state is ChildrenActionError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: AppColors.textDark,
                   behavior: SnackBarBehavior.floating,
+                  margin: EdgeInsets.only(bottom: 80.h, left: 16.w, right: 16.w),
                 ),
               );
             }
@@ -293,7 +310,15 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                             ],
                           ),
                         ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 12.h),
+
+                        // فاصل باللون الأخضر الزرعي المنعش والواضح
+                        Divider(
+                          thickness: 2,
+                          height: 20.h,
+                          color: const Color(0xFF4CAF50), // أخضر زرعي زاهي وواضح
+                        ),
+                        SizedBox(height: 12.h),
 
                         // 3️⃣ كارد تفاصيل الطفل المختار الشامل
                         if (activeChild != null)

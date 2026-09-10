@@ -454,6 +454,14 @@ class AppTheme {
           borderRadius: BorderRadius.circular(30),
           borderSide: const BorderSide(color: AppColors.errorLight, width: 1.5),
         ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: const BorderSide(color: AppColors.errorLight, width: 2),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide(color: AppColors.grey200.withValues(alpha: 0.5), width: 1.5),
+        ),
         labelStyle: GoogleFonts.cairo(color: AppColors.grey600),
         hintStyle: GoogleFonts.cairo(color: AppColors.grey400),
       ),
@@ -566,6 +574,14 @@ class AppTheme {
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
           borderSide: const BorderSide(color: AppColors.errorLight, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: const BorderSide(color: AppColors.errorLight, width: 2),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide(color: AppColors.grey800.withValues(alpha: 0.5), width: 1.5),
         ),
         labelStyle: GoogleFonts.cairo(color: AppColors.grey400),
         hintStyle: GoogleFonts.cairo(color: AppColors.grey600),

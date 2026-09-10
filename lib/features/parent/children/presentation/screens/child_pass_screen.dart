@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../core/routes/app_router.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/theme/text_styles.dart';
@@ -260,15 +259,14 @@ class ChildPassScreen extends StatelessWidget {
                 height: 50.h,
                 child: ElevatedButton(
                   onPressed: () {
-                    // العودة لتبويب "أطفالي" في شريط التنقل السفلي وتحديث القائمة
+                    // تحديث قائمة الأطفال ثم العودة للشاشة السابقة
+                    try {
+                      context.read<ChildrenCubit>().fetchChildren();
+                    } catch (_) {}
+                    // ننقل للتبويب الأطفال ثم نغلق هذه الشاشة فقط
+                    // الـ AddChildScreen سيتولى بقية التنقل عبر .then()
                     ParentMainWrapper.changeTab(1);
-                    context.read<ChildrenCubit>().fetchChildren();
-                    Navigator.of(context).popUntil(
-                      (route) =>
-                          route.settings.name == AppRoutes.parentMainWrapper ||
-                          route.settings.name == AppRoutes.parentHome ||
-                          route.settings.name == AppRoutes.parentHomeLegacy,
-                    );
+                    Navigator.of(context).pop();
                   },
                   style: AppTheme.elevatedButtonStyle(
                     backgroundColor: context.primaryColor,
