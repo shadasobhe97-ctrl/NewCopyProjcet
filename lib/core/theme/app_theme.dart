@@ -14,64 +14,64 @@ class AppTheme {
   );
 
   static TextTheme _buildTextTheme(TextTheme baseTheme) {
-    return GoogleFonts.tajawalTextTheme(baseTheme).copyWith(
-      displayLarge: GoogleFonts.tajawal(
+    return GoogleFonts.cairoTextTheme(baseTheme).copyWith(
+      displayLarge: GoogleFonts.cairo(
         fontSize: 32,
         fontWeight: FontWeight.bold,
       ),
-      displayMedium: GoogleFonts.tajawal(
+      displayMedium: GoogleFonts.cairo(
         fontSize: 28,
         fontWeight: FontWeight.bold,
       ),
-      displaySmall: GoogleFonts.tajawal(
+      displaySmall: GoogleFonts.cairo(
         fontSize: 24,
         fontWeight: FontWeight.bold,
       ),
-      headlineLarge: GoogleFonts.tajawal(
+      headlineLarge: GoogleFonts.cairo(
         fontSize: 22,
         fontWeight: FontWeight.bold,
       ),
-      headlineMedium: GoogleFonts.tajawal(
+      headlineMedium: GoogleFonts.cairo(
         fontSize: 20,
         fontWeight: FontWeight.bold,
       ),
-      headlineSmall: GoogleFonts.tajawal(
+      headlineSmall: GoogleFonts.cairo(
         fontSize: 18,
         fontWeight: FontWeight.bold,
       ),
-      titleLarge: GoogleFonts.tajawal(
+      titleLarge: GoogleFonts.cairo(
         fontSize: 18,
         fontWeight: FontWeight.w600,
       ),
-      titleMedium: GoogleFonts.tajawal(
+      titleMedium: GoogleFonts.cairo(
         fontSize: 16,
         fontWeight: FontWeight.w600,
       ),
-      titleSmall: GoogleFonts.tajawal(
+      titleSmall: GoogleFonts.cairo(
         fontSize: 14,
         fontWeight: FontWeight.w500,
       ),
-      bodyLarge: GoogleFonts.tajawal(
+      bodyLarge: GoogleFonts.cairo(
         fontSize: 16,
         fontWeight: FontWeight.normal,
       ),
-      bodyMedium: GoogleFonts.tajawal(
+      bodyMedium: GoogleFonts.cairo(
         fontSize: 14,
         fontWeight: FontWeight.normal,
       ),
-      bodySmall: GoogleFonts.tajawal(
+      bodySmall: GoogleFonts.cairo(
         fontSize: 12,
         fontWeight: FontWeight.normal,
       ),
-      labelLarge: GoogleFonts.tajawal(
+      labelLarge: GoogleFonts.cairo(
         fontSize: 14,
         fontWeight: FontWeight.w600,
       ),
-      labelMedium: GoogleFonts.tajawal(
+      labelMedium: GoogleFonts.cairo(
         fontSize: 12,
         fontWeight: FontWeight.w500,
       ),
-      labelSmall: GoogleFonts.tajawal(
+      labelSmall: GoogleFonts.cairo(
         fontSize: 10,
         fontWeight: FontWeight.w500,
       ),
@@ -307,7 +307,7 @@ class AppTheme {
       shadowColor: shadowColor,
       surfaceTintColor: surfaceTintColor,
       elevation: elevation,
-      textStyle: textStyle ?? GoogleFonts.tajawal(fontSize: 16, fontWeight: FontWeight.bold),
+      textStyle: textStyle ?? GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
       padding: padding,
       minimumSize: minimumSize,
       fixedSize: fixedSize,
@@ -361,7 +361,7 @@ class AppTheme {
       shadowColor: shadowColor,
       surfaceTintColor: surfaceTintColor,
       elevation: elevation,
-      textStyle: textStyle ?? GoogleFonts.tajawal(fontSize: 16, fontWeight: FontWeight.bold),
+      textStyle: textStyle ?? GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
       padding: padding,
       minimumSize: minimumSize,
       fixedSize: fixedSize,
@@ -385,7 +385,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     final baseTheme = ThemeData(
       brightness: Brightness.light,
-      fontFamily: GoogleFonts.tajawal().fontFamily,
+      fontFamily: GoogleFonts.cairo().fontFamily,
       primaryColor: AppColors.primaryLight,
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryLight,
@@ -417,7 +417,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          textStyle: GoogleFonts.tajawal(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -428,7 +428,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          textStyle: GoogleFonts.tajawal(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -448,14 +448,14 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: const BorderSide(color: AppColors.secondaryDark, width: 2),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
           borderSide: const BorderSide(color: AppColors.errorLight, width: 1.5),
         ),
-        labelStyle: GoogleFonts.tajawal(color: AppColors.grey600),
-        hintStyle: GoogleFonts.tajawal(color: AppColors.grey400),
+        labelStyle: GoogleFonts.cairo(color: AppColors.grey600),
+        hintStyle: GoogleFonts.cairo(color: AppColors.grey400),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
@@ -500,7 +500,7 @@ class AppTheme {
   static ThemeData get darkTheme {
     final baseTheme = ThemeData(
       brightness: Brightness.dark,
-      fontFamily: GoogleFonts.tajawal().fontFamily,
+      fontFamily: GoogleFonts.cairo().fontFamily,
       primaryColor: AppColors.primaryDark,
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primaryDark,
@@ -530,7 +530,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          textStyle: GoogleFonts.tajawal(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -541,7 +541,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          textStyle: GoogleFonts.tajawal(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -561,14 +561,14 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: const BorderSide(color: AppColors.secondaryDark, width: 2),
+          borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
           borderSide: const BorderSide(color: AppColors.errorLight, width: 1.5),
         ),
-        labelStyle: GoogleFonts.tajawal(color: AppColors.grey400),
-        hintStyle: GoogleFonts.tajawal(color: AppColors.grey600),
+        labelStyle: GoogleFonts.cairo(color: AppColors.grey400),
+        hintStyle: GoogleFonts.cairo(color: AppColors.grey600),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {

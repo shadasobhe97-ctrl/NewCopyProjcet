@@ -16,7 +16,18 @@ import '../widgets/empty_state_widget.dart';
 import '../widgets/search_loading_widget.dart';
 
 class ParentSearchScreen extends StatefulWidget {
-  const ParentSearchScreen({super.key});
+  final VoidCallback? onBack;
+  final bool isEmbedded;
+  final bool autoFocus;
+  final String? initialQuery;
+
+  const ParentSearchScreen({
+    super.key,
+    this.onBack,
+    this.isEmbedded = false,
+    this.autoFocus = false,
+    this.initialQuery,
+  });
 
   @override
   State<ParentSearchScreen> createState() => _ParentSearchScreenState();
@@ -24,6 +35,7 @@ class ParentSearchScreen extends StatefulWidget {
 
 class _ParentSearchScreenState extends State<ParentSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   String _searchQuery = '';
   String _driverGender = 'both'; // للفلتر بعد النتائج
@@ -60,6 +72,13 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
   @override
   void initState() {
     super.initState();
+    _searchFocusNode.addListener(() {
+      if (mounted) setState(() {});
+    });
+    if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
+      _searchController.text = widget.initialQuery!;
+      _searchQuery = widget.initialQuery!;
+    }
     final childrenState = context.read<ChildrenCubit>().state;
     if (childrenState is ChildrenLoaded) {
       _currentKids = childrenState.children;
@@ -67,11 +86,19 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
       _currentKids = _fallbackKids;
     }
     context.read<ChildrenCubit>().fetchChildren();
+    if (_searchQuery.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<SearchCubit>().searchDrivers(searchQuery: _searchQuery);
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -152,8 +179,6 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
       },
     );
   }
-
-  static const Color _darbiCyan = Color(0xFF20B4D8);
 
   int get _activeFiltersCount {
     int count = 0;
@@ -353,11 +378,11 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                           _applyFilter();
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _darbiCyan,
+                          backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16.r),
+                            borderRadius: BorderRadius.circular(30.r),
                           ),
                         ),
                         child: Text(
@@ -390,29 +415,50 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: EdgeInsets.symmetric(vertical: 11.h),
+        padding: EdgeInsets.symmetric(vertical: 11.h, horizontal: 8.w),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected
-              ? _darbiCyan
-              : (isDark ? AppColors.surfaceDark : Colors.white),
-          borderRadius: BorderRadius.circular(14.r),
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(30.r),
           border: Border.all(
             color: isSelected
-                ? _darbiCyan
+                ? AppColors.secondaryDark
                 : (isDark ? AppColors.grey800 : AppColors.grey300),
-            width: 1.0,
+            width: isSelected ? 1.5 : 1.0,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.secondaryDark.withValues(alpha: 0.12),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
         ),
-        child: Text(
-          label,
-          style: AppTextStyles.style(
-            fontSize: 12.5.sp,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected
-                ? Colors.white
-                : (isDark ? AppColors.grey300 : AppColors.textDark),
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: AppTextStyles.style(
+                fontSize: 12.5.sp,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected
+                    ? AppColors.secondaryDark
+                    : (isDark ? AppColors.grey300 : AppColors.textDark),
+              ),
+            ),
+            if (isSelected) ...[
+              SizedBox(width: 4.w),
+              Icon(
+                Icons.check_rounded,
+                size: 14.r,
+                color: AppColors.secondaryDark,
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -426,10 +472,10 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
       decoration: BoxDecoration(
-        color: _darbiCyan.withValues(alpha: 0.1),
+        color: AppColors.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10.r),
         border: Border.all(
-          color: _darbiCyan.withValues(alpha: 0.35),
+          color: AppColors.primary.withValues(alpha: 0.35),
           width: 1.0,
         ),
       ),
@@ -441,7 +487,7 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
             style: AppTextStyles.style(
               fontSize: 11.5.sp,
               fontWeight: FontWeight.w600,
-              color: isDark ? _darbiCyan : const Color(0xFF0F768E),
+              color: isDark ? AppColors.primaryLight : AppColors.primary,
             ),
           ),
           SizedBox(width: 5.w),
@@ -450,7 +496,7 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
             child: Icon(
               Icons.close_rounded,
               size: 14.r,
-              color: isDark ? _darbiCyan : const Color(0xFF0F768E),
+              color: isDark ? AppColors.primaryLight : AppColors.primary,
             ),
           ),
         ],
@@ -505,14 +551,27 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                             Container(
                               decoration: BoxDecoration(
                                 color: isDark ? AppColors.surfaceDark : Colors.white,
-                                borderRadius: BorderRadius.circular(16.r),
+                                borderRadius: BorderRadius.circular(30.r),
                                 border: Border.all(
-                                  color: isDark ? AppColors.grey800 : AppColors.grey300,
-                                  width: 1.0,
+                                  color: _searchFocusNode.hasFocus
+                                      ? AppColors.primary
+                                      : (isDark
+                                          ? AppColors.grey800
+                                          : AppColors.grey300),
+                                  width: _searchFocusNode.hasFocus ? 1.5 : 1.0,
                                 ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
                               child: TextField(
                                 controller: _searchController,
+                                focusNode: _searchFocusNode,
+                                autofocus: widget.autoFocus,
                                 onChanged: (val) {
                                   setState(() => _searchQuery = val.trim());
                                 },
@@ -532,7 +591,7 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                   isDense: true,
                                   filled: false,
                                   contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 16.w,
+                                    horizontal: 18.w,
                                     vertical: 14.h,
                                   ),
                                   border: InputBorder.none,
@@ -570,9 +629,9 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                         ),
                                       IconButton(
                                         icon: const Icon(
-                                          Icons.arrow_back_rounded,
-                                          color: _darbiCyan,
-                                          size: 20,
+                                          Icons.search_rounded,
+                                          color: AppColors.primary,
+                                          size: 22,
                                         ),
                                         tooltip: 'بحث',
                                         onPressed: () {
@@ -627,14 +686,14 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                               ),
                             ),
 
-                            // 4. زر CTA الرئيسي: "بحث عن سائق مناسب"
+                            // 4. زر CTA الرئيسي: "بحث عن سائق مناسب" (حدود دائرية وباللون الأزرق الداكن)
                             Container(
                               height: 50.h,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16.r),
+                                borderRadius: BorderRadius.circular(30.r),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: _darbiCyan.withValues(alpha: 0.22),
+                                    color: AppColors.primary.withValues(alpha: 0.25),
                                     blurRadius: 10,
                                     offset: const Offset(0, 3),
                                   ),
@@ -643,11 +702,11 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                               child: ElevatedButton(
                                 onPressed: () => _openSmartSearchDialog(context),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: _darbiCyan,
+                                  backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16.r),
+                                    borderRadius: BorderRadius.circular(30.r),
                                   ),
                                   padding: EdgeInsets.symmetric(horizontal: 16.w),
                                 ),
@@ -694,61 +753,62 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
 
                             // قسم النتائج والفلاتر
                             if (!isLoading && state is SearchLoaded) ...[
-                              // ── السائقون المتاحون مع العدد ──
+                              // ── السائقون المتاحون مع أيقونة التصفية في نفس السطر ──
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    'السائقون المتاحون',
-                                    style: AppTextStyles.style(
-                                      fontSize: 15.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark
-                                          ? AppColors.white
-                                          : AppColors.textDark,
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 10.w,
-                                      vertical: 3.h,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _darbiCyan.withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(12.r),
-                                    ),
-                                    child: Text(
-                                      '${filteredDrivers.length}',
-                                      style: AppTextStyles.style(
-                                        fontSize: 13.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: _darbiCyan,
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'السائقون المتاحون',
+                                        style: AppTextStyles.style(
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: isDark
+                                              ? AppColors.white
+                                              : AppColors.textDark,
+                                        ),
                                       ),
-                                    ),
+                                      SizedBox(width: 8.w),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 8.w,
+                                          vertical: 2.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary.withValues(alpha: 0.12),
+                                          borderRadius: BorderRadius.circular(12.r),
+                                        ),
+                                        child: Text(
+                                          '${filteredDrivers.length}',
+                                          style: AppTextStyles.style(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              SizedBox(height: 10.h),
 
-                              // ── زر الفلاتر الصغير والأنيق ──
-                              Row(
-                                children: [
+                                  // أيقونة التصفية بجانب العنوان مباشرة
                                   GestureDetector(
                                     onTap: _openFilterBottomSheet,
                                     child: Container(
                                       padding: EdgeInsets.symmetric(
-                                        horizontal: 14.w,
-                                        vertical: 7.h,
+                                        horizontal: 10.w,
+                                        vertical: 6.h,
                                       ),
                                       decoration: BoxDecoration(
                                         color: isDark
                                             ? AppColors.surfaceDark
                                             : Colors.white,
                                         borderRadius:
-                                            BorderRadius.circular(12.r),
+                                            BorderRadius.circular(20.r),
                                         border: Border.all(
                                           color: _activeFiltersCount > 0
-                                              ? _darbiCyan
+                                              ? AppColors.secondaryDark
                                               : (isDark
                                                   ? AppColors.grey800
                                                   : AppColors.grey300),
@@ -760,36 +820,68 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                         children: [
                                           Icon(
                                             Icons.tune_rounded,
-                                            size: 15.r,
+                                            size: 16.r,
                                             color: _activeFiltersCount > 0
-                                                ? _darbiCyan
+                                                ? AppColors.secondaryDark
                                                 : (isDark
-                                                    ? AppColors.grey300
-                                                    : AppColors.textDark),
+                                                    ? AppColors.grey400
+                                                    : AppColors.textMuted),
                                           ),
-                                          SizedBox(width: 6.w),
-                                          Text(
-                                            _activeFiltersCount > 0
-                                                ? 'الفلاتر $_activeFiltersCount'
-                                                : 'الفلاتر',
-                                            style: AppTextStyles.style(
-                                              fontSize: 12.sp,
-                                              fontWeight: _activeFiltersCount > 0
-                                                  ? FontWeight.bold
-                                                  : FontWeight.w500,
-                                              color: _activeFiltersCount > 0
-                                                  ? _darbiCyan
-                                                  : (isDark
-                                                      ? AppColors.white
-                                                      : AppColors.textDark),
+                                          if (_activeFiltersCount > 0) ...[
+                                            SizedBox(width: 4.w),
+                                            Text(
+                                              '$_activeFiltersCount',
+                                              style: AppTextStyles.style(
+                                                fontSize: 11.sp,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.secondaryDark,
+                                              ),
                                             ),
-                                          ),
+                                          ],
                                         ],
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
+                              SizedBox(height: 8.h),
+
+                              // ── هيدر ثابت: الترتيب من الأعلى تقييماً ──
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 6.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? AppColors.surfaceDark.withValues(alpha: 0.6)
+                                      : AppColors.grey100.withValues(alpha: 0.7),
+                                  borderRadius: BorderRadius.circular(10.r),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.sort_rounded,
+                                      size: 16.r,
+                                      color: isDark
+                                          ? AppColors.grey400
+                                          : AppColors.textMuted,
+                                    ),
+                                    SizedBox(width: 6.w),
+                                    Text(
+                                      'الترتيب: من الأعلى تقييماً',
+                                      style: AppTextStyles.style(
+                                        fontSize: 11.5.sp,
+                                        fontWeight: FontWeight.w500,
+                                        color: isDark
+                                            ? AppColors.grey400
+                                            : AppColors.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: 6.h),
 
                               // ── الفلاتر المختارة فقط كـ Chips صغيرة أسفل زر الفلاتر ──
                               if (_activeFiltersCount > 0) ...[
@@ -894,7 +986,13 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
               color: isDark ? AppColors.white : AppColors.textDark,
             ),
             tooltip: 'رجوع',
-            onPressed: () => Navigator.maybePop(context),
+            onPressed: () {
+              if (widget.onBack != null) {
+                widget.onBack!();
+              } else {
+                Navigator.maybePop(context);
+              }
+            },
           ),
           Expanded(
             child: Text(

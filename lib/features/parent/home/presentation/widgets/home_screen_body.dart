@@ -9,6 +9,8 @@ import 'package:kids_transport/features/parent/home/presentation/widgets/childre
 import 'package:kids_transport/features/parent/home/presentation/widgets/quick_services_widget.dart';
 import 'package:kids_transport/features/parent/home/presentation/widgets/notifications_widget.dart';
 
+import 'package:kids_transport/features/parent/trips/logic/active_trip_cubit/active_trip_cubit.dart';
+
 class HomeScreenBody extends StatefulWidget {
   final Future<void> Function()? onRefresh;
 
@@ -28,6 +30,7 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<ChildrenCubit>().fetchChildren();
+        context.read<ActiveTripCubit>().loadActiveTrips();
       }
     });
   }
@@ -36,7 +39,6 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).primaryColor;
 
-    const bool hasTrips = true;
     const bool hasNotifications = false;
 
     return Directionality(
@@ -44,7 +46,10 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
       child: RefreshIndicator(
         onRefresh: widget.onRefresh ??
             () async {
-              await context.read<ChildrenCubit>().fetchChildren();
+              await Future.wait([
+                context.read<ChildrenCubit>().fetchChildren(),
+                context.read<ActiveTripCubit>().loadActiveTrips(),
+              ]);
             },
         color: primaryColor,
         child: ListView(
@@ -55,27 +60,27 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
           children: [
             // 👋 1) قسم الترحيب
             const WelcomeHeaderWidget(),
-            SizedBox(height: 16.h),
+            SizedBox(height: 20.h),
 
-            // 🔍 2) كروت البحث الرئيسية (البحث للاشتراك + البحث السريع)
+            // 🔍 2) كروت البحث الرئيسية
             const SearchActionCardsWidget(),
-            SizedBox(height: 18.h),
+            SizedBox(height: 24.h),
 
             // 🧠 3) قسم الرحلة النشطة
-            const TopCardWidget(hasTrips: hasTrips),
-            SizedBox(height: 18.h),
+            const TopCardWidget(),
+            SizedBox(height: 24.h),
 
             // 👶 4) قسم الأطفال
             const ChildrenSectionWidget(),
-            SizedBox(height: 18.h),
+            SizedBox(height: 24.h),
 
             // 🔔 5) قسم الإشعارات
             const NotificationsWidget(hasNotifications: hasNotifications),
-            SizedBox(height: 18.h),
-
-            // ⚡ 6) قسم الخدمات السريعة (محفوظ بالكامل)
-            const QuickServicesWidget(),
             SizedBox(height: 24.h),
+
+            // ⚡ 6) قسم الخدمات السريعة
+            const QuickServicesWidget(),
+            SizedBox(height: 32.h),
           ],
         ),
       ),

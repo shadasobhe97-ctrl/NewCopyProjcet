@@ -31,7 +31,6 @@ class AddAddressSheet extends StatefulWidget {
 class _AddAddressSheetState extends State<AddAddressSheet> {
   final MapController _mapController = MapController();
   final _labelController = TextEditingController();
-  final _streetController = TextEditingController();
   late LatLng _currentCenter;
   bool _isLoading = false;
 
@@ -50,7 +49,6 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
     final addr = widget.initialAddress;
     if (addr != null) {
       _labelController.text = addr.title;
-      _streetController.text = addr.streetAddress ?? '';
       _selectedZoneId = addr.zoneId;
       _selectedZoneName = addr.zoneName;
       _currentCenter = LatLng(addr.latitude, addr.longitude);
@@ -137,7 +135,6 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
   void dispose() {
     _mapController.dispose();
     _labelController.dispose();
-    _streetController.dispose();
     super.dispose();
   }
 
@@ -276,23 +273,7 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
                         labelText: 'اسم العنوان (مثال: المنزل، العمل، المدرسة)',
                         prefixIcon: const Icon(
                           Icons.label_outline_rounded,
-                          color: AppColors.primaryLight,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // حقل وصف العنوان / الشارع
-                    TextFormField(
-                      controller: _streetController,
-                      textAlign: TextAlign.right,
-                      enabled: !_isLoading,
-                      decoration: AppTheme.inputDecoration(
-                        context,
-                        labelText: 'وصف العنوان / الشارع (مثال: شارع بن عاشور)',
-                        prefixIcon: const Icon(
-                          Icons.signpost_outlined,
-                          color: AppColors.primaryLight,
+                          color: AppColors.primary,
                         ),
                       ),
                     ),
@@ -310,7 +291,7 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         backgroundColor: _isLoading
                             ? AppColors.grey400
-                            : AppColors.primaryLight,
+                            : AppColors.primary,
                         foregroundColor: AppColors.white,
                       ),
                       child: _isLoading
@@ -413,7 +394,7 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
         labelText: 'المنطقة',
         prefixIcon: const Icon(
           Icons.map_outlined,
-          color: AppColors.primaryLight,
+          color: AppColors.primary,
         ),
       ),
       hint: Text(
@@ -462,17 +443,6 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
       return;
     }
 
-    final streetText = _streetController.text.trim();
-    if (streetText.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('يرجى إدخال وصف العنوان / الشارع'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
-
     final lat = _currentCenter.latitude;
     final lng = _currentCenter.longitude;
 
@@ -511,7 +481,7 @@ class _AddAddressSheetState extends State<AddAddressSheet> {
     final address = AddressModel(
       id: widget.initialAddress?.id,
       title: titleText,
-      streetAddress: streetText,
+      streetAddress: null,
       latitude: lat,
       longitude: lng,
       zoneId: _selectedZoneId,

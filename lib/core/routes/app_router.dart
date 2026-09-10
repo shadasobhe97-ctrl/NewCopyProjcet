@@ -248,8 +248,8 @@ class AppRoutes {
         final initialTab = settings.arguments as int? ?? 0;
         return _route(
           settings,
-          BlocProvider(
-            create: (context) => getIt<ParentProfileCubit>()..fetchProfile(),
+          BlocProvider.value(
+            value: getIt<ParentProfileCubit>()..fetchProfile(),
             child: ParentMainWrapper(initialIndex: initialTab),
           ),
         );
@@ -258,8 +258,8 @@ class AppRoutes {
       case parentProfile:
         return _route(
           settings,
-          BlocProvider(
-            create: (context) => getIt<ParentProfileCubit>(),
+          BlocProvider.value(
+            value: getIt<ParentProfileCubit>(),
             child: const ParentProfileScreen(),
           ),
         );

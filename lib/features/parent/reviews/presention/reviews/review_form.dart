@@ -121,7 +121,7 @@ class _ReviewFormState extends State<ReviewForm> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.r),
-                borderSide: const BorderSide(color: AppColors.secondaryDark, width: 1.5),
+                borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
               ),
             ),
             validator: (val) {

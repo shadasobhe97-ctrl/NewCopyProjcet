@@ -40,10 +40,9 @@ class ChildrenSectionWidget extends StatelessWidget {
         }
 
         final count = childrenList.length;
-
         String countText;
         if (count == 0) {
-          countText = '(لا يوجد أطفال)';
+          countText = '';
         } else if (count == 1) {
           countText = '(طفل واحد)';
         } else if (count == 2) {
@@ -55,7 +54,7 @@ class ChildrenSectionWidget extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // هيدر القسم: "أطفالي" وعدد الأطفال على اليمين و "عرض الكل" على اليسار
+            // هيدر القسم
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -69,24 +68,23 @@ class ChildrenSectionWidget extends StatelessWidget {
                         color: isDark ? AppColors.white : AppColors.textDark,
                       ),
                     ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      countText,
-                      style: AppTextStyles.style(
-                        fontSize: 11.sp,
-                        color: AppColors.textMuted,
+                    if (countText.isNotEmpty) ...[
+                      SizedBox(width: 6.w),
+                      Text(
+                        countText,
+                        style: AppTextStyles.style(
+                          fontSize: 11.sp,
+                          color: AppColors.textMuted,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
                 InkWell(
                   onTap: onViewAll ?? () => ParentMainWrapper.changeTab(1),
                   borderRadius: BorderRadius.circular(8.r),
                   child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 4.w,
-                      vertical: 2.h,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
                     child: Text(
                       'عرض الكل',
                       style: AppTextStyles.style(
@@ -99,21 +97,21 @@ class ChildrenSectionWidget extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 10.h),
+            SizedBox(height: 12.h),
 
-            // قائمة أفقية: كارد "إضافة طفل" ثابت على اليمين (Index 0)، يليه كروت الأطفال
+            // قائمة أفقية بأسلوب الماسنجر (ارتفاع ثابت آمن)
             SizedBox(
-              height: 128.h,
+              height: 116.h,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  // 1️⃣ كارد "إضافة طفل" - ثابت دائماً في البداية (جهة اليمين)
-                  _buildAddChildCard(context, isDark, primaryColor),
+                  // زر إضافة طفل أولاً
+                  _buildAddChildMessenger(context, isDark, primaryColor),
 
-                  // 2️⃣ كروت الأطفال المسجلين (الصورة واسم الطفل الأول فقط)
+                  // كروت الأطفال
                   ...childrenList.map(
-                    (child) => _buildChildCard(
+                    (child) => _buildChildMessengerItem(
                       context,
                       child: child,
                       isDark: isDark,
@@ -129,8 +127,8 @@ class ChildrenSectionWidget extends StatelessWidget {
     );
   }
 
-  // كارد الطفل (عرض الاسم الأول والصورة وحالة الاشتراك)
-  Widget _buildChildCard(
+  // 🧒 عنصر الطفل بأسلوب الماسنجر
+  Widget _buildChildMessengerItem(
     BuildContext context, {
     required ChildModel child,
     required bool isDark,
@@ -144,143 +142,188 @@ class ChildrenSectionWidget extends StatelessWidget {
     final avatarBgColor = isFemale ? context.femalePinkBg : context.maleBlueBg;
     final avatarIconColor =
         isFemale ? context.genderFemaleColor : context.genderMaleColor;
+    final ringColor = isFemale ? AppColors.femalePink : primaryColor;
 
-    // حالة الاشتراك (افتراضية نشطة إذا وجد خيار أو غير نشطة)
-    final bool hasSubscription = child.id != null; 
-    final statusText = hasSubscription ? 'اشتراك نشط' : 'لا يوجد اشتراك';
-    final statusColor = hasSubscription ? AppColors.accentGreen : AppColors.textMuted;
-
-    return InkWell(
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          AppRoutes.childDataDetails,
-          arguments: child,
-        );
-      },
-      borderRadius: BorderRadius.circular(16.r),
-      child: Container(
-        width: 98.w,
-        margin: EdgeInsets.only(left: 10.w),
-        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 6.w),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.grey900 : AppColors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: isDark ? AppColors.grey800 : AppColors.grey200,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+    return Container(
+      width: 70.w,
+      margin: EdgeInsets.only(left: 12.w),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // 1. الصورة الدائرية مع إطار أنيق
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(
+              context,
+              AppRoutes.childDataDetails,
+              arguments: child,
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AppUserAvatar(
-              imageUrl: child.photoUrl,
-              radius: 20.r,
-              backgroundColor: avatarBgColor,
-              iconColor: avatarIconColor,
-            ),
-            SizedBox(height: 6.h),
-            Text(
-              firstName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.style(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.white : AppColors.textDark,
+            child: Container(
+              padding: EdgeInsets.all(2.r),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: ringColor.withValues(alpha: 0.8),
+                  width: 2.0,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: ringColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: AppUserAvatar(
+                imageUrl: child.photoUrl,
+                radius: 20.r,
+                backgroundColor: avatarBgColor,
+                iconColor: avatarIconColor,
               ),
             ),
-            SizedBox(height: 2.h),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+          ),
+          SizedBox(height: 4.h),
+
+          // 2. اسم الطفل
+          Text(
+            firstName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.style(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.white : AppColors.textDark,
+            ),
+          ),
+          SizedBox(height: 3.h),
+
+          // 3. زر التفاصيل
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(
+              context,
+              AppRoutes.childDataDetails,
+              arguments: child,
+            ),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
               decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.1),
+                color: isDark ? AppColors.grey800 : AppColors.primarySoft,
                 borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.grey700
+                      : primaryColor.withValues(alpha: 0.25),
+                  width: 0.8,
+                ),
               ),
               child: Text(
-                statusText,
+                'التفاصيل',
                 style: AppTextStyles.style(
-                  fontSize: 8.5.sp,
-                  fontWeight: FontWeight.w600,
-                  color: statusColor,
+                  fontSize: 9.sp,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.primaryLight : primaryColor,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  // ➕ كارد "إضافة طفل" الموحد
-  Widget _buildAddChildCard(
+  // ➕ زر إضافة طفل بأسلوب الماسنجر
+  Widget _buildAddChildMessenger(
     BuildContext context,
     bool isDark,
     Color primaryColor,
   ) {
-    return InkWell(
-      onTap: onAddChild ??
-          () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AddChildStep1Screen(),
-              ),
-            );
-          },
-      borderRadius: BorderRadius.circular(16.r),
-      child: Container(
-        width: 92.w,
-        margin: EdgeInsets.only(left: 10.w),
-        padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 6.w),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.grey900 : AppColors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: primaryColor.withValues(alpha: 0.35),
-            width: 1.2,
+    void doAdd() {
+      if (onAddChild != null) {
+        onAddChild!();
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const AddChildStep1Screen(),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: primaryColor.withValues(alpha: isDark ? 0.1 : 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(8.r),
+        );
+      }
+    }
+
+    return Container(
+      width: 70.w,
+      margin: EdgeInsets.only(left: 12.w),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // الدائرة
+          GestureDetector(
+            onTap: doAdd,
+            child: Container(
+              width: 46.r,
+              height: 46.r,
               decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.1),
+                color: isDark ? AppColors.grey900 : AppColors.primarySoft,
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: primaryColor.withValues(alpha: 0.5),
+                  width: 1.8,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryColor.withValues(alpha: isDark ? 0.12 : 0.07),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              child: Icon(
-                Icons.add_rounded,
-                color: primaryColor,
-                size: 22.r,
+              child: Center(
+                child: Icon(
+                  Icons.add_rounded,
+                  color: primaryColor,
+                  size: 22.r,
+                ),
               ),
             ),
-            SizedBox(height: 8.h),
-            Text(
-              'إضافة طفل',
-              style: AppTextStyles.style(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.bold,
-                color: primaryColor,
+          ),
+          SizedBox(height: 4.h),
+
+          // الاسم
+          Text(
+            'إضافة طفل',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.style(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.bold,
+              color: primaryColor,
+            ),
+          ),
+          SizedBox(height: 3.h),
+
+          // شارة إضافة
+          GestureDetector(
+            onTap: doAdd,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+              decoration: BoxDecoration(
+                color: AppColors.secondary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Text(
+                '+ جديد',
+                style: AppTextStyles.style(
+                  fontSize: 9.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.secondaryDark,
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

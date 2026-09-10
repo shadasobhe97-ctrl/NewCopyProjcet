@@ -653,9 +653,7 @@ class _SmartSearchBottomSheetWidgetState
         duration: const Duration(milliseconds: 180),
         padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 8.w),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.secondary
-              : (isDark ? AppColors.grey900 : AppColors.white),
+          color: isDark ? AppColors.grey900 : AppColors.white,
           borderRadius: BorderRadius.circular(30.r),
           border: Border.all(
             color: isSelected
@@ -663,6 +661,15 @@ class _SmartSearchBottomSheetWidgetState
                 : (isDark ? AppColors.grey800 : AppColors.grey300),
             width: isSelected ? 1.5 : 1.0,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.secondaryDark.withValues(alpha: 0.12),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
         ),
         child: Center(
           child: Row(
@@ -674,16 +681,16 @@ class _SmartSearchBottomSheetWidgetState
                   fontSize: 11.sp,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   color: isSelected
-                      ? AppColors.onSecondary
+                      ? AppColors.secondaryDark
                       : (isDark ? AppColors.white : AppColors.textDark),
                 ),
               ),
               if (isSelected) ...[
-                SizedBox(width: 3.w),
+                SizedBox(width: 4.w),
                 Icon(
                   Icons.check_rounded,
                   size: 13.r,
-                  color: AppColors.onSecondary,
+                  color: AppColors.secondaryDark,
                 ),
               ],
             ],

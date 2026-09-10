@@ -5,6 +5,7 @@ import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import 'package:kids_transport/features/parent/absence/data/models/absence_model.dart';
 import 'package:kids_transport/features/parent/absence/logic/absence_cubit.dart';
 import 'package:kids_transport/features/parent/absence/logic/absence_state.dart';
@@ -198,13 +199,32 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                 return _buildEmptyChildrenState(context, isDark);
               }
 
-              // اختيار تلقائي للطفل الأول إذا وُجد طفل واحد فقط ولم يتم الاختيار سابقاً
-              if (children.length == 1 &&
-                  _selectedChildId == null &&
-                  children.first.id != null) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _selectChild(children.first);
-                });
+              // اختيار تلقائي للطفل إذا لم يتم الاختيار سابقاً
+              if (children.isNotEmpty && _selectedChildId == null) {
+                final targetChild = widget.initialChildId != null
+                    ? children.firstWhere(
+                        (c) => c.id == widget.initialChildId,
+                        orElse: () => children.first,
+                      )
+                    : children.first;
+                if (targetChild.id != null) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted && _selectedChildId == null) {
+                      _selectChild(targetChild);
+                    }
+                  });
+                }
+              }
+
+              // مزامنة اسم الطفل المختار إذا لم يكن متوفراً
+              if (_selectedChildId != null &&
+                  _selectedChildName == null &&
+                  children.isNotEmpty) {
+                final matched =
+                    children.where((c) => c.id == _selectedChildId);
+                if (matched.isNotEmpty) {
+                  _selectedChildName = matched.first.fullName;
+                }
               }
 
               return RefreshIndicator(
@@ -216,16 +236,14 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ─── 1. اختيار الطفل ─────────────────────────────
-                      if (children.length > 1) ...[
-                        _buildSectionTitle(context, '👶 اختر الطفل', isDark),
-                        SizedBox(height: 10.h),
-                        _buildChildSelector(context, children, isDark),
-                        SizedBox(height: 20.h),
-                      ],
+                      // ─── 1. شريط اختيار الأطفال (سكرول أفقي بنمط Messenger) ───
+                      _buildSectionTitle(context, '👶 أطفالي', isDark),
+                      SizedBox(height: 10.h),
+                      _buildChildSelector(context, children, isDark),
+                      SizedBox(height: 16.h),
 
                       // ─── بقية المحتوى بعد اختيار الطفل ──────────────
-                      if (_selectedChildId == null && children.length > 1)
+                      if (_selectedChildId == null)
                         _buildSelectChildPrompt(context, isDark)
                       else
                         BlocBuilder<AbsenceCubit, AbsenceState>(
@@ -250,6 +268,10 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
 
   void _selectChild(ChildModel child) {
     if (child.id == null) return;
+    if (_selectedChildId == child.id &&
+        context.read<AbsenceCubit>().state is! AbsenceInitial) {
+      return;
+    }
     setState(() {
       _selectedChildId = child.id;
       _selectedChildName = child.fullName;
@@ -257,78 +279,76 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
     context.read<AbsenceCubit>().loadAbsenceData(child.id!);
   }
 
-  // ─── قسم اختيار الطفل (WhatsApp/Messenger Style) ───────────────────────
+  // ─── قسم اختيار الطفل (Messenger Style مع إطار بريمري وعلامة صح باليمين) ───
   Widget _buildChildSelector(
     BuildContext context,
     List<ChildModel> children,
     bool isDark,
   ) {
+    final primaryColor = context.primaryColor;
+
     return SizedBox(
-      height: 135.h,
+      height: 112.h,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 2.h),
         itemCount: children.length,
         itemBuilder: (context, index) {
           final child = children[index];
           final isSelected = child.id == _selectedChildId;
-          final primaryColor = context.primaryColor;
+          final isFemale = child.gender == 'female';
 
           return GestureDetector(
             onTap: () => _selectChild(child),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 76.w,
-              margin: EdgeInsets.symmetric(horizontal: 6.w),
-              padding: EdgeInsets.only(top: 6.h, bottom: 8.h, left: 2.w, right: 2.w),
+            child: Container(
+              width: 78.w,
+              margin: EdgeInsets.only(left: 10.w),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // ── الصورة مع الإطار وعلامة التأشير ──
                   Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      // الحلقة الخارجية (border ring عند التحديد)
+                      // الحلقة الخارجية (دائرة باللون البريمري عند التحديد)
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.all(3),
+                        padding: EdgeInsets.all(3.r),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: isSelected
                                 ? primaryColor
                                 : (isDark
-                                      ? AppColors.grey600
-                                      : AppColors.grey300),
-                            width: isSelected ? 2.5 : 1.5,
+                                    ? AppColors.grey700
+                                    : AppColors.grey300),
+                            width: isSelected ? 2.5 : 1.2,
                           ),
-                        ),
-                        child: CircleAvatar(
-                          radius: 26.r,
-                          backgroundColor: isDark
-                              ? AppColors.grey700
-                              : primaryColor.withValues(alpha: 0.1),
-                          backgroundImage:
-                              (child.photoUrl != null && child.hasRealPhoto)
-                              ? NetworkImage(child.photoUrl!)
-                              : null,
-                          child: (child.photoUrl == null || !child.hasRealPhoto)
-                              ? Text(
-                                  child.fullName.isNotEmpty
-                                      ? child.fullName[0].toUpperCase()
-                                      : '؟',
-                                  style: AppTextStyles.style(
-                                    fontSize: 18.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: primaryColor,
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: primaryColor.withValues(alpha: 0.25),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
                                   ),
-                                )
-                              : null,
+                                ]
+                              : [],
+                        ),
+                        child: AppUserAvatar(
+                          imageUrl: child.photoUrl,
+                          radius: 26.r,
+                          backgroundColor: isFemale
+                              ? context.femalePinkBg
+                              : context.maleBlueBg,
+                          iconColor: isFemale
+                              ? context.genderFemaleColor
+                              : context.genderMaleColor,
                         ),
                       ),
 
-                      // علامة ✔ الزرقاء عند التحديد
+                      // علامة ✔ الصغيرة باللون البريمري في اليمين عند التحديد
                       if (isSelected)
                         Positioned(
                           top: 0,
@@ -337,8 +357,8 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                             scale: isSelected ? 1.0 : 0.0,
                             duration: const Duration(milliseconds: 200),
                             child: Container(
-                              width: 18.r,
-                              height: 18.r,
+                              width: 19.r,
+                              height: 19.r,
                               decoration: BoxDecoration(
                                 color: primaryColor,
                                 shape: BoxShape.circle,
@@ -348,11 +368,18 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                                       : AppColors.white,
                                   width: 2,
                                 ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.15),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
                               ),
                               child: Icon(
                                 Icons.check_rounded,
                                 color: AppColors.white,
-                                size: 10.r,
+                                size: 11.r,
                               ),
                             ),
                           ),
@@ -360,16 +387,16 @@ class _AbsenceScreenBodyState extends State<_AbsenceScreenBody> {
                     ],
                   ),
 
-                  SizedBox(height: 8.h),
+                  SizedBox(height: 6.h),
 
                   // ── اسم الطفل ──
                   Text(
-                    child.fullName.split(' ').first,
+                    child.fullName.trim().split(' ').first,
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.style(
-                      fontSize: 11.sp,
+                      fontSize: 11.5.sp,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.w500,
                       color: isSelected
