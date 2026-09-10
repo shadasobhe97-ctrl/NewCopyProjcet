@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,7 +6,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
-import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -21,6 +18,7 @@ import 'package:kids_transport/features/parent/children/data/models/child_model.
 import 'package:kids_transport/features/parent/children/data/models/logistics_model.dart';
 import 'package:kids_transport/features/parent/children/data/models/school_model.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
+import 'package:kids_transport/features/parent/children/presentation/screens/child_pass_screen.dart';
 import 'package:latlong2/latlong.dart';
 
 class AddChildScreen extends StatefulWidget {
@@ -58,7 +56,6 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
   TimeOfDay? _pickupTime;
   TimeOfDay? _dropoffTime;
-  double _notificationRadius = 500; // قيمة إشعارات النطاق ثابتة 500م
   Uint8List? _imageBytes;
   String? _imagePath;
   String? _existingPhotoUrl;
@@ -416,8 +413,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
                             initialCenter: selectedCenter,
                             initialZoom: 15.5,
                             onPositionChanged: (pos, hasGesture) {
-                              if (hasGesture && pos.center != null) {
-                                selectedCenter = pos.center!;
+                              if (hasGesture) {
+                                selectedCenter = pos.center;
                               }
                             },
                           ),
@@ -477,7 +474,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                                   ),
                                 );
 
-                                if (pos != null && (pos.latitude != 0.0 || pos.longitude != 0.0)) {
+                                if (pos.latitude != 0.0 || pos.longitude != 0.0) {
                                   final newLatLng = LatLng(pos.latitude, pos.longitude);
                                   selectedCenter = newLatLng;
                                   modalMapController.move(newLatLng, 16.0);
@@ -955,10 +952,22 @@ class _AddChildScreenState extends State<AddChildScreen> {
           context.read<ChildrenCubit>().fetchChildren();
         } catch (_) {}
 
-        if (widget.isFirstChildMandatory && _isFirstChildHeaderShown) {
-          _showAddAnotherChildDialog();
-        } else {
+        if (isEditMode) {
           Navigator.pop(context, resultChild);
+        } else {
+          // عرض بطاقة QR Code الخاصة بالطفل فوراً لولي الأمر
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChildPassScreen(child: resultChild),
+            ),
+          ).then((_) {
+            if (widget.isFirstChildMandatory && _isFirstChildHeaderShown && mounted) {
+              _showAddAnotherChildDialog();
+            } else if (mounted) {
+              Navigator.pop(context, resultChild);
+            }
+          });
         }
       }
     } on ApiException catch (e) {
@@ -1036,7 +1045,6 @@ class _AddChildScreenState extends State<AddChildScreen> {
       _preferredTimeSlot = 'morning';
       _pickupTime = null;
       _dropoffTime = null;
-      _notificationRadius = 500;
       _imageBytes = null;
       _imagePath = null;
       _existingPhotoUrl = null;
@@ -1189,7 +1197,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
                     children: [
                       // اختيار تاريخ الميلاد
                       Expanded(
-                        child: InkWell(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
                           onTap: _selectBirthDate,
                           child: IgnorePointer(
                             child: TextFormField(
@@ -1271,7 +1280,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   const SizedBox(height: 16),
 
                   // مدرسة الطفل
-                  InkWell(
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onTap: _showSchoolPicker,
                     child: IgnorePointer(
                       child: TextFormField(
@@ -1461,10 +1471,20 @@ class _AddChildScreenState extends State<AddChildScreen> {
           ),
           const SizedBox(height: 8),
           _isLoadingAddress
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Center(
+                    child: SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          isDark ? AppColors.grey500 : AppColors.grey400,
+                        ),
+                      ),
+                    ),
+                  ),
                 )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1534,16 +1554,14 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   ],
                 ),
           const SizedBox(height: 14),
-          // زر التعديل ممتد بعرض الكارد بالكامل وفي المنتصف
+          // زر التعديل ممتد بعرض الكارد بالكامل وبحدود دائرية
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                side: BorderSide(color: theme.primaryColor),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                side: BorderSide(color: theme.primaryColor, width: 1.2),
+                shape: const StadiumBorder(),
               ),
               onPressed: _showEditAddressConfirmation,
               icon: const Icon(Icons.edit_location_alt_rounded, size: 18),

@@ -54,7 +54,7 @@ class ChildrenSectionWidget extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // هيدر القسم
+            // ── هيدر القسم: أطفالي + عدد الأطفال + عرض الكل ──
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -99,17 +99,17 @@ class ChildrenSectionWidget extends StatelessWidget {
             ),
             SizedBox(height: 12.h),
 
-            // قائمة أفقية بأسلوب الماسنجر (ارتفاع ثابت آمن)
+            // ── قائمة أفقية بأسلوب الماسنجر (الأفاتار + الاسم + زر التفاصيل) ──
             SizedBox(
               height: 116.h,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  // زر إضافة طفل أولاً
+                  // 1️⃣ زر إضافة طفل أولاً وثابت دائماً
                   _buildAddChildMessenger(context, isDark, primaryColor),
 
-                  // كروت الأطفال
+                  // 2️⃣ كروت الأطفال (صورة دائرية + اسم + زر التفاصيل)
                   ...childrenList.map(
                     (child) => _buildChildMessengerItem(
                       context,
@@ -127,7 +127,7 @@ class ChildrenSectionWidget extends StatelessWidget {
     );
   }
 
-  // 🧒 عنصر الطفل بأسلوب الماسنجر
+  // 🧒 عنصر الطفل بأسلوب الماسنجر: صورة دائرية + اسم الطفل + زر التفاصيل
   Widget _buildChildMessengerItem(
     BuildContext context, {
     required ChildModel child,
@@ -232,7 +232,7 @@ class ChildrenSectionWidget extends StatelessWidget {
     );
   }
 
-  // ➕ زر إضافة طفل بأسلوب الماسنجر
+  // ➕ زر إضافة طفل أول القائمة وثابت دائماً
   Widget _buildAddChildMessenger(
     BuildContext context,
     bool isDark,
@@ -258,7 +258,7 @@ class ChildrenSectionWidget extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // الدائرة
+          // الدائرة الحاوية للأيقونة
           GestureDetector(
             onTap: doAdd,
             child: Container(
@@ -288,37 +288,25 @@ class ChildrenSectionWidget extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(height: 4.h),
-
-          // الاسم
-          Text(
-            'إضافة طفل',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.style(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.bold,
-              color: primaryColor,
-            ),
-          ),
+          // مسافة بديلة عن النص المكرر للحفاظ على توازي وتناسق المحاذاة مع أسماء الأطفال المجاورة
+          SizedBox(height: 14.sp),
           SizedBox(height: 3.h),
 
-          // شارة إضافة
+          // زر إضافة طفل
           GestureDetector(
             onTap: doAdd,
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
               decoration: BoxDecoration(
-                color: AppColors.secondary.withValues(alpha: 0.15),
+                color: primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Text(
-                '+ جديد',
+                'إضافة طفل',
                 style: AppTextStyles.style(
                   fontSize: 9.sp,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.secondaryDark,
+                  color: isDark ? AppColors.primaryLight : primaryColor,
                 ),
               ),
             ),

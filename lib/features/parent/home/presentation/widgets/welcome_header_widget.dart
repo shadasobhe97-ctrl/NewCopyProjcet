@@ -33,92 +33,52 @@ class WelcomeHeaderWidget extends StatelessWidget {
 
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 2.h),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. النص الترحيبي
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              // السطر الأول: الترحيب + الاسم
+              RichText(
+                text: TextSpan(
                   children: [
-                    // السطر الأول: الترحيب + الاسم
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: 'مرحباً',
-                            style: AppTextStyles.style(
-                              fontSize: 22.sp,
-                              fontWeight: FontWeight.w900,
-                              color: isDark ? AppColors.white : AppColors.textDark,
-                            ),
-                          ),
-                          if (firstName.isNotEmpty) ...[
-                            TextSpan(
-                              text: '، $firstName',
-                              style: AppTextStyles.style(
-                                fontSize: 22.sp,
-                                fontWeight: FontWeight.w900,
-                                color: isDark
-                                    ? AppColors.primaryLight
-                                    : primaryColor,
-                              ),
-                            ),
-                          ],
-                          TextSpan(
-                            text: ' 👋',
-                            style: TextStyle(fontSize: 20.sp),
-                          ),
-                        ],
+                    TextSpan(
+                      text: 'مرحباً',
+                      style: AppTextStyles.style(
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? AppColors.white : AppColors.textDark,
                       ),
                     ),
-                    SizedBox(height: 5.h),
-
-                    // السطر الثاني: رسالة قصيرة احترافية
-                    Text(
-                      'أطفالك بأمان — في كل رحلة، كل يوم',
-                      style: AppTextStyles.style(
-                        fontSize: 12.sp,
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.2,
+                    if (firstName.isNotEmpty) ...[
+                      TextSpan(
+                        text: '، $firstName',
+                        style: AppTextStyles.style(
+                          fontSize: 22.sp,
+                          fontWeight: FontWeight.w900,
+                          color: isDark
+                              ? AppColors.primaryLight
+                              : primaryColor,
+                        ),
                       ),
+                    ],
+                    TextSpan(
+                      text: ' 👋',
+                      style: TextStyle(fontSize: 20.sp),
                     ),
                   ],
                 ),
               ),
+              SizedBox(height: 5.h),
 
-              // 2. شارة درب (لوغو صغير / بادج)
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: AppColors.secondary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(
-                    color: AppColors.secondary.withValues(alpha: 0.5),
-                    width: 1.0,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.verified_rounded,
-                      color: AppColors.secondaryDark,
-                      size: 14.r,
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      'دربي',
-                      style: AppTextStyles.style(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.secondaryDark,
-                      ),
-                    ),
-                  ],
+              // السطر الثاني: رسالة قصيرة احترافية
+              Text(
+                'أطفالك بأمان — في كل رحلة، كل يوم',
+                style: AppTextStyles.style(
+                  fontSize: 12.sp,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.2,
                 ),
               ),
             ],

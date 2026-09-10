@@ -268,7 +268,7 @@ class TopCardWidget extends StatelessWidget {
                     ),
                   ),
 
-                  // سهم التنقل
+                  // سهم التنقل (يشير لليسار في واجهة RTL للدلالة على المتابعة)
                   Container(
                     padding: EdgeInsets.all(6.r),
                     decoration: BoxDecoration(
@@ -276,7 +276,7 @@ class TopCardWidget extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.arrow_back_ios_new_rounded,
+                      Icons.arrow_forward_ios_rounded,
                       size: 13.r,
                       color: isDark ? AppColors.grey300 : primaryColor,
                     ),
