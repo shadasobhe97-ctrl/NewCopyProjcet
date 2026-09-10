@@ -171,6 +171,38 @@ class AddressRemoteDataSource {
     }
   }
 
+  /// GET /api/parent/addresses?is_default=true لجلب العنوان المعتمد
+  Future<AddressModel?> getDefaultAddress() async {
+    try {
+      final response = await _client.get(
+        ApiEndpoints.parentAddresses,
+        queryParameters: {'is_default': 'true'},
+        headers: _authHeader,
+      );
+      final data = response.data;
+      debugPrint('📥 [Addresses API] GET /addresses?is_default=true => $data');
+      _checkSuccess(data, 'تعذر تحميل العنوان المعتمد.');
+      final list = _extractList(data);
+      if (list.isNotEmpty) {
+        return AddressModel.fromJson(Map<String, dynamic>.from(list.first as Map));
+      }
+      if (data is Map && data['data'] is Map) {
+        return AddressModel.fromJson(Map<String, dynamic>.from(data['data'] as Map));
+      }
+    } catch (e) {
+      debugPrint('⚠️ [Addresses API] getDefaultAddress error: $e');
+    }
+
+    // احتياطاً: جلب كافة العناوين وأخذ الافتراضي أو الأول
+    try {
+      final all = await getAddresses();
+      if (all.isNotEmpty) {
+        return all.firstWhere((a) => a.isDefault, orElse: () => all.first);
+      }
+    } catch (_) {}
+    return null;
+  }
+
   /// GET /api/parent/addresses
   Future<List<AddressModel>> getAddresses() async {
     final response = await _client.get(

@@ -30,12 +30,13 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
   }
 
   void _openAddChild(BuildContext context) {
+    final cubit = context.read<ChildrenCubit>();
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AddChildStep1Screen()),
     ).then((_) {
       if (mounted) {
-        context.read<ChildrenCubit>().fetchChildren();
+        cubit.fetchChildren();
       }
     });
   }
@@ -383,33 +384,66 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // الدائرة المحيطة بالأفاتار
-            Container(
-              padding: EdgeInsets.all(isSelected ? 3.r : 2.r),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected
-                      ? primaryColor
-                      : (isDark ? AppColors.grey700 : AppColors.grey300),
-                  width: isSelected ? 2.5 : 1.2,
+            // الدائرة المحيطة بالأفاتار مع علامة الصح عند التحديد
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(isSelected ? 3.r : 2.r),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? primaryColor
+                          : (isDark ? AppColors.grey700 : AppColors.grey300),
+                      width: isSelected ? 2.5 : 1.2,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: primaryColor.withValues(alpha: 0.35),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: AppUserAvatar(
+                    imageUrl: child.photoUrl,
+                    radius: 22.r,
+                    backgroundColor: avatarBgColor,
+                    iconColor: avatarIconColor,
+                  ),
                 ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: primaryColor.withValues(alpha: 0.35),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                if (isSelected)
+                  Positioned(
+                    top: -2.r,
+                    right: -2.r,
+                    child: Container(
+                      padding: EdgeInsets.all(2.5.r),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4CAF50),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          width: 1.8,
                         ),
-                      ]
-                    : null,
-              ),
-              child: AppUserAvatar(
-                imageUrl: child.photoUrl,
-                radius: 22.r,
-                backgroundColor: avatarBgColor,
-                iconColor: avatarIconColor,
-              ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.25),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.check_rounded,
+                        size: 11.r,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             SizedBox(height: 5.h),
 

@@ -72,6 +72,10 @@ class ParentDrawer extends StatelessWidget {
             fullName = profileState.parent.fullName;
             phoneNumber = profileState.parent.phoneNumber;
             avatarUrl = profileState.parent.avatarUrl;
+          } else if (profileState is ParentProfileUpdateLoading) {
+            fullName = profileState.currentParent.fullName;
+            phoneNumber = profileState.currentParent.phoneNumber;
+            avatarUrl = profileState.currentParent.avatarUrl;
           } else {
             // Fallback: الكاش المحلي
             final cubit = context.read<ParentProfileCubit>();
@@ -121,7 +125,7 @@ class ParentDrawer extends StatelessWidget {
                       AppDrawerItem(
                         icon: Icons.location_on_outlined,
                         iconColor: context.successColor,
-                        label: 'إدارة العناوين المحفوظة',
+                        label: 'عنواني',
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.pushNamed(

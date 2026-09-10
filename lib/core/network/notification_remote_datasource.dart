@@ -42,6 +42,12 @@ class NotificationRemoteDataSource {
     return ApiEndpoints.markAllNotificationsRead;
   }
 
+  Map<String, dynamic> get _authHeader {
+    final auth = StorageService.getAuthorizationHeader();
+    if (auth == null || auth.isEmpty) return {};
+    return {'Authorization': auth};
+  }
+
   Future<Response<dynamic>> getNotifications({
     int page = 1,
     int? perPage,
@@ -61,6 +67,7 @@ class NotificationRemoteDataSource {
       return await _apiClient.get(
         primaryEndpoint,
         queryParameters: queryParams,
+        headers: _authHeader,
       );
     } on DioException catch (e) {
       if (primaryEndpoint != ApiEndpoints.notifications &&
@@ -68,6 +75,7 @@ class NotificationRemoteDataSource {
         return await _apiClient.get(
           ApiEndpoints.notifications,
           queryParameters: queryParams,
+          headers: _authHeader,
         );
       }
       rethrow;
@@ -78,11 +86,17 @@ class NotificationRemoteDataSource {
     final primaryEndpoint = _unreadCountEndpoint;
 
     try {
-      return await _apiClient.get(primaryEndpoint);
+      return await _apiClient.get(
+        primaryEndpoint,
+        headers: _authHeader,
+      );
     } on DioException catch (e) {
       if (primaryEndpoint != ApiEndpoints.notificationsUnreadCount &&
           e.response?.statusCode == 404) {
-        return await _apiClient.get(ApiEndpoints.notificationsUnreadCount);
+        return await _apiClient.get(
+          ApiEndpoints.notificationsUnreadCount,
+          headers: _authHeader,
+        );
       }
       rethrow;
     }
@@ -92,22 +106,34 @@ class NotificationRemoteDataSource {
     final primaryEndpoint = _markReadEndpoint(id);
 
     try {
-      return await _apiClient.post(primaryEndpoint);
+      return await _apiClient.post(
+        primaryEndpoint,
+        headers: _authHeader,
+      );
     } on DioException catch (e) {
       if (e.response?.statusCode == 405 || e.response?.statusCode == 404) {
         try {
-          return await _apiClient.patch(primaryEndpoint);
+          return await _apiClient.patch(
+            primaryEndpoint,
+            headers: _authHeader,
+          );
         } on DioException catch (e2) {
           if (primaryEndpoint != ApiEndpoints.markNotificationRead(id) &&
               e2.response?.statusCode == 404) {
-            return await _apiClient.post(ApiEndpoints.markNotificationRead(id));
+            return await _apiClient.post(
+              ApiEndpoints.markNotificationRead(id),
+              headers: _authHeader,
+            );
           }
           rethrow;
         }
       }
       if (primaryEndpoint != ApiEndpoints.markNotificationRead(id) &&
           e.response?.statusCode == 404) {
-        return await _apiClient.post(ApiEndpoints.markNotificationRead(id));
+        return await _apiClient.post(
+          ApiEndpoints.markNotificationRead(id),
+          headers: _authHeader,
+        );
       }
       rethrow;
     }
@@ -117,36 +143,50 @@ class NotificationRemoteDataSource {
     final primaryEndpoint = _markAllReadEndpoint;
 
     try {
-      return await _apiClient.post(primaryEndpoint);
+      return await _apiClient.post(
+        primaryEndpoint,
+        headers: _authHeader,
+      );
     } on DioException catch (e) {
       if (primaryEndpoint != ApiEndpoints.markAllNotificationsRead &&
           e.response?.statusCode == 404) {
-        return await _apiClient.post(ApiEndpoints.markAllNotificationsRead);
+        return await _apiClient.post(
+          ApiEndpoints.markAllNotificationsRead,
+          headers: _authHeader,
+        );
       }
       rethrow;
     }
   }
 
   Future<Response<dynamic>> deleteNotification(String id) async {
-    return await _apiClient.delete(ApiEndpoints.deleteNotification(id));
+    return await _apiClient.delete(
+      ApiEndpoints.deleteNotification(id),
+      headers: _authHeader,
+    );
   }
 
   Future<Response<dynamic>> registerDeviceToken(Map<String, dynamic> body) async {
     return await _apiClient.post(
       ApiEndpoints.registerDeviceToken,
       data: body,
+      headers: _authHeader,
     );
   }
 
   Future<Response<dynamic>> removeDeviceToken(String deviceId) async {
-    return await _apiClient.dio.delete(
+    return await _apiClient.delete(
       ApiEndpoints.deleteDeviceToken,
       data: {'device_id': deviceId},
+      headers: _authHeader,
     );
   }
 
   Future<Response<dynamic>> logoutAllDevices() async {
-    return await _apiClient.post(ApiEndpoints.logoutAllDevices);
+    return await _apiClient.post(
+      ApiEndpoints.logoutAllDevices,
+      headers: _authHeader,
+    );
   }
 }
 

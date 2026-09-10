@@ -39,7 +39,7 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
 
   String _searchQuery = '';
   String _driverGender = 'both'; // للفلتر بعد النتائج
-  bool _hasAcOnly = false;       // للفلتر بعد النتائج
+  bool _hasAcOnly = false; // للفلتر بعد النتائج
   final List<int> _selectedKidsIds = [];
   String _subscriptionType = 'multi_day';
   String _tripDirection = 'go';
@@ -124,8 +124,9 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
 
   void _openSmartSearchDialog(BuildContext context) {
     final kidsState = context.read<ChildrenCubit>().state;
-    final kids =
-        kidsState is ChildrenLoaded ? kidsState.children : _currentKids;
+    final kids = kidsState is ChildrenLoaded
+        ? kidsState.children
+        : _currentKids;
 
     showDialog(
       context: context,
@@ -142,38 +143,42 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
             initialSelectedKidsIds: _selectedKidsIds,
             initialTripDirection: _tripDirection,
             initialSubscriptionType: _subscriptionType,
-            onApply: ({
-              required List<int> selectedKidsIds,
-              required String tripDirection,
-              required String subscriptionType,
-              required DateTime? startDate,
-              required DateTime? endDate,
-            }) {
-              final startStr = startDate?.toIso8601String().split('T').first;
-              final endStr = endDate?.toIso8601String().split('T').first;
+            onApply:
+                ({
+                  required List<int> selectedKidsIds,
+                  required String tripDirection,
+                  required String subscriptionType,
+                  required DateTime? startDate,
+                  required DateTime? endDate,
+                }) {
+                  final startStr = startDate
+                      ?.toIso8601String()
+                      .split('T')
+                      .first;
+                  final endStr = endDate?.toIso8601String().split('T').first;
 
-              setState(() {
-                _selectedKidsIds.clear();
-                _selectedKidsIds.addAll(selectedKidsIds);
-                _tripDirection = tripDirection;
-                _subscriptionType = subscriptionType;
-                _startDate = startStr;
-                _endDate = endStr;
-              });
+                  setState(() {
+                    _selectedKidsIds.clear();
+                    _selectedKidsIds.addAll(selectedKidsIds);
+                    _tripDirection = tripDirection;
+                    _subscriptionType = subscriptionType;
+                    _startDate = startStr;
+                    _endDate = endStr;
+                  });
 
-              // إعادة ضبط فلاتر البحث الإضافية عند كل بحث جديد
-              setState(() {
-                _driverGender = 'both';
-                _hasAcOnly = false;
-              });
-              context.read<SearchCubit>().searchDrivers(
+                  // إعادة ضبط فلاتر البحث الإضافية عند كل بحث جديد
+                  setState(() {
+                    _driverGender = 'both';
+                    _hasAcOnly = false;
+                  });
+                  context.read<SearchCubit>().searchDrivers(
                     childIds: _selectedKidsIds,
                     subscriptionType: _subscriptionType,
                     tripDirection: _tripDirection,
                     startDate: _startDate,
                     endDate: _endDate,
                   );
-            },
+                },
           ),
         );
       },
@@ -226,7 +231,9 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                 ),
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.surfaceDark : Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(24.r),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.1),
@@ -261,7 +268,9 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                           style: AppTextStyles.style(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? AppColors.white : AppColors.textDark,
+                            color: isDark
+                                ? AppColors.white
+                                : AppColors.textDark,
                           ),
                         ),
                         if (tempGender != 'both' || tempHasAc)
@@ -306,7 +315,8 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                           child: _buildModalChip(
                             label: 'الكل',
                             isSelected: tempGender == 'both',
-                            onTap: () => setModalState(() => tempGender = 'both'),
+                            onTap: () =>
+                                setModalState(() => tempGender = 'both'),
                             isDark: isDark,
                           ),
                         ),
@@ -315,7 +325,8 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                           child: _buildModalChip(
                             label: 'سائق ذكر',
                             isSelected: tempGender == 'male',
-                            onTap: () => setModalState(() => tempGender = 'male'),
+                            onTap: () =>
+                                setModalState(() => tempGender = 'male'),
                             isDark: isDark,
                           ),
                         ),
@@ -324,7 +335,8 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                           child: _buildModalChip(
                             label: 'سائقة أنثى',
                             isSelected: tempGender == 'female',
-                            onTap: () => setModalState(() => tempGender = 'female'),
+                            onTap: () =>
+                                setModalState(() => tempGender = 'female'),
                             isDark: isDark,
                           ),
                         ),
@@ -550,19 +562,23 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                             // 2. حقل البحث
                             Container(
                               decoration: BoxDecoration(
-                                color: isDark ? AppColors.surfaceDark : Colors.white,
+                                color: isDark
+                                    ? AppColors.surfaceDark
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(30.r),
                                 border: Border.all(
                                   color: _searchFocusNode.hasFocus
                                       ? AppColors.primary
                                       : (isDark
-                                          ? AppColors.grey800
-                                          : AppColors.grey300),
+                                            ? AppColors.grey800
+                                            : AppColors.grey300),
                                   width: _searchFocusNode.hasFocus ? 1.5 : 1.0,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                                    color: Colors.black.withValues(
+                                      alpha: isDark ? 0.2 : 0.04,
+                                    ),
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),
@@ -578,8 +594,8 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                 onSubmitted: (val) {
                                   FocusScope.of(context).unfocus();
                                   context.read<SearchCubit>().searchDrivers(
-                                        searchQuery: _searchQuery,
-                                      );
+                                    searchQuery: _searchQuery,
+                                  );
                                 },
                                 style: AppTextStyles.style(
                                   fontSize: 14.sp,
@@ -624,7 +640,9 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                           onPressed: () {
                                             _searchController.clear();
                                             setState(() => _searchQuery = '');
-                                            context.read<SearchCubit>().resetState();
+                                            context
+                                                .read<SearchCubit>()
+                                                .resetState();
                                           },
                                         ),
                                       IconButton(
@@ -636,7 +654,9 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                         tooltip: 'بحث',
                                         onPressed: () {
                                           FocusScope.of(context).unfocus();
-                                          context.read<SearchCubit>().searchDrivers(
+                                          context
+                                              .read<SearchCubit>()
+                                              .searchDrivers(
                                                 searchQuery: _searchQuery,
                                               );
                                         },
@@ -693,14 +713,17 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                 borderRadius: BorderRadius.circular(30.r),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.primary.withValues(alpha: 0.25),
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.25,
+                                    ),
                                     blurRadius: 10,
                                     offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
                               child: ElevatedButton(
-                                onPressed: () => _openSmartSearchDialog(context),
+                                onPressed: () =>
+                                    _openSmartSearchDialog(context),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
@@ -708,17 +731,13 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30.r),
                                   ),
-                                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 16.w,
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
-                                      Icons.directions_bus_rounded,
-                                      size: 20.r,
-                                      color: Colors.white,
-                                    ),
-                                    SizedBox(width: 8.w),
                                     Text(
                                       'بحث عن سائق مناسب',
                                       style: AppTextStyles.style(
@@ -755,7 +774,8 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                             if (!isLoading && state is SearchLoaded) ...[
                               // ── السائقون المتاحون مع أيقونة التصفية في نفس السطر ──
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -777,8 +797,12 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                           vertical: 2.h,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: AppColors.primary.withValues(alpha: 0.12),
-                                          borderRadius: BorderRadius.circular(12.r),
+                                          color: AppColors.primary.withValues(
+                                            alpha: 0.12,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            12.r,
+                                          ),
                                         ),
                                         child: Text(
                                           '${filteredDrivers.length}',
@@ -804,14 +828,15 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                         color: isDark
                                             ? AppColors.surfaceDark
                                             : Colors.white,
-                                        borderRadius:
-                                            BorderRadius.circular(20.r),
+                                        borderRadius: BorderRadius.circular(
+                                          20.r,
+                                        ),
                                         border: Border.all(
                                           color: _activeFiltersCount > 0
                                               ? AppColors.secondaryDark
                                               : (isDark
-                                                  ? AppColors.grey800
-                                                  : AppColors.grey300),
+                                                    ? AppColors.grey800
+                                                    : AppColors.grey300),
                                           width: 1.0,
                                         ),
                                       ),
@@ -824,8 +849,8 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                             color: _activeFiltersCount > 0
                                                 ? AppColors.secondaryDark
                                                 : (isDark
-                                                    ? AppColors.grey400
-                                                    : AppColors.textMuted),
+                                                      ? AppColors.grey400
+                                                      : AppColors.textMuted),
                                           ),
                                           if (_activeFiltersCount > 0) ...[
                                             SizedBox(width: 4.w),
@@ -854,8 +879,12 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: isDark
-                                      ? AppColors.surfaceDark.withValues(alpha: 0.6)
-                                      : AppColors.grey100.withValues(alpha: 0.7),
+                                      ? AppColors.surfaceDark.withValues(
+                                          alpha: 0.6,
+                                        )
+                                      : AppColors.grey100.withValues(
+                                          alpha: 0.7,
+                                        ),
                                   borderRadius: BorderRadius.circular(10.r),
                                 ),
                                 child: Row(
@@ -896,7 +925,9 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                             ? 'سائق ذكر'
                                             : 'سائقة أنثى',
                                         onRemove: () {
-                                          setState(() => _driverGender = 'both');
+                                          setState(
+                                            () => _driverGender = 'both',
+                                          );
                                           _applyFilter();
                                         },
                                         isDark: isDark,
@@ -925,8 +956,7 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                               else
                                 ListView.separated(
                                   shrinkWrap: true,
-                                  physics:
-                                      const NeverScrollableScrollPhysics(),
+                                  physics: const NeverScrollableScrollPhysics(),
                                   itemCount: filteredDrivers.length,
                                   separatorBuilder: (context, index) =>
                                       SizedBox(height: 10.h),
@@ -1011,4 +1041,3 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
     );
   }
 }
-

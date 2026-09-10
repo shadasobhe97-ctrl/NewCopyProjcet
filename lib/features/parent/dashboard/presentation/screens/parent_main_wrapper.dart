@@ -7,7 +7,7 @@ import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/features/parent/dashboard/presentation/widgets/parent_drawer.dart';
 import 'package:kids_transport/features/parent/home/presentation/screens/parent_home_screen.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/my_children_screen.dart';
+import 'package:kids_transport/features/parent/wallet/presentation/screens/wallet_screen.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscriptions_screen.dart';
@@ -64,7 +64,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
       case 0:
         return 'الرئيسية';
       case 1:
-        return 'أطفالي';
+        return 'المحفظة';
       case 2:
         return 'اشتراكاتي';
       case 3:
@@ -85,7 +85,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
     };
     _screens = [
       const ParentHomeScreen(),
-      const MyChildrenScreen(),
+      const WalletScreen(),
       const SubscriptionsScreen(),
       const TripsHomeScreen(),
     ];
@@ -150,7 +150,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                 },
                 tabs: const [
                   GButton(icon: Icons.home_rounded, text: 'الرئيسية'),
-                  GButton(icon: Icons.people_alt_rounded, text: 'أطفالي'),
+                  GButton(icon: Icons.account_balance_wallet_rounded, text: 'المحفظة'),
                   GButton(icon: Icons.description_rounded, text: 'اشتراكاتي'),
                   GButton(icon: Icons.map_outlined, text: 'الرحلات'),
                 ],
