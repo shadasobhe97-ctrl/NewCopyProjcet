@@ -56,19 +56,21 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
 
   late final List<Widget> _screens;
   late final DriverTripsCubit _tripsCubit;
+  late final FinanceCubit _financeCubit;
 
   @override
   void initState() {
     super.initState();
     _tripsCubit = driverSl<DriverTripsCubit>();
+    _financeCubit = driverSl<FinanceCubit>();
     _screens = [
       // الشاشة الرئيسية للسائق
       const DriverHomeScreen(),
 
       // شاشة رحلاتي اليوم
       BlocProvider.value(value: _tripsCubit, child: const DriverTripsScreen()),
-      BlocProvider(
-        create: (_) => driverSl<FinanceCubit>(),
+      BlocProvider.value(
+        value: _financeCubit,
         child: const FinanceDashboardScreen(),
       ),
       // شاشة الطلبات الحقيقية مع Cubits للطلبات والاشتراكات
@@ -151,6 +153,7 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
                       onTabChange: (index) {
                         setState(() => _selectedIndex = index);
                         if (index == 1) _tripsCubit.refresh();
+                        if (index == 2) _financeCubit.loadDashboard();
                       },
                       tabs: const [
                         GButton(icon: Icons.home_rounded, text: 'الرئيسية'),

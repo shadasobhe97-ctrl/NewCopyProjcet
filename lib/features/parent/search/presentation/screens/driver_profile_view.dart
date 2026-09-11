@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/transport_details_screen.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step1_screen.dart';
+import 'package:kids_transport/features/parent/search/data/models/subscription_request.dart';
 import 'subscription_confirmation_screen.dart';
 import '../widgets/child_selection_card_widget.dart';
 import '../widgets/smart_search_bottom_sheet_widget.dart';

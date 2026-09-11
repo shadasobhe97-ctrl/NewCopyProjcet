@@ -8,6 +8,7 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/features/parent/dashboard/presentation/widgets/parent_drawer.dart';
 import 'package:kids_transport/features/parent/home/presentation/screens/parent_home_screen.dart';
 import 'package:kids_transport/features/parent/wallet/presentation/screens/wallet_screen.dart';
+import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_cubit.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscriptions_screen.dart';
@@ -58,6 +59,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
   final String? userAvatarurl = null;
 
   late final List<Widget> _screens;
+  late final WalletCubit _walletCubit;
 
   String _getAppBarTitle() {
     switch (_selectedIndex) {
@@ -78,14 +80,16 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
+    _walletCubit = getIt<WalletCubit>();
     ParentMainWrapper.changeTab = (index) {
       if (mounted) {
         setState(() => _selectedIndex = index);
+        if (index == 1) _walletCubit.loadWalletData();
       }
     };
     _screens = [
       const ParentHomeScreen(),
-      const WalletScreen(),
+      WalletScreen(cubit: _walletCubit),
       const SubscriptionsScreen(),
       const TripsHomeScreen(),
     ];
@@ -147,6 +151,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
                 selectedIndex: _selectedIndex < 4 ? _selectedIndex : 0,
                 onTabChange: (index) {
                   setState(() => _selectedIndex = index);
+                  if (index == 1) _walletCubit.loadWalletData();
                 },
                 tabs: const [
                   GButton(icon: Icons.home_rounded, text: 'الرئيسية'),

@@ -155,7 +155,11 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen> {
                                   child: const WithdrawalRequestsScreen(),
                                 ),
                               ),
-                            );
+                            ).then((_) {
+                              if (context.mounted) {
+                                context.read<FinanceCubit>().loadDashboard();
+                              }
+                            });
                           },
                         ),
                       ),
@@ -174,7 +178,11 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen> {
                                   child: const InvoicesScreen(),
                                 ),
                               ),
-                            );
+                            ).then((_) {
+                              if (context.mounted) {
+                                context.read<FinanceCubit>().loadDashboard();
+                              }
+                            });
                           },
                         ),
                       ),

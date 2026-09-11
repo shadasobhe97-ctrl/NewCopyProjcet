@@ -11,10 +11,18 @@ import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_
 import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_state.dart';
 
 class WalletScreen extends StatelessWidget {
-  const WalletScreen({super.key});
+  final WalletCubit? cubit;
+
+  const WalletScreen({super.key, this.cubit});
 
   @override
   Widget build(BuildContext context) {
+    if (cubit != null) {
+      return BlocProvider.value(
+        value: cubit!,
+        child: const _WalletScreenContent(),
+      );
+    }
     return BlocProvider(
       create: (context) => getIt<WalletCubit>()..loadWalletData(),
       child: const _WalletScreenContent(),
@@ -146,7 +154,11 @@ class _WalletScreenContent extends StatelessWidget {
                         context,
                         AppRoutes.parentRecharge,
                         arguments: context.read<WalletCubit>(),
-                      );
+                      ).then((_) {
+                        if (context.mounted) {
+                          context.read<WalletCubit>().loadWalletData();
+                        }
+                      });
                     },
                   ),
                   const SizedBox(height: 16),
@@ -158,7 +170,14 @@ class _WalletScreenContent extends StatelessWidget {
                     subtitle: 'عرض جميع فواتيرك',
                     iconColor: context.successColor,
                     onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.parentInvoices);
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.parentInvoices,
+                      ).then((_) {
+                        if (context.mounted) {
+                          context.read<WalletCubit>().loadWalletData();
+                        }
+                      });
                     },
                   ),
                 ],
