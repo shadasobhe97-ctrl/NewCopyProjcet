@@ -19,6 +19,7 @@ class SmartSearchBottomSheetWidget extends StatefulWidget {
   final String initialSubscriptionType;
   final DateTime? initialStartDate;
   final DateTime? initialEndDate;
+  final String? buttonLabel;
   final Function({
     required List<int> selectedKidsIds,
     required String tripDirection,
@@ -35,6 +36,7 @@ class SmartSearchBottomSheetWidget extends StatefulWidget {
     this.initialSubscriptionType = 'single_day',
     this.initialStartDate,
     this.initialEndDate,
+    this.buttonLabel,
     required this.onApply,
   });
 
@@ -621,7 +623,7 @@ class _SmartSearchBottomSheetWidgetState
                         Navigator.pop(context);
                       },
                       child: Text(
-                        "عرض السائقين المناسبين",
+                        widget.buttonLabel ?? "عرض السائقين المناسبين",
                         style: AppTextStyles.style(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.bold,

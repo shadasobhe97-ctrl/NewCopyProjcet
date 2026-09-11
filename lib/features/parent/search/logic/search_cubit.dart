@@ -75,6 +75,7 @@ class SearchCubit extends Cubit<SearchState> {
   Future<void> getPricing({
     required String searchQuery,
     required List<int> childIds,
+    int? driverId,
     String? subscriptionType,
     String? tripDirection,
     String? startDate,
@@ -99,7 +100,19 @@ class SearchCubit extends Cubit<SearchState> {
       emit(PricingError(error));
     } else if (response != null && response.drivers.isNotEmpty) {
       lastSearchContext = response.searchContext;
-      emit(PricingLoaded(response.drivers.first,
+      DriverSearchModel targetDriver;
+      if (driverId != null) {
+        try {
+          targetDriver = response.drivers.firstWhere(
+            (d) => d.driverId == driverId || d.driver.id == driverId,
+          );
+        } catch (_) {
+          targetDriver = response.drivers.first;
+        }
+      } else {
+        targetDriver = response.drivers.first;
+      }
+      emit(PricingLoaded(targetDriver,
           searchContext: response.searchContext));
     } else {
       emit(PricingError('لم يتم العثور على السائق.'));
@@ -110,6 +123,7 @@ class SearchCubit extends Cubit<SearchState> {
   Future<DriverSearchModel?> fetchDriverPricing({
     required int driverId,
     required List<int> childIds,
+    String? searchQuery,
     String? subscriptionType,
     String? tripDirection,
     String? startDate,
@@ -119,6 +133,8 @@ class SearchCubit extends Cubit<SearchState> {
 
     final queryParams = <String, dynamic>{
       'child_ids[]': childIds,
+      if (searchQuery != null && searchQuery.trim().isNotEmpty)
+        'search_query': searchQuery.trim(),
       if (subscriptionType != null && subscriptionType.isNotEmpty)
         'subscription_type': subscriptionType,
       if (tripDirection != null && tripDirection.isNotEmpty)
@@ -138,7 +154,9 @@ class SearchCubit extends Cubit<SearchState> {
     }
 
     try {
-      return response.drivers.firstWhere((d) => d.driverId == driverId);
+      return response.drivers.firstWhere(
+        (d) => d.driverId == driverId || d.driver.id == driverId,
+      );
     } catch (_) {
       return response.drivers.first;
     }

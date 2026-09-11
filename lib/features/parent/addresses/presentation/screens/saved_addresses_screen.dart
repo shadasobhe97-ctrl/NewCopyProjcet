@@ -474,7 +474,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                     Padding(
                       padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 8.h),
                       child: Container(
-                        height: 260.h,
+                        height: 330.h,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(24.r),
                           border: Border.all(

@@ -63,10 +63,14 @@ class DriverProfileView extends StatefulWidget {
 class _DriverProfileViewState extends State<DriverProfileView> {
   late List<int> _selectedKidsIds;
   bool _loadingShowing = false;
+  // مؤشر تحميل التسعير لسيناريو البحث بالاسم/الرقم
+  bool _isPricingLoading = false;
   // نسخة السائق بعد إعادة جلب التسعير للمجموعة الحالية من الأطفال المختارين
-  // (تفادياً لعرض/إرسال خصم إخوة قديم محسوب على تشكيلة أطفال مختلفة)
   DriverSearchModel? _pricedDriver;
   DriverSearchModel get _effectiveDriver => _pricedDriver ?? widget.driver;
+  // نسخة مخزّنة من الأطفال المختارين تُحدَّث لحظة اختيارهم
+  List<ChildModel> _cachedSelectedKids = [];
+
   List<ChildModel> get _selectedKids {
     final state = context.read<ChildrenCubit>().state;
     final availableKids = state is ChildrenLoaded
@@ -92,6 +96,11 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       return;
     }
 
+    // إيقاف مؤشر تحميل التسعير إن كان نشطاً
+    if (_isPricingLoading) {
+      setState(() => _isPricingLoading = false);
+    }
+
     _loadingShowing = true;
     showDialog(
       context: context,
@@ -99,13 +108,28 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       builder: (_) => const Center(child: CircularProgressIndicator()),
     ).then((_) => _loadingShowing = false);
 
+    final ctx = context.read<SearchCubit>().lastSearchContext;
+    final subType = ctx?.subscriptionType;
+    final direction = ctx?.tripDirection;
+    final start = ctx?.startDate;
+    final end = ctx?.endDate;
+    final searchQ = widget.searchQuery.trim().isNotEmpty
+        ? widget.searchQuery.trim()
+        : widget.driver.fullName;
+
+    final navigator = Navigator.of(context);
     final fresh = await context.read<SearchCubit>().fetchDriverPricing(
       driverId: widget.driver.driverId,
       childIds: _selectedKidsIds,
+      searchQuery: searchQ,
+      subscriptionType: subType,
+      tripDirection: direction,
+      startDate: start,
+      endDate: end,
     );
 
     if (_loadingShowing) {
-      Navigator.of(context).pop();
+      navigator.pop();
     }
 
     if (!mounted) return;
@@ -114,17 +138,155 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       setState(() => _pricedDriver = fresh);
     }
 
+    final kidsToPass = _cachedSelectedKids.isNotEmpty
+        ? _cachedSelectedKids
+        : _selectedKids;
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => SubscriptionConfirmationScreen(
           driver: fresh ?? widget.driver,
-          selectedKids: _selectedKids,
+          selectedKids: kidsToPass,
         ),
       ),
     );
   }
 
+<<<<<<< HEAD
+=======
+  void _showConfirmDialog() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
+          title: Text(
+            'تأكيد إرسال الطلب',
+            style: AppTextStyles.style(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: isDark ? AppColors.white : AppColors.textDark,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'السائق: ${_effectiveDriver.fullName}',
+                style: AppTextStyles.style(
+                  fontSize: 14,
+                  color: isDark ? AppColors.grey300 : AppColors.grey700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'الأطفال: ${_selectedKids.map((k) => k.name).join('، ')}',
+                style: AppTextStyles.style(
+                  fontSize: 14,
+                  color: isDark ? AppColors.grey300 : AppColors.grey700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'السعر الإجمالي: ${_effectiveDriver.pricing.totalPrice.toStringAsFixed(2)} د.ل',
+                style: AppTextStyles.style(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                'إلغاء',
+                style: AppTextStyles.style(color: AppColors.textMuted),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _submitDirectly();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'تأكيد وإرسال',
+                style: AppTextStyles.style(color: AppColors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _submitDirectly() {
+    debugPrint(
+      '\n================= SUBMIT SUBSCRIPTION (DriverProfileView) =================',
+    );
+    _loadingShowing = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    ).then((_) => _loadingShowing = false);
+
+    final ctx = context.read<SearchCubit>().lastSearchContext;
+
+    final subType = ctx?.subscriptionType ?? 'multi_day';
+    final direction = ctx?.tripDirection ?? 'go';
+    final start = (ctx?.startDate != null && ctx!.startDate.isNotEmpty)
+        ? ctx.startDate
+        : DateTime.now().toIso8601String().split('T').first;
+    final end = (ctx?.endDate != null && ctx!.endDate.isNotEmpty)
+        ? ctx.endDate
+        : start;
+
+    int? homeAddrId;
+    if (_selectedKids.isNotEmpty && _selectedKids.first.addressId.isNotEmpty) {
+      homeAddrId = int.tryParse(_selectedKids.first.addressId);
+    }
+
+    final List<SubscriptionChildRequest> childrenRequestList = _selectedKids
+        .where((k) => k.id != null)
+        .map((k) => SubscriptionChildRequest(childId: k.id!))
+        .toList();
+
+    final request = SubscriptionRequest(
+      driverId: _effectiveDriver.driverId,
+      subscriptionType: subType,
+      tripDirection: direction,
+      startDate: start,
+      endDate: end,
+      homeAddressId: homeAddrId,
+      children: childrenRequestList,
+    );
+
+    debugPrint('>>> Final JSON being sent:');
+    debugPrint(request.toJson().toString());
+    debugPrint('========================================================');
+
+    context.read<SearchCubit>().submitSubscription(request);
+  }
+
+>>>>>>> 508b442fe70ba8ffb372939fc8b3946f7257cbd7
   void _makePhoneCall(String phoneNumber) async {
     final Uri uri = Uri(scheme: 'tel', path: phoneNumber);
     try {
@@ -187,7 +349,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                 ListTile(
                   leading: const Icon(Icons.phone_rounded, color: AppColors.success),
                   title: const Text('الرقم الأساسي'),
-                  subtitle: Text(primary!),
+                  subtitle: Text(primary),
                   onTap: () {
                     Navigator.pop(ctx);
                     _makePhoneCall(primary);
@@ -197,7 +359,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                 ListTile(
                   leading: const Icon(Icons.phone_iphone_rounded, color: AppColors.primary),
                   title: const Text('الرقم الاحتياطي'),
-                  subtitle: Text(alt!),
+                  subtitle: Text(alt),
                   onTap: () {
                     Navigator.pop(ctx);
                     _makePhoneCall(alt);
@@ -209,9 +371,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
         ),
       );
     } else if (hasPrimary) {
-      _makePhoneCall(primary!);
+      _makePhoneCall(primary);
     } else if (hasAlt) {
-      _makePhoneCall(alt!);
+      _makePhoneCall(alt);
     }
   }
 
@@ -459,6 +621,8 @@ class _DriverProfileViewState extends State<DriverProfileView> {
         ? childrenState.children
         : widget.availableKids;
 
+    final lastCtx = context.read<SearchCubit>().lastSearchContext;
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -473,6 +637,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
           child: SmartSearchBottomSheetWidget(
             kids: kids,
             initialSelectedKidsIds: _selectedKidsIds,
+            initialTripDirection: lastCtx?.tripDirection ?? 'two_way',
+            initialSubscriptionType: lastCtx?.subscriptionType ?? 'monthly',
+            buttonLabel: 'موافق',
             onApply: ({
               required List<int> selectedKidsIds,
               required String tripDirection,
@@ -483,16 +650,27 @@ class _DriverProfileViewState extends State<DriverProfileView> {
               final startStr = startDate?.toIso8601String().split('T').first;
               final endStr = endDate?.toIso8601String().split('T').first;
 
-              // تحديث الحالة المحلية
+              // تخزين نسخة من الأطفال المختارين للاستخدام عند فتح شاشة التأكيد
+              final selectedKidsObjs = kids
+                  .where((k) => k.id != null && selectedKidsIds.contains(k.id))
+                  .toList();
+
+              // تحديث الحالة المحلية وتفعيل مؤشر التحميل
               setState(() {
                 _selectedKidsIds = selectedKidsIds;
+                _cachedSelectedKids = selectedKidsObjs;
                 _pricedDriver = null;
+                _isPricingLoading = true;
               });
 
-              // إعادة البحث بكل البيانات (search_query الأصلي + child_ids + بيانات الاشتراك)
-              // → سيرجع search_context + السعر من الباك وبعدين ننتقل للتأكيد
+              final searchQ = widget.searchQuery.trim().isNotEmpty
+                  ? widget.searchQuery.trim()
+                  : widget.driver.fullName;
+
+              // إعادة البحث بكل البيانات (search_query + child_ids + بيانات الاشتراك)
               context.read<SearchCubit>().getPricing(
-                searchQuery: widget.searchQuery,
+                searchQuery: searchQ,
+                driverId: widget.driver.driverId,
                 childIds: selectedKidsIds,
                 subscriptionType: subscriptionType,
                 tripDirection: tripDirection,
@@ -743,26 +921,44 @@ class _DriverProfileViewState extends State<DriverProfileView> {
         listeners: [
           BlocListener<SearchCubit, SearchState>(
             listener: (context, state) {
-              // تفادياً لمعالجة نفس النتيجة مرتين: SearchCubit مشترك على مستوى
-              // التطبيق، فلو صار push لشاشة تأكيد الاشتراك فوق هذه الشاشة
-              // وهي لسه موجودة بالخلفية، بيوصلها نفس الحدث أيضاً (Dialog/SnackBar
-              // مكرر). نتجاهل الحدث هنا إذا مو هذه الشاشة هي الحالية فعلاً.
-              final route = ModalRoute.of(context);
-              if (route != null && !route.isCurrent) return;
-
+              // ── حالات التسعير (سيناريو البحث بالاسم/الرقم) ──────────────────
+              // لا نتحقق من route.isCurrent هنا لأن نافذة الاختيار
+              // قد تكون لا تزال على المكدس في لحظة صدور الحالة،
+              // مما كان يُجمّد الشاشة دون انتقال.
               if (state is PricingLoaded) {
-                Navigator.pushReplacement(
+                if (!mounted) return;
+                if (_isPricingLoading) {
+                  setState(() => _isPricingLoading = false);
+                }
+                final kidsToPass = _cachedSelectedKids.isNotEmpty
+                    ? _cachedSelectedKids
+                    : _selectedKids;
+                Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => SubscriptionConfirmationScreen(
                       driver: state.driver,
-                      selectedKids: _selectedKids,
+                      selectedKids: kidsToPass,
                     ),
                   ),
                 );
-              } else if (state is PricingError) {
+                return;
+              }
+
+              if (state is PricingError) {
+                if (!mounted) return;
+                if (_isPricingLoading) {
+                  setState(() => _isPricingLoading = false);
+                }
                 _handleErrorMessage(state.errorMessage);
-              } else if (state is SubscriptionSuccess) {
+                return;
+              }
+
+              // ── باقي الحالات: نتجاهلها إذا لم تكن الشاشة الحالية ───────────
+              final route = ModalRoute.of(context);
+              if (route != null && !route.isCurrent) return;
+
+              if (state is SubscriptionSuccess) {
                 if (_loadingShowing) Navigator.of(context).pop();
                 Navigator.pop(context);
                 _showSnack(state.message, AppColors.success);
@@ -1894,6 +2090,10 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     );
   }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 508b442fe70ba8ffb372939fc8b3946f7257cbd7
   // ══════════════════════════════════════════════════════════════════
   // Section: Bottom Action Bar
   // ══════════════════════════════════════════════════════════════════
@@ -1962,7 +2162,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
           width: double.infinity,
           height: 52,
           child: ElevatedButton.icon(
-            onPressed: _onSendRequest,
+            onPressed: _showConfirmDialog,
             icon: const Icon(Icons.send_rounded, size: 18),
             label: Text(
               'إرسال الطلب',
@@ -2042,47 +2242,78 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                 color: isDark ? AppColors.grey300 : AppColors.grey800,
               ),
             ),
-            TextButton(
-              onPressed: _showChildrenPicker,
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(0, 0),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text(
-                'تغيير الاختيار',
-                style: AppTextStyles.style(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+            if (!_isPricingLoading)
+              TextButton(
+                onPressed: _showChildrenPicker,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 0),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'تغيير الاختيار',
+                  style: AppTextStyles.style(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
         const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
           height: 52,
-          child: ElevatedButton.icon(
-            onPressed: _onSendRequest,
-            icon: const Icon(Icons.send_rounded, size: 18),
-            label: Text(
-              'متابعة وتأكيد الطلب',
-              style: AppTextStyles.style(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: theme.colorScheme.onPrimary,
-              ),
-            ),
+          child: ElevatedButton(
+            onPressed: _isPricingLoading ? null : _onSendRequest,
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,
+              disabledBackgroundColor: theme.colorScheme.primary.withValues(alpha: 0.7),
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
+            child: _isPricingLoading
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'جاري الحصول على السعر...',
+                        style: AppTextStyles.style(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.send_rounded, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'متابعة وتأكيد الطلب',
+                        style: AppTextStyles.style(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ),
       ],

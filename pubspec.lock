@@ -933,6 +933,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
+  image:
+    dependency: transitive
+    description:
+      name: image
+      sha256: "1976370a4df3091bb0f72409c187ad1f9132a818bc6b95ca59c0bae1c75c688e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.9.2"
+  image_blur_detection:
+    dependency: "direct main"
+    description:
+      name: image_blur_detection
+      sha256: "0d1043422b90b97dea2aa282aa5cbb206e34bdc43acc0cb312b31f160f977333"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
   image_picker:
     dependency: "direct main"
     description:
