@@ -39,7 +39,6 @@ import 'package:kids_transport/features/parent/subscriptions/logic/subscriptions
 import 'package:kids_transport/features/parent/subscriptions/data/repositories/subscriptions_repository.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 
-
 class DriverProfileView extends StatefulWidget {
   final DriverSearchModel driver;
   final List<ChildModel> availableKids;
@@ -153,8 +152,6 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     );
   }
 
-<<<<<<< HEAD
-=======
   void _showConfirmDialog() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -286,17 +283,22 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     context.read<SearchCubit>().submitSubscription(request);
   }
 
->>>>>>> 508b442fe70ba8ffb372939fc8b3946f7257cbd7
   void _makePhoneCall(String phoneNumber) async {
     final Uri uri = Uri(scheme: 'tel', path: phoneNumber);
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
-        _showSnack('تعذر إجراء المكالمة على الرقم: $phoneNumber', AppColors.error);
+        _showSnack(
+          'تعذر إجراء المكالمة على الرقم: $phoneNumber',
+          AppColors.error,
+        );
       }
     } catch (_) {
-      _showSnack('تعذر إجراء المكالمة على الرقم: $phoneNumber', AppColors.error);
+      _showSnack(
+        'تعذر إجراء المكالمة على الرقم: $phoneNumber',
+        AppColors.error,
+      );
     }
   }
 
@@ -323,7 +325,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: isDark ? AppColors.surfaceDark : AppColors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -347,7 +351,10 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                 ),
                 const SizedBox(height: 16),
                 ListTile(
-                  leading: const Icon(Icons.phone_rounded, color: AppColors.success),
+                  leading: const Icon(
+                    Icons.phone_rounded,
+                    color: AppColors.success,
+                  ),
                   title: const Text('الرقم الأساسي'),
                   subtitle: Text(primary),
                   onTap: () {
@@ -357,7 +364,10 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                 ),
                 const Divider(),
                 ListTile(
-                  leading: const Icon(Icons.phone_iphone_rounded, color: AppColors.primary),
+                  leading: const Icon(
+                    Icons.phone_iphone_rounded,
+                    color: AppColors.primary,
+                  ),
                   title: const Text('الرقم الاحتياطي'),
                   subtitle: Text(alt),
                   onTap: () {
@@ -393,8 +403,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     if (!hasActiveSub) {
       // 2. التحقق المباشر من السيرفر عبر Endpoint: parent/subscriptions/check
       try {
-        final checkRes = await getIt<ReviewsRepository>()
-            .checkSubscription(driver.driverId);
+        final checkRes = await getIt<ReviewsRepository>().checkSubscription(
+          driver.driverId,
+        );
         hasActiveSub = checkRes.hasSubscription == true;
       } catch (e) {
         debugPrint('Error calling checkSubscription in _handleOpenChat: $e');
@@ -412,11 +423,14 @@ class _DriverProfileViewState extends State<DriverProfileView> {
           if (!hasActiveSub) {
             final cached = await getIt<SubscriptionsRepository>()
                 .getCachedSubscriptions();
-            hasActiveSub =
-                cached.any((sub) => sub.driver.id == driver.driverId);
+            hasActiveSub = cached.any(
+              (sub) => sub.driver.id == driver.driverId,
+            );
           }
         } catch (e) {
-          debugPrint('Error checking SubscriptionsCubit in _handleOpenChat: $e');
+          debugPrint(
+            'Error checking SubscriptionsCubit in _handleOpenChat: $e',
+          );
         }
       }
     }
@@ -453,7 +467,6 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       );
     }
   }
-
 
   void _showSnack(
     String msg,
@@ -498,11 +511,16 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
           title: Row(
             children: [
-              const Icon(Icons.account_balance_wallet_rounded, color: AppColors.error),
+              const Icon(
+                Icons.account_balance_wallet_rounded,
+                color: AppColors.error,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -530,9 +548,13 @@ class _DriverProfileViewState extends State<DriverProfileView> {
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(ctx),
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: isDark ? AppColors.grey700 : AppColors.grey300),
+                  side: BorderSide(
+                    color: isDark ? AppColors.grey700 : AppColors.grey300,
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: Text(
                   'إلغاء',
@@ -558,11 +580,16 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: theme.colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: Text(
                   'اشحن محفظتك',
-                  style: AppTextStyles.style(fontWeight: FontWeight.bold, color: AppColors.white),
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.white,
+                  ),
                 ),
               ),
             ),
@@ -575,9 +602,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
   void _openEditPersonalData(BuildContext context, ChildModel kid) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => AddChildStep1Screen(child: kid),
-      ),
+      MaterialPageRoute(builder: (context) => AddChildStep1Screen(child: kid)),
     ).then((_) {
       if (context.mounted) {
         context.read<ChildrenCubit>().fetchChildren();
@@ -640,44 +665,50 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             initialTripDirection: lastCtx?.tripDirection ?? 'two_way',
             initialSubscriptionType: lastCtx?.subscriptionType ?? 'monthly',
             buttonLabel: 'موافق',
-            onApply: ({
-              required List<int> selectedKidsIds,
-              required String tripDirection,
-              required String subscriptionType,
-              required DateTime? startDate,
-              required DateTime? endDate,
-            }) {
-              final startStr = startDate?.toIso8601String().split('T').first;
-              final endStr = endDate?.toIso8601String().split('T').first;
+            onApply:
+                ({
+                  required List<int> selectedKidsIds,
+                  required String tripDirection,
+                  required String subscriptionType,
+                  required DateTime? startDate,
+                  required DateTime? endDate,
+                }) {
+                  final startStr = startDate
+                      ?.toIso8601String()
+                      .split('T')
+                      .first;
+                  final endStr = endDate?.toIso8601String().split('T').first;
 
-              // تخزين نسخة من الأطفال المختارين للاستخدام عند فتح شاشة التأكيد
-              final selectedKidsObjs = kids
-                  .where((k) => k.id != null && selectedKidsIds.contains(k.id))
-                  .toList();
+                  // تخزين نسخة من الأطفال المختارين للاستخدام عند فتح شاشة التأكيد
+                  final selectedKidsObjs = kids
+                      .where(
+                        (k) => k.id != null && selectedKidsIds.contains(k.id),
+                      )
+                      .toList();
 
-              // تحديث الحالة المحلية وتفعيل مؤشر التحميل
-              setState(() {
-                _selectedKidsIds = selectedKidsIds;
-                _cachedSelectedKids = selectedKidsObjs;
-                _pricedDriver = null;
-                _isPricingLoading = true;
-              });
+                  // تحديث الحالة المحلية وتفعيل مؤشر التحميل
+                  setState(() {
+                    _selectedKidsIds = selectedKidsIds;
+                    _cachedSelectedKids = selectedKidsObjs;
+                    _pricedDriver = null;
+                    _isPricingLoading = true;
+                  });
 
-              final searchQ = widget.searchQuery.trim().isNotEmpty
-                  ? widget.searchQuery.trim()
-                  : widget.driver.fullName;
+                  final searchQ = widget.searchQuery.trim().isNotEmpty
+                      ? widget.searchQuery.trim()
+                      : widget.driver.fullName;
 
-              // إعادة البحث بكل البيانات (search_query + child_ids + بيانات الاشتراك)
-              context.read<SearchCubit>().getPricing(
-                searchQuery: searchQ,
-                driverId: widget.driver.driverId,
-                childIds: selectedKidsIds,
-                subscriptionType: subscriptionType,
-                tripDirection: tripDirection,
-                startDate: startStr,
-                endDate: endStr,
-              );
-            },
+                  // إعادة البحث بكل البيانات (search_query + child_ids + بيانات الاشتراك)
+                  context.read<SearchCubit>().getPricing(
+                    searchQuery: searchQ,
+                    driverId: widget.driver.driverId,
+                    childIds: selectedKidsIds,
+                    subscriptionType: subscriptionType,
+                    tripDirection: tripDirection,
+                    startDate: startStr,
+                    endDate: endStr,
+                  );
+                },
           ),
         ),
       ),
@@ -752,9 +783,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                           vertical: 28,
                         ),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.grey900
-                              : AppColors.grey50,
+                          color: isDark ? AppColors.grey900 : AppColors.grey50,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: isDark
@@ -818,8 +847,10 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                                   temp.remove(id);
                                 }
                               }),
-                              onEditPersonalData: (k) => _openEditPersonalData(context, k),
-                              onEditTransportData: (k) => _openEditTransportData(context, k),
+                              onEditPersonalData: (k) =>
+                                  _openEditPersonalData(context, k),
+                              onEditTransportData: (k) =>
+                                  _openEditTransportData(context, k),
                             );
                           },
                         ),
@@ -1643,7 +1674,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                           fontSize: 13.5,
                           color: hasSub
                               ? theme.colorScheme.onPrimary
-                              : (isDark ? AppColors.grey400 : AppColors.grey600),
+                              : (isDark
+                                    ? AppColors.grey400
+                                    : AppColors.grey600),
                         ),
                       ),
                     ),
@@ -1966,7 +1999,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                         padding: const EdgeInsets.only(bottom: 4),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.success.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
@@ -2090,10 +2125,6 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     );
   }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 508b442fe70ba8ffb372939fc8b3946f7257cbd7
   // ══════════════════════════════════════════════════════════════════
   // Section: Bottom Action Bar
   // ══════════════════════════════════════════════════════════════════
@@ -2270,7 +2301,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,
-              disabledBackgroundColor: theme.colorScheme.primary.withValues(alpha: 0.7),
+              disabledBackgroundColor: theme.colorScheme.primary.withValues(
+                alpha: 0.7,
+              ),
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
