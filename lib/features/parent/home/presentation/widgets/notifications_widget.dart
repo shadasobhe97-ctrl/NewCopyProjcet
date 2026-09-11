@@ -45,7 +45,8 @@ class NotificationsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
-    final currentNotifications = notifications ?? _defaultNotifications;
+    final rawNotifications = notifications ?? _defaultNotifications;
+    final currentNotifications = rawNotifications.take(3).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

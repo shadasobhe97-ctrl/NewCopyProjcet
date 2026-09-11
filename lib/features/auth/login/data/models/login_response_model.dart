@@ -54,13 +54,26 @@ class LoginResponseModel {
       message: json['message']?.toString() ?? '',
       accessToken: json['access_token']?.toString() ?? json['token']?.toString() ?? '',
       tokenType: json['token_type']?.toString() ?? 'Bearer',
-      roleName: rawRoleName.isNotEmpty ? rawRoleName : (roleId == 4 ? 'driver' : 'parent'),
+      roleName: rawRoleName.isNotEmpty ? rawRoleName : ((roleId == 8 || roleId == 4) ? 'driver' : 'parent'),
       user: finalUser,
     );
   }
 
-  bool get isParent => user.roleId == 3 || UserModel._roleToId(roleName) == 3 || roleName.toLowerCase().contains('parent') || roleName.contains('ولي');
-  bool get isDriver => user.roleId == 4 || UserModel._roleToId(roleName) == 4 || roleName.toLowerCase().contains('driver') || roleName.contains('سائق');
+  bool get isParent =>
+      user.roleId == 7 ||
+      user.roleId == 3 ||
+      UserModel._roleToId(roleName) == 7 ||
+      UserModel._roleToId(roleName) == 3 ||
+      roleName.toLowerCase().contains('parent') ||
+      roleName.contains('ولي');
+
+  bool get isDriver =>
+      user.roleId == 8 ||
+      user.roleId == 4 ||
+      UserModel._roleToId(roleName) == 8 ||
+      UserModel._roleToId(roleName) == 4 ||
+      roleName.toLowerCase().contains('driver') ||
+      roleName.contains('سائق');
 }
 
 class UserModel {
@@ -102,7 +115,7 @@ class UserModel {
 
     final rawRoleId = _readInt(json['role_id'] ?? json['roleId'] ?? json['id_role'] ?? 0);
     int roleId = rawRoleId;
-    if (roleId == 0 || (roleId != 3 && roleId != 4 && roleId != 1)) {
+    if (roleId == 0 || (roleId != 7 && roleId != 8 && roleId != 3 && roleId != 4 && roleId != 1)) {
       roleId = _roleToId(rawRole);
     }
     if (roleId == 0 && rawRoleId > 0) {
@@ -122,7 +135,7 @@ class UserModel {
       phoneNumber: json['phone_number']?.toString() ?? json['phone']?.toString() ?? '',
       alternativePhone: json['alternative_phone']?.toString() ?? json['alternative_phone_number']?.toString(),
       roleId: roleId,
-      role: rawRole.isNotEmpty ? rawRole : (roleId == 4 ? 'driver' : 'parent'),
+      role: rawRole.isNotEmpty ? rawRole : ((roleId == 8 || roleId == 4) ? 'driver' : 'parent'),
       isActive: _readBool(json['is_active'] ?? json['isActive'] ?? true),
       isTrusted: json['is_trusted'] == true,
       avatarUrl: json['avatar_url']?.toString() ?? json['photo_url']?.toString(),
@@ -132,11 +145,11 @@ class UserModel {
 
   static int _roleToId(String role) {
     final r = role.toLowerCase().trim();
-    if (r == '4' || r.contains('driver') || r.contains('سائق') || r.contains('كابتن')) {
-      return 4;
+    if (r == '8' || r == '4' || r.contains('driver') || r.contains('سائق') || r.contains('كابتن')) {
+      return 8;
     }
-    if (r == '3' || r.contains('parent') || r.contains('guardian') || r.contains('ولي')) {
-      return 3;
+    if (r == '7' || r == '3' || r.contains('parent') || r.contains('guardian') || r.contains('ولي')) {
+      return 7;
     }
     if (r == '1' || r.contains('admin') || r.contains('أدمن') || r.contains('مدير')) {
       return 1;

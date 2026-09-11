@@ -64,7 +64,7 @@ class _TimelineCardState extends State<TimelineCard>
 
   Color _getNodeColor(BuildContext context) {
     if (widget.item.isCompleted) return AppColors.success;
-    if (widget.item.isCurrent) return AppColors.amber;
+    if (widget.item.isCurrent) return AppColors.secondaryDark;
     return AppColors.grey400;
   }
 
@@ -215,15 +215,15 @@ class _TimelineCardState extends State<TimelineCard>
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                           decoration: BoxDecoration(
-                            color: AppColors.amber.withValues(alpha: 0.15),
+                            color: AppColors.secondary.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8.r),
                           ),
                           child: Text(
                             'مباشر',
-                            style: TextStyle(
+                            style: AppTextStyles.style(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.amber,
+                              color: AppColors.secondaryDark,
                             ),
                           ),
                         ),

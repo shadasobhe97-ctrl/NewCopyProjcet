@@ -138,19 +138,19 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: AppColors.orange),
-              SizedBox(width: 8),
+              const Icon(Icons.warning_amber_rounded, color: AppColors.orange),
+              const SizedBox(width: 8),
               Text(
                 'إلغاء التسجيل',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ],
           ),
-          content: const Text(
+          content: Text(
             'هل ترغب في إكمال التسجيل وإدخال البيانات الآن، أم ترغب في إلغاء التسجيل والخروج؟',
-            style: TextStyle(fontSize: 15, height: 1.4),
+            style: AppTextStyles.style(fontSize: 15, height: 1.4),
           ),
           actionsPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -167,11 +167,11 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                       ),
                     ),
                     onPressed: () => Navigator.of(dialogContext).pop(true),
-                    child: const FittedBox(
+                    child: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
                         'إلغاء التسجيل والخروج',
-                        style: TextStyle(
+                        style: AppTextStyles.style(
                           color: AppColors.red,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
@@ -191,11 +191,11 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                       ),
                     ),
                     onPressed: () => Navigator.of(dialogContext).pop(false),
-                    child: const FittedBox(
+                    child: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
                         'متابعة التسجيل',
-                        style: TextStyle(
+                        style: AppTextStyles.style(
                           color: AppColors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,

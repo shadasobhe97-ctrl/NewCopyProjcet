@@ -254,7 +254,7 @@ class DriverSearchCardWidget extends StatelessWidget {
                           side: BorderSide(color: cs.primary, width: 1.5),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(30),
                           ),
                         ),
                         child: Text(
@@ -284,7 +284,7 @@ class DriverSearchCardWidget extends StatelessWidget {
                               color: cs.primary.withValues(alpha: 0.4),
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(30),
                             ),
                           ),
                           child: Row(

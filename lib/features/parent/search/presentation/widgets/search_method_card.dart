@@ -67,7 +67,7 @@ class SearchMethodCard extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
-                  child: Text(emoji, style: const TextStyle(fontSize: 26)),
+                  child: Text(emoji, style: AppTextStyles.style(fontSize: 26)),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

@@ -214,7 +214,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12.r),
-                            borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+                            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                           ),
                         ),
                         validator: (val) {

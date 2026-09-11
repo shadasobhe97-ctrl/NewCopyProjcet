@@ -38,7 +38,7 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
 
   final List<Color> _paletteColors = const [
     AppColors.primaryLight,
-    AppColors.amber,
+    AppColors.secondaryDark,
     AppColors.accentPurple,
     AppColors.accentGreen,
     AppColors.maleBlue,

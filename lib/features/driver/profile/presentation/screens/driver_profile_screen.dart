@@ -121,9 +121,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
               const Text('تنبيه الإدارة'),
             ],
           ),
-          content: const Text(
+          content: Text(
             'لقد قمت بتعديل "الاسم بالكامل". هذا التعديل يتطلب موافقة الإدارة ولن يظهر في ملفك حتى يتم اعتماده.',
-            style: TextStyle(fontSize: 14, height: 1.5),
+            style: AppTextStyles.style(fontSize: 14, height: 1.5),
           ),
           actions: [
             TextButton(
@@ -710,9 +710,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                                     ),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'قيد المراجعة',
-                                    style: TextStyle(
+                                    style: AppTextStyles.style(
                                       color: Colors.orange,
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,

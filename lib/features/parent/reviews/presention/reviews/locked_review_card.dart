@@ -15,10 +15,10 @@ class LockedReviewCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: AppColors.pending.withValues(alpha: 0.08),
+        color: AppColors.secondary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
-          color: AppColors.pending.withValues(alpha: 0.35),
+          color: AppColors.secondaryDark.withValues(alpha: 0.5),
           width: 1.2,
         ),
       ),
@@ -26,10 +26,10 @@ class LockedReviewCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 24.r,
-            backgroundColor: AppColors.pending.withValues(alpha: 0.15),
+            backgroundColor: AppColors.secondary.withValues(alpha: 0.25),
             child: const Icon(
               Icons.lock_outline_rounded,
-              color: AppColors.pending,
+              color: AppColors.secondaryDark,
               size: 26,
             ),
           ),

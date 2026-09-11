@@ -146,7 +146,7 @@ void initParentInjection() {
     );
   }
   if (!getIt.isRegistered<ParentProfileCubit>()) {
-    getIt.registerFactory<ParentProfileCubit>(
+    getIt.registerLazySingleton<ParentProfileCubit>(
       () => ParentProfileCubit(getIt<ParentProfileRepository>()),
     );
   }

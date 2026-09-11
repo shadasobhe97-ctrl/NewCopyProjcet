@@ -630,20 +630,20 @@ class _ParentLocationChangeScreenState extends State<ParentLocationChangeScreen>
               margin: EdgeInsets.only(bottom: 12.h),
               padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.15),
+                color: AppColors.secondary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: Colors.amber),
+                border: Border.all(color: AppColors.secondaryDark),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900),
+                  const Icon(Icons.info_outline_rounded, color: AppColors.secondaryDark),
                   SizedBox(width: 10.w),
                   Expanded(
                     child: Text(
                       previewResult.errors.join('\n'),
                       style: AppTextStyles.style(
                         fontSize: 12.sp,
-                        color: Colors.amber.shade900,
+                        color: AppColors.secondaryDark,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

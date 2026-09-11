@@ -24,7 +24,7 @@ class DriverModel {
   const DriverModel({
     required this.driverId,
     required this.userId,
-    this.roleId = 4,
+    this.roleId = 8,
     required this.fullName,
     required this.email,
     required this.phoneNumber,
@@ -53,7 +53,7 @@ class DriverModel {
     return DriverModel(
       driverId: json['driver_id'] is int ? json['driver_id'] : (int.tryParse(json['driver_id']?.toString() ?? '') ?? 0),
       userId: json['user_id'] is int ? json['user_id'] : (int.tryParse(json['user_id']?.toString() ?? '') ?? 0),
-      roleId: json['role_id'] is int ? json['role_id'] : (int.tryParse(json['role_id']?.toString() ?? '') ?? 4),
+      roleId: json['role_id'] is int ? json['role_id'] : (int.tryParse(json['role_id']?.toString() ?? '') ?? 8),
       fullName: json['full_name']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       phoneNumber: json['phone_number']?.toString() ?? '',

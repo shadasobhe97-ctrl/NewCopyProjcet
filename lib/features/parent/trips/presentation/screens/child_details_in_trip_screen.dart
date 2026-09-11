@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:latlong2/latlong.dart';
@@ -141,7 +141,7 @@ class ChildDetailsInTripScreen extends StatelessWidget {
                                     trip.destination.name,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(fontSize: 9.sp, fontWeight: FontWeight.bold),
+                                    style: AppTextStyles.style(fontSize: 9.sp, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ],

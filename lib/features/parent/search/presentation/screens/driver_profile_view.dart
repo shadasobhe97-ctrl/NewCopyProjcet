@@ -12,6 +12,7 @@ import 'package:kids_transport/features/parent/children/presentation/screens/tra
 import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step1_screen.dart';
 import 'subscription_confirmation_screen.dart';
 import '../widgets/child_selection_card_widget.dart';
+import '../widgets/smart_search_bottom_sheet_widget.dart';
 import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
 import 'package:kids_transport/features/parent/search/logic/search_state.dart';
 import 'package:kids_transport/features/parent/search/data/models/subscription_request.dart';
@@ -219,58 +220,34 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       builder: (_) => const Center(child: CircularProgressIndicator()),
     ).then((_) => _loadingShowing = false);
 
-        final List<SubscriptionChildRequest> childrenRequestList = [];
-    debugPrint('>>> بيانات كل طفل على حدة (كل طفل بإعداداته الخاصة):');
-    for (final kid in _selectedKids) {
-      final pref = kid.transportPref;
-      final breakdownItem = _effectiveDriver.breakdown.firstWhere(
-        (b) => b.childId == kid.id,
-        orElse: () => BreakdownModelInfo(
-          childId: kid.id ?? 0,
-          childName: kid.name,
-          schoolName: kid.schoolName,
-          distanceKm: 0.0,
-          pricePerKm: 0.0,
-          subscriptionType: pref.subscriptionType,
-          workingDays: 22,
-          childPrice: _effectiveDriver.price,
-          childPriceRaw: _effectiveDriver.price.toInt(),
-        ),
-      );
+    final ctx = context.read<SearchCubit>().lastSearchContext;
 
-      // نوع الاشتراك/الاتجاه/الفترة/التواريخ تُؤخذ من هذا الطفل تحديداً
-      final childType = SubscriptionEnums.normalizeType(
-        breakdownItem.subscriptionType.isNotEmpty
-            ? breakdownItem.subscriptionType
-            : pref.subscriptionType,
-      );
-      final childDirection = SubscriptionEnums.normalizeDirection(pref.serviceType);
-      final childTiming = SubscriptionEnums.normalizeTiming(pref.period);
-      final childStart = pref.startDate.toIso8601String().split('T').first;
-      final childEnd = pref.endDate?.toIso8601String().split('T').first;
+    final subType = ctx?.subscriptionType ?? 'multi_day';
+    final direction = ctx?.tripDirection ?? 'go';
+    final start = (ctx?.startDate != null && ctx!.startDate.isNotEmpty)
+        ? ctx.startDate
+        : DateTime.now().toIso8601String().split('T').first;
+    final end = (ctx?.endDate != null && ctx!.endDate.isNotEmpty)
+        ? ctx.endDate
+        : start;
 
-      debugPrint('  child_id            = ${kid.id} (${kid.name})');
-      debugPrint('  subscription_type   = $childType');
-      debugPrint('  trip_direction      = $childDirection');
-      debugPrint('  timing              = $childTiming');
-      debugPrint('  start_date          = $childStart');
-      debugPrint('  end_date            = $childEnd');
-      debugPrint('  ---');
-
-      childrenRequestList.add(
-        SubscriptionChildRequest(
-          childId: kid.id ?? 0,
-          subscriptionType: childType,
-          tripDirection: childDirection,
-          timing: childTiming,
-          startDate: childStart,
-          endDate: childEnd,
-        ),
-      );
+    int? homeAddrId;
+    if (_selectedKids.isNotEmpty && _selectedKids.first.addressId != null) {
+      homeAddrId = int.tryParse(_selectedKids.first.addressId!);
     }
+
+    final List<SubscriptionChildRequest> childrenRequestList = _selectedKids
+        .where((k) => k.id != null)
+        .map((k) => SubscriptionChildRequest(childId: k.id!))
+        .toList();
 
     final request = SubscriptionRequest(
       driverId: _effectiveDriver.driverId,
+      subscriptionType: subType,
+      tripDirection: direction,
+      startDate: start,
+      endDate: end,
+      homeAddressId: homeAddrId,
       children: childrenRequestList,
     );
 
@@ -592,7 +569,78 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     });
   }
 
+  /// في حالة showPricing==false (سيناريو البحث بالاسم/رقم):
+  ///   يفتح SmartSearchBottomSheetWidget لجمع الأطفال + بيانات الاشتراك
+  ///   ثم يعيد البحث مع كل البيانات لجلب السعر والانتقال للتأكيد
+  ///
+  /// في حالة showPricing==true (سيناريو البحث الذكي):
+  ///   يفتح المتحدد القديم (اختيار أطفال فقط)
   void _showChildrenPicker() {
+    if (!widget.showPricing) {
+      // سيناريو 1: بحث بالاسم/رقم → يفتح SmartSearch لجمع كل البيانات
+      _openSmartSearchForPricing();
+      return;
+    }
+    // سيناريو 2: بحث ذكي (الأطفال مختارون مسبقاً) → اختيار أطفال فقط
+    _showChildrenPickerOld();
+  }
+
+  /// فتح SmartSearchBottomSheetWidget لجمع الأطفال + بيانات الاشتراك ثم جلب السعر
+  void _openSmartSearchForPricing() {
+    final childrenState = context.read<ChildrenCubit>().state;
+    final kids = childrenState is ChildrenLoaded
+        ? childrenState.children
+        : widget.availableKids;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (modalContext) => BlocProvider.value(
+        value: context.read<ChildrenCubit>(),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24.r),
+          ),
+          child: SmartSearchBottomSheetWidget(
+            kids: kids,
+            initialSelectedKidsIds: _selectedKidsIds,
+            onApply: ({
+              required List<int> selectedKidsIds,
+              required String tripDirection,
+              required String subscriptionType,
+              required DateTime? startDate,
+              required DateTime? endDate,
+            }) {
+              final startStr = startDate?.toIso8601String().split('T').first;
+              final endStr = endDate?.toIso8601String().split('T').first;
+
+              // تحديث الحالة المحلية
+              setState(() {
+                _selectedKidsIds = selectedKidsIds;
+                _pricedDriver = null;
+              });
+
+              // إعادة البحث بكل البيانات (search_query الأصلي + child_ids + بيانات الاشتراك)
+              // → سيرجع search_context + السعر من الباك وبعدين ننتقل للتأكيد
+              context.read<SearchCubit>().getPricing(
+                searchQuery: widget.searchQuery,
+                childIds: selectedKidsIds,
+                subscriptionType: subscriptionType,
+                tripDirection: tripDirection,
+                startDate: startStr,
+                endDate: endStr,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// المتحدد القديم: في سيناريو 2 (بحث ذكي) — يختار أطفال فقط (search_context مخزّن مسبقاً)
+  void _showChildrenPickerOld() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     List<int> temp = List<int>.from(_selectedKidsIds);
@@ -1885,7 +1933,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                     _breakdownDetailRow(
                       Icons.calendar_month_outlined,
                       'نوع الاشتراك',
-                      _getSubscriptionTypeArabic(item.subscriptionType),
+                      item.subscriptionTypeLabel.isNotEmpty
+                          ? item.subscriptionTypeLabel
+                          : 'اشتراك مخصص',
                       isDark,
                     ),
                     _breakdownDetailRow(

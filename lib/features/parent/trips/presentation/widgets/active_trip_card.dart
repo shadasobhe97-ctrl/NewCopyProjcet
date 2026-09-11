@@ -169,7 +169,7 @@ class ActiveTripCard extends StatelessWidget {
                   ),
                   child: Text(
                     trip.vehicle.plateNumber!,
-                    style: TextStyle(
+                    style: AppTextStyles.style(
                       fontSize: 10.sp,
                       fontWeight: FontWeight.bold,
                       color: context.textPrimary,
@@ -227,7 +227,7 @@ class ActiveTripCard extends StatelessWidget {
                     Icon(
                       Icons.school_rounded,
                       size: 16.r,
-                      color: AppColors.amber,
+                      color: AppColors.secondaryDark,
                     ),
                     SizedBox(width: 6.w),
                     Text(
@@ -259,7 +259,7 @@ class ActiveTripCard extends StatelessWidget {
                       ? Icons.home_rounded
                       : Icons.school_rounded,
                   size: 18.r,
-                  color: AppColors.amber,
+                  color: AppColors.secondaryDark,
                 ),
                 SizedBox(width: 6.w),
                 Text(

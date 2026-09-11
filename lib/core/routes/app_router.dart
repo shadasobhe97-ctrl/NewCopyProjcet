@@ -22,6 +22,8 @@ import 'package:kids_transport/features/auth/registration/presentation/screens/p
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_basic_info_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_email_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_location_screen.dart';
+import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_add_first_child_screen.dart';
+import 'package:kids_transport/features/parent/children/presentation/screens/add_child_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/parent/parent_otp_screen.dart';
 
 import 'package:kids_transport/features/driver/dashboard/presentation/screens/driver_main_wrapper.dart';
@@ -54,8 +56,7 @@ import 'package:kids_transport/features/driver/statistics/logic/cubit/driver_sta
 
 import 'package:kids_transport/features/parent/addresses/presentation/screens/saved_addresses_screen.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step1_screen.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step2_screen.dart';
+import 'package:kids_transport/features/parent/subscriptions/data/models/active_subscription_model.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/child_data_details_screen.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/child_pass_screen.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/my_children_screen.dart';
@@ -167,6 +168,7 @@ class AppRoutes {
   static const String parentAvatar = '/parentAvatar';
   static const String parentAlternativePhone = '/parentAlternativePhone';
   static const String parentLocation = '/parentLocation';
+  static const String parentAddFirstChild = '/parentAddFirstChild';
 
   static const String driverHome = '/driverHome';
   static const String driverMainWrapper = '/driverMainWrapper';
@@ -246,8 +248,8 @@ class AppRoutes {
         final initialTab = settings.arguments as int? ?? 0;
         return _route(
           settings,
-          BlocProvider(
-            create: (context) => getIt<ParentProfileCubit>()..fetchProfile(),
+          BlocProvider.value(
+            value: getIt<ParentProfileCubit>()..fetchProfile(),
             child: ParentMainWrapper(initialIndex: initialTab),
           ),
         );
@@ -256,8 +258,8 @@ class AppRoutes {
       case parentProfile:
         return _route(
           settings,
-          BlocProvider(
-            create: (context) => getIt<ParentProfileCubit>(),
+          BlocProvider.value(
+            value: getIt<ParentProfileCubit>(),
             child: const ParentProfileScreen(),
           ),
         );
@@ -267,9 +269,11 @@ class AppRoutes {
         return _route(settings, const MyChildrenScreen());
       case addChild:
       case addChildStep1:
-        return _route(settings, const AddChildStep1Screen());
       case addChildStep2:
-        return _route(settings, const AddChildStep2Screen());
+        final childArg = settings.arguments is ChildModel
+            ? settings.arguments as ChildModel
+            : null;
+        return _route(settings, AddChildScreen(childToEdit: childArg));
       case childDetail:
       case childDataDetails:
         return _childRoute(
@@ -284,7 +288,17 @@ class AppRoutes {
           (child) => TransportDetailsScreen(child: child),
         );
       case subscriptionDetails:
-        final subscriptionId = settings.arguments as int;
+        final args = settings.arguments;
+        if (args is ActiveSubscriptionModel) {
+          return _route(
+            settings,
+            BlocProvider(
+              create: (_) => getIt<SubscriptionsCubit>(),
+              child: SubscriptionDetailsScreen(subscription: args),
+            ),
+          );
+        }
+        final subscriptionId = args as int? ?? 0;
         return _route(
           settings,
           BlocProvider(
@@ -421,6 +435,8 @@ class AppRoutes {
         return _route(settings, const ParentAvatarScreen());
       case parentLocation:
         return _route(settings, const ParentLocationScreen());
+      case parentAddFirstChild:
+        return _route(settings, const ParentAddFirstChildScreen());
       default:
         return null;
     }

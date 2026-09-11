@@ -389,7 +389,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
         SizedBox(height: MediaQuery.sizeOf(context).height * 0.012),
         Text(
           'اضغط على الصورة لتغيير الصورة الشخصية',
-          style: TextStyle(
+          style: AppTextStyles.style(
             fontSize: 12,
             color: context.textMuted.withValues(alpha: 0.8),
           ),
@@ -418,7 +418,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   }) {
     return InputDecoration(
       hintText: hintText,
-      hintStyle: TextStyle(
+      hintStyle: AppTextStyles.style(
         fontSize: 14,
         color: context.textMuted.withValues(alpha: 0.6),
       ),

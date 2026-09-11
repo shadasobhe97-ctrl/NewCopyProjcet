@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 
 class EmailVerificationDialog extends StatefulWidget {
@@ -87,9 +88,9 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
               const Text('تأكيد البريد الإلكتروني'),
             ],
           ),
-          content: const Text(
+          content: Text(
             'تم إرسال رابط تأكيد إلى بريدك الإلكتروني الجديد.\nيرجى فتح البريد والموافقة على تعديل الحساب.',
-            style: TextStyle(height: 1.5, fontSize: 14),
+            style: AppTextStyles.style(height: 1.5, fontSize: 14),
           ),
           actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           actions: [
@@ -117,9 +118,9 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
                               ),
                             ),
                           )
-                        : const Text(
+                        : Text(
                             'إلغاء التعديل',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: AppTextStyles.style(fontWeight: FontWeight.bold),
                           ),
                   ),
                 ),
@@ -145,9 +146,9 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
                               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                        : const Text(
+                        : Text(
                             'تم التعديل',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: AppTextStyles.style(fontWeight: FontWeight.bold),
                           ),
                   ),
                 ),

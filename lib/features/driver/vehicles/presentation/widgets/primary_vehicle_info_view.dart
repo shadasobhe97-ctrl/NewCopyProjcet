@@ -84,10 +84,7 @@ class PrimaryVehicleInfoView extends StatelessWidget {
         ),
         content: Text(
           'عند إرسال التعديلات الجديدة على بيانات أو صورة المركبة، سيتم إرسالها إلى الإدارة للمراجعة والتدقيق.\n\nسيتم إيقاف حساب السائق مؤقتاً لحين الاعتماد لأسباب أمنية ولضمان سلامة الخدمة.\n\nهل تريد المتابعة وإرسال الطلب؟',
-          style: AppTextStyles.style(
-            fontSize: 14,
-            height: 1.5,
-          ),
+          style: AppTextStyles.style(fontSize: 14, height: 1.5),
         ),
         actions: [
           Padding(
@@ -118,9 +115,9 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Text(
+                    child: Text(
                       'موافق وإرسال',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: AppTextStyles.style(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -138,7 +135,8 @@ class PrimaryVehicleInfoView extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.primaryColor;
 
-    final hasImage = selectedVehicleImage != null ||
+    final hasImage =
+        selectedVehicleImage != null ||
         (vehicleImageUrl != null && vehicleImageUrl!.trim().isNotEmpty);
 
     return Padding(
@@ -174,10 +172,13 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                           if (isEditing)
                             TextButton.icon(
                               onPressed: onPickImage,
-                              icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+                              icon: const Icon(
+                                Icons.add_a_photo_outlined,
+                                size: 18,
+                              ),
                               label: Text(
                                 hasImage ? 'تغيير الصورة' : 'إضافة صورة',
-                                style: const TextStyle(fontSize: 13),
+                                style: AppTextStyles.style(fontSize: 13),
                               ),
                             ),
                         ],
@@ -199,7 +200,8 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                               alignment: Alignment.bottomRight,
                               children: [
                                 AppImageWidget(
-                                  image: selectedVehicleImage ?? vehicleImageUrl,
+                                  image:
+                                      selectedVehicleImage ?? vehicleImageUrl,
                                   height: 180,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
@@ -214,7 +216,7 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                                     color: Colors.black.withValues(alpha: 0.6),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
@@ -225,7 +227,7 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                                       SizedBox(width: 4),
                                       Text(
                                         'اضغط للتكبير',
-                                        style: TextStyle(
+                                        style: AppTextStyles.style(
                                           color: Colors.white,
                                           fontSize: 11,
                                         ),
@@ -242,9 +244,7 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                           height: 120,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.grey[800]
-                                : Colors.grey[100],
+                            color: isDark ? Colors.grey[800] : Colors.grey[100],
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: Colors.grey.withValues(alpha: 0.3),
@@ -261,7 +261,7 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                               const SizedBox(height: 8),
                               Text(
                                 'لم يتم رفع صورة للمركبة بعد',
-                                style: TextStyle(
+                                style: AppTextStyles.style(
                                   color: Colors.grey[500],
                                   fontSize: 13,
                                 ),
@@ -286,7 +286,11 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      Icon(Icons.directions_car_filled, color: primaryColor, size: 28),
+                      Icon(
+                        Icons.directions_car_filled,
+                        color: primaryColor,
+                        size: 28,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -309,7 +313,10 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                           ],
                         ),
                       ),
-                      _buildStatusBadge(status ?? 'Active', isVerified: isVerified),
+                      _buildStatusBadge(
+                        status ?? 'Active',
+                        isVerified: isVerified,
+                      ),
                     ],
                   ),
                 ),
@@ -410,12 +417,16 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                       // نوع المركبة
                       if (isEditing)
                         DropdownButtonFormField<String>(
-                          initialValue: _getSelectedTypeEnglish(typeController.text),
+                          initialValue: _getSelectedTypeEnglish(
+                            typeController.text,
+                          ),
                           decoration: const InputDecoration(
                             labelText: 'نوع المركبة',
                             prefixIcon: Icon(Icons.category_outlined),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(10),
+                              ),
                             ),
                           ),
                           isExpanded: true,
@@ -525,14 +536,18 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                              Icon(
+                                Icons.check_circle_outline,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                               SizedBox(width: 8),
                               Text(
                                 'إرسال التعديلات',
-                                style: TextStyle(
+                                style: AppTextStyles.style(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
@@ -552,7 +567,10 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: const Text('إلغاء', style: TextStyle(fontSize: 15)),
+                          child: Text(
+                            'إلغاء',
+                            style: AppTextStyles.style(fontSize: 15),
+                          ),
                         ),
                       ),
                     ],
@@ -615,11 +633,7 @@ class PrimaryVehicleInfoView extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          color: bg,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
+        style: AppTextStyles.style(color: bg, fontWeight: FontWeight.bold, fontSize: 12),
       ),
     );
   }

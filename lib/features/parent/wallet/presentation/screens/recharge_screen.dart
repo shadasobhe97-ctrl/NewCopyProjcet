@@ -263,7 +263,7 @@ class _RechargeScreenState extends State<RechargeScreen> {
                                   child: Row(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text('•', style: TextStyle(fontSize: 16)),
+                                      Text('•', style: AppTextStyles.style(fontSize: 16)),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(

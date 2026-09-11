@@ -35,16 +35,20 @@ class AppEntryCubit extends Cubit<AppEntryState> {
     final roleId = _sessionRepository.getRoleId();
     final roleName = _sessionRepository.getRoleName()?.toLowerCase().trim() ?? '';
 
-    final isDriver = roleId == 4 ||
+    final isDriver = roleId == 8 ||
+        roleId == 4 ||
         roleName.contains('driver') ||
         roleName.contains('سائق') ||
         roleName.contains('كابتن') ||
+        roleName == '8' ||
         roleName == '4';
 
-    final isParent = roleId == 3 ||
+    final isParent = roleId == 7 ||
+        roleId == 3 ||
         roleName.contains('parent') ||
         roleName.contains('guardian') ||
         roleName.contains('ولي') ||
+        roleName == '7' ||
         roleName == '3';
 
     if (isDriver) {
@@ -96,6 +100,9 @@ class AppEntryCubit extends Cubit<AppEntryState> {
       final parentStage = StorageService.getParentRegStage();
       if (parentStage == 'location') {
         emit(NavigateToParentLocationRequired());
+        return;
+      } else if (parentStage == 'add_child' || parentStage == 'child') {
+        emit(NavigateToParentChildRequired());
         return;
       }
       emit(NavigateToParentHome());

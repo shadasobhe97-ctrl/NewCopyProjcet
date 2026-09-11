@@ -1,121 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:intl/intl.dart' as intl;
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/core/utils/subscription_enums.dart';
 import '../../logic/subscriptions_cubit/subscriptions_cubit.dart';
-import '../../data/models/subscription_detail_model.dart';
-import '../../data/models/subscription_location_model.dart';
-import 'subscription_map_screen.dart';
+import '../../data/models/active_subscription_model.dart';
+import '../../data/models/request_model.dart'
+    show RequestChildPricing;
 
+/// شاشة تفاصيل الاشتراك النشط — لا تستدعي API جديد
+/// تعرض البيانات مباشرة من [ActiveSubscriptionModel] المُمرَّر إليها
+/// شاشة تفاصيل الاشتراك النشط — لا تستدعي API تفاصيل مخصص
+/// تدعم التمرير المباشر لـ [ActiveSubscriptionModel] أو تحميله عبر [subscriptionId]
 class SubscriptionDetailsScreen extends StatefulWidget {
-  final int subscriptionId;
+  final ActiveSubscriptionModel? subscription;
+  final int? subscriptionId;
 
   const SubscriptionDetailsScreen({
     super.key,
-    required this.subscriptionId,
-  });
+    this.subscription,
+    this.subscriptionId,
+  }) : assert(subscription != null || subscriptionId != null,
+            'Must provide either subscription or subscriptionId');
 
   @override
   State<SubscriptionDetailsScreen> createState() =>
       _SubscriptionDetailsScreenState();
 }
 
-class _SubscriptionDetailsScreenState
-    extends State<SubscriptionDetailsScreen> {
+class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
+  ActiveSubscriptionModel? _subscription;
+
+  ActiveSubscriptionModel get subscription =>
+      _subscription ?? widget.subscription!;
+
   @override
   void initState() {
     super.initState();
-    context
-        .read<SubscriptionsCubit>()
-        .fetchSubscriptionDetail(widget.subscriptionId);
+    _subscription = widget.subscription;
+    if (_subscription == null && widget.subscriptionId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<SubscriptionsCubit>().fetchSubscriptions();
+        }
+      });
+    }
   }
 
   String _formatDate(String? raw) {
     if (raw == null || raw.isEmpty) return 'غير محدد';
     try {
       final dt = DateTime.parse(raw.split('T').first);
-      return intl.DateFormat('yyyy/MM/dd').format(dt);
+      return '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
     } catch (_) {
       return raw.split('T').first;
     }
   }
 
-
-  SubscriptionDetailModel? _loadedDetail;
-
-  void _confirmCancel(BuildContext context, int subscriptionId) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cubit = context.read<SubscriptionsCubit>();
-
-    showDialog(
-      context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
-          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
-          title: Text(
-            'إلغاء الاشتراك',
-            style: AppTextStyles.style(
-              fontWeight: FontWeight.bold,
-              fontSize: 16.sp,
-              color: isDark ? AppColors.white : AppColors.textDark,
-            ),
-          ),
-          content: Text(
-            'هل أنت متأكد من إلغاء هذا الاشتراك؟ سيتم إشعار السائق فوراً ولا يمكن التراجع عن هذا الإجراء.',
-            style: AppTextStyles.style(
-              fontSize: 13.sp,
-              color: isDark ? AppColors.grey300 : AppColors.grey700,
-              height: 1.5,
-            ),
-          ),
-          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
-          actions: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: isDark ? AppColors.grey700 : AppColors.grey300),
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                ),
-                child: Text(
-                  'تراجع',
-                  style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.grey300 : AppColors.textMuted,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  cubit.cancelSubscription(subscriptionId);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  foregroundColor: AppColors.white,
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                ),
-                child: Text(
-                  'إلغاء الاشتراك',
-                  style: AppTextStyles.style(fontWeight: FontWeight.bold, color: AppColors.white),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  String _formatTime(String? raw) {
+    if (raw == null || raw.isEmpty) return '—';
+    final parts = raw.split(':');
+    if (parts.length >= 2) return '${parts[0]}:${parts[1]}';
+    return raw;
   }
 
   @override
@@ -127,641 +75,795 @@ class _SubscriptionDetailsScreenState
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor:
-            isDark ? AppColors.backgroundDark : const Color(0xFFF8FAFC),
-        appBar: AppBar(
+            isDark ? AppColors.backgroundDark : const Color(0xFFF4F6FA),
+        appBar: _buildAppBar(isDark, theme, context),
+        body: BlocConsumer<SubscriptionsCubit, SubscriptionsState>(
+          listener: (context, state) {
+            if (state is SubscriptionsActionSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                _snackBar(state.message, AppColors.success),
+              );
+              Navigator.of(context).pop(true);
+            } else if (state is SubscriptionsActionError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                _snackBar(state.message, AppColors.error),
+              );
+            }
+          },
+          builder: (context, state) {
+            if (_subscription == null) {
+              if (state is SubscriptionsLoading) {
+                return const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                );
+              }
+              if (state is SubscriptionsError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        state.message,
+                        style: AppTextStyles.style(
+                          color: isDark ? AppColors.white : AppColors.textDark,
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      ElevatedButton(
+                        onPressed: () => context
+                            .read<SubscriptionsCubit>()
+                            .fetchSubscriptions(),
+                        child: const Text('إعادة المحاولة'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final list = state is SubscriptionsLoaded
+                  ? state.subscriptions
+                  : (state is SubscriptionsActionLoading
+                      ? state.currentList
+                      : (state is SubscriptionsActionSuccess
+                          ? state.updatedList
+                          : (state is SubscriptionsActionError
+                              ? state.currentList
+                              : <ActiveSubscriptionModel>[])));
+
+              final found = list
+                  .where((s) => s.id == widget.subscriptionId)
+                  .firstOrNull;
+              if (found != null) {
+                _subscription = found;
+              } else {
+                return Center(
+                  child: Text(
+                    'لم يتم العثور على الاشتراك',
+                    style: AppTextStyles.style(
+                      color: isDark ? AppColors.white : AppColors.textDark,
+                    ),
+                  ),
+                );
+              }
+            }
+
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.all(16.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. بيانات السائق
+                  _buildDriverCard(theme, isDark),
+                  SizedBox(height: 14.h),
+
+                  // 2. بيانات الاشتراك المشتركة
+                  _buildSubscriptionInfoCard(theme, isDark),
+                  SizedBox(height: 14.h),
+
+                  // 3. مواعيد الرحلة (إن وجدت)
+                  if (subscription.pickupTime != null ||
+                      subscription.dropoffTime != null) ...[
+                    _buildTimingCard(theme, isDark),
+                    SizedBox(height: 14.h),
+                  ],
+
+                  // 4. عنوان المنزل
+                  if (subscription.homeAddress != null) ...[
+                    _buildHomeAddressCard(theme, isDark),
+                    SizedBox(height: 14.h),
+                  ],
+
+                  // 5. كروت الأطفال (طفل أو أكثر)
+                  _buildSectionTitle(
+                      'الأطفال', Icons.child_care_rounded, isDark),
+                  SizedBox(height: 8.h),
+                  ...subscription.children.asMap().entries.map((entry) =>
+                      _buildChildCard(context, entry.value, theme, isDark)),
+
+                  // 6. الملاحظات
+                  if (subscription.notes != null &&
+                      subscription.notes!.trim().isNotEmpty) ...[
+                    SizedBox(height: 4.h),
+                    _buildNotesCard(theme, isDark),
+                    SizedBox(height: 14.h),
+                  ],
+
+                  SizedBox(height: 20.h),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // AppBar
+  // ───────────────────────────────────────────────────────────────
+  PreferredSizeWidget _buildAppBar(bool isDark, ThemeData theme, BuildContext context) {
+    return AppBar(
+      backgroundColor:
+          isDark ? AppColors.surfaceDark : AppColors.white,
+      elevation: 0,
+      centerTitle: true,
+      title: Text(
+        'تفاصيل الاشتراك',
+        style: AppTextStyles.style(
+          fontWeight: FontWeight.bold,
+          fontSize: 16.sp,
+          color: isDark ? AppColors.white : AppColors.textDark,
+        ),
+      ),
+      leading: IconButton(
+        icon: Icon(
+          Icons.arrow_back_ios_new_rounded,
+          color: isDark ? AppColors.white : AppColors.textDark,
+          size: 18.r,
+        ),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // بيانات السائق
+  // ───────────────────────────────────────────────────────────────
+  Widget _buildDriverCard(ThemeData theme, bool isDark) {
+    final driver = subscription.driver;
+    final driverColor =
+        driver.isFemale ? AppColors.femalePink : theme.colorScheme.primary;
+
+    return _card(
+      isDark: isDark,
+      child: Row(
+        children: [
+          // أفاتار
+          Container(
+            width: 56.r,
+            height: 56.r,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: driverColor.withValues(alpha: 0.12),
+            ),
+            child: driver.avatarUrl != null
+                ? ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl: driver.avatarUrl!,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => _driverInitials(
+                          driver.name, driverColor),
+                    ),
+                  )
+                : _driverInitials(driver.name, driverColor),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  driver.name,
+                  style: AppTextStyles.style(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.white : AppColors.textDark,
+                  ),
+                ),
+                if (driver.phone != null) ...[
+                  SizedBox(height: 4.h),
+                  GestureDetector(
+                    onLongPress: () =>
+                        Clipboard.setData(ClipboardData(text: driver.phone!)),
+                    child: Row(
+                      children: [
+                        Icon(Icons.phone_rounded,
+                            size: 13.r,
+                            color: theme.colorScheme.primary),
+                        SizedBox(width: 4.w),
+                        Text(
+                          driver.phone!,
+                          style: AppTextStyles.style(
+                            fontSize: 13.sp,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          // معلومات السيارة
+          if (driver.vehicle != null)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (driver.vehicle!.hasAc)
+                  _badge(
+                    label: 'مكيف ❄️',
+                    bg: Colors.blue.withValues(alpha: 0.1),
+                    color: Colors.blue,
+                  ),
+                if (driver.vehicle!.plateNumber != null) ...[
+                  SizedBox(height: 4.h),
+                  _badge(
+                    label: driver.vehicle!.plateNumber!,
+                    bg: isDark
+                        ? AppColors.grey800
+                        : AppColors.grey100,
+                    color: isDark ? AppColors.grey300 : AppColors.grey700,
+                  ),
+                ],
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // بيانات الاشتراك المشتركة
+  // ───────────────────────────────────────────────────────────────
+  Widget _buildSubscriptionInfoCard(ThemeData theme, bool isDark) {
+    final sub = subscription.subscription;
+    return _cardWithTitle(
+      isDark: isDark,
+      theme: theme,
+      icon: Icons.receipt_long_rounded,
+      title: 'تفاصيل الاشتراك',
+      child: Column(
+        children: [
+          _detailRow('نوع الاشتراك', sub.typeDisplayLabel, isDark),
+          _detailRow('اتجاه الرحلة', sub.directionDisplayLabel, isDark),
+          _detailRow('تاريخ البداية', _formatDate(sub.startDate), isDark),
+          if (sub.endDate != null)
+            _detailRow('تاريخ الانتهاء', _formatDate(sub.endDate), isDark),
+          _detailRow('أيام العمل', '${sub.workingDaysCount} يوم', isDark),
+          _detailRow('حالة الاشتراك',
+              subscription.statusDisplayLabel, isDark,
+              valueColor: _statusColor(subscription.status)),
+        ],
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // مواعيد الرحلة
+  // ───────────────────────────────────────────────────────────────
+  Widget _buildTimingCard(ThemeData theme, bool isDark) {
+    return _cardWithTitle(
+      isDark: isDark,
+      theme: theme,
+      icon: Icons.access_time_rounded,
+      title: 'مواعيد الرحلة',
+      child: Column(
+        children: [
+          if (subscription.pickupTime != null)
+            _detailRow('وقت الاصطحاب',
+                _formatTime(subscription.pickupTime), isDark),
+          if (subscription.dropoffTime != null)
+            _detailRow('وقت التوصيل',
+                _formatTime(subscription.dropoffTime), isDark),
+        ],
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // عنوان المنزل
+  // ───────────────────────────────────────────────────────────────
+  Widget _buildHomeAddressCard(ThemeData theme, bool isDark) {
+    final home = subscription.homeAddress!;
+    return _cardWithTitle(
+      isDark: isDark,
+      theme: theme,
+      icon: Icons.home_rounded,
+      title: 'عنوان المنزل',
+      child: Column(
+        children: [
+          if (home.label != null)
+            _detailRow('العنوان', home.label!, isDark),
+          if (home.lat != null && home.lng != null)
+            _detailRow(
+                'الإحداثيات', '${home.lat!.toStringAsFixed(4)}, ${home.lng!.toStringAsFixed(4)}', isDark),
+        ],
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // كرت الطفل
+  // ───────────────────────────────────────────────────────────────
+  Widget _buildChildCard(BuildContext context, ActiveChild child,
+      ThemeData theme, bool isDark) {
+    final isFemale = child.isFemale;
+    final avatarColor = isFemale ? AppColors.femalePink : theme.colorScheme.primary;
+    final isCancellable = ['active', 'accepted', 'pending_start']
+        .contains(subscription.status.toLowerCase());
+
+    return BlocBuilder<SubscriptionsCubit, SubscriptionsState>(
+      builder: (context, state) {
+        final isCancelling = state is SubscriptionsActionLoading &&
+            state.actionId == subscription.id;
+
+        return Container(
+          margin: EdgeInsets.only(bottom: 14.h),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCard : AppColors.white,
+            borderRadius: BorderRadius.circular(18.r),
+            border: Border.all(
+              color: avatarColor.withValues(alpha: 0.3),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.black
+                    .withValues(alpha: isDark ? 0.15 : 0.04),
+                blurRadius: 10.r,
+                offset: Offset(0, 3.h),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── رأس كرت الطفل ──
+              Container(
+                padding:
+                    EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                decoration: BoxDecoration(
+                  color: avatarColor.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(18.r),
+                    topLeft: Radius.circular(18.r),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // أفاتار
+                    Container(
+                      width: 40.r,
+                      height: 40.r,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: avatarColor.withValues(alpha: 0.15),
+                      ),
+                      child: child.photoUrl != null
+                          ? ClipOval(
+                              child: CachedNetworkImage(
+                                imageUrl: child.photoUrl!,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) =>
+                                    Center(
+                                  child: Text(child.avatarInitials,
+                                      style: AppTextStyles.style(
+                                          fontSize: 13.sp,
+                                          fontWeight: FontWeight.bold,
+                                          color: avatarColor)),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Text(child.avatarInitials,
+                                  style: AppTextStyles.style(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: avatarColor)),
+                            ),
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            child.name,
+                            style: AppTextStyles.style(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  isDark ? AppColors.white : AppColors.textDark,
+                            ),
+                          ),
+                          if (child.gradeLabelDisplay.isNotEmpty)
+                            Text(
+                              child.gradeLabelDisplay,
+                              style: AppTextStyles.style(
+                                fontSize: 12.sp,
+                                color: isDark
+                                    ? AppColors.grey400
+                                    : AppColors.grey600,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    // جنس + عمر
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (child.age != null)
+                          Text(
+                            '${child.age} سنة',
+                            style: AppTextStyles.style(
+                              fontSize: 11.sp,
+                              color: isDark
+                                  ? AppColors.grey400
+                                  : AppColors.grey600,
+                            ),
+                          ),
+                        SizedBox(height: 2.h),
+                        Icon(
+                          isFemale
+                              ? Icons.face_4_rounded
+                              : Icons.face_rounded,
+                          size: 16.r,
+                          color: avatarColor,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── تفاصيل الطفل ──
+              Padding(
+                padding: EdgeInsets.all(14.w),
+                child: Column(
+                  children: [
+                    _detailRow('المدرسة', child.school.name, isDark),
+                    if (child.distanceKm != null)
+                      _detailRow('المسافة',
+                          '${child.distanceKm!.toStringAsFixed(1)} كم', isDark),
+                    if (child.hasMedicalNotes.isNotEmpty)
+                      _detailRow('ملاحظات طبية', child.hasMedicalNotes, isDark,
+                          valueColor: AppColors.warning),
+
+                    // التسعير
+                    if (child.pricing != null) ...[
+                      Divider(
+                        color: isDark ? AppColors.grey800 : AppColors.grey100,
+                        height: 20.h,
+                      ),
+                      _buildChildPricing(child.pricing!, isDark),
+                    ],
+
+                    // زر الإلغاء
+                    if (isCancellable) ...[
+                      SizedBox(height: 14.h),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: isCancelling
+                              ? null
+                              : () => _confirmCancel(context, subscription.id),
+                          icon: isCancelling
+                              ? SizedBox(
+                                  width: 14.r,
+                                  height: 14.r,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.white,
+                                  ),
+                                )
+                              : Icon(Icons.cancel_outlined, size: 16.r),
+                          label: Text(
+                            isCancelling ? 'جارٍ الإلغاء...' : 'إلغاء اشتراك هذا الطفل',
+                            style: AppTextStyles.style(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13.sp,
+                              color: AppColors.white,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.error,
+                            foregroundColor: AppColors.white,
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildChildPricing(RequestChildPricing pricing, bool isDark) {
+    return Column(
+      children: [
+        if (pricing.hasDiscount)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'السعر قبل الخصم',
+                style: AppTextStyles.style(
+                  fontSize: 12.sp,
+                  color: isDark ? AppColors.grey400 : AppColors.grey600,
+                ),
+              ),
+              Text(
+                pricing.formattedPriceBeforeDiscount,
+                style: AppTextStyles.style(
+                  fontSize: 12.sp,
+                  color: isDark ? AppColors.grey400 : AppColors.grey500,
+                  decoration: TextDecoration.lineThrough,
+                ),
+              ),
+            ],
+          ),
+        if (pricing.hasDiscount) SizedBox(height: 4.h),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'السعر بعد الخصم',
+              style: AppTextStyles.style(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.white : AppColors.textDark,
+              ),
+            ),
+            Text(
+              pricing.formattedPriceAfterDiscount,
+              style: AppTextStyles.style(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: AppColors.success,
+              ),
+            ),
+          ],
+        ),
+        if (pricing.hasDiscount) ...[
+          SizedBox(height: 4.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'الخصم',
+                style: AppTextStyles.style(
+                  fontSize: 12.sp,
+                  color: AppColors.success,
+                ),
+              ),
+              Text(
+                '${pricing.discountPercentage.toStringAsFixed(0)}%  (-${pricing.formattedPriceAfterDiscount})',
+                style: AppTextStyles.style(
+                  fontSize: 12.sp,
+                  color: AppColors.success,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // الملاحظات
+  // ───────────────────────────────────────────────────────────────
+  Widget _buildNotesCard(ThemeData theme, bool isDark) {
+    return _cardWithTitle(
+      isDark: isDark,
+      theme: theme,
+      icon: Icons.note_alt_rounded,
+      title: 'ملاحظات',
+      child: Text(
+        subscription.notes!,
+        style: AppTextStyles.style(
+          fontSize: 13.sp,
+          height: 1.5,
+          color: isDark ? AppColors.grey300 : AppColors.grey700,
+        ),
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Helpers
+  // ───────────────────────────────────────────────────────────────
+  void _confirmCancel(BuildContext context, int id) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cubit = context.read<SubscriptionsCubit>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.r)),
+          backgroundColor:
+              isDark ? AppColors.surfaceDark : AppColors.white,
           title: Text(
-            'تفاصيل الاشتراك',
+            'إلغاء الاشتراك',
             style: AppTextStyles.style(
               fontWeight: FontWeight.bold,
               fontSize: 16.sp,
               color: isDark ? AppColors.white : AppColors.textDark,
             ),
           ),
-          centerTitle: true,
-          elevation: 0,
-          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
-          foregroundColor: isDark ? AppColors.white : AppColors.textDark,
-        ),
-        body: BlocConsumer<SubscriptionsCubit, SubscriptionsState>(
-          listener: (context, state) {
-            if (state is SubscriptionCancelSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    state.message,
-                    style: AppTextStyles.style(color: AppColors.white),
-                  ),
-                  backgroundColor: AppColors.success,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                ),
-              );
-              Navigator.of(context).pop(true);
-            } else if (state is SubscriptionCancelError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    state.message,
-                    style: AppTextStyles.style(color: AppColors.white),
-                  ),
-                  backgroundColor: AppColors.error,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                ),
-              );
-            }
-          },
-          builder: (context, state) {
-            if (state is SubscriptionDetailLoading && _loadedDetail == null) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (state is SubscriptionDetailError && _loadedDetail == null) {
-              return _buildErrorState(context, state.message, isDark, theme);
-            }
-
-            if (state is SubscriptionDetailLoaded) {
-              _loadedDetail = state.detail;
-            }
-
-            final isCancelling = state is SubscriptionCancelLoading && state.id == widget.subscriptionId;
-
-            if (_loadedDetail != null) {
-              return RefreshIndicator(
-                onRefresh: () => context
-                    .read<SubscriptionsCubit>()
-                    .fetchSubscriptionDetail(widget.subscriptionId),
-                child: _buildContent(context, _loadedDetail!, isDark, theme, isCancelling),
-              );
-            }
-
-            return const Center(child: CircularProgressIndicator());
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContent(BuildContext context, SubscriptionDetailModel sub,
-      bool isDark, ThemeData theme, bool isCancelling) {
-    final isCancellable = sub.status.toLowerCase() == 'accepted' || sub.status.toLowerCase() == 'active';
-
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildChildCard(sub.child, theme, isDark),
-          SizedBox(height: 16.h),
-          _buildDriverCard(sub.driver, theme, isDark),
-          SizedBox(height: 16.h),
-          _buildScheduleCard(sub, theme, isDark),
-          SizedBox(height: 16.h),
-          _buildBillingCard(sub.billing, theme, isDark),
-          SizedBox(height: 16.h),
-          _buildAdditionalCard(sub, theme, isDark),
-          if (isCancellable) ...[
-            SizedBox(height: 20.h),
-            SizedBox(
-              width: double.infinity,
-              height: 48.h,
-              child: ElevatedButton.icon(
-                onPressed: isCancelling ? null : () => _confirmCancel(context, sub.id),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  foregroundColor: AppColors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-                  elevation: 0,
-                ),
-                icon: isCancelling
-                    ? SizedBox(
-                        width: 20.r,
-                        height: 20.r,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Icon(Icons.cancel_outlined, size: 20.r),
-                label: Text(
-                  isCancelling ? 'جاري الإلغاء...' : 'إلغاء الاشتراك',
-                  style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14.sp,
-                    color: AppColors.white,
-                  ),
-                ),
-              ),
+          content: Text(
+            'هل أنت متأكد من إلغاء اشتراك هذا الطفل؟ سيتم إشعار السائق فوراً.',
+            style: AppTextStyles.style(
+              fontSize: 13.sp,
+              color: isDark ? AppColors.grey300 : AppColors.grey700,
+              height: 1.5,
             ),
-          ],
-          SizedBox(height: 20.h),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChildCard(DetailChild child, ThemeData theme, bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(18.w),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(
-            color: isDark ? AppColors.grey800 : AppColors.grey200, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.child_care_outlined,
-                  color: theme.colorScheme.primary, size: 20.r),
-              SizedBox(width: 8.w),
-              Text(
-                'معلومات الطفل',
-                style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14.sp,
-                  color: isDark ? AppColors.white : AppColors.textDark,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          Row(
-            children: [
-              if (child.avatar != null && child.avatar!.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(25.r),
-                  child: CachedNetworkImage(
-                    imageUrl: child.avatar!,
-                    width: 50.r,
-                    height: 50.r,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      width: 50.r,
-                      height: 50.r,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      child: Icon(Icons.person_outline,
-                          color: theme.colorScheme.primary),
+          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                          color: isDark
+                              ? AppColors.grey700
+                              : AppColors.grey300),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r)),
                     ),
-                    errorWidget: (context, url, error) =>
-                        _buildInitialsAvatar(child, theme),
-                  ),
-                )
-              else
-                _buildInitialsAvatar(child, theme),
-              SizedBox(width: 14.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      child.name ?? 'بدون اسم',
+                    child: Text(
+                      'تراجع',
                       style: AppTextStyles.style(
                         fontWeight: FontWeight.bold,
-                        fontSize: 15.sp,
-                        color: isDark ? AppColors.white : AppColors.textDark,
+                        color: isDark
+                            ? AppColors.grey300
+                            : AppColors.textMuted,
                       ),
                     ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      child.schoolName.isNotEmpty ? child.schoolName : 'مدرسة غير محددة',
-                      style: AppTextStyles.style(
-                        fontSize: 12.sp,
-                        color: isDark ? AppColors.grey400 : AppColors.textMuted,
-                      ),
-                    ),
-                    if (child.schoolAddress != null && child.schoolAddress!.isNotEmpty) ...[
-                      SizedBox(height: 2.h),
-                      Text(
-                        child.schoolAddress!,
-                        style: AppTextStyles.style(
-                          fontSize: 11.sp,
-                          color: isDark ? AppColors.grey500 : AppColors.grey500,
-                        ),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInitialsAvatar(DetailChild child, ThemeData theme) {
-    return CircleAvatar(
-      radius: 25.r,
-      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-      child: Text(
-        child.avatarInitials ??
-            (child.name != null && child.name!.isNotEmpty ? child.name![0] : '?'),
-        style: AppTextStyles.style(
-          fontWeight: FontWeight.bold,
-          fontSize: 16.sp,
-          color: theme.colorScheme.primary,
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      cubit.cancelSubscription(id);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: AppColors.white,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r)),
+                    ),
+                    child: Text(
+                      'نعم، إلغاء',
+                      style: AppTextStyles.style(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildDriverCard(DetailDriver driver, ThemeData theme, bool isDark) {
-    final vehicle = driver.vehicle;
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+      case 'accepted':
+        return AppColors.success;
+      case 'pending_start':
+        return AppColors.primary;
+      case 'completed':
+        return AppColors.grey500;
+      case 'cancelled':
+        return AppColors.error;
+      default:
+        return AppColors.grey500;
+    }
+  }
+
+  Widget _driverInitials(String name, Color color) => Center(
+        child: Text(
+          name.isNotEmpty ? name[0] : '?',
+          style: AppTextStyles.style(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      );
+
+  Widget _badge(
+      {required String label, required Color bg, required Color color}) {
     return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(18.w),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(
-            color: isDark ? AppColors.grey800 : AppColors.grey200, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: bg,
+        borderRadius: BorderRadius.circular(8.r),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.directions_car_outlined,
-                  color: theme.colorScheme.primary, size: 20.r),
-              SizedBox(width: 8.w),
-              Text(
-                'معلومات السائق',
-                style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14.sp,
-                  color: isDark ? AppColors.white : AppColors.textDark,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 24.r,
-                backgroundColor:
-                    theme.colorScheme.primary.withValues(alpha: 0.1),
-                backgroundImage: driver.avatarUrl != null && driver.avatarUrl!.isNotEmpty
-                    ? NetworkImage(driver.avatarUrl!)
-                    : null,
-                child: driver.avatarUrl == null || driver.avatarUrl!.isEmpty
-                    ? Icon(Icons.person_rounded,
-                        color: theme.colorScheme.primary, size: 24.r)
-                    : null,
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      driver.name,
-                      style: AppTextStyles.style(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15.sp,
-                        color: isDark ? AppColors.white : AppColors.textDark,
-                      ),
-                    ),
-                    if (driver.phone != null) ...[
-                      SizedBox(height: 4.h),
-                      Text(
-                        driver.phone!,
-                        style: AppTextStyles.style(
-                          fontSize: 12.sp,
-                          color:
-                              isDark ? AppColors.grey400 : AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              Text(
-                'التقييم:',
-                style: AppTextStyles.style(
-                  fontSize: 12.sp,
-                  color: isDark ? AppColors.grey400 : AppColors.textMuted,
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Row(
-                children: List.generate(5, (index) {
-                  return Icon(
-                    Icons.star_rounded,
-                    color: index < driver.rating
-                        ? Colors.amber
-                        : (isDark ? AppColors.grey700 : AppColors.grey200),
-                    size: 18.r,
-                  );
-                }),
-              ),
-            ],
-          ),
-          if (vehicle != null) ...[
-            SizedBox(height: 14.h),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.backgroundDark
-                    : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(
-                    color: isDark ? AppColors.grey800 : AppColors.grey200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _detailRow(
-                      'السيارة',
-                      vehicle.displayName.isNotEmpty
-                          ? vehicle.displayName
-                          : 'غير محدد',
-                      isDark),
-                  _divider(isDark),
-                  _detailRow(
-                      'رقم اللوحة',
-                      vehicle.plateNumber?.isNotEmpty == true
-                          ? vehicle.plateNumber!
-                          : 'غير محدد',
-                      isDark),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
+      child: Text(label,
+          style: AppTextStyles.style(
+              fontSize: 10.sp, color: color, fontWeight: FontWeight.bold)),
     );
   }
 
-  Widget _buildScheduleCard(
-      SubscriptionDetailModel sub, ThemeData theme, bool isDark) {
-    final schedule = sub.schedule;
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(18.w),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(
-            color: isDark ? AppColors.grey800 : AppColors.grey200, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+  Widget _buildSectionTitle(String title, IconData icon, bool isDark) {
+    return Row(
+      children: [
+        Icon(icon,
+            size: 16.r,
+            color: isDark ? AppColors.grey400 : AppColors.grey600),
+        SizedBox(width: 6.w),
+        Text(
+          title,
+          style: AppTextStyles.style(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.bold,
+            color: isDark ? AppColors.grey300 : AppColors.grey700,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.schedule_rounded,
-                  color: theme.colorScheme.primary, size: 20.r),
-              SizedBox(width: 8.w),
-              Text(
-                'جدول الرحلة',
-                style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14.sp,
-                  color: isDark ? AppColors.white : AppColors.textDark,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          _detailRow('الفترة', SubscriptionEnums.timingLabel(schedule.timing), isDark),
-          _divider(isDark),
-          _detailRow('اتجاه الرحلة',
-              SubscriptionEnums.directionLabel(schedule.shift), isDark),
-          _divider(isDark),
-          _detailRow(
-              'منطقة الالتقاط', schedule.pickupZoneName ?? 'غير محدد', isDark),
-          SizedBox(height: 12.h),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                final homeLoc = sub.schedule.homeLocation;
-                final pickup = homeLoc != null
-                    ? SubscriptionLocationModel(
-                        latitude: homeLoc.latitude,
-                        longitude: homeLoc.longitude,
-                        address: schedule.pickupZoneName,
-                      )
-                    : SubscriptionLocationModel(address: schedule.pickupZoneName);
-                final dropoff = SubscriptionLocationModel(address: sub.child.schoolName);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => SubscriptionMapScreen(
-                      title: 'موقع اشتراك ${sub.child.name ?? ""}',
-                      pickupLocation: pickup,
-                      dropoffLocation: dropoff,
-                    ),
-                  ),
-                );
-              },
-              icon: Icon(
-                Icons.map_rounded,
-                size: 16.sp,
-                color: theme.colorScheme.primary,
-              ),
-              label: Text(
-                'عرض الموقع على الخريطة',
-                style: AppTextStyles.style(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                padding: EdgeInsets.symmetric(vertical: 8.h),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBillingCard(
-      DetailBilling billing, ThemeData theme, bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(18.w),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(
-            color: isDark ? AppColors.grey800 : AppColors.grey200, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.monetization_on_outlined,
-                  color: theme.colorScheme.primary, size: 20.r),
-              SizedBox(width: 8.w),
-              Text(
-                'تفاصيل الاشتراك والمالية',
-                style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14.sp,
-                  color: isDark ? AppColors.white : AppColors.textDark,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          _detailRow('سعر اشتراك الطفل', billing.formattedChildPrice, isDark,
-              valueColor: theme.colorScheme.primary, isBoldValue: true),
-          _divider(isDark),
-          _detailRow('سعر الرحلة', billing.formattedTripPrice, isDark),
-          _divider(isDark),
-          _detailRow('السعر الإجمالي للطلب', billing.formattedTotalPrice, isDark,
-              valueColor: theme.colorScheme.primary, isBoldValue: true),
-          _divider(isDark),
-          if (billing.workingDaysCount != null) ...[
-            _detailRow(
-                'عدد أيام العمل', '${billing.workingDaysCount} يوم', isDark),
-            _divider(isDark),
-          ],
-          _detailRow('تاريخ البداية', _formatDate(billing.startsAt), isDark),
-          _divider(isDark),
-          _detailRow('تاريخ النهاية', _formatDate(billing.endsAt), isDark),
-          if (billing.remainingDays != null) ...[
-            _divider(isDark),
-            _detailRow(
-                'الأيام المتبقية', '${billing.remainingDays} يوم', isDark,
-                valueColor:
-                    (billing.remainingDays! <= 3) ? AppColors.error : null),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAdditionalCard(
-      SubscriptionDetailModel sub, ThemeData theme, bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(18.w),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(
-            color: isDark ? AppColors.grey800 : AppColors.grey200, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.info_outline_rounded,
-                  color: theme.colorScheme.primary, size: 20.r),
-              SizedBox(width: 8.w),
-              Text(
-                'معلومات إضافية',
-                style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14.sp,
-                  color: isDark ? AppColors.white : AppColors.textDark,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          _detailRow('رقم الطلب', '#${sub.requestId}', isDark),
-          _divider(isDark),
-          _detailRow(
-              'تاريخ إنشاء الاشتراك', _formatDate(sub.createdAt), isDark),
-          if (sub.cancelReason != null && sub.cancelReason!.isNotEmpty) ...[
-            _divider(isDark),
-            _detailRow('سبب الإلغاء', sub.cancelReason!, isDark,
-                valueColor: AppColors.error),
-          ],
-          if (sub.cancelledAt != null && sub.cancelledAt!.isNotEmpty) ...[
-            _divider(isDark),
-            _detailRow('تاريخ الإلغاء', _formatDate(sub.cancelledAt), isDark,
-                valueColor: AppColors.error),
-          ],
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _detailRow(String label, String value, bool isDark,
-      {Color? valueColor, bool isBoldValue = false}) {
+      {Color? valueColor}) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.0.h),
+      padding: EdgeInsets.only(bottom: 8.h),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: AppTextStyles.style(
-              fontSize: 12.sp,
-              color: isDark ? AppColors.grey400 : AppColors.textMuted,
+          SizedBox(
+            width: 110.w,
+            child: Text(
+              label,
+              style: AppTextStyles.style(
+                fontSize: 12.sp,
+                color: isDark ? AppColors.grey500 : AppColors.grey500,
+              ),
             ),
           ),
-          Flexible(
+          Expanded(
             child: Text(
               value,
-              textAlign: TextAlign.end,
               style: AppTextStyles.style(
                 fontSize: 13.sp,
-                fontWeight: isBoldValue ? FontWeight.bold : FontWeight.w600,
+                fontWeight: FontWeight.bold,
                 color: valueColor ??
-                    (isDark ? AppColors.white : AppColors.textDark),
+                    (isDark ? AppColors.grey200 : AppColors.textDark),
               ),
             ),
           ),
@@ -770,53 +872,106 @@ class _SubscriptionDetailsScreenState
     );
   }
 
-  Widget _divider(bool isDark) {
-    return Divider(
-        color: isDark ? AppColors.grey800 : AppColors.grey100, height: 16);
+  Widget _card({required bool isDark, required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(
+          color: isDark ? AppColors.grey800 : AppColors.grey200,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color:
+                AppColors.black.withValues(alpha: isDark ? 0.15 : 0.04),
+            blurRadius: 10.r,
+            offset: Offset(0, 3.h),
+          ),
+        ],
+      ),
+      child: child,
+    );
   }
 
-  Widget _buildErrorState(
-      BuildContext context, String error, bool isDark, ThemeData theme) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline_rounded,
-                size: 64.r, color: AppColors.error),
-            SizedBox(height: 16.h),
-            Text(
-              error,
-              style: AppTextStyles.style(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.white : AppColors.textDark,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 24.h),
-            ElevatedButton.icon(
-              onPressed: () => context
-                  .read<SubscriptionsCubit>()
-                  .fetchSubscriptionDetail(widget.subscriptionId),
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text(
-                'إعادة المحاولة',
-                style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13.sp,
-                    color: AppColors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r)),
-              ),
-            ),
-          ],
+  Widget _cardWithTitle({
+    required bool isDark,
+    required ThemeData theme,
+    required IconData icon,
+    required String title,
+    required Widget child,
+  }) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(
+          color: isDark ? AppColors.grey800 : AppColors.grey200,
         ),
+        boxShadow: [
+          BoxShadow(
+            color:
+                AppColors.black.withValues(alpha: isDark ? 0.15 : 0.04),
+            blurRadius: 10.r,
+            offset: Offset(0, 3.h),
+          ),
+        ],
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.all(14.w),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(6.w),
+                  decoration: BoxDecoration(
+                    color:
+                        theme.colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Icon(icon,
+                      size: 16.r, color: theme.colorScheme.primary),
+                ),
+                SizedBox(width: 8.w),
+                Text(
+                  title,
+                  style: AppTextStyles.style(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.white : AppColors.textDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(
+            color: isDark ? AppColors.grey800 : AppColors.grey100,
+            height: 1,
+          ),
+          Padding(
+            padding: EdgeInsets.all(14.w),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+
+  SnackBar _snackBar(String message, Color bg) {
+    return SnackBar(
+      content: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Text(message,
+            style: AppTextStyles.style(
+                color: AppColors.white, fontWeight: FontWeight.bold)),
+      ),
+      backgroundColor: bg,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
     );
   }
 }

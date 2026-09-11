@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/cubit/theme_cubit.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_cubit.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_state.dart';
@@ -34,19 +35,19 @@ class _SplashScreenState extends State<SplashScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.assignment_turned_in, color: AppColors.orange),
-              SizedBox(width: 8),
+              const Icon(Icons.assignment_turned_in, color: AppColors.orange),
+              const SizedBox(width: 8),
               Text(
                 'استئناف إنشاء الحساب',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style: AppTextStyles.style(fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ],
           ),
-          content: const Text(
+          content: Text(
             'هل ترغب في إكمال التسجيل وإدخال البيانات الآن، أم ترغب في إلغاء التسجيل والخروج؟',
-            style: TextStyle(fontSize: 15, height: 1.4),
+            style: AppTextStyles.style(fontSize: 15, height: 1.4),
           ),
           actionsPadding: const EdgeInsets.symmetric(
             horizontal: 16,
@@ -78,11 +79,11 @@ class _SplashScreenState extends State<SplashScreen> {
                       );
                       Navigator.pushReplacementNamed(context, AppRoutes.login);
                     },
-                    child: const FittedBox(
+                    child: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
                         'إلغاء التسجيل والخروج',
-                        style: TextStyle(
+                        style: AppTextStyles.style(
                           color: AppColors.red,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
@@ -118,11 +119,11 @@ class _SplashScreenState extends State<SplashScreen> {
                         );
                       }
                     },
-                    child: const FittedBox(
+                    child: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
                         'متابعة التسجيل',
-                        style: TextStyle(
+                        style: AppTextStyles.style(
                           color: AppColors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
@@ -157,6 +158,8 @@ class _SplashScreenState extends State<SplashScreen> {
           NotificationNavigationHandler.handlePendingNotification();
         } else if (state is NavigateToParentLocationRequired) {
           Navigator.pushReplacementNamed(context, '/parentLocation');
+        } else if (state is NavigateToParentChildRequired) {
+          Navigator.pushReplacementNamed(context, AppRoutes.parentAddFirstChild);
         } else if (state is NavigateToDriverWaiting) {
           Navigator.pushReplacementNamed(context, '/driverWaiting');
         } else if (state is NavigateToDriverPreferencesRequired) {

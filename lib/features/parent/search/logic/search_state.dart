@@ -8,7 +8,8 @@ class SearchLoading extends SearchState {}
 
 class SearchLoaded extends SearchState {
   final List<DriverSearchModel> drivers;
-  SearchLoaded(this.drivers);
+  final SearchContextModel? searchContext;
+  SearchLoaded(this.drivers, {this.searchContext});
 }
 
 class SearchError extends SearchState {
@@ -32,7 +33,8 @@ class PricingLoading extends SearchState {}
 
 class PricingLoaded extends SearchState {
   final DriverSearchModel driver;
-  PricingLoaded(this.driver);
+  final SearchContextModel? searchContext;
+  PricingLoaded(this.driver, {this.searchContext});
 }
 
 class PricingError extends SearchState {

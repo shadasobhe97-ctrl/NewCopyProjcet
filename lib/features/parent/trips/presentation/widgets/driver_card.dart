@@ -54,14 +54,16 @@ class DriverCard extends StatelessWidget {
     if (driverId <= 0) return;
 
     final searchRepo = getIt<SearchRepository>();
-    final (drivers, error) = await searchRepo.searchDrivers({'search_query': driverId.toString()});
+    final (searchResponse, error) = await searchRepo.searchDrivers({'search_query': driverId.toString()});
 
     if (!context.mounted) return;
 
-    if (drivers != null && drivers.isNotEmpty) {
-      final driverModel = drivers.firstWhere(
+    final driversList = searchResponse?.drivers ?? [];
+
+    if (driversList.isNotEmpty) {
+      final driverModel = driversList.firstWhere(
         (d) => d.driverId == driverId,
-        orElse: () => drivers.first,
+        orElse: () => driversList.first,
       );
 
       Navigator.push(

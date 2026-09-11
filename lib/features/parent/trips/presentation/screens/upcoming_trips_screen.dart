@@ -243,15 +243,15 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                 decoration: BoxDecoration(
-                  color: (isToSchool ? context.primaryColor : AppColors.pending).withValues(alpha: 0.12),
+                  color: (isToSchool ? context.primaryColor : AppColors.secondary).withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Text(
                   trip.scheduledFor,
-                  style: TextStyle(
+                  style: AppTextStyles.style(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.bold,
-                    color: isToSchool ? context.primaryColor : AppColors.pending,
+                    color: isToSchool ? context.primaryColor : AppColors.secondaryDark,
                   ),
                 ),
               ),
@@ -327,7 +327,7 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                       ),
                       child: Text(
                         '$childPrice ${trip.pricing.currency}',
-                        style: TextStyle(
+                        style: AppTextStyles.style(
                           fontSize: 10.sp,
                           fontWeight: FontWeight.bold,
                           color: context.primaryColor,

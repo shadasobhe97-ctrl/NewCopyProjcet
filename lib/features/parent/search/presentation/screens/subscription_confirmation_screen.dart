@@ -31,6 +31,13 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
   bool _isLoading = true;
   bool _hasError = false;
   String? _errorMessage;
+  final TextEditingController _notesController = TextEditingController();
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -53,11 +60,10 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
             childName: kid.name,
             schoolName: kid.schoolName,
             distanceKm: 0.0,
-            pricePerKm: 0.0,
-            subscriptionType: kid.transportPref.subscriptionType,
             workingDays: 22,
-            childPrice: widget.driver.price,
-            childPriceRaw: widget.driver.price.toInt(),
+            subtotal: widget.driver.price,
+            finalTotal: widget.driver.price,
+            childPriceRaw: widget.driver.price,
           ),
         );
         if (breakdownItem.error != null && breakdownItem.error!.isNotEmpty) {
@@ -84,24 +90,23 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
       );
       return breakdownItem.childPrice;
     } catch (_) {}
-    try {
-      final t = kid.transportPref.subscriptionType.toLowerCase();
-      if (t == 'weekly') return widget.driver.price * 0.3;
-      if (t == 'days') return widget.driver.price * 0.1;
-    } catch (_) {}
     return widget.driver.price;
   }
 
-  /// تسمية نوع اشتراك هذا الطفل تحديداً: يوم واحد | عدة أيام
+  /// تسمية نوع الاشتراك
   String _labelForKid(ChildModel kid) {
     try {
       final breakdownItem = widget.driver.breakdown.firstWhere(
         (b) => b.childId == kid.id,
       );
-      if (breakdownItem.subscriptionType.isNotEmpty) {
-        return SubscriptionEnums.typeLabel(breakdownItem.subscriptionType);
+      if (breakdownItem.subscriptionTypeLabel.isNotEmpty) {
+        return breakdownItem.subscriptionTypeLabel;
       }
     } catch (_) {}
+    final ctx = context.read<SearchCubit>().lastSearchContext;
+    if (ctx != null) {
+      return SubscriptionEnums.typeLabel(ctx.subscriptionType);
+    }
     return SubscriptionEnums.typeLabel(kid.transportPref.subscriptionType);
   }
 
@@ -112,59 +117,40 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
     if (widget.selectedKids.isEmpty) return;
 
     debugPrint('\n================= SUBMIT SUBSCRIPTION =================');
-    final List<SubscriptionChildRequest> childrenRequestList = [];
-    debugPrint('>>> بيانات كل طفل على حدة (كل طفل بإعداداته الخاصة):');
-    for (final kid in widget.selectedKids) {
-      final pref = kid.transportPref;
-      final breakdownItem = widget.driver.breakdown.firstWhere(
-        (b) => b.childId == kid.id,
-        orElse: () => BreakdownModelInfo(
-          childId: kid.id ?? 0,
-          childName: kid.name,
-          schoolName: kid.schoolName,
-          distanceKm: 0.0,
-          pricePerKm: 0.0,
-          subscriptionType: pref.subscriptionType,
-          workingDays: 22,
-          childPrice: widget.driver.price,
-          childPriceRaw: widget.driver.price.toInt(),
-        ),
-      );
 
-      // نوع الاشتراك/الاتجاه/الفترة/التواريخ تُؤخذ من هذا الطفل تحديداً
-      final childType = SubscriptionEnums.normalizeType(
-        breakdownItem.subscriptionType.isNotEmpty
-            ? breakdownItem.subscriptionType
-            : pref.subscriptionType,
-      );
-      final childDirection = SubscriptionEnums.normalizeDirection(pref.serviceType);
-      final childTiming = SubscriptionEnums.normalizeTiming(pref.period);
-      final childStart = pref.startDate.toIso8601String().split('T').first;
-      final childEnd = pref.endDate?.toIso8601String().split('T').first;
+    final ctx = context.read<SearchCubit>().lastSearchContext;
 
-      debugPrint('  child_id            = ${kid.id} (${kid.name})');
-      debugPrint('  subscription_type   = $childType');
-      debugPrint('  trip_direction      = $childDirection');
-      debugPrint('  timing              = $childTiming');
-      debugPrint('  start_date          = $childStart');
-      debugPrint('  end_date            = $childEnd');
-      debugPrint('  ---');
+    final subType = ctx?.subscriptionType ?? 'multi_day';
+    final direction = ctx?.tripDirection ?? 'go';
+    final start = (ctx?.startDate != null && ctx!.startDate.isNotEmpty)
+        ? ctx.startDate
+        : DateTime.now().toIso8601String().split('T').first;
+    final end = (ctx?.endDate != null && ctx!.endDate.isNotEmpty)
+        ? ctx.endDate
+        : start;
 
-      childrenRequestList.add(
-        SubscriptionChildRequest(
-          childId: kid.id ?? 0,
-          subscriptionType: childType,
-          tripDirection: childDirection,
-          timing: childTiming,
-          startDate: childStart,
-          endDate: childEnd,
-        ),
-      );
+    int? homeAddrId;
+    if (widget.selectedKids.isNotEmpty) {
+      homeAddrId = int.tryParse(widget.selectedKids.first.addressId);
     }
+
+    final List<SubscriptionChildRequest> childrenRequestList = widget
+        .selectedKids
+        .where((k) => k.id != null)
+        .map((k) => SubscriptionChildRequest(childId: k.id!))
+        .toList();
 
     final request = SubscriptionRequest(
       driverId: widget.driver.driverId,
+      subscriptionType: subType,
+      tripDirection: direction,
+      startDate: start,
+      endDate: end,
+      homeAddressId: homeAddrId,
       children: childrenRequestList,
+      notes: _notesController.text.trim().isNotEmpty
+          ? _notesController.text.trim()
+          : null,
     );
 
     debugPrint('>>> Final JSON being sent:');
@@ -350,7 +336,11 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                           _buildPricingCard(theme, isDark),
                           SizedBox(height: 16.h),
 
-                          // 3. تنبيه إرشادي
+                          // 3. حقل الملاحظات
+                          _buildNotesField(theme, isDark),
+                          SizedBox(height: 16.h),
+
+                          // 4. تنبيه إرشادي
                           _buildInfoCard(theme, isDark),
                         ],
                       ),
@@ -698,7 +688,102 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
     );
   }
 
+  Widget _buildNotesField(ThemeData theme, bool isDark) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: isDark ? AppColors.grey800 : AppColors.grey200),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withValues(alpha: isDark ? 0.15 : 0.04),
+            blurRadius: 12.r,
+            offset: Offset(0, 4.h),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(6.w),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Icon(Icons.note_alt_rounded, color: theme.colorScheme.primary, size: 18.r),
+                ),
+                SizedBox(width: 10.w),
+                Text(
+                  'ملاحظات للسائق (اختياري)',
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14.sp,
+                    color: isDark ? AppColors.white : AppColors.textDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(color: isDark ? AppColors.grey800 : AppColors.grey100, height: 1.h),
+          Padding(
+            padding: EdgeInsets.all(16.w),
+            child: TextField(
+              controller: _notesController,
+              maxLines: 3,
+              maxLength: 300,
+              textDirection: TextDirection.rtl,
+              style: AppTextStyles.style(
+                fontSize: 13.sp,
+                color: isDark ? AppColors.white : AppColors.textDark,
+              ),
+              decoration: InputDecoration(
+                hintText: 'مثال: يرجى الانتظار عند الباب الخارجي لمدة دقيقتين...',
+                hintStyle: AppTextStyles.style(
+                  fontSize: 12.sp,
+                  color: isDark ? AppColors.grey500 : AppColors.textMuted,
+                ),
+                filled: true,
+                fillColor: isDark ? AppColors.grey900 : AppColors.grey50,
+                contentPadding: EdgeInsets.all(14.w),
+                counterStyle: AppTextStyles.style(
+                  fontSize: 11.sp,
+                  color: isDark ? AppColors.grey500 : AppColors.grey400,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.r),
+                  borderSide: BorderSide(
+                    color: isDark ? AppColors.grey700 : AppColors.grey200,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.r),
+                  borderSide: BorderSide(
+                    color: isDark ? AppColors.grey700 : AppColors.grey200,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.r),
+                  borderSide: const BorderSide(
+                    color: AppColors.secondaryDark,
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInfoCard(ThemeData theme, bool isDark) {
+
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(

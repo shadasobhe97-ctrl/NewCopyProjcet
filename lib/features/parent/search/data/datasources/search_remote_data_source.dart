@@ -17,7 +17,7 @@ class SearchRemoteDataSource {
   }
 
   /// GET /api/parent/drivers/search
-  Future<List<DriverSearchModel>> searchDrivers(
+  Future<DriverSearchResponseModel> searchDrivers(
     Map<String, dynamic> queryParameters,
   ) async {
     final response = await _client.get(
@@ -26,23 +26,21 @@ class SearchRemoteDataSource {
       headers: _authHeader,
     );
     final data = response.data;
-    if (data is Map) {
+    if (data is Map<String, dynamic>) {
       final success = data['success'] ?? data['status'];
       if (success == false) {
         final serverMessage = ApiException.extractMessage(data);
         throw ApiException(serverMessage ?? 'تعذر البحث عن السائقين.');
       }
-      final list =
-          data['data'] as List<dynamic>? ??
-          data['drivers'] as List<dynamic>? ??
-          [];
-      return list
-          .map((e) => DriverSearchModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+      return DriverSearchResponseModel.fromJson(data);
     } else if (data is List) {
-      return data
+      final driversList = data
           .map((e) => DriverSearchModel.fromJson(e as Map<String, dynamic>))
           .toList();
+      return DriverSearchResponseModel(
+        status: true,
+        drivers: driversList,
+      );
     }
     throw const ApiException('استجابة الخادم غير مقروءة.');
   }

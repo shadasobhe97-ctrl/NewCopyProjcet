@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -376,7 +376,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                     SizedBox(height: 4.h),
                     Text(
                       trip.startedAt,
-                      style: TextStyle(
+                      style: AppTextStyles.style(
                         fontSize: 10.sp,
                         color: AppColors.textMuted,
                       ),
@@ -567,7 +567,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                                     ),
                                     child: Text(
                                       'المحدد',
-                                      style: TextStyle(
+                                      style: AppTextStyles.style(
                                         fontSize: 8.5.sp,
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.white,

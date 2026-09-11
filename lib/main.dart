@@ -13,7 +13,6 @@ import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/cubit/theme_cubit.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_cubit.dart';
 import 'package:kids_transport/features/auth/login/logic/auth_cubit.dart';
-import 'package:kids_transport/features/auth/login/data/repositories/auth_repository.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/add_child_cubit.dart';
@@ -25,6 +24,7 @@ import 'package:kids_transport/core/services/hive_helper.dart';
 import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 import 'package:kids_transport/core/services/notification_service.dart';
 import 'package:kids_transport/features/chat/presentation/screens/chat_room_screen.dart';
+import 'package:kids_transport/features/parent/trips/logic/active_trip_cubit/active_trip_cubit.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -118,6 +118,7 @@ class TransportApp extends StatelessWidget {
           create: (_) => getIt<SubscriptionsCubit>(),
         ),
         BlocProvider<SearchCubit>(create: (_) => getIt<SearchCubit>()),
+        BlocProvider<ActiveTripCubit>(create: (_) => getIt<ActiveTripCubit>()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) {

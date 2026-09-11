@@ -62,7 +62,7 @@ class RegisterCubit extends Cubit<RegisterState> {
   // دالة تحديث الرول المختار
   void updateRole(int roleId) {
     selectedRoleId = roleId;
-    selectedRole = (roleId == 4) ? 'driver' : 'parent';
+    selectedRole = (roleId == 8 || roleId == 4) ? 'driver' : 'parent';
   }
 
   // دالة تجميع البيانات الأساسية
@@ -479,11 +479,18 @@ class RegisterCubit extends Cubit<RegisterState> {
     required String label,
     required double lat,
     required double lng,
+    int? zoneId,
     bool isDefault = true,
   }) async {
     emit(LocationSaveLoading());
     try {
-      final token = parentAccessToken ?? '';
+      // عند رجوع ولي الأمر للتطبيق يُعاد بناء الـ Cubit من جديد فتكون parentAccessToken = null
+      // لذا نرجع للتوكن المحفوظ في StorageService كـ fallback
+      final token =
+          (parentAccessToken != null && parentAccessToken!.isNotEmpty)
+              ? parentAccessToken!
+              : (StorageService.getToken() ?? '');
+
       if (token.isEmpty) {
         emit(
           LocationSaveError('لا يوجد توكن صالح، يرجى تسجيل الدخول مرة أخرى.'),
@@ -496,6 +503,7 @@ class RegisterCubit extends Cubit<RegisterState> {
         label: label,
         lat: lat,
         lng: lng,
+        zoneId: zoneId,
         isDefault: isDefault,
       );
 

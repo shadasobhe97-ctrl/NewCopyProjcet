@@ -118,6 +118,7 @@ class RegistrationRepository {
     required double lat,
     required double lng,
     required bool isDefault,
+    int? zoneId,
   }) async {
     final responseData = await _parentDataSource.addAddress(
       token: token,
@@ -125,6 +126,7 @@ class RegistrationRepository {
       lat: lat,
       lng: lng,
       isDefault: isDefault,
+      zoneId: zoneId,
     );
     return ParentAddressResponse.fromJson(responseData);
   }
