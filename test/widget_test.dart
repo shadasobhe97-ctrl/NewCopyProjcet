@@ -10,6 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/main.dart';
+import 'package:kids_transport/core/di/dependency_injection.dart';
+import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 import 'package:kids_transport/features/app_entry/presentation/screens/splash_screen.dart';
 
 void main() {
@@ -17,6 +19,8 @@ void main() {
     // Mock SharedPreferences values before pumping the widget
     SharedPreferences.setMockInitialValues({});
     await StorageService.init();
+    setupDependencyInjection();
+    initDriverInjection();
 
     // Build our app and trigger a frame.
     await tester.pumpWidget(const TransportApp());

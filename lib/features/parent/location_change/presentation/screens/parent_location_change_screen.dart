@@ -5,7 +5,6 @@ import '../../../../../core/di/dependency_injection.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/text_styles.dart';
 import '../../../../../core/utils/theme_context.dart';
-import '../../data/models/location_change_options_model.dart';
 import '../../logic/cubit/location_change_cubit.dart';
 import '../widgets/address_selection_bottom_sheet.dart';
 import 'location_change_history_screen.dart';

@@ -81,6 +81,7 @@ class AddressModel {
     return {
       'label': title.isNotEmpty ? title : (streetAddress ?? 'المنزل الرئيسي'),
       'title': title,
+      if (streetAddress != null) 'street_address': streetAddress,
       'lat': latitude,
       'lng': longitude,
       'latitude': latitude,

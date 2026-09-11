@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:kids_transport/core/utils/subscription_enums.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kids_transport/features/parent/search/data/models/driver_search_model.dart';
@@ -15,7 +14,6 @@ import '../widgets/child_selection_card_widget.dart';
 import '../widgets/smart_search_bottom_sheet_widget.dart';
 import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
 import 'package:kids_transport/features/parent/search/logic/search_state.dart';
-import 'package:kids_transport/features/parent/search/data/models/subscription_request.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_cubit.dart';
 
@@ -127,137 +125,6 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     );
   }
 
-  void _showConfirmDialog() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
-          title: Text(
-            'تأكيد إرسال الطلب',
-            style: AppTextStyles.style(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: isDark ? AppColors.white : AppColors.textDark,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'السائق: ${_effectiveDriver.fullName}',
-                style: AppTextStyles.style(
-                  fontSize: 14,
-                  color: isDark ? AppColors.grey300 : AppColors.grey700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'الأطفال: ${_selectedKids.map((k) => k.name).join('، ')}',
-                style: AppTextStyles.style(
-                  fontSize: 14,
-                  color: isDark ? AppColors.grey300 : AppColors.grey700,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'السعر الإجمالي: ${_effectiveDriver.pricing.totalPrice.toStringAsFixed(2)} د.ل',
-                style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                'إلغاء',
-                style: AppTextStyles.style(color: AppColors.textMuted),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _submitDirectly();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                'تأكيد وإرسال',
-                style: AppTextStyles.style(color: AppColors.white),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _submitDirectly() {
-    debugPrint(
-      '\n================= SUBMIT SUBSCRIPTION (DriverProfileView) =================',
-    );
-    _loadingShowing = true;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    ).then((_) => _loadingShowing = false);
-
-    final ctx = context.read<SearchCubit>().lastSearchContext;
-
-    final subType = ctx?.subscriptionType ?? 'multi_day';
-    final direction = ctx?.tripDirection ?? 'go';
-    final start = (ctx?.startDate != null && ctx!.startDate.isNotEmpty)
-        ? ctx.startDate
-        : DateTime.now().toIso8601String().split('T').first;
-    final end = (ctx?.endDate != null && ctx!.endDate.isNotEmpty)
-        ? ctx.endDate
-        : start;
-
-    int? homeAddrId;
-    if (_selectedKids.isNotEmpty && _selectedKids.first.addressId != null) {
-      homeAddrId = int.tryParse(_selectedKids.first.addressId!);
-    }
-
-    final List<SubscriptionChildRequest> childrenRequestList = _selectedKids
-        .where((k) => k.id != null)
-        .map((k) => SubscriptionChildRequest(childId: k.id!))
-        .toList();
-
-    final request = SubscriptionRequest(
-      driverId: _effectiveDriver.driverId,
-      subscriptionType: subType,
-      tripDirection: direction,
-      startDate: start,
-      endDate: end,
-      homeAddressId: homeAddrId,
-      children: childrenRequestList,
-    );
-
-    debugPrint('>>> Final JSON being sent:');
-    debugPrint(request.toJson().toString());
-    debugPrint('========================================================');
-
-    context.read<SearchCubit>().submitSubscription(request);
-  }
-
   void _makePhoneCall(String phoneNumber) async {
     final Uri uri = Uri(scheme: 'tel', path: phoneNumber);
     try {
@@ -272,11 +139,11 @@ class _DriverProfileViewState extends State<DriverProfileView> {
   }
 
   void _handleCallDriver(DriverSearchModel driver) {
-    final primary = driver.phoneNumber;
-    final alt = driver.alternativePhone;
+    final String? primary = driver.phoneNumber;
+    final String? alt = driver.alternativePhone;
 
-    final hasPrimary = primary != null && primary.trim().isNotEmpty;
-    final hasAlt = alt != null && alt.trim().isNotEmpty;
+    final bool hasPrimary = primary != null && primary.trim().isNotEmpty;
+    final bool hasAlt = alt != null && alt.trim().isNotEmpty;
 
     if (!hasPrimary && !hasAlt) {
       _showSnack('رقم هاتف السائق غير متاح حالياً.', AppColors.error);
@@ -2026,9 +1893,6 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       ),
     );
   }
-
-  String _getSubscriptionTypeArabic(String type) =>
-      SubscriptionEnums.typeLabel(type);
 
   // ══════════════════════════════════════════════════════════════════
   // Section: Bottom Action Bar
