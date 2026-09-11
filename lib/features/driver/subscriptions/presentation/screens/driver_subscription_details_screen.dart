@@ -30,16 +30,13 @@ class _DriverSubscriptionDetailsScreenState
   @override
   void initState() {
     super.initState();
-    context
-        .read<DriverSubscriptionsCubit>()
-        .loadSubscriptionDetail(widget.subscriptionId);
+    context.read<DriverSubscriptionsCubit>().loadSubscriptionDetail(
+      widget.subscriptionId,
+    );
   }
 
   Future<void> _makeCall(String phoneNumber) async {
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: phoneNumber,
-    );
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
     if (await canLaunchUrl(launchUri)) {
       await launchUrl(launchUri);
     } else {
@@ -54,8 +51,9 @@ class _DriverSubscriptionDetailsScreenState
   Future<void> _openMap(double lat, double lng) async {
     final googleMapsUrl = Uri.parse("google.navigation:q=$lat,$lng&mode=d");
     final appleMapsUrl = Uri.parse("https://maps.apple.com/?q=$lat,$lng");
-    final webUrl =
-        Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng");
+    final webUrl = Uri.parse(
+      "https://www.google.com/maps/search/?api=1&query=$lat,$lng",
+    );
 
     try {
       if (await canLaunchUrl(googleMapsUrl)) {
@@ -87,23 +85,31 @@ class _DriverSubscriptionDetailsScreenState
   }
 
   void _confirmCancel(
-      BuildContext context, DriverSubscriptionModel subscription) {
+    BuildContext context,
+    DriverSubscriptionModel subscription,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.r),
+          ),
           title: Text(
             'إلغاء الاشتراك',
             style: AppTextStyles.style(
-                fontWeight: FontWeight.bold, fontSize: 16.sp),
+              fontWeight: FontWeight.bold,
+              fontSize: 16.sp,
+            ),
           ),
           content: Text(
             'هل أنت متأكد من إلغاء هذا الاشتراك؟ سيتم إشعار ولي الأمر فوراً ولا يمكن التراجع عن هذا الإجراء.',
             style: AppTextStyles.style(
-                fontSize: 13.sp, color: AppColors.textMuted, height: 1.5),
+              fontSize: 13.sp,
+              color: AppColors.textMuted,
+              height: 1.5,
+            ),
           ),
           actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
           actions: [
@@ -113,11 +119,13 @@ class _DriverSubscriptionDetailsScreenState
                 style: OutlinedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 12.h),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r)),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
                 ),
-                child: Text('تراجع',
-                    style:
-                        AppTextStyles.style(fontWeight: FontWeight.bold)),
+                child: Text(
+                  'تراجع',
+                  style: AppTextStyles.style(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
             SizedBox(width: 10.w),
@@ -125,21 +133,24 @@ class _DriverSubscriptionDetailsScreenState
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(ctx);
-                  context
-                      .read<DriverSubscriptionsCubit>()
-                      .cancelSubscription(subscription);
+                  context.read<DriverSubscriptionsCubit>().cancelSubscription(
+                    subscription,
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.error,
                   foregroundColor: AppColors.white,
                   padding: EdgeInsets.symmetric(vertical: 12.h),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r)),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
                 ),
                 child: Text(
                   'تأكيد الإلغاء',
                   style: AppTextStyles.style(
-                      fontWeight: FontWeight.bold, color: AppColors.white),
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.white,
+                  ),
                 ),
               ),
             ),
@@ -195,13 +206,18 @@ class _DriverSubscriptionDetailsScreenState
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline_rounded,
-                          size: 60.sp, color: AppColors.error),
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: 60.sp,
+                        color: AppColors.error,
+                      ),
                       SizedBox(height: 16.h),
                       Text(
                         state.message,
                         style: AppTextStyles.style(
-                            fontSize: 15.sp, fontWeight: FontWeight.w600),
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 20.h),
@@ -231,7 +247,7 @@ class _DriverSubscriptionDetailsScreenState
             if (subscription != null) {
               final isAllowCancel =
                   subscription.status.toLowerCase() == 'accepted' ||
-                      subscription.status.toLowerCase() == 'active';
+                  subscription.status.toLowerCase() == 'active';
 
               return RefreshIndicator(
                 onRefresh: () => context
@@ -280,13 +296,15 @@ class _DriverSubscriptionDetailsScreenState
                               icon: Icons.date_range_rounded,
                               label: 'تاريخ البداية',
                               value: _formatDate(
-                                  subscription.subscription.startDate),
+                                subscription.subscription.startDate,
+                              ),
                             ),
                             _InfoRow(
                               icon: Icons.event_available_rounded,
                               label: 'تاريخ النهاية',
                               value: _formatDate(
-                                  subscription.subscription.endDate),
+                                subscription.subscription.endDate,
+                              ),
                             ),
                             if (subscription.subscription.workingDaysCount !=
                                 null)
@@ -321,12 +339,14 @@ class _DriverSubscriptionDetailsScreenState
                                   width: double.infinity,
                                   child: OutlinedButton.icon(
                                     onPressed: () => _openMap(
-                                      subscription.homeAddress!.lat!,
-                                      subscription.homeAddress!.lng!,
+                                      subscription!.homeAddress!.lat!,
+                                      subscription!.homeAddress!.lng!,
                                     ),
-                                    icon: Icon(Icons.navigation_rounded,
-                                        size: 16.sp,
-                                        color: context.primaryColor),
+                                    icon: Icon(
+                                      Icons.navigation_rounded,
+                                      size: 16.sp,
+                                      color: context.primaryColor,
+                                    ),
                                     label: Text(
                                       'عرض موقع الانطلاق على الخريطة',
                                       style: AppTextStyles.style(
@@ -364,7 +384,8 @@ class _DriverSubscriptionDetailsScreenState
                           iconColor: AppColors.success,
                           title: 'الملخص المالي للاشتراك',
                           child: _OverallPricingWidget(
-                              pricing: subscription.pricing!),
+                            pricing: subscription.pricing!,
+                          ),
                         ),
                         SizedBox(height: 12.h),
                       ],
@@ -406,10 +427,15 @@ class _DriverSubscriptionDetailsScreenState
                                       color: AppColors.error,
                                     ),
                                   )
-                                : Icon(Icons.cancel_outlined,
-                                    size: 18.sp, color: AppColors.error),
+                                : Icon(
+                                    Icons.cancel_outlined,
+                                    size: 18.sp,
+                                    color: AppColors.error,
+                                  ),
                             label: Text(
-                              isCancelling ? 'جارٍ الإلغاء...' : 'إلغاء الاشتراك',
+                              isCancelling
+                                  ? 'جارٍ الإلغاء...'
+                                  : 'إلغاء الاشتراك',
                               style: AppTextStyles.style(
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.bold,
@@ -420,7 +446,8 @@ class _DriverSubscriptionDetailsScreenState
                               side: const BorderSide(color: AppColors.error),
                               padding: EdgeInsets.symmetric(vertical: 12.h),
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12.r)),
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
                             ),
                           ),
                         ),
@@ -452,8 +479,11 @@ class _DriverSubscriptionDetailsScreenState
       centerTitle: false,
       elevation: 0,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back_ios_rounded,
-            color: AppColors.white, size: 20.sp),
+        icon: Icon(
+          Icons.arrow_back_ios_rounded,
+          color: AppColors.white,
+          size: 20.sp,
+        ),
         onPressed: () => Navigator.of(context).pop(),
       ),
       flexibleSpace: Container(
@@ -651,10 +681,7 @@ class _ParentInfoWidget extends StatelessWidget {
   final DriverParentModel parent;
   final Function(String) onCallPhone;
 
-  const _ParentInfoWidget({
-    required this.parent,
-    required this.onCallPhone,
-  });
+  const _ParentInfoWidget({required this.parent, required this.onCallPhone});
 
   @override
   Widget build(BuildContext context) {
@@ -670,8 +697,11 @@ class _ParentInfoWidget extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 10.h),
             child: Row(
               children: [
-                Icon(Icons.phone_outlined,
-                    size: 16.sp, color: AppColors.textMuted),
+                Icon(
+                  Icons.phone_outlined,
+                  size: 16.sp,
+                  color: AppColors.textMuted,
+                ),
                 SizedBox(width: 8.w),
                 Text(
                   'الهاتف: ',
@@ -695,8 +725,11 @@ class _ParentInfoWidget extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.phone_in_talk_rounded,
-                      size: 18.sp, color: AppColors.success),
+                  icon: Icon(
+                    Icons.phone_in_talk_rounded,
+                    size: 18.sp,
+                    color: AppColors.success,
+                  ),
                   onPressed: () => onCallPhone(parent.phone!),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -710,8 +743,11 @@ class _ParentInfoWidget extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 10.h),
             child: Row(
               children: [
-                Icon(Icons.phone_android_rounded,
-                    size: 16.sp, color: AppColors.textMuted),
+                Icon(
+                  Icons.phone_android_rounded,
+                  size: 16.sp,
+                  color: AppColors.textMuted,
+                ),
                 SizedBox(width: 8.w),
                 Text(
                   'هاتف بديل: ',
@@ -747,10 +783,7 @@ class _ChildrenListWidget extends StatelessWidget {
   final List<DriverChildModel> children;
   final Function(double, double) onOpenMap;
 
-  const _ChildrenListWidget({
-    required this.children,
-    required this.onOpenMap,
-  });
+  const _ChildrenListWidget({required this.children, required this.onOpenMap});
 
   @override
   Widget build(BuildContext context) {
@@ -814,8 +847,8 @@ class _ChildCard extends StatelessWidget {
               CircleAvatar(
                 radius: 22.r,
                 backgroundColor: primaryColor.withValues(alpha: 0.12),
-                backgroundImage: (child.photoUrl != null &&
-                        child.photoUrl!.isNotEmpty)
+                backgroundImage:
+                    (child.photoUrl != null && child.photoUrl!.isNotEmpty)
                     ? CachedNetworkImageProvider(
                         child.photoUrl!.startsWith('http')
                             ? child.photoUrl!
@@ -860,8 +893,10 @@ class _ChildCard extends StatelessWidget {
               ),
               if (child.pricing?.priceAfterDiscount != null)
                 Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 5.h,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12.r),
@@ -887,23 +922,11 @@ class _ChildCard extends StatelessWidget {
             runSpacing: 6.h,
             children: [
               if (child.gender != null)
-                _buildBadge(
-                  child.genderDisplay,
-                  Icons.wc_rounded,
-                  isDark,
-                ),
+                _buildBadge(child.genderDisplay, Icons.wc_rounded, isDark),
               if (child.age != null)
-                _buildBadge(
-                  '${child.age} سنوات',
-                  Icons.cake_outlined,
-                  isDark,
-                ),
+                _buildBadge('${child.age} سنوات', Icons.cake_outlined, isDark),
               if (child.displayGrade.isNotEmpty)
-                _buildBadge(
-                  child.displayGrade,
-                  Icons.school_outlined,
-                  isDark,
-                ),
+                _buildBadge(child.displayGrade, Icons.school_outlined, isDark),
               if (child.distanceKm != null)
                 _buildBadge(
                   '${child.distanceKm} كم',
@@ -933,8 +956,10 @@ class _ChildCard extends StatelessWidget {
                     onPressed: () =>
                         onOpenMap(child.school!.lat!, child.school!.lng!),
                     icon: Icon(Icons.map_rounded, size: 14.sp),
-                    label: Text('خريطة',
-                        style: AppTextStyles.style(fontSize: 11.sp)),
+                    label: Text(
+                      'خريطة',
+                      style: AppTextStyles.style(fontSize: 11.sp),
+                    ),
                     style: TextButton.styleFrom(padding: EdgeInsets.zero),
                   ),
               ],
@@ -998,8 +1023,11 @@ class _ChildCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.check_circle_outline_rounded,
-                          size: 13.sp, color: AppColors.primaryLight),
+                      Icon(
+                        Icons.check_circle_outline_rounded,
+                        size: 13.sp,
+                        color: AppColors.primaryLight,
+                      ),
                       SizedBox(width: 4.w),
                       Text(
                         'اشتراك الطفل المفعل: ${child.activeSubscription!.displayStatus}',
