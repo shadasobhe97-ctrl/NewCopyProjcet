@@ -676,6 +676,13 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                                         ),
                                       ),
                                     ),
+                                  if (breakdownItem != null) ...[
+                                    SizedBox(height: 4.h),
+                                    _breakdownDetailRow(Icons.school_outlined, 'المدرسة', breakdownItem.schoolName.isNotEmpty ? breakdownItem.schoolName : kid.schoolName, isDark),
+                                    _breakdownDetailRow(Icons.linear_scale_rounded, 'المسافة', '${breakdownItem.distanceKm.toStringAsFixed(1)} كم', isDark),
+                                    _breakdownDetailRow(Icons.calendar_month_outlined, 'نوع الاشتراك', breakdownItem.subscriptionTypeLabel.isNotEmpty ? breakdownItem.subscriptionTypeLabel : label, isDark),
+                                    _breakdownDetailRow(Icons.date_range_rounded, 'أيام العمل', '${breakdownItem.workingDays} يوم', isDark),
+                                  ],
                                 ],
                               ),
                             );
@@ -878,6 +885,45 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                         ),
                       ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _breakdownDetailRow(
+    IconData icon,
+    String label,
+    String value,
+    bool isDark,
+  ) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 2.0.h),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 14.r,
+            color: isDark ? AppColors.grey500 : AppColors.grey500,
+          ),
+          SizedBox(width: 6.w),
+          Text(
+            '$label: ',
+            style: AppTextStyles.style(
+              fontSize: 12.sp,
+              color: isDark ? AppColors.grey400 : AppColors.textMuted,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: AppTextStyles.style(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w500,
+                color: isDark ? AppColors.grey200 : AppColors.textDark,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

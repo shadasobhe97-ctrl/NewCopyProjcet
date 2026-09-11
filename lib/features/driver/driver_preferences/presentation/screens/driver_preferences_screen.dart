@@ -400,7 +400,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
       padding: EdgeInsets.all(14.w),
       decoration: AppTheme.boxDecoration(
         color: isDark ? AppColors.darkCard : AppColors.primaryContainerLight,
-        borderRadius: AppTheme.radius(12.r),
+        borderRadius: BorderRadius.circular(30.r),
       ),
       child: Text(
         'اختر إعدادات النقل بعناية، حيث سيتم إرسال طلبات الرحلات إليك بناءً على هذه الإعدادات ومواصفات حافلتك.',
@@ -453,7 +453,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
           color: isDark ? AppColors.darkCard : AppColors.white,
           elevation: 1,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(30.r),
             side: BorderSide(
               color: morningActive
                   ? context.primaryColor
@@ -524,7 +524,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
           color: isDark ? AppColors.darkCard : AppColors.white,
           elevation: 1,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(30.r),
             side: BorderSide(
               color: afternoonActive
                   ? context.primaryColor
@@ -604,14 +604,14 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
 
         return InkWell(
           onTap: () => _onSchoolStageTapped(value),
-          borderRadius: BorderRadius.circular(10.r),
+          borderRadius: BorderRadius.circular(30.r),
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
             decoration: BoxDecoration(
               color: isSelected
                   ? context.primaryColor.withValues(alpha: isDark ? 0.2 : 0.08)
                   : (isDark ? AppColors.darkCard : AppColors.white),
-              borderRadius: BorderRadius.circular(10.r),
+              borderRadius: BorderRadius.circular(30.r),
               border: Border.all(
                 color: isSelected
                     ? context.primaryColor
@@ -641,7 +641,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
       padding: EdgeInsets.symmetric(horizontal: 14.w),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : AppColors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(30.r),
         border: Border.all(
           color: _selectedSubtype != null
               ? context.primaryColor
@@ -691,7 +691,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
         padding: EdgeInsets.all(14.w),
         decoration: AppTheme.boxDecoration(
           color: isDark ? AppColors.darkCard : AppColors.white,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(30.r),
         ),
         child: Text(
           'لا توجد مناطق جغرافية متاحة حالياً.',
@@ -739,7 +739,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
               margin: EdgeInsets.only(bottom: 8.h),
               child: InkWell(
                 onTap: () => _onSubMunicipalitySelected(coverage),
-                borderRadius: BorderRadius.circular(10.r),
+                borderRadius: BorderRadius.circular(30.r),
                 child: Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: 14.w,
@@ -751,7 +751,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                             alpha: isDark ? 0.2 : 0.08,
                           )
                         : (isDark ? AppColors.darkCard : AppColors.white),
-                    borderRadius: BorderRadius.circular(10.r),
+                    borderRadius: BorderRadius.circular(30.r),
                     border: Border.all(
                       color: isSelected
                           ? context.primaryColor
@@ -823,7 +823,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
               color: isDark ? AppColors.darkCard : AppColors.white,
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(30.r),
               border: Border.all(
                 color: context.primaryColor.withValues(alpha: 0.3),
                 width: 1.5,
@@ -867,7 +867,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                           ? AppColors.surfaceDark
                           : AppColors.grey100,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.r),
+                        borderRadius: BorderRadius.circular(30.r),
                         side: BorderSide(
                           color: isZoneSelected
                               ? context.primaryColor
@@ -914,8 +914,8 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
       decoration: AppTheme.boxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20.r),
-          topRight: Radius.circular(20.r),
+          topLeft: Radius.circular(30.r),
+          topRight: Radius.circular(30.r),
         ),
         boxShadow: [
           BoxShadow(

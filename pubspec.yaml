@@ -33,6 +33,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   image_picker: ^1.2.3
+  image_blur_detection: ^1.0.1
   flutter_map: ^8.3.1
   latlong2: ^0.9.1
   intl: ^0.20.2

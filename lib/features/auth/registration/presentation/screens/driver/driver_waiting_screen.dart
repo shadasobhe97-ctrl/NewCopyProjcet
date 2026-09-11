@@ -170,7 +170,7 @@ class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 13),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(30),
                           ),
                         ),
                         child: Text(
@@ -222,7 +222,7 @@ class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 13),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(30),
                           ),
                         ),
                       ),
@@ -248,7 +248,7 @@ class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
   }) {
     return Card(
       elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
       color: isDark ? AppColors.grey900 : AppColors.white,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
