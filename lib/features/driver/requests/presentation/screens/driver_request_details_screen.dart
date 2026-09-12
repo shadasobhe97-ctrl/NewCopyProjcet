@@ -841,6 +841,26 @@ class _ChildCard extends StatelessWidget {
     required this.onOpenMap,
   });
 
+  String _formatTime(String? raw) {
+    if (raw == null || raw.trim().isEmpty || raw.trim() == 'null') {
+      return 'غير محدد';
+    }
+    final clean = raw.trim();
+    final parts = clean.split(':');
+    if (parts.length >= 2) {
+      final h = int.tryParse(parts[0]);
+      final m = int.tryParse(parts[1]);
+      if (h != null && m != null) {
+        final period = h >= 12 ? 'مساءً' : 'صباحًا';
+        final displayHour = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+        final hourStr = displayHour.toString().padLeft(2, '0');
+        final minStr = m.toString().padLeft(2, '0');
+        return '$hourStr:$minStr $period';
+      }
+    }
+    return clean;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
@@ -992,6 +1012,23 @@ class _ChildCard extends StatelessWidget {
               ],
             ),
           ],
+
+          SizedBox(height: 8.h),
+          _InfoRow(
+            icon: Icons.access_time_rounded,
+            label: 'فترة الطفل',
+            value: child.timingDisplayLabel,
+          ),
+          _InfoRow(
+            icon: Icons.flight_takeoff_rounded,
+            label: 'وقت الاستلام',
+            value: _formatTime(child.pickupTime),
+          ),
+          _InfoRow(
+            icon: Icons.flight_land_rounded,
+            label: 'وقت التسليم',
+            value: _formatTime(child.dropoffTime),
+          ),
 
           // ── الملاحظات الطبية ──
           if (child.medicalNotes != null &&

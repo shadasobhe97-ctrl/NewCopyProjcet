@@ -39,42 +39,18 @@ class AppTheme {
         fontSize: 18,
         fontWeight: FontWeight.bold,
       ),
-      titleLarge: GoogleFonts.cairo(
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-      ),
-      titleMedium: GoogleFonts.cairo(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-      ),
-      titleSmall: GoogleFonts.cairo(
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-      ),
-      bodyLarge: GoogleFonts.cairo(
-        fontSize: 16,
-        fontWeight: FontWeight.normal,
-      ),
+      titleLarge: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.w600),
+      titleMedium: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.w600),
+      titleSmall: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w500),
+      bodyLarge: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.normal),
       bodyMedium: GoogleFonts.cairo(
         fontSize: 14,
         fontWeight: FontWeight.normal,
       ),
-      bodySmall: GoogleFonts.cairo(
-        fontSize: 12,
-        fontWeight: FontWeight.normal,
-      ),
-      labelLarge: GoogleFonts.cairo(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-      ),
-      labelMedium: GoogleFonts.cairo(
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-      ),
-      labelSmall: GoogleFonts.cairo(
-        fontSize: 10,
-        fontWeight: FontWeight.w500,
-      ),
+      bodySmall: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.normal),
+      labelLarge: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600),
+      labelMedium: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.w500),
+      labelSmall: GoogleFonts.cairo(fontSize: 10, fontWeight: FontWeight.w500),
     );
   }
 
@@ -160,7 +136,8 @@ class AppTheme {
     return OutlineInputBorder(
       borderRadius: borderRadius ?? BorderRadius.circular(radius),
       borderSide:
-          borderSide ?? BorderSide(color: color ?? AppColors.grey200, width: width),
+          borderSide ??
+          BorderSide(color: color ?? AppColors.grey200, width: width),
     );
   }
 
@@ -307,13 +284,16 @@ class AppTheme {
       shadowColor: shadowColor,
       surfaceTintColor: surfaceTintColor,
       elevation: elevation,
-      textStyle: textStyle ?? GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
+      textStyle:
+          textStyle ??
+          GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
       padding: padding,
       minimumSize: minimumSize,
       fixedSize: fixedSize,
       maximumSize: maximumSize,
       side: side,
-      shape: shape ??
+      shape:
+          shape ??
           (borderRadius == null
               ? null
               : RoundedRectangleBorder(borderRadius: borderRadius)),
@@ -361,13 +341,16 @@ class AppTheme {
       shadowColor: shadowColor,
       surfaceTintColor: surfaceTintColor,
       elevation: elevation,
-      textStyle: textStyle ?? GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
+      textStyle:
+          textStyle ??
+          GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
       padding: padding,
       minimumSize: minimumSize,
       fixedSize: fixedSize,
       maximumSize: maximumSize,
       side: side,
-      shape: shape ??
+      shape:
+          shape ??
           (borderRadius == null
               ? null
               : RoundedRectangleBorder(borderRadius: borderRadius)),
@@ -417,7 +400,10 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          textStyle: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.cairo(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -428,7 +414,10 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          textStyle: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.cairo(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -460,7 +449,10 @@ class AppTheme {
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide(color: AppColors.grey200.withValues(alpha: 0.5), width: 1.5),
+          borderSide: BorderSide(
+            color: AppColors.grey200.withValues(alpha: 0.5),
+            width: 1.5,
+          ),
         ),
         labelStyle: GoogleFonts.cairo(color: AppColors.grey600),
         hintStyle: GoogleFonts.cairo(color: AppColors.grey400),
@@ -538,7 +530,10 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          textStyle: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.cairo(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -549,7 +544,10 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          textStyle: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.cairo(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -581,7 +579,10 @@ class AppTheme {
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide(color: AppColors.grey800.withValues(alpha: 0.5), width: 1.5),
+          borderSide: BorderSide(
+            color: AppColors.grey800.withValues(alpha: 0.5),
+            width: 1.5,
+          ),
         ),
         labelStyle: GoogleFonts.cairo(color: AppColors.grey400),
         hintStyle: GoogleFonts.cairo(color: AppColors.grey600),
@@ -626,4 +627,3 @@ class AppTheme {
     );
   }
 }
-

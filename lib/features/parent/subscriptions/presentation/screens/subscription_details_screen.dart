@@ -60,10 +60,23 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
   }
 
   String _formatTime(String? raw) {
-    if (raw == null || raw.isEmpty) return '—';
-    final parts = raw.split(':');
-    if (parts.length >= 2) return '${parts[0]}:${parts[1]}';
-    return raw;
+    if (raw == null || raw.trim().isEmpty || raw.trim() == 'null') {
+      return 'غير محدد';
+    }
+    final clean = raw.trim();
+    final parts = clean.split(':');
+    if (parts.length >= 2) {
+      final h = int.tryParse(parts[0]);
+      final m = int.tryParse(parts[1]);
+      if (h != null && m != null) {
+        final period = h >= 12 ? 'مساءً' : 'صباحًا';
+        final displayHour = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+        final hourStr = displayHour.toString().padLeft(2, '0');
+        final minStr = m.toString().padLeft(2, '0');
+        return '$hourStr:$minStr $period';
+      }
+    }
+    return clean;
   }
 
   @override
@@ -534,6 +547,9 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
                 child: Column(
                   children: [
                     _detailRow('المدرسة', child.school.name, isDark),
+                    _detailRow('الفترة', child.timingDisplayLabel, isDark),
+                    _detailRow('وقت الاستلام', _formatTime(child.pickupTime), isDark),
+                    _detailRow('وقت التسليم', _formatTime(child.dropoffTime), isDark),
                     if (child.distanceKm != null)
                       _detailRow('المسافة',
                           '${child.distanceKm!.toStringAsFixed(1)} كم', isDark),

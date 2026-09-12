@@ -320,6 +320,8 @@ class DriverChildModel {
   final String? gradeLabel;
   final DriverSchoolModel? school;
   final String? timing; // Nullable
+  final String? pickupTime; // Nullable
+  final String? dropoffTime; // Nullable
   final double? distanceKm;
   final String? medicalNotes;
   final DriverChildPricingModel? pricing;
@@ -335,6 +337,8 @@ class DriverChildModel {
     this.gradeLabel,
     this.school,
     this.timing,
+    this.pickupTime,
+    this.dropoffTime,
     this.distanceKm,
     this.medicalNotes,
     this.pricing,
@@ -362,6 +366,20 @@ class DriverChildModel {
   String get timingDisplay => timing != null && timing!.isNotEmpty
       ? SubscriptionEnums.timingLabel(timing)
       : 'غير محدد';
+
+  String get timingDisplayLabel {
+    switch ((timing ?? '').toUpperCase()) {
+      case 'MORNING':
+        return 'صباحية';
+      case 'AFTERNOON':
+      case 'EVENING':
+        return 'مسائية';
+      case 'BOTH':
+        return 'صباحية ومسائية';
+      default:
+        return 'غير محدد';
+    }
+  }
 
   factory DriverChildModel.fromJson(Map<String, dynamic> json) {
     final cid = _parseInt(json['child_id'] ?? json['id']) ?? 0;
@@ -393,6 +411,8 @@ class DriverChildModel {
       school:
           schoolJson != null ? DriverSchoolModel.fromJson(schoolJson) : null,
       timing: json['timing']?.toString(),
+      pickupTime: json['pickup_time']?.toString(),
+      dropoffTime: json['dropoff_time']?.toString(),
       distanceKm: _parseDouble(json['distance_km']),
       medicalNotes: (medNotes != null &&
               medNotes.trim().isNotEmpty &&
@@ -419,6 +439,8 @@ class DriverChildModel {
         'grade_label': gradeLabel,
         'school': school?.toJson(),
         'timing': timing,
+        'pickup_time': pickupTime,
+        'dropoff_time': dropoffTime,
         'distance_km': distanceKm,
         'medical_notes': medicalNotes,
         'pricing': pricing?.toJson(),

@@ -245,9 +245,11 @@ class _DriverSubscriptionDetailsScreenState
             }
 
             if (subscription != null) {
+              final sub = subscription;
+              final home = sub.homeAddress;
               final isAllowCancel =
-                  subscription.status.toLowerCase() == 'accepted' ||
-                  subscription.status.toLowerCase() == 'active';
+                  sub.status.toLowerCase() == 'accepted' ||
+                  sub.status.toLowerCase() == 'active';
 
               return RefreshIndicator(
                 onRefresh: () => context
@@ -320,7 +322,7 @@ class _DriverSubscriptionDetailsScreenState
                       SizedBox(height: 12.h),
 
                       // 4. عنوان الانطلاق
-                      if (subscription.homeAddress != null) ...[
+                      if (home != null) ...[
                         _SectionCard(
                           icon: Icons.home_rounded,
                           iconColor: AppColors.warning,
@@ -331,16 +333,16 @@ class _DriverSubscriptionDetailsScreenState
                               _InfoRow(
                                 icon: Icons.location_on_rounded,
                                 label: 'العنوان',
-                                value: subscription.homeAddress!.displayName,
+                                value: home.displayName,
                               ),
-                              if (subscription.homeAddress!.hasCoordinates) ...[
+                              if (home.hasCoordinates) ...[
                                 SizedBox(height: 8.h),
                                 SizedBox(
                                   width: double.infinity,
                                   child: OutlinedButton.icon(
                                     onPressed: () => _openMap(
-                                      subscription!.homeAddress!.lat!,
-                                      subscription!.homeAddress!.lng!,
+                                      home.lat!,
+                                      home.lng!,
                                     ),
                                     icon: Icon(
                                       Icons.navigation_rounded,
@@ -822,6 +824,26 @@ class _ChildCard extends StatelessWidget {
     required this.onOpenMap,
   });
 
+  String _formatTime(String? raw) {
+    if (raw == null || raw.trim().isEmpty || raw.trim() == 'null') {
+      return 'غير محدد';
+    }
+    final clean = raw.trim();
+    final parts = clean.split(':');
+    if (parts.length >= 2) {
+      final h = int.tryParse(parts[0]);
+      final m = int.tryParse(parts[1]);
+      if (h != null && m != null) {
+        final period = h >= 12 ? 'مساءً' : 'صباحًا';
+        final displayHour = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+        final hourStr = displayHour.toString().padLeft(2, '0');
+        final minStr = m.toString().padLeft(2, '0');
+        return '$hourStr:$minStr $period';
+      }
+    }
+    return clean;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
@@ -966,6 +988,23 @@ class _ChildCard extends StatelessWidget {
             ),
           ],
 
+          SizedBox(height: 8.h),
+          _InfoRow(
+            icon: Icons.access_time_rounded,
+            label: 'فترة الطفل',
+            value: child.timingDisplayLabel,
+          ),
+          _InfoRow(
+            icon: Icons.directions_car_rounded,
+            label: 'وقت الاستلام',
+            value: _formatTime(child.pickupTime),
+          ),
+          _InfoRow(
+            icon: Icons.home_rounded,
+            label: 'وقت التسليم',
+            value: _formatTime(child.dropoffTime),
+          ),
+
           // ── الملاحظات الطبية ──
           if (child.medicalNotes != null &&
               child.medicalNotes!.trim().isNotEmpty) ...[
@@ -1018,38 +1057,22 @@ class _ChildCard extends StatelessWidget {
                 color: AppColors.primaryLight.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8.r),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.check_circle_outline_rounded,
-                        size: 13.sp,
-                        color: AppColors.primaryLight,
-                      ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        'اشتراك الطفل المفعل: ${child.activeSubscription!.displayStatus}',
-                        style: AppTextStyles.style(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primaryLight,
-                        ),
-                      ),
-                    ],
+                  Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: 13.sp,
+                    color: AppColors.primaryLight,
                   ),
-                  if (child.activeSubscription!.pickupTime != null ||
-                      child.activeSubscription!.dropoffTime != null) ...[
-                    SizedBox(height: 4.h),
-                    Text(
-                      'الصعود: ${child.activeSubscription!.pickupTime ?? "غير محدد"} | النزول: ${child.activeSubscription!.dropoffTime ?? "غير محدد"}',
-                      style: AppTextStyles.style(
-                        fontSize: 11.sp,
-                        color: AppColors.textMuted,
-                      ),
+                  SizedBox(width: 4.w),
+                  Text(
+                    'اشتراك الطفل: ${child.activeSubscription!.displayStatus}',
+                    style: AppTextStyles.style(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryLight,
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),
