@@ -1,6 +1,7 @@
 import 'package:kids_transport/features/parent/wallet/data/datasources/wallet_remote_data_source.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/hold_trip_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/payment_method_model.dart';
+import 'package:kids_transport/features/parent/wallet/data/models/recharge_mock_pay_response_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/recharge_response_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/trip_dispute_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/wallet_balance_model.dart';
@@ -18,15 +19,21 @@ class WalletRepository {
     return await _remoteDataSource.getPaymentMethods();
   }
 
-  Future<RechargeResponseModel> rechargeWallet({
-    required double amount,
-    required String paymentMethod,
-    String? referenceNumber,
+  Future<RechargeInitiateResponseModel> rechargeInitiate({
+    required num amount,
+    required int paymentMethodId,
   }) async {
-    return await _remoteDataSource.rechargeWallet(
+    return await _remoteDataSource.rechargeInitiate(
       amount: amount,
-      paymentMethod: paymentMethod,
-      referenceNumber: referenceNumber,
+      paymentMethodId: paymentMethodId,
+    );
+  }
+
+  Future<RechargeMockPayResponseModel> rechargeMockPay({
+    required String sessionToken,
+  }) async {
+    return await _remoteDataSource.rechargeMockPay(
+      sessionToken: sessionToken,
     );
   }
 

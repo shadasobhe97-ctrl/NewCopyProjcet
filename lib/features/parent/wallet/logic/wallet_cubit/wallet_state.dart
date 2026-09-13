@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/hold_trip_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/payment_method_model.dart';
+import 'package:kids_transport/features/parent/wallet/data/models/recharge_mock_pay_response_model.dart';
+import 'package:kids_transport/features/parent/wallet/data/models/recharge_response_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/trip_dispute_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/wallet_balance_model.dart';
 
@@ -34,15 +36,33 @@ class WalletError extends WalletState {
   List<Object?> get props => [message];
 }
 
-class WalletRecharging extends WalletState {}
+class WalletRechargeInitiating extends WalletState {}
 
-class WalletRechargeSuccess extends WalletState {
-  final String message;
+class WalletRechargeInitiated extends WalletState {
+  final RechargeInitiateResponseModel data;
 
-  const WalletRechargeSuccess(this.message);
+  const WalletRechargeInitiated(this.data);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [data];
+}
+
+class WalletRechargeConfirming extends WalletState {
+  final RechargeInitiateResponseModel initiateData;
+
+  const WalletRechargeConfirming(this.initiateData);
+
+  @override
+  List<Object?> get props => [initiateData];
+}
+
+class WalletRechargeSuccess extends WalletState {
+  final RechargeMockPayResponseModel data;
+
+  const WalletRechargeSuccess(this.data);
+
+  @override
+  List<Object?> get props => [data];
 }
 
 class WalletRechargeError extends WalletState {

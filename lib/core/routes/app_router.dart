@@ -72,6 +72,8 @@ import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profil
 // Wallet & Finance
 import 'package:kids_transport/features/parent/wallet/presentation/screens/wallet_screen.dart';
 import 'package:kids_transport/features/parent/wallet/presentation/screens/recharge_screen.dart';
+import 'package:kids_transport/features/parent/wallet/presentation/screens/recharge_confirmation_screen.dart';
+import 'package:kids_transport/features/parent/wallet/data/models/recharge_response_model.dart';
 import 'package:kids_transport/features/parent/wallet/presentation/screens/invoices_screen.dart';
 import 'package:kids_transport/features/parent/wallet/presentation/screens/invoice_details_screen.dart';
 import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_cubit.dart';
@@ -124,6 +126,8 @@ class AppRoutes {
   // Parent Wallet & Finance Routes
   static const String parentWallet = '/parent-wallet';
   static const String parentRecharge = '/parent-recharge';
+  static const String parentRechargeConfirmation =
+      '/parent-recharge-confirmation';
   static const String parentInvoices = '/parent-invoices';
   static const String parentInvoiceDetails = '/parent-invoice-details';
 
@@ -315,6 +319,17 @@ class AppRoutes {
         return _route(
           settings,
           BlocProvider.value(value: walletCubit, child: const RechargeScreen()),
+        );
+      case parentRechargeConfirmation:
+        final args = settings.arguments as Map<String, dynamic>;
+        final walletCubit = args['cubit'] as WalletCubit;
+        final initData = args['initData'] as RechargeInitiateResponseModel;
+        return _route(
+          settings,
+          BlocProvider.value(
+            value: walletCubit,
+            child: RechargeConfirmationScreen(initData: initData),
+          ),
         );
       case parentInvoices:
         return _route(settings, const InvoicesScreen());

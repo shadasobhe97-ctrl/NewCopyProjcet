@@ -135,7 +135,10 @@ class ApiEndpoints {
   static const String parentWalletBalance = 'parent/wallet/balance';
   static const String parentWalletPaymentMethods =
       'parent/wallet/payment-methods';
-  static const String parentWalletRecharge = 'parent/wallet/recharge';
+  static const String parentWalletRechargeInitiate =
+      'parent/wallet/recharge/initiate';
+  static const String parentWalletRechargeMockPay =
+      'parent/wallet/recharge/mock-pay';
   static const String parentWalletHoldTrip = 'parent/wallet/hold-trip';
   static String parentTripDispute(dynamic tripId) =>
       'parent/trips/$tripId/dispute';
