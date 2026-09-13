@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -93,4 +92,3 @@ class AppTextStyles {
     );
   }
 }
-

@@ -5,8 +5,13 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 
 class WelcomeGuideCard extends StatelessWidget {
   final String driverName;
+  final VoidCallback? onDismiss;
 
-  const WelcomeGuideCard({super.key, required this.driverName});
+  const WelcomeGuideCard({
+    super.key,
+    required this.driverName,
+    this.onDismiss,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +48,7 @@ class WelcomeGuideCard extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: const Icon(
-               Icons.waving_hand_rounded,
+              Icons.waving_hand_rounded,
               color: AppColors.primaryLight,
               size: 24,
             ),
@@ -65,7 +70,7 @@ class WelcomeGuideCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  "يسعدنا انضمامك إلينا. للبدء في استقبال طلبات أولياء الأمور وتنسيق رحلات المدارس، تأكد من تفعيل وضع 'متصل' من الزر في الأعلى.",
+                  'تم تفعيل حسابك بنجاح. يمكنك الآن استقبال طلبات أولياء الأمور وتنسيق رحلات المدارس.',
                   style: AppTextStyles.style(
                     fontSize: 13,
                     height: 1.6,
@@ -75,6 +80,20 @@ class WelcomeGuideCard extends StatelessWidget {
               ],
             ),
           ),
+
+          // زر إغلاق (اختياري) — يخفي البطاقة نهائياً لهذا السائق
+          if (onDismiss != null)
+            IconButton(
+              onPressed: onDismiss,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              icon: Icon(
+                Icons.close_rounded,
+                color: AppColors.textMuted.withValues(alpha: 0.8),
+                size: 20,
+              ),
+              tooltip: 'إغلاق',
+            ),
         ],
       ),
     );

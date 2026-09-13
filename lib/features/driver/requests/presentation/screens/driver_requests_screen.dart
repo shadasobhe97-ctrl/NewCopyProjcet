@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/features/driver/requests/data/models/driver_request_model.dart';
 import 'package:kids_transport/features/driver/requests/logic/driver_requests_cubit.dart';
 import 'package:kids_transport/features/driver/requests/presentation/screens/driver_request_details_screen.dart';
-import 'package:kids_transport/core/routes/app_router.dart';
-import 'package:kids_transport/core/network/api_endpoints.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kids_transport/features/driver/subscriptions/data/models/driver_subscription_model.dart';
 import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
 
@@ -189,7 +187,6 @@ class _RequestsTabContentState extends State<_RequestsTabContent> {
                         ),
                       )
                       .then((_) {
-                        // Refresh if returning from details screen
                         cubit.refresh();
                       });
                 },
@@ -461,7 +458,7 @@ class _SubscriptionsFilterBar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 5. كرت طلب الاشتراك (مع التركيز على الأطفال والمدرسة)
+// 5. كرت طلب الاشتراك الموحد
 // ─────────────────────────────────────────────────────────────────────────────
 class _DriverRequestCard extends StatelessWidget {
   final DriverRequestModel request;
@@ -475,6 +472,7 @@ class _DriverRequestCard extends StatelessWidget {
         return AppColors.pending;
       case 'accepted':
       case 'approved':
+      case 'active':
         return AppColors.success;
       case 'rejected':
         return AppColors.error;
@@ -489,6 +487,12 @@ class _DriverRequestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final statusColor = _getStatusColor();
+    final parentName = request.parent.name.isNotEmpty
+        ? request.parent.name
+        : 'طلب اشتراك #${request.id}';
+    final childrenNames = request.children.isNotEmpty
+        ? request.children.map((c) => c.name).join('، ')
+        : 'لا يوجد أطفال';
 
     return GestureDetector(
       onTap: onTap,
@@ -528,13 +532,7 @@ class _DriverRequestCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              request.parent.name.isNotEmpty
-                                  ? request.parent.name
-                                  : (request.children.isNotEmpty
-                                      ? request.children
-                                          .map((c) => c.name)
-                                          .join('، ')
-                                      : 'طلب #${request.id}'),
+                              parentName,
                               style: AppTextStyles.style(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
@@ -554,26 +552,15 @@ class _DriverRequestCard extends StatelessWidget {
                             color: AppColors.textMuted,
                           ),
                           const SizedBox(width: 6),
-                          Text(
-                            '${request.childrenCount} أطفال',
-                            style: AppTextStyles.style(
-                              fontSize: 13,
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const Icon(
-                            Icons.monetization_on_rounded,
-                            size: 16,
-                            color: AppColors.success,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${request.totalPrice} د.ل',
-                            style: AppTextStyles.style(
-                              fontSize: 13,
-                              color: AppColors.success,
-                              fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: Text(
+                              '${request.childrenCount} أطفال ($childrenNames)',
+                              style: AppTextStyles.style(
+                                fontSize: 13,
+                                color: AppColors.textMuted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -583,17 +570,38 @@ class _DriverRequestCard extends StatelessWidget {
                         children: [
                           const Icon(
                             Icons.calendar_today_rounded,
-                            size: 16,
+                            size: 14,
                             color: AppColors.textMuted,
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            request.hasMixedChildDetails
-                                ? 'نوع الاشتراك يختلف حسب الطفل'
-                                : request.subscriptionTypeDisplayLabel,
+                            request.typeDisplayLabel,
                             style: AppTextStyles.style(
-                              fontSize: 13,
+                              fontSize: 12,
                               color: AppColors.textMuted,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Icon(
+                            Icons.alt_route_rounded,
+                            size: 14,
+                            color: AppColors.textMuted,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            request.directionDisplayLabel,
+                            style: AppTextStyles.style(
+                              fontSize: 12,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            request.totalPriceDisplay,
+                            style: AppTextStyles.style(
+                              fontSize: 14,
+                              color: AppColors.success,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
@@ -601,6 +609,7 @@ class _DriverRequestCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -640,7 +649,7 @@ class _DriverRequestCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6. كرت الاشتراك النشط (مع التركيز على الأطفال والمدرسة والمسار)
+// 6. كرت الاشتراك النشط الموحد
 // ─────────────────────────────────────────────────────────────────────────────
 class _DriverSubscriptionCard extends StatelessWidget {
   final DriverSubscriptionModel subscription;
@@ -669,7 +678,7 @@ class _DriverSubscriptionCard extends StatelessWidget {
   }
 
   String _formatDate(String? raw) {
-    if (raw == null || raw.isEmpty) return 'غير متوفر';
+    if (raw == null || raw.isEmpty) return '';
     try {
       final dt = DateTime.parse(raw);
       return '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
@@ -682,7 +691,18 @@ class _DriverSubscriptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final statusColor = _getStatusColor();
-    final child = subscription.child;
+    final parentName = subscription.parent.name.isNotEmpty
+        ? subscription.parent.name
+        : 'اشتراك #${subscription.id}';
+    final childrenNames = subscription.children.isNotEmpty
+        ? subscription.children.map((c) => c.name).join('، ')
+        : 'لا يوجد أطفال';
+
+    final startDateStr = _formatDate(subscription.subscription.startDate);
+    final endDateStr = _formatDate(subscription.subscription.endDate);
+    final dateRange = (startDateStr.isNotEmpty && endDateStr.isNotEmpty)
+        ? '$startDateStr - $endDateStr'
+        : '';
 
     return GestureDetector(
       onTap: onTap,
@@ -707,30 +727,17 @@ class _DriverSubscriptionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // الرأس
+            // الرأس: ولي الأمر والحالة
             Row(
               children: [
                 CircleAvatar(
-                  radius: 24.r,
+                  radius: 22.r,
                   backgroundColor: context.primaryColor.withValues(alpha: 0.1),
-                  backgroundImage:
-                      (child.photoUrl != null && child.photoUrl!.isNotEmpty)
-                      ? CachedNetworkImageProvider(
-                          child.photoUrl!.startsWith('http')
-                              ? child.photoUrl!
-                              : '${ApiEndpoints.baseUrl.replaceAll('/api/', '')}/storage/${child.photoUrl!}',
-                        )
-                      : null,
-                  child: (child.photoUrl == null || child.photoUrl!.isEmpty)
-                      ? Text(
-                          child.avatarInitials,
-                          style: AppTextStyles.style(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.bold,
-                            color: context.primaryColor,
-                          ),
-                        )
-                      : null,
+                  child: Icon(
+                    Icons.assignment_rounded,
+                    color: context.primaryColor,
+                    size: 20.sp,
+                  ),
                 ),
                 SizedBox(width: 12.w),
                 Expanded(
@@ -738,7 +745,7 @@ class _DriverSubscriptionCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        child.displayName,
+                        parentName,
                         style: AppTextStyles.style(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.bold,
@@ -749,37 +756,23 @@ class _DriverSubscriptionCard extends StatelessWidget {
                       SizedBox(height: 4.h),
                       Row(
                         children: [
-                          if (child.age != null) ...[
-                            Icon(
-                              Icons.calendar_today_rounded,
-                              size: 12.sp,
-                              color: AppColors.textMuted,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              'العمر: ${child.age} سنة',
+                          Icon(
+                            Icons.child_care_rounded,
+                            size: 13.sp,
+                            color: AppColors.textMuted,
+                          ),
+                          SizedBox(width: 4.w),
+                          Expanded(
+                            child: Text(
+                              '${subscription.childrenCount} أطفال: $childrenNames',
                               style: AppTextStyles.style(
                                 fontSize: 11.sp,
                                 color: AppColors.textMuted,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            SizedBox(width: 10.w),
-                          ],
-                          if (child.grade != null) ...[
-                            Icon(
-                              Icons.grade_rounded,
-                              size: 12.sp,
-                              color: AppColors.textMuted,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              'الصف: ${child.grade}',
-                              style: AppTextStyles.style(
-                                fontSize: 11.sp,
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                          ],
+                          ),
                         ],
                       ),
                     ],
@@ -808,7 +801,7 @@ class _DriverSubscriptionCard extends StatelessWidget {
             ),
             SizedBox(height: 12.h),
 
-            // تفاصيل الرحلة
+            // تفاصيل الاشتراك
             Container(
               padding: EdgeInsets.all(12.w),
               decoration: AppTheme.boxDecoration(
@@ -821,90 +814,49 @@ class _DriverSubscriptionCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _MiniInfoWidget(
-                        icon: Icons.schedule_rounded,
-                        text: subscription.timingLabel,
-                        color: AppColors.pending,
+                        icon: Icons.calendar_today_rounded,
+                        text: subscription.typeDisplayLabel,
+                        color: AppColors.primaryLight,
                       ),
                       _MiniInfoWidget(
                         icon: Icons.alt_route_rounded,
-                        text: subscription.tripDirectionLabel,
+                        text: subscription.directionDisplayLabel,
                         color: context.primaryColor,
                       ),
-                      _MiniInfoWidget(
-                        icon: Icons.calendar_today_rounded,
-                        text: subscription.subscriptionTypeDisplayLabel,
-                        color: AppColors.primaryLight,
-                      ),
+                      if (subscription.pricing?.driverNetTotal != null)
+                        _MiniInfoWidget(
+                          icon: Icons.monetization_on_rounded,
+                          text: subscription.pricing!.formattedDriverNet,
+                          color: AppColors.success,
+                        ),
                     ],
                   ),
-                  SizedBox(height: 10.h),
-                  const Divider(height: 1, thickness: 0.5),
-                  SizedBox(height: 10.h),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.location_on_rounded,
-                        size: 14.sp,
-                        color: AppColors.textMuted,
-                      ),
-                      SizedBox(width: 4.w),
-                      Expanded(
-                        child: Text(
-                          'من: ${subscription.pickupLabel ?? "غير محدد"} 📍 إلى: ${subscription.dropoffLabel ?? "غير محدد"} 🏫',
+                  if (dateRange.isNotEmpty) ...[
+                    SizedBox(height: 8.h),
+                    const Divider(height: 1, thickness: 0.5),
+                    SizedBox(height: 8.h),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.date_range_rounded,
+                          size: 13.sp,
+                          color: AppColors.textMuted,
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          dateRange,
                           style: AppTextStyles.style(
-                            fontSize: 12.sp,
+                            fontSize: 11.sp,
                             color: AppColors.textMuted,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
-            SizedBox(height: 12.h),
-
-            // المالية
-            if (subscription.driverNetPrice != null) ...[
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 4.w),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'صافي الربح',
-                      style: AppTextStyles.style(
-                        fontSize: 12.sp,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                    Text(
-                      '${subscription.driverNetPrice} د.ل',
-                      style: AppTextStyles.style(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.success,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 4.w),
-                child: Text(
-                  'المدة: ${_formatDate(subscription.startDate)} - ${_formatDate(subscription.endDate)}',
-                  style: AppTextStyles.style(
-                    fontSize: 11.sp,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              ),
-              SizedBox(height: 10.h),
-            ],
+            SizedBox(height: 10.h),
 
             const Divider(height: 1, thickness: 0.5),
             SizedBox(height: 8.h),

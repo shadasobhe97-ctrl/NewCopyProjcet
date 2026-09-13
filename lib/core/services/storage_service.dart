@@ -26,6 +26,9 @@ class StorageService {
   static const String _driverRegDraftKey = 'driver_reg_draft';
   static const String _parentRegStageKey = 'parent_reg_stage';
 
+  static const String _driverWelcomeShownKeyPrefix = 'driver_welcome_shown_';
+  static const String _driverOnlineStatusKeyPrefix = 'driver_online_status_';
+
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
   }
@@ -156,6 +159,37 @@ class StorageService {
   }
 
   static String? getFcmToken() => _prefs.getString(_fcmTokenKey);
+
+  // ==========================================
+  // Driver First-Welcome (per driverId)
+  // ==========================================
+
+  static bool hasDriverWelcomeBeenShown(int driverId) {
+    if (driverId <= 0) return true;
+    return _prefs.getBool('$_driverWelcomeShownKeyPrefix$driverId') ?? false;
+  }
+
+  static Future<bool> markDriverWelcomeShown(int driverId) {
+    if (driverId <= 0) return Future.value(false);
+    return _prefs.setBool('$_driverWelcomeShownKeyPrefix$driverId', true);
+  }
+
+  // ==========================================
+  // Driver Online Status (per driverId) — مستقل تماماً
+  // ==========================================
+
+  static bool getDriverOnlineStatus(int driverId) {
+    if (driverId <= 0) return false;
+    return _prefs.getBool('$_driverOnlineStatusKeyPrefix$driverId') ?? false;
+  }
+
+  static Future<bool> setDriverOnlineStatus(int driverId, bool isOnline) {
+    if (driverId <= 0) return Future.value(false);
+    return _prefs.setBool(
+      '$_driverOnlineStatusKeyPrefix$driverId',
+      isOnline,
+    );
+  }
 
   // --- [إدارة المسودة وحالة تسجيل السائق] ---
   static Future<bool> saveDriverRegStage(String stage) {

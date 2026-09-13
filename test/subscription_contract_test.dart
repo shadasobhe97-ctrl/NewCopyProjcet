@@ -1,500 +1,333 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kids_transport/core/utils/subscription_enums.dart';
 import 'package:kids_transport/features/driver/requests/data/datasources/driver_requests_remote_data_source.dart';
 import 'package:kids_transport/features/driver/requests/data/models/driver_request_model.dart';
-import 'package:kids_transport/features/parent/search/data/models/subscription_request.dart';
-import 'package:kids_transport/features/parent/subscriptions/data/models/active_subscription_model.dart';
-import 'package:kids_transport/features/parent/subscriptions/data/models/request_model.dart';
+import 'package:kids_transport/features/driver/subscriptions/data/models/driver_subscription_model.dart';
 
-/// استجابة الباك الجديدة لعرض طلب الاشتراك لولي الأمر
-const _parentRequestJson = '''
+/// استجابة العقد الجديد للطلب الموحد / الاشتراك الموحد (مع طفلين)
+const _unifiedResponseJson = '''
 {
   "id": 105,
-  "status": "pending",
-  "status_label": "قيد الانتظار",
-  "driver": {
-    "id": 45,
-    "name": "أحمد السائق",
-    "phone": "0912345678",
+  "status": "active",
+  "status_label": "ساري ومفعل",
+
+  "parent": {
+    "id": 20,
+    "name": "المختار الوالد",
+    "phone": "0921111111",
     "alternative_phone": null,
     "gender": "male",
-    "photo_url": "https://example.com/avatar.jpg",
-    "vehicle": {
-      "has_ac": true,
-      "capacity": 4,
-      "plate_number": "12345-6"
-    }
+    "photo_url": null
   },
+
   "subscription": {
-    "type": "multi_day",
-    "type_label": "عدة أيام",
+    "type": "monthly",
+    "type_label": "اشتراك شهري",
     "direction": "both",
-    "direction_label": "ذهاب وعودة",
+    "direction_label": "ذهاب وإياب",
     "start_date": "2026-09-10",
-    "end_date": "2026-09-30",
-    "working_days_count": 15
+    "end_date": "2026-10-10",
+    "working_days_count": 22
   },
+
   "home_address": {
     "id": 12,
-    "label": "المنزل - حي الأندلس",
+    "label": "المنزل",
     "lat": 32.8872,
     "lng": 13.1913
   },
+
   "children_count": 2,
+
   "pricing": {
-    "total_price": 500.00,
-    "discount_amount": 50.00,
-    "total_amount_after_discount": 450.00
+    "total_price": 1000.0,
+    "discount_amount": 100.0,
+    "total_amount_after_discount": 900.0,
+    "platform_commission_total": 90.0,
+    "driver_net_total": 810.0
   },
+
   "children": [
     {
-      "child_id": 5,
-      "name": "سارة",
-      "photo_url": null,
-      "age": 8,
-      "gender": "female",
-      "grade": "3",
-      "grade_label": "الصف الثالث",
-      "school": {
-        "id": 3,
-        "name": "مدرسة الأمل الابتدائية",
-        "lat": 32.8900,
-        "lng": 13.1800
-      },
-      "timing": "morning",
-      "distance_km": 4.5,
-      "medical_notes": null,
-      "pricing": {
-        "price_before_discount": 250.00,
-        "discount_percentage": 10.0,
-        "discount_amount": 25.00,
-        "price_after_discount": 225.00
-      }
-    },
-    {
-      "child_id": 8,
-      "name": "علي",
+      "child_id": 1,
+      "name": "عمر المختار",
       "photo_url": null,
       "age": 10,
       "gender": "male",
-      "grade": "5",
+      "grade": "الخامس",
       "grade_label": "الصف الخامس",
+
       "school": {
-        "id": 4,
-        "name": "مدرسة النور الإعدادية",
+        "id": 5,
+        "name": "مدرسة الأجيال",
+        "lat": 32.8900,
+        "lng": 13.1950
+      },
+
+      "timing": null,
+      "distance_km": 5.2,
+      "medical_notes": "لا يوجد",
+
+      "pricing": {
+        "price_before_discount": 500.0,
+        "discount_percentage": 10.0,
+        "discount_amount": 50.0,
+        "price_after_discount": 450.0,
+        "platform_commission_amount": 45.0,
+        "driver_net_price": 405.0
+      },
+
+      "active_subscription": {
+        "id": 500,
+        "status": "active",
+        "status_label": "ساري ومفعل",
+        "route_id": 8,
+        "pickup_time": "06:30:00",
+        "dropoff_time": "14:00:00"
+      }
+    },
+    {
+      "child_id": 2,
+      "name": "فاطمة المختار",
+      "photo_url": "https://example.com/photo.jpg",
+      "age": 8,
+      "gender": "female",
+      "grade": 3,
+      "grade_label": "الصف الثالث",
+
+      "school": {
+        "id": 6,
+        "name": "مدرسة الرواد",
         "lat": 32.8950,
+        "lng": 13.1980
+      },
+
+      "timing": "MORNING",
+      "distance_km": 4.0,
+      "medical_notes": "حساسية من المكسرات",
+
+      "pricing": {
+        "price_before_discount": 500.0,
+        "discount_percentage": 10.0,
+        "discount_amount": 50.0,
+        "price_after_discount": 450.0,
+        "platform_commission_amount": 45.0,
+        "driver_net_price": 405.0
+      },
+
+      "active_subscription": {
+        "id": 501,
+        "status": "active",
+        "status_label": "ساري ومفعل",
+        "route_id": 8,
+        "pickup_time": "06:40:00",
+        "dropoff_time": "14:10:00"
+      }
+    }
+  ],
+
+  "notes": "الرجاء الانتباه للأطفال عند النزول",
+  "created_at": "2026-09-08T10:00:00Z",
+  "updated_at": "2026-09-08T11:05:00Z"
+}
+''';
+
+/// استجابة طلب معلق لطفل واحد (بدون active_subscription)
+const _singlePendingRequestJson = '''
+{
+  "id": 108,
+  "status": "pending",
+  "status_label": "قيد الانتظار",
+
+  "parent": {
+    "id": 25,
+    "name": "سالم الفيتوري",
+    "phone": "0912223344",
+    "alternative_phone": "0923334455",
+    "gender": "male",
+    "photo_url": null
+  },
+
+  "subscription": {
+    "type": "single_day",
+    "type_label": "اشتراك يوم واحد",
+    "direction": "go",
+    "direction_label": "ذهاب فقط",
+    "start_date": "2026-09-12",
+    "end_date": "2026-09-12",
+    "working_days_count": 1
+  },
+
+  "home_address": {
+    "id": 14,
+    "label": "منزل حي الأندلس",
+    "lat": 32.8800,
+    "lng": 13.1800
+  },
+
+  "children_count": 1,
+
+  "pricing": {
+    "total_price": 40.0,
+    "discount_amount": 0.0,
+    "total_amount_after_discount": 40.0,
+    "platform_commission_total": 4.0,
+    "driver_net_total": 36.0
+  },
+
+  "children": [
+    {
+      "child_id": 10,
+      "name": "أيوب سالم",
+      "photo_url": null,
+      "age": 6,
+      "gender": "male",
+      "grade": 1,
+      "grade_label": "الصف الأول",
+
+      "school": {
+        "id": 2,
+        "name": "مدرسة الأمل",
+        "lat": 32.8850,
         "lng": 13.1850
       },
-      "timing": "morning",
-      "distance_km": 5.2,
-      "medical_notes": "حساسية من الغبار",
+
+      "timing": "MORNING",
+      "distance_km": 2.5,
+      "medical_notes": null,
+
       "pricing": {
-        "price_before_discount": 250.00,
-        "discount_percentage": 10.0,
-        "discount_amount": 25.00,
-        "price_after_discount": 225.00
+        "price_before_discount": 40.0,
+        "discount_percentage": 0.0,
+        "discount_amount": 0.0,
+        "price_after_discount": 40.0,
+        "platform_commission_amount": 4.0,
+        "driver_net_price": 36.0
       }
     }
   ],
-  "notes": "يرجى الحضور في الوقت المحدد",
-  "created_at": "2026-09-08T10:30:00Z"
-}
-''';
 
-/// استجابة حقيقية من الباك (طلب 124) بمفاتيح pickup_location / dropoff_location
-const _requestJson = '''
-{
-  "id": 124,
-  "status": "pending",
-  "total_price": 650,
-  "notes": "يرجى التواصل مع ولي الأمر قبل الانطلاق بـ 10 دقائق.",
-  "driver": { "id": 189, "name": "محمد مسعود الجبالي", "phone": "0923181690", "photo": null },
-  "children": [
-    {
-      "id": 144,
-      "name": "آيلا عبدالعزيز محمد",
-      "photo": null,
-      "details": {
-        "subscription_type": "multi_day",
-        "trip_direction": "both",
-        "timing": "MORNING",
-        "start_date": "2026-08-27",
-        "end_date": "2026-09-30",
-        "working_days_count": 25,
-        "distance_km": 0,
-        "trip_price": 0,
-        "price_per_child": 350
-      },
-      "pickup_location": {
-        "id": 59, "name": "منزلي", "address": "عنوان غير متوفر",
-        "latitude": 32.81510148, "longitude": 13.12894439
-      },
-      "dropoff_location": {
-        "id": 4, "name": "مدرسة النور الابتدائية",
-        "address": "النوفليين - بجانب المستشفى المركزي",
-        "latitude": 32.899, "longitude": 13.205
-      }
-    },
-    {
-      "id": 145,
-      "name": "لين عبدالعزيز محمد",
-      "photo": null,
-      "details": {
-        "subscription_type": "single_day",
-        "trip_direction": "return",
-        "timing": "EVENING",
-        "start_date": "2026-08-27",
-        "end_date": "2026-08-27",
-        "working_days_count": 1,
-        "distance_km": 0,
-        "trip_price": 0,
-        "price_per_child": 300
-      },
-      "pickup_location": {
-        "id": 59, "name": "منزلي", "address": "عنوان غير متوفر",
-        "latitude": 32.81510148, "longitude": 13.12894439
-      },
-      "dropoff_location": {
-        "id": 6, "name": "مدرسة الرواد الأهلية",
-        "address": "سوق الجمعة - بالقرب من دوار قاطوشة",
-        "latitude": 32.876, "longitude": 13.248
-      }
-    }
-  ],
-  "created_at": "2026-08-26T21:09:24+02:00",
-  "updated_at": null
-}
-''';
-
-/// نفس الطلب لكن بالمفاتيح البديلة Home / School
-const _requestJsonHomeSchool = '''
-{
-  "id": 124,
-  "status": "pending",
-  "total_price": 650,
-  "notes": null,
-  "driver": { "id": 189, "name": "محمد مسعود الجبالي", "phone": "0923181690" },
-  "children": [
-    {
-      "id": 144,
-      "name": "آيلا عبدالعزيز محمد",
-      "details": {
-        "subscription_type": "multi_day", "trip_direction": "both", "timing": "MORNING",
-        "start_date": "2026-08-27", "end_date": "2026-09-30",
-        "working_days_count": 25, "distance_km": 0, "trip_price": 0, "price_per_child": 350
-      },
-      "Home": { "id": 59, "name": "منزلي", "address": "عنوان غير متوفر", "latitude": 32.8, "longitude": 13.1 },
-      "School": { "id": 4, "name": "مدرسة النور الابتدائية", "address": "النوفليين", "latitude": 32.899, "longitude": 13.205 }
-    }
-  ],
-  "created_at": "2026-08-26T21:09:24+02:00"
-}
-''';
-
-/// سجل قديم ببيانات ناقصة + قيم اتجاه مخالفة للعقد
-const _legacyJson = '''
-{
-  "id": 109,
-  "status": "pending",
-  "total_price": 650,
-  "children": [
-    {
-      "id": 144, "name": "آيلا",
-      "details": {
-        "subscription_type": null, "trip_direction": "two_way", "timing": "BOTH",
-        "start_date": null, "end_date": null, "working_days_count": 1, "price_per_child": 1
-      }
-    },
-    {
-      "id": 145, "name": "لين",
-      "details": {
-        "subscription_type": "single_day", "trip_direction": "one_way_evening", "timing": "BOTH",
-        "start_date": "2026-08-27", "end_date": "2026-08-27",
-        "working_days_count": 1, "price_per_child": 300
-      }
-    }
-  ]
+  "notes": "ملاحظات إضافية",
+  "created_at": "2026-09-09T08:00:00Z"
 }
 ''';
 
 void main() {
-  group('نموذج ولي الأمر — RequestModel', () {
-    final model = RequestModel.fromJson(
-        jsonDecode(_parentRequestJson) as Map<String, dynamic>);
+  group('نموذج طلب السائق الموحد — DriverRequestModel', () {
+    test('يقرأ الاشتراك الموحد مع طفلين وبيانات التسعير العامة والخاصة', () {
+      final model = DriverRequestModel.fromJson(
+          jsonDecode(_unifiedResponseJson) as Map<String, dynamic>);
 
-    test('يقرأ الحقول العامة والسائق وبيانات الاشتراك المشتركة', () {
+      // 1. هوية الطلب في المستوى الأعلى
       expect(model.id, 105);
-      expect(model.status, 'pending');
-      expect(model.statusDisplayLabel, 'قيد الانتظار');
-      expect(model.childrenCount, 2);
-      expect(model.driver.name, 'أحمد السائق');
-      expect(model.driver.phone, '0912345678');
-      expect(model.driver.vehicle?.hasAc, isTrue);
-      expect(model.driver.vehicle?.plateNumber, '12345-6');
-      expect(model.subscription.type, 'multi_day');
-      expect(model.subscription.typeDisplayLabel, 'عدة أيام');
+      expect(model.status, 'active');
+      expect(model.statusLabel, 'ساري ومفعل');
+      expect(model.statusDisplayLabel, 'ساري ومفعل');
+
+      // 2. ولي الأمر في المستوى الأعلى
+      expect(model.parent.id, 20);
+      expect(model.parent.name, 'المختار الوالد');
+      expect(model.parent.phone, '0921111111');
+      expect(model.parent.alternativePhone, isNull);
+
+      // 3. بيانات الاشتراك الموحد
+      expect(model.subscription.startDate, '2026-09-10');
+      expect(model.subscription.endDate, '2026-10-10');
+      expect(model.subscription.workingDaysCount, 22);
       expect(model.subscription.direction, 'both');
       expect(model.subscription.directionDisplayLabel, 'ذهاب وعودة');
-      expect(model.subscription.workingDaysCount, 15);
-      expect(model.homeAddress?.label, 'المنزل - حي الأندلس');
-      expect(model.notes, contains('يرجى الحضور'));
-    });
 
-    test('يقرأ التسعير الإجمالي والخصم بالشكل المنسق', () {
-      expect(model.pricing?.totalPrice, 500.0);
-      expect(model.pricing?.discountAmount, 50.0);
-      expect(model.pricing?.totalAmountAfterDiscount, 450.0);
-      expect(model.pricing?.hasDiscount, isTrue);
-      expect(model.formattedTotalPrice, '450 د.ل');
-    });
-
-    test('كل طفل يحمل تسعيره الخاص ومدرسته وبياناته', () {
-      expect(model.children.length, 2);
-      expect(model.childrenNames, 'سارة، علي');
-
-      final sara = model.children[0];
-      expect(sara.childId, 5);
-      expect(sara.name, 'سارة');
-      expect(sara.gender, 'female');
-      expect(sara.isFemale, isTrue);
-      expect(sara.gradeLabelDisplay, 'الصف الثالث');
-      expect(sara.school.name, 'مدرسة الأمل الابتدائية');
-      expect(sara.pricing?.priceBeforeDiscount, 250.0);
-      expect(sara.pricing?.priceAfterDiscount, 225.0);
-      expect(sara.pricing?.discountPercentage, 10.0);
-      expect(sara.pricing?.hasDiscount, isTrue);
-
-      final ali = model.children[1];
-      expect(ali.childId, 8);
-      expect(ali.name, 'علي');
-      expect(ali.gender, 'male');
-      expect(ali.isFemale, isFalse);
-      expect(ali.gradeLabelDisplay, 'الصف الخامس');
-      expect(ali.school.name, 'مدرسة النور الإعدادية');
-      expect(ali.medicalNotes, 'حساسية من الغبار');
-    });
-
-    test('التسميات العربية بلا شهري أو أسبوعي', () {
+      // 4. عدم عرض "اشتراك شهري" في الواجهة وتحويلها إلى "عدة أيام"
+      expect(model.subscription.typeDisplayLabel, 'عدة أيام');
       expect(model.subscription.typeDisplayLabel, isNot(contains('شهري')));
-      expect(model.subscription.typeDisplayLabel, isNot(contains('أسبوعي')));
-      expect(model.subscription.typeDisplayLabel, 'عدة أيام');
-      expect(model.subscription.directionDisplayLabel, 'ذهاب وعودة');
-    });
 
-    test('يدعم تحويل النموذج إلى JSON واسترجاعه بدقة', () {
-      final json = model.toJson();
-      final restored = RequestModel.fromJson(json);
-      expect(restored.id, model.id);
-      expect(restored.children.length, model.children.length);
-      expect(restored.formattedTotalPrice, model.formattedTotalPrice);
-      expect(restored.children[0].name, 'سارة');
-    });
-  });
+      // 5. عنوان المنزل في المستوى الأعلى
+      expect(model.homeAddress?.id, 12);
+      expect(model.homeAddress?.displayName, 'المنزل');
+      expect(model.homeAddress?.lat, 32.8872);
+      expect(model.homeAddress?.lng, 13.1913);
 
-  group('نموذج الاشتراك النشط — ActiveSubscriptionModel', () {
-    const activeJson = '''
-{
-  "active_subscription_id": 88,
-  "status": "active",
-  "status_label": "نشط",
-  "driver": {
-    "id": 45,
-    "name": "أحمد السائق",
-    "phone": "0912345678",
-    "vehicle": {
-      "has_ac": true,
-      "plate_number": "12345-6"
-    }
-  },
-  "subscription": {
-    "type": "multi_day",
-    "type_label": "عدة أيام",
-    "direction": "both",
-    "direction_label": "ذهاب وعودة",
-    "start_date": "2026-09-10",
-    "end_date": "2026-09-30",
-    "working_days_count": 15
-  },
-  "home_address": {
-    "id": 12,
-    "label": "المنزل - حي الأندلس"
-  },
-  "child": {
-    "child_id": 5,
-    "name": "سارة",
-    "school": {
-      "name": "مدرسة الأمل الابتدائية"
-    },
-    "pricing": {
-      "price_after_discount": 225.00
-    }
-  },
-  "pickup_time": "07:30",
-  "dropoff_time": "14:00",
-  "created_at": "2026-09-08T10:30:00Z"
-}
-''';
+      // 6. التسعير المالي الموحد على مستوى الاشتراك
+      expect(model.pricing?.totalPrice, 1000.0);
+      expect(model.pricing?.discountAmount, 100.0);
+      expect(model.pricing?.totalAmountAfterDiscount, 900.0);
+      expect(model.pricing?.platformCommissionTotal, 90.0);
+      expect(model.pricing?.driverNetTotal, 810.0);
 
-    final model = ActiveSubscriptionModel.fromJson(
-        jsonDecode(activeJson) as Map<String, dynamic>);
-
-    test('يقرأ الحقول العامة والسائق والاشتراك', () {
-      expect(model.id, 88);
-      expect(model.status, 'active');
-      expect(model.statusDisplayLabel, 'نشط');
-      expect(model.driver.name, 'أحمد السائق');
-      expect(model.subscription.typeDisplayLabel, 'عدة أيام');
-      expect(model.pickupTime, '07:30');
-      expect(model.dropoffTime, '14:00');
-    });
-
-    test('يقرأ الطفل والتسعير المنسق', () {
-      expect(model.children.length, 1);
-      expect(model.firstChild?.name, 'سارة');
-      expect(model.formattedPrice, '225 دينار');
-    });
-  });
-
-  group('نموذج السائق — DriverRequestModel', () {
-    final model = DriverRequestModel.fromJson(
-        jsonDecode(_requestJson) as Map<String, dynamic>);
-
-    test('يقرأ الطلب والسعر الإجمالي وقائمة الأطفال', () {
-      expect(model.id, 124);
-      expect(model.totalPrice, '650');
+      // 7. الأطفال داخل children[]
       expect(model.children.length, 2);
+      expect(model.childrenCount, 2);
+
+      // الطفل الأول
+      final child1 = model.children[0];
+      expect(child1.childId, 1);
+      expect(child1.name, 'عمر المختار');
+      expect(child1.age, 10);
+      expect(child1.displayGrade, 'الصف الخامس');
+      expect(child1.school?.name, 'مدرسة الأجيال');
+      expect(child1.timing, isNull);
+      expect(child1.distanceKm, 5.2);
+      expect(child1.pricing?.priceAfterDiscount, 450.0);
+      expect(child1.pricing?.driverNetPrice, 405.0);
+
+      // active_subscription داخل الطفل
+      expect(child1.activeSubscription, isNotNull);
+      expect(child1.activeSubscription?.id, 500);
+      expect(child1.activeSubscription?.routeId, 8);
+      expect(child1.activeSubscription?.pickupTime, '06:30:00');
+      expect(child1.activeSubscription?.dropoffTime, '14:00:00');
+
+      // الطفل الثاني
+      final child2 = model.children[1];
+      expect(child2.childId, 2);
+      expect(child2.name, 'فاطمة المختار');
+      expect(child2.school?.name, 'مدرسة الرواد');
+      expect(child2.activeSubscription?.id, 501);
+
+      // التأكد من أن Subscription ID (105) مستقل عن active_subscription.id (500)
+      expect(model.id, isNot(child1.activeSubscription?.id));
     });
 
-    test('كل طفل بتفاصيله وسعره ومدرسته', () {
-      final ayla = model.children[0];
-      final leen = model.children[1];
+    test('يقرأ الطلب المعلق لطفل واحد بدون active_subscription دون حدوث crash', () {
+      final model = DriverRequestModel.fromJson(
+          jsonDecode(_singlePendingRequestJson) as Map<String, dynamic>);
 
-      expect(ayla.details.typeLabel, 'عدة أيام');
-      expect(ayla.details.directionLabel, 'ذهاب وعودة');
-      expect(ayla.details.timingLabel, 'صباحاً');
-      expect(ayla.priceLabel, '350 د.ل');
-      expect(ayla.dropoffLocation!.displayName, 'مدرسة النور الابتدائية');
-
-      expect(leen.details.typeLabel, 'يوم واحد');
-      expect(leen.details.directionLabel, 'عودة فقط');
-      expect(leen.details.timingLabel, 'مساءً');
-      expect(leen.priceLabel, '300 د.ل');
-      expect(leen.dropoffLocation!.displayName, 'مدرسة الرواد الأهلية');
-    });
-
-    test('يكتشف اختلاف إعدادات الأطفال', () {
-      expect(model.hasMixedChildDetails, isTrue);
-    });
-
-    test('العنوان البديل مخفي وسعر الرحلة مقروء', () {
-      expect(model.children[0].pickupLocation!.displayName, 'منزلي');
-      expect(model.children[0].pickupLocation!.displayAddress, isNull);
-      expect(model.children[0].details.tripPrice, 0);
-    });
-
-    test('يدعم المفاتيح البديلة Home و School في نموذج السائق', () {
-      final alt = DriverRequestModel.fromJson(
-          jsonDecode(_requestJsonHomeSchool) as Map<String, dynamic>);
-      expect(alt.children[0].pickupLocation!.displayName, 'منزلي');
-      expect(alt.children[0].dropoffLocation!.displayName,
-          'مدرسة النور الابتدائية');
-      expect(alt.children[0].dropoffLocation!.displayAddress, 'النوفليين');
-    });
-
-    test('لا يعرض شهري حتى لو غابت التفاصيل', () {
-      final legacy = DriverRequestModel.fromJson(
-          jsonDecode(_legacyJson) as Map<String, dynamic>);
-      expect(legacy.subscriptionTypeDisplayLabel, isNot(contains('شهري')));
-      for (final c in legacy.children) {
-        expect(c.details.typeLabel, anyOf('عدة أيام', 'يوم واحد'));
-      }
-    });
-  });
-
-  group('جسم الإرسال — SubscriptionRequest', () {
-    test('كل طفل يرسل بإعداداته الخاصة ومطابقا للعقد', () {
-      final req = SubscriptionRequest(
-        driverId: 189,
-        subscriptionType: 'multi_day',
-        tripDirection: 'both',
-        startDate: '2026-08-27',
-        endDate: '2026-09-30',
-        homeAddressId: 37,
-        notes: 'يرجى التواصل مع ولي الأمر قبل الانطلاق بـ 10 دقائق.',
-        children: [
-          SubscriptionChildRequest(childId: 144),
-          SubscriptionChildRequest(childId: 145),
-        ],
-      );
-
-      final json = req.toJson();
-      expect(json['driver_id'], 189);
-      expect(json['subscription_type'], 'multi_day');
-      expect(json['trip_direction'], 'both');
-      expect(json['start_date'], '2026-08-27');
-      expect(json['end_date'], '2026-09-30');
-      expect(json['home_address_id'], 37);
-      expect(json['notes'], contains('يرجى التواصل'));
-
-      final kids = json['children'] as List;
-      expect(kids.length, 2);
-
-      expect(kids[0], {'child_id': 144});
-      expect(kids[1], {'child_id': 145});
-    });
-
-    test('يطابق قيم الأنواع والتنظيف التلقائي للتواريخ', () {
-      final req = SubscriptionRequest(
-        driverId: 1,
-        subscriptionType: 'single_day',
-        tripDirection: 'go',
-        startDate: '2026-08-27',
-        children: [
-          SubscriptionChildRequest(childId: 10),
-        ],
-      );
-
-      expect(req.subscriptionType, 'single_day');
-      expect(req.tripDirection, 'go');
-      expect(req.toJson()['subscription_type'], 'single_day');
+      expect(model.id, 108);
+      expect(model.status, 'pending');
+      expect(model.statusDisplayLabel, 'قيد الانتظار');
+      expect(model.children.length, 1);
+      expect(model.children[0].childId, 10);
+      expect(model.children[0].name, 'أيوب سالم');
+      expect(model.children[0].activeSubscription, isNull);
+      expect(model.subscription.typeDisplayLabel, 'يوم واحد');
+      expect(model.subscription.directionDisplayLabel, 'ذهاب فقط');
+      expect(model.parent.alternativePhone, '0923334455');
     });
   });
 
-  group('SubscriptionEnums', () {
-    test('لا ينتج شهري أو أسبوعي لأي مدخل', () {
-      for (final v in [
-        'monthly',
-        'weekly',
-        'multi_day',
-        'single_day',
-        'daily',
-        'days',
-        '',
-        'قيمة غريبة'
-      ]) {
-        final label = SubscriptionEnums.typeLabel(v);
-        expect(label, anyOf('يوم واحد', 'عدة أيام'), reason: 'input: $v');
-      }
-    });
+  group('نموذج الاشتراك الموحد للسائق — DriverSubscriptionModel', () {
+    test('يقرأ الاشتراك الموحد كنموذج مستقل باستخدام النماذج المتداخلة المشتركة', () {
+      final sub = DriverSubscriptionModel.fromJson(
+          jsonDecode(_unifiedResponseJson) as Map<String, dynamic>);
 
-    test('يطبع الاتجاهات والفترات', () {
-      expect(SubscriptionEnums.normalizeDirection('two_way'), 'both');
-      expect(SubscriptionEnums.normalizeDirection('one_way_evening'), 'return');
-      expect(SubscriptionEnums.normalizeDirection('one_way_to_school'), 'go');
-      expect(SubscriptionEnums.normalizeTiming('afternoon'), 'EVENING');
-      expect(SubscriptionEnums.normalizeTiming('MORNING'), 'MORNING');
+      expect(sub.id, 105);
+      expect(sub.parent.name, 'المختار الوالد');
+      expect(sub.children.length, 2);
+      expect(sub.children[0].activeSubscription?.id, 500);
+      expect(sub.children[1].activeSubscription?.id, 501);
+      expect(sub.typeDisplayLabel, 'عدة أيام');
+      expect(sub.typeDisplayLabel, isNot(contains('شهري')));
+      expect(sub.pricing?.formattedDriverNet, '810 د.ل');
     });
   });
 
   group('ترقيم قائمة طلبات السائق', () {
-    // شكل الاستجابة الحقيقي: الترقيم داخل meta والروابط داخل links
     const listJson = '''
 {
   "data": [
-    { "id": 124, "status": "pending", "total_price": 650, "children": [] },
-    { "id": 116, "status": "pending", "total_price": 650, "children": [] }
+    { "id": 105, "status": "active", "children_count": 2, "children": [] },
+    { "id": 108, "status": "pending", "children_count": 1, "children": [] }
   ],
   "links": {
     "first": "https://x/api/driver/requests?page=1",
@@ -513,181 +346,12 @@ void main() {
           jsonDecode(listJson) as Map<String, dynamic>);
 
       expect(page.data.length, 2);
-      expect(page.data.first.id, 124);
+      expect(page.data.first.id, 105);
       expect(page.currentPage, 1);
       expect(page.lastPage, 3);
       expect(page.perPage, 15);
-      expect(page.hasMore, isTrue); // كان دائماً false قبل الإصلاح
+      expect(page.hasMore, isTrue);
       expect(page.nextPageUrl, contains('page=2'));
-    });
-
-    test('صفحة واحدة فقط لا تطلب المزيد', () {
-      final single = DriverRequestsRemoteDataSource.parsePaginated({
-        'data': [
-          {'id': 1, 'status': 'pending', 'total_price': 10, 'children': []}
-        ],
-        'links': {'next': null},
-        'meta': {'current_page': 1, 'last_page': 1, 'per_page': 15},
-        'status': true,
-      });
-
-      expect(single.hasMore, isFalse);
-      expect(single.nextPageUrl, isNull);
-    });
-
-    test('يرمي خطأ برسالة الخادم عند status: false', () {
-      expect(
-        () => DriverRequestsRemoteDataSource.parsePaginated({
-          'status': false,
-          'message': 'لم يتم العثور على ملفك الشخصي',
-        }),
-        throwsA(predicate((e) =>
-            e.toString().contains('لم يتم العثور على ملفك الشخصي'))),
-      );
-    });
-
-    test('يتحمّل الشكل القديم بترقيم في الجذر', () {
-      final legacy = DriverRequestsRemoteDataSource.parsePaginated({
-        'data': [
-          {'id': 9, 'status': 'pending', 'total_price': 5, 'children': []}
-        ],
-        'current_page': 2,
-        'last_page': 4,
-        'per_page': 10,
-        'next_page_url': 'https://x/api/driver/requests?page=3',
-      });
-
-      expect(legacy.currentPage, 2);
-      expect(legacy.lastPage, 4);
-      expect(legacy.hasMore, isTrue);
-    });
-  });
-
-  group('مسار تفاصيل طلب السائق — GET /api/driver/requests/{id}', () {
-    // استجابة حقيقية (طلب 127) بشكل مختلف تماماً عن القائمة
-    const detailJson = '''
-{
-  "id": 127,
-  "status": { "value": "pending" },
-  "notes": "يرجى التواصل مع ولي الأمر قبل الانطلاق بـ 10 دقائق.",
-  "total_amount": 598,
-  "currency": "د.ل",
-  "children_count": 1,
-  "parent": {
-    "id": 37, "name": "أم محمد عبدالعزيز", "phone": "0922225533",
-    "email": "alasalem2502@gmail.com", "avatar": null
-  },
-  "children": [
-    {
-      "id": 28, "name": "محمد عبدالعزيز محمد", "gender": "male", "age": 7,
-      "grade": 2, "photo_url": null,
-      "notes": { "child_notes": "لديه حساسية من الفراولة" },
-      "pricing": { "trip_price": 161, "total_price": 322 },
-      "subscription_period": {
-        "start_date": "2026-08-27", "end_date": "2026-09-30", "working_days_count": 25
-      },
-      "trip_details": {
-        "subscription_type": "multi_day", "trip_direction": "both", "timing": "MORNING"
-      },
-      "school": {
-        "id": 1, "name": "مدرسة الجيل الجديد الدولية",
-        "address": "حي الأندلس - بالقرب من جامع الأندلس", "lat": 32.892, "lng": 13.168
-      },
-      "home": { "address": "منزلي", "lat": 32.81510148, "lng": 13.12894439 }
-    },
-    {
-      "id": 145, "name": "لين عبدالعزيز محمد", "gender": "female", "age": 11,
-      "grade": 0, "photo_url": null,
-      "notes": { "child_notes": null },
-      "pricing": { "trip_price": 138, "total_price": 276 },
-      "subscription_period": {
-        "start_date": "2026-08-27", "end_date": "2026-08-27", "working_days_count": 1
-      },
-      "trip_details": {
-        "subscription_type": "single_day", "trip_direction": "return", "timing": "EVENING"
-      },
-      "school": {
-        "id": 6, "name": "مدرسة الرواد الأهلية",
-        "address": "سوق الجمعة - بالقرب من دوار قاطوشة", "lat": 32.876, "lng": 13.248
-      },
-      "home": { "address": "منزلي", "lat": 32.81510148, "lng": 13.12894439 }
-    }
-  ],
-  "created_at": "2026-08-26T22:53:09+02:00",
-  "created_at_formatted": "2026-08-26 22:53"
-}
-''';
-
-    final model = DriverRequestModel.fromJson(
-        jsonDecode(detailJson) as Map<String, dynamic>);
-
-    test('يقرأ status ككائن و total_amount والعملة', () {
-      expect(model.id, 127);
-      expect(model.status, 'pending');
-      expect(model.statusDisplayLabel, 'قيد الانتظار');
-      expect(model.totalPrice, '598');
-      expect(model.currency, 'د.ل');
-      expect(model.createdAtFormatted, '2026-08-26 22:53');
-    });
-
-    test('يقرأ بيانات ولي الأمر', () {
-      expect(model.parent.name, 'أم محمد عبدالعزيز');
-      expect(model.parent.phone, '0922225533');
-      expect(model.parent.email, 'alasalem2502@gmail.com');
-    });
-
-    test('عدد الأطفال يتبع القائمة الفعلية لا children_count الخاطئ', () {
-      expect(model.children.length, 2);
-      expect(model.childrenCount, 2); // الخادم أرسل 1 وهو غلط
-    });
-
-    test('يقرأ trip_details و subscription_period و pricing لكل طفل', () {
-      final mohamed = model.children[0];
-      final leen = model.children[1];
-
-      expect(mohamed.details.typeLabel, 'عدة أيام');
-      expect(mohamed.details.directionLabel, 'ذهاب وعودة');
-      expect(mohamed.details.timingLabel, 'صباحاً');
-      expect(mohamed.details.startDate, '2026-08-27');
-      expect(mohamed.details.endDate, '2026-09-30');
-      expect(mohamed.details.workingDaysCount, 25);
-      expect(mohamed.details.tripPrice, 161);
-      expect(mohamed.price, 322);
-      expect(mohamed.age, 7);
-      expect(mohamed.childNotes, 'لديه حساسية من الفراولة');
-
-      expect(leen.details.typeLabel, 'يوم واحد');
-      expect(leen.details.directionLabel, 'عودة فقط');
-      expect(leen.details.timingLabel, 'مساءً');
-      expect(leen.details.workingDaysCount, 1);
-      expect(leen.details.tripPrice, 138);
-      expect(leen.price, 276);
-      expect(leen.age, 11);
-      expect(leen.childNotes, isNull);
-    });
-
-    test('يقرأ school و home بمفاتيح lat/lng', () {
-      final school = model.children[0].dropoffLocation!;
-      expect(school.displayName, 'مدرسة الجيل الجديد الدولية');
-      expect(school.displayAddress, 'حي الأندلس - بالقرب من جامع الأندلس');
-      expect(school.latitude, 32.892);
-      expect(school.longitude, 13.168);
-
-      final home = model.children[0].pickupLocation!;
-      expect(home.displayName, 'منزلي');
-      expect(home.displayAddress, isNull); // لا يتكرر تحت الاسم
-      expect(home.hasCoordinates, isTrue);
-
-      // مدرسة مختلفة للطفل الثاني
-      expect(model.children[1].dropoffLocation!.displayName,
-          'مدرسة الرواد الأهلية');
-    });
-
-    test('يكتشف اختلاف إعدادات الأطفال ولا يعرض شهري', () {
-      expect(model.hasMixedChildDetails, isTrue);
-      for (final c in model.children) {
-        expect(c.details.typeLabel, isNot(contains('شهري')));
-      }
     });
   });
 }

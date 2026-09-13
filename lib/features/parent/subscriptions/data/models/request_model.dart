@@ -358,6 +358,8 @@ class RequestChild {
   final String? gradeLabel;
   final RequestChildSchool school;
   final String? timing;
+  final String? pickupTime;
+  final String? dropoffTime;
   final double? distanceKm;
   final String? medicalNotes;
   final RequestChildPricing? pricing;
@@ -372,6 +374,8 @@ class RequestChild {
     this.gradeLabel,
     required this.school,
     this.timing,
+    this.pickupTime,
+    this.dropoffTime,
     this.distanceKm,
     this.medicalNotes,
     this.pricing,
@@ -389,6 +393,20 @@ class RequestChild {
   String get gradeLabelDisplay =>
       gradeLabel ?? (grade != null ? 'الصف $grade' : '');
 
+  String get timingDisplayLabel {
+    switch ((timing ?? '').toUpperCase()) {
+      case 'MORNING':
+        return 'صباحية';
+      case 'AFTERNOON':
+      case 'EVENING':
+        return 'مسائية';
+      case 'BOTH':
+        return 'صباحية ومسائية';
+      default:
+        return 'غير محدد';
+    }
+  }
+
   factory RequestChild.fromJson(Map<String, dynamic> json) => RequestChild(
         childId: _parseInt(json['child_id'] ?? json['id']) ?? 0,
         name: json['name']?.toString() ?? '',
@@ -400,6 +418,8 @@ class RequestChild {
         school: RequestChildSchool.fromJson(
             json['school'] as Map<String, dynamic>? ?? {}),
         timing: json['timing']?.toString(),
+        pickupTime: json['pickup_time']?.toString(),
+        dropoffTime: json['dropoff_time']?.toString(),
         distanceKm: _parseDouble(json['distance_km']),
         medicalNotes: json['medical_notes']?.toString(),
         pricing: json['pricing'] is Map
@@ -418,6 +438,8 @@ class RequestChild {
         if (gradeLabel != null) 'grade_label': gradeLabel,
         'school': school.toJson(),
         if (timing != null) 'timing': timing,
+        if (pickupTime != null) 'pickup_time': pickupTime,
+        if (dropoffTime != null) 'dropoff_time': dropoffTime,
         if (distanceKm != null) 'distance_km': distanceKm,
         if (medicalNotes != null) 'medical_notes': medicalNotes,
         if (pricing != null) 'pricing': pricing!.toJson(),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
+import 'package:kids_transport/core/theme/text_styles.dart';
 
 // Components
 import 'package:kids_transport/features/driver/home/presentation/widgets/online_status_card.dart';
@@ -73,21 +75,28 @@ class _HomeBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isNewDriver = state.newRequests.isEmpty && !state.hasActiveTrip;
-
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // كرت حالة الاتصال (متصل/غير متصل)
+          // ترحيب عادي دائم باسم السائق
+          _NormalGreeting(fullName: state.driver.fullName),
+          const SizedBox(height: 18),
+
+          // كرت حالة الاتصال (متصل/غير متصل) — يظهر دائماً
           OnlineStatusCard(isOnline: state.isOnline),
           const SizedBox(height: 24),
 
-          // إرشاد ترحيبي للسائق الجديد (إذا لم يكن هناك رحلات أو طلبات)
-          if (isNewDriver) ...[
-            WelcomeGuideCard(driverName: state.driver.fullName),
+          // رسالة الترحيب الأولى — تظهر مرة واحدة فقط لكل سائق
+          // ومستقلة تماماً عن حالة Online/Offline.
+          if (state.showFirstWelcome) ...[
+            WelcomeGuideCard(
+              driverName: state.driver.fullName,
+              onDismiss: () =>
+                  context.read<DriverHomeCubit>().dismissFirstWelcome(),
+            ),
             const SizedBox(height: 24),
           ],
 
@@ -95,20 +104,83 @@ class _HomeBody extends StatelessWidget {
           const WorkAreasCard(),
           const SizedBox(height: 24),
 
-          // إحصائيات سريعة (رحلات وطلاب اليوم)
-          DailyStatsRow(
-            tripsCount: state.todayTripsCount,
-            studentsCount: state.todayStudentsCount,
+          // إحصائيات سريعة (رحلات وطلاب اليوم) — قابلة للضغط لفتح شاشة الإحصائيات
+          InkWell(
+            onTap: () => Navigator.pushNamed(
+              context,
+              AppRoutes.driverStatistics,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            child: DailyStatsRow(
+              tripsCount: state.todayTripsCount,
+              studentsCount: state.todayStudentsCount,
+            ),
           ),
           const SizedBox(height: 30),
 
-          // قسم الرحلة الحالية
-          ActiveTripCard(hasActiveTrip: state.hasActiveTrip),
+          // قسم الرحلة الحالية — قابل للضغط فقط عند وجود رحلة نشطة حقيقية
+          // ولديها tripId حقيقي قادم من Backend.
+          if (state.hasActiveTrip && state.activeTripId != null)
+            InkWell(
+              onTap: () => Navigator.pushNamed(
+                context,
+                AppRoutes.driverLiveTrip,
+                arguments: state.activeTripId,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              child: ActiveTripCard(hasActiveTrip: true),
+            )
+          else
+            ActiveTripCard(hasActiveTrip: state.hasActiveTrip),
           const SizedBox(height: 30),
 
           // قسم طلبات الاشتراك الجديدة
           NewRequestsSection(requests: state.newRequests),
           const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+}
+
+/// ترحيب افتراضي: "مرحباً، الاسم 👋" — يظهر دائماً.
+/// مستقل عن OnlineStatusCard و WelcomeGuideCard.
+class _NormalGreeting extends StatelessWidget {
+  final String fullName;
+  const _NormalGreeting({required this.fullName});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+    final firstName = fullName.trim().isNotEmpty
+        ? fullName.trim().split(' ').first
+        : '';
+
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: 'مرحباً',
+            style: AppTextStyles.style(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: isDark ? AppColors.white : AppColors.textDark,
+            ),
+          ),
+          if (firstName.isNotEmpty)
+            TextSpan(
+              text: '، $firstName',
+              style: AppTextStyles.style(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: isDark ? AppColors.primaryLight : primaryColor,
+              ),
+            ),
+          const TextSpan(
+            text: ' 👋',
+            style: TextStyle(fontSize: 18),
+          ),
         ],
       ),
     );

@@ -34,6 +34,26 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
     }
   }
 
+  String _formatTime(String? raw) {
+    if (raw == null || raw.trim().isEmpty || raw.trim() == 'null') {
+      return 'غير محدد';
+    }
+    final clean = raw.trim();
+    final parts = clean.split(':');
+    if (parts.length >= 2) {
+      final h = int.tryParse(parts[0]);
+      final m = int.tryParse(parts[1]);
+      if (h != null && m != null) {
+        final period = h >= 12 ? 'مساءً' : 'صباحًا';
+        final displayHour = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+        final hourStr = displayHour.toString().padLeft(2, '0');
+        final minStr = m.toString().padLeft(2, '0');
+        return '$hourStr:$minStr $period';
+      }
+    }
+    return clean;
+  }
+
   SnackBar _snackBar(String msg, Color bg) => SnackBar(
         content: Directionality(
           textDirection: TextDirection.rtl,
@@ -614,6 +634,9 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
             child: Column(
               children: [
                 _row('المدرسة', child.school.name, isDark),
+                _row('فترة الطفل', child.timingDisplayLabel, isDark),
+                _row('وقت الاستلام', _formatTime(child.pickupTime), isDark),
+                _row('وقت التسليم', _formatTime(child.dropoffTime), isDark),
                 if (child.distanceKm != null)
                   _row('المسافة',
                       '${child.distanceKm!.toStringAsFixed(1)} كم', isDark),

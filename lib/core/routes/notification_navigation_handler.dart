@@ -46,7 +46,6 @@ class NotificationNavigationHandler {
 
   static void _executeNavigation(NavigatorState state, Map<String, dynamic> data, String? role) {
     final String screen = (data['screen']?.toString() ?? '').toUpperCase();
-    final String action = (data['action']?.toString() ?? '').toLowerCase();
     final String entityIdStr = data['entity_id']?.toString() ??
         data['trip_id']?.toString() ??
         data['subscription_id']?.toString() ??

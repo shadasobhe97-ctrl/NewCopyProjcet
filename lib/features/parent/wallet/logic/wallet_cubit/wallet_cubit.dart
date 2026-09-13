@@ -1,12 +1,16 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:kids_transport/features/parent/wallet/data/models/wallet_balance_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/payment_method_model.dart';
+import 'package:kids_transport/features/parent/wallet/data/models/recharge_response_model.dart';
+import 'package:kids_transport/features/parent/wallet/data/models/wallet_balance_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/repositories/wallet_repository.dart';
 import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_state.dart';
-import 'package:dio/dio.dart';
 
 class WalletCubit extends Cubit<WalletState> {
   final WalletRepository _repository;
+
+  WalletBalanceModel? _cachedBalance;
+  List<PaymentMethodModel>? _cachedMethods;
 
   WalletCubit(this._repository) : super(WalletInitial());
 
@@ -16,6 +20,8 @@ class WalletCubit extends Cubit<WalletState> {
     try {
       final balance = await _repository.getBalance();
       final methods = await _repository.getPaymentMethods();
+      _cachedBalance = balance;
+      _cachedMethods = methods;
       emit(WalletLoaded(balance, methods));
     } on DioException catch (e) {
       final msg = e.response?.data?['message'] ?? 'فشل في تحميل بيانات المحفظة';
@@ -25,46 +31,89 @@ class WalletCubit extends Cubit<WalletState> {
     }
   }
 
-  /// 3. تقديم طلب شحن رصيد جديد
-  Future<void> rechargeWallet({
-    required double amount,
-    required String paymentMethod,
-    String? referenceNumber,
+  /// 3a. بدء عملية الشحن — POST /recharge/initiate
+  Future<void> initiateRecharge({
+    required num amount,
+    required int paymentMethodId,
   }) async {
-    final currentState = state;
-    WalletBalanceModel? cachedBalance;
-    List<PaymentMethodModel>? cachedMethods;
+    if (state is WalletRechargeInitiating) return;
 
-    if (currentState is WalletLoaded) {
-      cachedBalance = currentState.balance;
-      cachedMethods = currentState.paymentMethods;
+    if (state is WalletLoaded) {
+      final loaded = state as WalletLoaded;
+      _cachedBalance = loaded.balance;
+      _cachedMethods = loaded.paymentMethods;
     }
 
-    emit(WalletRecharging());
+    emit(WalletRechargeInitiating());
     try {
-      await _repository.rechargeWallet(
+      final result = await _repository.rechargeInitiate(
         amount: amount,
-        paymentMethod: paymentMethod,
-        referenceNumber: referenceNumber,
+        paymentMethodId: paymentMethodId,
       );
-
-      emit(WalletRechargeSuccess(
-        'تم تقديم طلب الشحن عبر $paymentMethod بنجاح. بانتظار تأكيد الإدارة.',
-      ));
-
-      // إعادة تحميل الرصيد فور النجاح
-      loadWalletData();
+      emit(WalletRechargeInitiated(result));
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? 'فشل في إرسال طلب الشحن';
+      final msg = e.response?.data?['message'] ?? 'فشل في بدء عملية الشحن';
       emit(WalletRechargeError(msg.toString()));
-      if (cachedBalance != null && cachedMethods != null) {
-        emit(WalletLoaded(cachedBalance, cachedMethods));
-      }
+      _restoreLoadedIfPossible();
     } catch (e) {
       emit(WalletRechargeError(e.toString()));
-      if (cachedBalance != null && cachedMethods != null) {
-        emit(WalletLoaded(cachedBalance, cachedMethods));
+      _restoreLoadedIfPossible();
+    }
+  }
+
+  /// 3b. تأكيد الدفع — POST /recharge/mock-pay
+  ///
+  /// يستخدم `sessionToken` القادم من `RechargeInitiateResponseModel`
+  /// فقط، ولا يقبل أي token من مصدر آخر.
+  Future<void> confirmRecharge({
+    required RechargeInitiateResponseModel initiateData,
+  }) async {
+    if (state is WalletRechargeConfirming) return;
+
+    emit(WalletRechargeConfirming(initiateData));
+    try {
+      final result = await _repository.rechargeMockPay(
+        sessionToken: initiateData.sessionToken,
+      );
+
+      if (_cachedBalance != null) {
+        _cachedBalance = WalletBalanceModel(
+          balance: result.currentBalance.toDouble(),
+          currency: result.currency.isNotEmpty
+              ? result.currency
+              : _cachedBalance!.currency,
+        );
       }
+
+      emit(WalletRechargeSuccess(result));
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? 'فشل في إتمام عملية الدفع';
+      emit(WalletRechargeError(msg.toString()));
+    } catch (e) {
+      emit(WalletRechargeError(e.toString()));
+    }
+  }
+
+  /// يعيد الحالة إلى `WalletLoaded` باستخدام الرصيد/الطرق المحدَّثة
+  /// دون طلب شبكة إضافي — لعرض الرصيد الجديد فوراً في WalletScreen.
+  void refreshFromCache() {
+    if (_cachedBalance != null && _cachedMethods != null) {
+      emit(WalletLoaded(_cachedBalance!, _cachedMethods!));
+    }
+  }
+
+  /// قراءة فقط للحالة المخزَّنة — بدون emit — لاستخدامها في UI
+  /// أثناء حالات الشحن المؤقتة.
+  WalletLoaded? get cachedLoaded {
+    if (_cachedBalance != null && _cachedMethods != null) {
+      return WalletLoaded(_cachedBalance!, _cachedMethods!);
+    }
+    return null;
+  }
+
+  void _restoreLoadedIfPossible() {
+    if (_cachedBalance != null && _cachedMethods != null) {
+      emit(WalletLoaded(_cachedBalance!, _cachedMethods!));
     }
   }
 
@@ -83,7 +132,6 @@ class WalletCubit extends Cubit<WalletState> {
         holdData: result,
         message: 'تم حجز مبلغ الرحلة بنجاح في أمانات المحفظة.',
       ));
-      // تحديث الرصيد بعد تجميد المبلغ
       loadWalletData();
     } on DioException catch (e) {
       final msg = e.response?.data?['message'] ?? 'فشل حجز مبلغ الرحلة';

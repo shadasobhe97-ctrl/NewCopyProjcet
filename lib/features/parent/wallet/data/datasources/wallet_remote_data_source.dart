@@ -4,6 +4,7 @@ import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/hold_trip_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/payment_method_model.dart';
+import 'package:kids_transport/features/parent/wallet/data/models/recharge_mock_pay_response_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/recharge_response_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/trip_dispute_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/wallet_balance_model.dart';
@@ -53,18 +54,16 @@ class WalletRemoteDataSource {
     return list.map((e) => PaymentMethodModel.fromJson(e)).toList();
   }
 
-  /// 3. POST /api/parent/wallet/recharge
-  Future<RechargeResponseModel> rechargeWallet({
-    required double amount,
-    required String paymentMethod,
-    String? referenceNumber,
+  /// 3a. POST /api/parent/wallet/recharge/initiate
+  Future<RechargeInitiateResponseModel> rechargeInitiate({
+    required num amount,
+    required int paymentMethodId,
   }) async {
     final response = await _apiClient.post(
-      ApiEndpoints.parentWalletRecharge,
+      ApiEndpoints.parentWalletRechargeInitiate,
       data: {
         'amount': amount,
-        'payment_method': paymentMethod,
-        'reference_number': referenceNumber,
+        'payment_method_id': paymentMethodId,
       },
       headers: _authHeader,
     );
@@ -73,10 +72,32 @@ class WalletRemoteDataSource {
       final success = data['success'];
       if (success == false) {
         final msg = ApiException.extractMessage(data);
-        throw ApiException(msg ?? 'تعذر إجراء عملية الشحن.');
+        throw ApiException(msg ?? 'تعذر بدء عملية الشحن.');
       }
     }
-    return RechargeResponseModel.fromJson(data['data']);
+    return RechargeInitiateResponseModel.fromJson(data['data']);
+  }
+
+  /// 3b. POST /api/parent/wallet/recharge/mock-pay
+  Future<RechargeMockPayResponseModel> rechargeMockPay({
+    required String sessionToken,
+  }) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.parentWalletRechargeMockPay,
+      data: {
+        'session_token': sessionToken,
+      },
+      headers: _authHeader,
+    );
+    final data = response.data;
+    if (data is Map) {
+      final success = data['success'];
+      if (success == false) {
+        final msg = ApiException.extractMessage(data);
+        throw ApiException(msg ?? 'تعذر إتمام عملية الدفع.');
+      }
+    }
+    return RechargeMockPayResponseModel.fromJson(data['data']);
   }
 
   /// 4. POST /api/parent/wallet/hold-trip
