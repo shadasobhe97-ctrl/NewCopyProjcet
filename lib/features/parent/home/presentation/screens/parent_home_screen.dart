@@ -53,9 +53,6 @@ class HomeScreenBody extends StatefulWidget {
 }
 
 class _HomeScreenBodyState extends State<HomeScreenBody> {
-  bool _isSearchActive = false;
-  String? _initialSearchQuery;
-
   @override
   void initState() {
     super.initState();
@@ -67,83 +64,60 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
     });
   }
 
-  void _enterSearchMode({String? query}) {
-    setState(() {
-      _isSearchActive = true;
-      _initialSearchQuery = query;
-    });
-  }
-
-  void _exitSearchMode() {
-    setState(() {
-      _isSearchActive = false;
-      _initialSearchQuery = null;
-    });
+  void _openSearchScreen({String? query}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ParentSearchScreen(
+          autoFocus: true,
+          initialQuery: query,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).primaryColor;
 
-    return PopScope(
-      canPop: !_isSearchActive,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && _isSearchActive) {
-          _exitSearchMode();
-        }
-      },
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 220),
-        child: _isSearchActive
-            // 🔍 وضع البحث الموسّع الكامل داخل الهوم سكرين مع زر الرجوع
-            ? ParentSearchScreen(
-                key: const ValueKey('expanded_search'),
-                isEmbedded: true,
-                autoFocus: true,
-                initialQuery: _initialSearchQuery,
-                onBack: _exitSearchMode,
-              )
-            // 🏠 الواجهة الرئيسية المكونة بدقة من الأقسام الأربعة
-            : RefreshIndicator(
-                key: const ValueKey('home_sections'),
-                onRefresh: widget.onRefresh ??
-                    () async {
-                      await Future.wait([
-                        context.read<ChildrenCubit>().fetchChildren(),
-                        context.read<ActiveTripCubit>().loadActiveTrips(),
-                      ]);
-                    },
-                color: primaryColor,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                  children: [
-                    // 👋 1️⃣ قسم الترحيب البسيط + كرت تتبع الرحلة المدمج الذكي
-                    const WelcomeHeaderWidget(),
-                    SizedBox(height: 8.h),
-                    const TopCardWidget(),
-                    SizedBox(height: 18.h),
+    return RefreshIndicator(
+      key: const ValueKey('home_sections'),
+      onRefresh: widget.onRefresh ??
+          () async {
+            await Future.wait([
+              context.read<ChildrenCubit>().fetchChildren(),
+              context.read<ActiveTripCubit>().loadActiveTrips(),
+            ]);
+          },
+      color: primaryColor,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        children: [
+          // 👋 1️⃣ قسم الترحيب البسيط + كرت تتبع الرحلة المدمج الذكي
+          const WelcomeHeaderWidget(),
+          SizedBox(height: 8.h),
+          const TopCardWidget(),
+          SizedBox(height: 18.h),
 
-                    // 🔍 2️⃣ قسم البحث المباشر (حقل دائري + فاصل أو + زر بحث دائري بالأزرق الداكن)
-                    HomeSearchSectionWidget(
-                      onTapSearch: () => _enterSearchMode(),
-                      onTapSmartSearch: () => _enterSearchMode(),
-                      onSubmitQuery: (query) => _enterSearchMode(query: query),
-                    ),
-                    SizedBox(height: 20.h),
+          // 🔍 2️⃣ قسم البحث المباشر (حقل دائري + فاصل أو + زر بحث دائري بالأزرق الداكن)
+          HomeSearchSectionWidget(
+            onTapSearch: () => _openSearchScreen(),
+            onTapSmartSearch: () => _openSearchScreen(),
+            onSubmitQuery: (query) => _openSearchScreen(query: query),
+          ),
+          SizedBox(height: 20.h),
 
-                    // 👶 3️⃣ قسم أطفالي (كروت بيضاوية كبسولية أنيقة ومودرن)
-                    const ChildrenSectionWidget(),
-                    SizedBox(height: 20.h),
+          // 👶 3️⃣ قسم أطفالي (كروت بيضاوية كبسولية أنيقة ومودرن)
+          const ChildrenSectionWidget(),
+          SizedBox(height: 20.h),
 
-                    // ⚡ 4️⃣ قسم الخدمات السريعة (محفوظ بكامله دون حذف)
-                    const QuickServicesWidget(),
-                    SizedBox(height: 24.h),
-                  ],
-                ),
-              ),
+          // ⚡ 4️⃣ قسم الخدمات السريعة (محفوظ بكامله دون حذف)
+          const QuickServicesWidget(),
+          SizedBox(height: 24.h),
+        ],
       ),
     );
   }

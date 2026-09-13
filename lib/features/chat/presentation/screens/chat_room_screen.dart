@@ -18,13 +18,17 @@ import '../widgets/media_attachment_bottom_sheet.dart';
 import '../widgets/recording_input_bar.dart';
 import '../../data/models/chat_message_model.dart';
 import 'package:kids_transport/features/parent/search/data/repositories/search_repository.dart';
+import 'package:kids_transport/features/parent/search/data/models/driver_search_model.dart';
 import 'package:kids_transport/features/parent/search/presentation/screens/driver_profile_view.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 
 
 class ChatRoomScreen extends StatefulWidget {
   final String chatRoomId;
   final String otherUserName;
   final String? otherUserPhoto;
+  final String? otherUserPhone;
+  final int? otherUserId;
   final bool canChat;
   final String currentUserId;
   final String currentUserRole;
@@ -34,6 +38,8 @@ class ChatRoomScreen extends StatefulWidget {
     required this.chatRoomId,
     required this.otherUserName,
     this.otherUserPhoto,
+    this.otherUserPhone,
+    this.otherUserId,
     required this.canChat,
     required this.currentUserId,
     required this.currentUserRole,
@@ -299,47 +305,110 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   }
 
   void _openDriverProfile(BuildContext context) async {
-    final roleLower = widget.currentUserRole.toLowerCase();
-    if (!roleLower.contains('parent') && !roleLower.contains('ولي')) return;
+    final role = widget.currentUserRole.trim().isNotEmpty
+        ? widget.currentUserRole.trim()
+        : (StorageService.getRoleName() ?? '');
+    final roleLower = role.toLowerCase();
+    if (roleLower.contains('driver') || roleLower.contains('سائق')) {
+      return;
+    }
 
-    int driverId = 0;
-    try {
-      final parts = widget.chatRoomId.split('_');
-      final driverIndex = parts.indexOf('driver');
-      if (driverIndex != -1 && driverIndex + 1 < parts.length) {
-        driverId = int.tryParse(parts[driverIndex + 1]) ?? 0;
-      }
-    } catch (_) {}
+    // إظهار مؤشر تحميل فوري للمستخدم
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
 
-    if (driverId <= 0) return;
+    int driverId = widget.otherUserId ?? 0;
+    if (driverId <= 0) {
+      try {
+        final parts = widget.chatRoomId.split('_');
+        final driverIndex = parts.indexOf('driver');
+        if (driverIndex != -1 && driverIndex + 1 < parts.length) {
+          driverId = int.tryParse(parts[driverIndex + 1]) ?? 0;
+        }
+      } catch (_) {}
+    }
 
     final searchRepo = getIt<SearchRepository>();
-    final (searchResponse, error) = await searchRepo.searchDrivers({'search_query': driverId.toString()});
+    DriverSearchModel? driverModel;
+
+    // 1. البحث باسم السائق أولاً (هو المفتاح الأساسي في endpoint البحث بالباك إند)
+    if (widget.otherUserName.trim().isNotEmpty) {
+      final (searchResponse, _) = await searchRepo.searchDrivers({
+        'search_query': widget.otherUserName.trim(),
+      });
+      final list = searchResponse?.drivers ?? [];
+      if (list.isNotEmpty) {
+        if (driverId > 0) {
+          driverModel = list.firstWhere(
+            (d) => d.driverId == driverId || d.driver.id == driverId,
+            orElse: () => list.first,
+          );
+        } else {
+          driverModel = list.first;
+        }
+      }
+    }
+
+    // 2. إذا لم يعثر عليه بالاسم، نجرب برقم الهاتف
+    if (driverModel == null &&
+        widget.otherUserPhone != null &&
+        widget.otherUserPhone!.trim().isNotEmpty) {
+      final (searchResponse, _) = await searchRepo.searchDrivers({
+        'search_query': widget.otherUserPhone!.trim(),
+      });
+      final list = searchResponse?.drivers ?? [];
+      if (list.isNotEmpty) {
+        if (driverId > 0) {
+          driverModel = list.firstWhere(
+            (d) => d.driverId == driverId || d.driver.id == driverId,
+            orElse: () => list.first,
+          );
+        } else {
+          driverModel = list.first;
+        }
+      }
+    }
+
+    // 3. كحل أخير: نجرب بالـ ID
+    if (driverModel == null && driverId > 0) {
+      final (searchResponse, _) = await searchRepo.searchDrivers({
+        'search_query': driverId.toString(),
+      });
+      final list = searchResponse?.drivers ?? [];
+      if (list.isNotEmpty) {
+        driverModel = list.firstWhere(
+          (d) => d.driverId == driverId || d.driver.id == driverId,
+          orElse: () => list.first,
+        );
+      }
+    }
 
     if (!context.mounted) return;
 
-    final driversList = searchResponse?.drivers ?? [];
+    // إغلاق مؤشر التحميل
+    Navigator.of(context, rootNavigator: true).pop();
 
-    if (driversList.isNotEmpty) {
-      final driverModel = driversList.firstWhere(
-        (d) => d.driverId == driverId,
-        orElse: () => driversList.first,
-      );
-
+    if (driverModel != null) {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => DriverProfileView(
-            driver: driverModel,
+            driver: driverModel!,
             availableKids: const [],
             showPricing: false,
+            fromChat: true,
           ),
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error ?? 'تعذر تحميل ملف السائق.'),
+        const SnackBar(
+          content: Text('تعذر تحميل ملف السائق، يرجى المحاولة لاحقاً.'),
           backgroundColor: AppColors.error,
         ),
       );

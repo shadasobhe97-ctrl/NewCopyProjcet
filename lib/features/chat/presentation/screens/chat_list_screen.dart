@@ -269,6 +269,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                       chatRoomId: item.chatRoomId,
                                       otherUserName: item.otherUserName,
                                       otherUserPhoto: item.otherUserPhoto,
+                                      otherUserPhone: item.otherUserPhone,
+                                      otherUserId: item.otherUserId,
                                       canChat: item.canChat,
                                       currentUserId: currentUserId,
                                       currentUserRole: currentUserRole,

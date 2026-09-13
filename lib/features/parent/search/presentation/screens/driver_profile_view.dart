@@ -47,6 +47,7 @@ class DriverProfileView extends StatefulWidget {
   final List<int> initialSelectedKidsIds;
   final bool showPricing;
   final String searchQuery;
+  final bool fromChat;
 
   const DriverProfileView({
     super.key,
@@ -55,6 +56,7 @@ class DriverProfileView extends StatefulWidget {
     this.initialSelectedKidsIds = const [],
     this.showPricing = true,
     this.searchQuery = '',
+    this.fromChat = false,
   });
 
   @override
@@ -66,6 +68,8 @@ class _DriverProfileViewState extends State<DriverProfileView> {
   bool _loadingShowing = false;
   // مؤشر تحميل التسعير لسيناريو البحث بالاسم/الرقم
   bool _isPricingLoading = false;
+  // مؤشر إرسال طلب الاشتراك المباشر (سيناريو البحث الذكي)
+  bool _isSubmittingDirectly = false;
   // نسخة السائق بعد إعادة جلب التسعير للمجموعة الحالية من الأطفال المختارين
   DriverSearchModel? _pricedDriver;
   DriverSearchModel get _effectiveDriver => _pricedDriver ?? widget.driver;
@@ -157,6 +161,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
   void _showConfirmDialog() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final kidsList = _cachedSelectedKids.isNotEmpty
+        ? _cachedSelectedKids
+        : _selectedKids;
 
     showDialog(
       context: context,
@@ -188,7 +195,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
               ),
               const SizedBox(height: 8),
               Text(
-                'الأطفال: ${_selectedKids.map((k) => k.name).join('، ')}',
+                'الأطفال: ${kidsList.map((k) => k.name).join('، ')}',
                 style: AppTextStyles.style(
                   fontSize: 14,
                   color: isDark ? AppColors.grey300 : AppColors.grey700,
@@ -240,6 +247,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     debugPrint(
       '\n================= SUBMIT SUBSCRIPTION (DriverProfileView) =================',
     );
+    _isSubmittingDirectly = true;
     _loadingShowing = true;
     showDialog(
       context: context,
@@ -258,12 +266,16 @@ class _DriverProfileViewState extends State<DriverProfileView> {
         ? ctx.endDate
         : start;
 
+    final kidsList = _cachedSelectedKids.isNotEmpty
+        ? _cachedSelectedKids
+        : _selectedKids;
+
     int? homeAddrId;
-    if (_selectedKids.isNotEmpty && _selectedKids.first.addressId.isNotEmpty) {
-      homeAddrId = int.tryParse(_selectedKids.first.addressId);
+    if (kidsList.isNotEmpty && kidsList.first.addressId.isNotEmpty) {
+      homeAddrId = int.tryParse(kidsList.first.addressId);
     }
 
-    final List<SubscriptionChildRequest> childrenRequestList = _selectedKids
+    final List<SubscriptionChildRequest> childrenRequestList = kidsList
         .where((k) => k.id != null)
         .map((k) => SubscriptionChildRequest(childId: k.id!))
         .toList();
@@ -421,6 +433,11 @@ class _DriverProfileViewState extends State<DriverProfileView> {
 
     if (!context.mounted) return;
 
+    if (widget.fromChat) {
+      Navigator.pop(context);
+      return;
+    }
+
     if (hasActiveSub) {
       // التوجه مباشرة للشات
       final currentUserId =
@@ -436,6 +453,8 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             chatRoomId: chatRoomId,
             otherUserName: driver.fullName,
             otherUserPhoto: driver.photoUrl,
+            otherUserPhone: driver.phoneNumber,
+            otherUserId: driver.driverId,
             canChat: true,
             currentUserId: currentUserId,
             currentUserRole: 'parent',
@@ -952,17 +971,28 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                 return;
               }
 
-              // ── باقي الحالات: نتجاهلها إذا لم تكن الشاشة الحالية ───────────
-              final route = ModalRoute.of(context);
-              if (route != null && !route.isCurrent) return;
-
+              // ── معالجة نتيجة إرسال الطلب المباشر من بروفايل السائق (البحث الذكي) ──
               if (state is SubscriptionSuccess) {
-                if (_loadingShowing) Navigator.of(context).pop();
-                Navigator.pop(context);
-                _showSnack(state.message, AppColors.success);
-              } else if (state is SubscriptionError) {
-                if (_loadingShowing) Navigator.of(context).pop();
-                _handleErrorMessage(state.errorMessage);
+                if (_isSubmittingDirectly) {
+                  _isSubmittingDirectly = false;
+                  if (_loadingShowing) {
+                    Navigator.of(context).pop();
+                  }
+                  Navigator.pop(context);
+                  _showSnack(state.message, AppColors.success);
+                }
+                return;
+              }
+
+              if (state is SubscriptionError) {
+                if (_isSubmittingDirectly) {
+                  _isSubmittingDirectly = false;
+                  if (_loadingShowing) {
+                    Navigator.of(context).pop();
+                  }
+                  _handleErrorMessage(state.errorMessage);
+                }
+                return;
               }
             },
           ),
@@ -1026,7 +1056,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                     : const Color(0xFFF1F5F9),
                 appBar: AppBar(
                   title: Text(
-                    'ملف الكابتن',
+                    'ملف ${_effectiveDriver.fullName}',
                     style: AppTextStyles.style(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,

@@ -29,18 +29,6 @@ class _WalletScreenContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.surfaceColor,
-      appBar: AppBar(
-        title: Text(
-          'المحفظة',
-          style: AppTextStyles.style(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: context.surfaceColor,
-        elevation: 0,
-        centerTitle: true,
-      ),
       body: BlocBuilder<WalletCubit, WalletState>(
         builder: (context, state) {
           if (state is WalletLoading) {
