@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
@@ -58,9 +59,12 @@ class TripsRemoteDataSource {
           0.0;
       final String status = data['status']?.toString() ?? baseModel.status;
 
-      print(
-        '🔥 [Firestore Tracking Update] Trip ID: $docId | '
-        'Lat: $driverLat | Lng: $driverLng | Heading: $heading° | Speed: $speed km/h',
+      debugPrint(
+        '\n🔥 ==================== [FIREBASE LIVE TRACKING UPDATE] ====================\n'
+        '📌 Firestore Document ID (Trip ID): $docId\n'
+        '🚗 Driver Location: Lat = $driverLat, Lng = $driverLng\n'
+        '🧭 Heading: $heading° | Speed: $speed km/h | Status: $status\n'
+        '=========================================================================\n',
       );
 
       return baseModel.copyWith(
@@ -89,7 +93,7 @@ class TripsRemoteDataSource {
             (data['driver_lng'] as num?)?.toDouble() ?? 0.0;
         final double heading = (data['heading'] as num?)?.toDouble() ?? 0.0;
 
-        print(
+        debugPrint(
           '🔥 [Firestore Multi-Tracking Update] Trip ID: ${doc.id} | '
           'Lat: $driverLat | Lng: $driverLng | Heading: $heading°',
         );
@@ -118,6 +122,14 @@ class TripsRemoteDataSource {
       headers: _authHeader,
     );
     final data = response.data;
+
+    debugPrint(
+      '\n🌐 ==================== [BACKEND REST API: GET active-trips] ====================\n'
+      'URL: ${ApiEndpoints.parentActiveTrips}\n'
+      'Raw Response Data: $data\n'
+      '=================================================================================\n',
+    );
+
     if (data is Map) {
       final success = data['success'] ?? data['status'];
       if (success == false || success == 'error') {
@@ -127,9 +139,26 @@ class TripsRemoteDataSource {
     }
     final payload = (data is Map && data['data'] != null) ? data['data'] : data;
     if (payload is List) {
-      return payload
+      final trips = payload
           .map((e) => ActiveTripModel.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
+
+      for (final trip in trips) {
+        debugPrint(
+          '📦 [ActiveTrip] Trip ID: ${trip.tripId} | Status: ${trip.status} | Direction: ${trip.direction}\n'
+          '   Driver: ${trip.driver.name} (ID: ${trip.driver.id}, Phone: ${trip.driver.phone})\n'
+          '   Destination: ${trip.destination.name} (Type: ${trip.destination.type}, Lat: ${trip.destination.lat}, Lng: ${trip.destination.lng})\n'
+          '   Children Count: ${trip.children.length}',
+        );
+        for (final child in trip.children) {
+          debugPrint(
+            '   👶 Child: ${child.childName} (ID: ${child.childId}, Status: ${child.childStatus})\n'
+            '      🏠 Home: ${child.homeAddress?.title} -> Lat: ${child.homeAddress?.lat}, Lng: ${child.homeAddress?.lng}\n'
+            '      🏫 School: ${child.school?.name} -> Lat: ${child.school?.lat}, Lng: ${child.school?.lng}',
+          );
+        }
+      }
+      return trips;
     }
     return [];
   }
@@ -141,6 +170,14 @@ class TripsRemoteDataSource {
       headers: _authHeader,
     );
     final data = response.data;
+
+    debugPrint(
+      '\n🌐 ==================== [BACKEND REST API: GET trip-track] ====================\n'
+      'Trip ID: $tripId | URL: ${ApiEndpoints.parentTripTrack(tripId)}\n'
+      'Raw Response Data: $data\n'
+      '=================================================================================\n',
+    );
+
     if (data is Map) {
       final success = data['success'] ?? data['status'];
       if (success == false || success == 'error') {
@@ -148,14 +185,24 @@ class TripsRemoteDataSource {
         throw ApiException(msg ?? 'تعذر تحميل مسار الرحلة.');
       }
     }
+    LiveTrackingModel model;
     if (data is Map && data['data'] != null) {
-      return LiveTrackingModel.fromJson(
+      model = LiveTrackingModel.fromJson(
           Map<String, dynamic>.from(data['data'] as Map));
+    } else if (data is Map<String, dynamic>) {
+      model = LiveTrackingModel.fromJson(data);
+    } else {
+      throw ApiException('استجابة غير متوقعة عند جلب مسار الرحلة.');
     }
-    if (data is Map<String, dynamic>) {
-      return LiveTrackingModel.fromJson(data);
-    }
-    throw ApiException('استجابة غير متوقعة عند جلب مسار الرحلة.');
+
+    debugPrint(
+      '📌 [TripTrack Initial Data] Trip ID: ${model.tripId} | '
+      'Driver Initial Lat: ${model.driverLat}, Lng: ${model.driverLng}\n'
+      '   Destination: ${model.destination?.name} (${model.destination?.type}) -> Lat: ${model.destination?.lat}, Lng: ${model.destination?.lng}\n'
+      '   Children tracked: ${model.children.length}',
+    );
+
+    return model;
   }
 
   /// 3. GET /api/parent/trips/active/tracking (تتبع جميع الرحلات)

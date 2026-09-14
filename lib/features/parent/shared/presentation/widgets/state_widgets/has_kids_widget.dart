@@ -40,7 +40,10 @@ class HasKidsWidget extends StatelessWidget {
             color: AppColors.transparent,
             borderRadius: AppTheme.radius(16),
             child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 6,
+              ),
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: AppTheme.boxDecoration(
@@ -69,7 +72,10 @@ class HasKidsWidget extends StatelessWidget {
                 ),
               ),
               trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: AppTheme.boxDecoration(
                   color: context.primaryColor,
                   borderRadius: AppTheme.radius(12),
@@ -110,7 +116,10 @@ class HasKidsWidget extends StatelessWidget {
             color: AppColors.transparent,
             borderRadius: AppTheme.radius(16),
             child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 6,
+              ),
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: AppTheme.boxDecoration(

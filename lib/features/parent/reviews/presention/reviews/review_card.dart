@@ -22,11 +22,34 @@ class ReviewCard extends StatelessWidget {
   });
 
   bool get _isOwnReview {
-    final userId = getIt<SessionRepository>().getUserId();
-    
+    final sessionRepo = getIt<SessionRepository>();
+    final userId = sessionRepo.getUserId();
+    final userFullName = sessionRepo.getFullName()?.trim().toLowerCase();
+
     if (review.parent == null) return false;
-    
-    return userId != null && review.parent!.userId.toString() == userId;
+
+    final parentUserId = review.parent?.userId.toString();
+    final parentId = review.parent?.id.toString();
+    final parentName = review.parent?.fullName.trim().toLowerCase();
+
+    debugPrint(
+      '>>> [ReviewCard Debug] Current User ID: $userId | Review Parent User ID: $parentUserId | Review Parent ID: $parentId | User FullName: $userFullName | Review Parent Name: $parentName',
+    );
+
+    if (userId == null && (userFullName == null || userFullName.isEmpty)) return false;
+
+    // 1. Direct ID match (against user_id or parent_id)
+    final bool idMatches = userId != null &&
+        (parentUserId == userId || parentId == userId);
+
+    // 2. Full Name match (smart fallback if Backend sends parent_id instead of user_id in parent object)
+    final bool nameMatches = userFullName != null &&
+        userFullName.isNotEmpty &&
+        parentName != null &&
+        parentName.isNotEmpty &&
+        (parentName == userFullName || parentName.contains(userFullName) || userFullName.contains(parentName));
+
+    return idMatches || nameMatches;
   }
 
   String _fmtDate(String raw) {

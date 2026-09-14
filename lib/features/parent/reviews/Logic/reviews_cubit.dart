@@ -13,18 +13,25 @@ class ReviewsCubit extends Cubit<ReviewsState> {
   Future<void> loadReviews(int driverId) async {
     if (state is ReviewsLoading) return;
     emit(ReviewsLoading());
+
+    ReviewsResponse? reviewsRes;
+    bool hasSub = false;
+    String? errorMessage;
+
     try {
-      // Parallel calls: checkSubscription and getReviews
-      final results = await Future.wait([
-        _repository.getReviews(driverId, 1),
-        _repository.checkSubscription(driverId),
-      ]);
+      reviewsRes = await _repository.getReviews(driverId, 1);
+    } catch (e) {
+      errorMessage = _parseError(e);
+    }
 
-      final reviewsRes = results[0] as ReviewsResponse;
-      final checkRes = results[1] as dynamic; // SubscriptionCheckModel
+    try {
+      final checkRes = await _repository.checkSubscription(driverId);
+      hasSub = checkRes.hasSubscription == true;
+    } catch (e) {
+      hasSub = false;
+    }
 
-      final hasSub = checkRes.hasSubscription == true;
-
+    if (reviewsRes != null) {
       emit(
         ReviewsLoaded(
           reviews: reviewsRes.reviews,
@@ -33,8 +40,8 @@ class ReviewsCubit extends Cubit<ReviewsState> {
           hasMore: reviewsRes.hasMore,
         ),
       );
-    } catch (e) {
-      emit(ReviewsError(_parseError(e)));
+    } else {
+      emit(ReviewsError(errorMessage ?? 'تعذر تحميل التقييمات'));
     }
   }
 

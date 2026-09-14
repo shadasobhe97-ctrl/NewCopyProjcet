@@ -161,7 +161,7 @@ class ApiEndpoints {
 
   // Parent Driver Reviews
   static String checkSubscription(int driverId) =>
-      'parent/subscriptions/check?driver_id=$driverId';
+      'parent/subscriptions/check-exists?driver_id=$driverId';
   static const String driverReviews = 'parent/driver-reviews';
   static String getDriverReviews(int driverId) =>
       'parent/driver-reviews/driver/$driverId';

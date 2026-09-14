@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:latlong2/latlong.dart';
@@ -36,6 +37,10 @@ class TrackingMapWidget extends StatefulWidget {
 class _TrackingMapWidgetState extends State<TrackingMapWidget> {
   static const LatLng defaultLocation = LatLng(32.8872, 13.1913);
 
+  final Dio _dio = Dio();
+  final Map<String, List<LatLng>> _routeCache = {};
+  final Set<String> _pendingRouteRequests = {};
+
   final List<Color> _paletteColors = const [
     AppColors.primaryLight,
     AppColors.secondaryDark,
@@ -43,6 +48,68 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
     AppColors.accentGreen,
     AppColors.maleBlue,
   ];
+
+  List<LatLng> _getPolylinePoints(LatLng start, LatLng end) {
+    if (start.latitude == 0.0 || start.longitude == 0.0 || end.latitude == 0.0 || end.longitude == 0.0) {
+      return [start, end];
+    }
+
+    final key = '${start.latitude.toStringAsFixed(4)},${start.longitude.toStringAsFixed(4)}->${end.latitude.toStringAsFixed(4)},${end.longitude.toStringAsFixed(4)}';
+
+    if (_routeCache.containsKey(key)) {
+      return _routeCache[key]!;
+    }
+
+    if (!_pendingRouteRequests.contains(key)) {
+      _pendingRouteRequests.add(key);
+      _fetchOSRMRoute(key, start, end);
+    }
+
+    return [start, end];
+  }
+
+  Future<void> _fetchOSRMRoute(String key, LatLng start, LatLng end) async {
+    try {
+      final url = 'https://router.project-osrm.org/route/v1/driving/'
+          '${start.longitude},${start.latitude};${end.longitude},${end.latitude}'
+          '?overview=full&geometries=geojson';
+
+      final response = await _dio.get(url).timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200 && response.data is Map) {
+        final data = response.data as Map;
+        if (data['code'] == 'Ok' && data['routes'] is List && (data['routes'] as List).isNotEmpty) {
+          final route = data['routes'][0];
+          final geometry = route['geometry'];
+          if (geometry is Map && geometry['coordinates'] is List) {
+            final List coords = geometry['coordinates'] as List;
+            final List<LatLng> path = coords.map<LatLng>((c) {
+              final List pair = c as List;
+              final double lng = (pair[0] as num).toDouble();
+              final double lat = (pair[1] as num).toDouble();
+              return LatLng(lat, lng);
+            }).toList();
+
+            if (path.isNotEmpty) {
+              _routeCache[key] = path;
+              debugPrint('🛣️ [OSRM ROUTE SUCCESS] Loaded ${path.length} road waypoints for key: $key');
+              if (mounted) {
+                setState(() {});
+              }
+              return;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [OSRM ROUTE FALLBACK] Failed to fetch road route ($key): $e');
+    } finally {
+      _pendingRouteRequests.remove(key);
+    }
+
+    // Fallback if network or routing failed
+    _routeCache[key] = [start, end];
+  }
 
   Future<void> _openGoogleMaps(double lat, double lng) async {
     final uri = Uri.parse(
@@ -70,22 +137,35 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
   }
 
   void _centerDriver() {
-    if (!widget.isMultiMode && widget.singleTrack != null) {
-      widget.mapController.move(
-        LatLng(widget.singleTrack!.driverLat, widget.singleTrack!.driverLng),
-        15.0,
-      );
+    LatLng target = defaultLocation;
+
+    if (!widget.isMultiMode && widget.singleTrack != null && widget.singleTrack!.driverLat != 0.0 && widget.singleTrack!.driverLng != 0.0) {
+      target = LatLng(widget.singleTrack!.driverLat, widget.singleTrack!.driverLng);
     } else if (widget.multiTracks.isNotEmpty) {
-      widget.mapController.move(
-        LatLng(
-          widget.multiTracks.first.driverLat,
-          widget.multiTracks.first.driverLng,
-        ),
-        13.5,
+      final valid = widget.multiTracks.firstWhere(
+        (t) => t.driverLat != 0.0 && t.driverLng != 0.0,
+        orElse: () => widget.multiTracks.first,
       );
-    } else {
-      widget.mapController.move(defaultLocation, 13.5);
+      if (valid.driverLat != 0.0 && valid.driverLng != 0.0) {
+        target = LatLng(valid.driverLat, valid.driverLng);
+      }
+    } else if (widget.singleTrip != null) {
+      if (widget.singleTrip!.uniqueSchools.isNotEmpty) {
+        target = LatLng(widget.singleTrip!.uniqueSchools.first.lat, widget.singleTrip!.uniqueSchools.first.lng);
+      } else if (widget.singleTrip!.uniqueHomeAddresses.isNotEmpty) {
+        target = LatLng(widget.singleTrip!.uniqueHomeAddresses.first.lat, widget.singleTrip!.uniqueHomeAddresses.first.lng);
+      }
+    } else if (widget.multiTrips.isNotEmpty) {
+      final firstTrip = widget.multiTrips.first;
+      if (firstTrip.uniqueSchools.isNotEmpty) {
+        target = LatLng(firstTrip.uniqueSchools.first.lat, firstTrip.uniqueSchools.first.lng);
+      } else if (firstTrip.uniqueHomeAddresses.isNotEmpty) {
+        target = LatLng(firstTrip.uniqueHomeAddresses.first.lat, firstTrip.uniqueHomeAddresses.first.lng);
+      }
     }
+
+    debugPrint('🎯 [MAP RE-CENTER] Moving camera to Lat: ${target.latitude}, Lng: ${target.longitude}');
+    widget.mapController.move(target, widget.isMultiMode ? 13.5 : 15.0);
   }
 
   @override
@@ -94,10 +174,59 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
     List<Polyline> polylines = [];
     LatLng initialCenter = defaultLocation;
 
-    if (!widget.isMultiMode && widget.singleTrack != null) {
+    // Build effective tracking list for MultiMode
+    List<LiveTrackingModel> effectiveMultiTracks = widget.multiTracks;
+    if (widget.isMultiMode && effectiveMultiTracks.isEmpty && widget.multiTrips.isNotEmpty) {
+      effectiveMultiTracks = widget.multiTrips.map((trip) {
+        double lat = trip.destination.lat;
+        double lng = trip.destination.lng;
+        if ((lat == 0.0 || lng == 0.0) && trip.uniqueSchools.isNotEmpty) {
+          lat = trip.uniqueSchools.first.lat;
+          lng = trip.uniqueSchools.first.lng;
+        }
+        if ((lat == 0.0 || lng == 0.0) && trip.uniqueHomeAddresses.isNotEmpty) {
+          lat = trip.uniqueHomeAddresses.first.lat;
+          lng = trip.uniqueHomeAddresses.first.lng;
+        }
+        return LiveTrackingModel(
+          tripId: trip.tripId,
+          status: trip.status,
+          driverLat: lat,
+          driverLng: lng,
+          driverName: trip.driver.name,
+          lastUpdated: 'من الباك إند',
+        );
+      }).toList();
+    }
+
+    // Build effective single track
+    LiveTrackingModel? effectiveSingleTrack = widget.singleTrack;
+    if (!widget.isMultiMode && effectiveSingleTrack == null && widget.singleTrip != null) {
+      final trip = widget.singleTrip!;
+      double lat = trip.destination.lat;
+      double lng = trip.destination.lng;
+      if ((lat == 0.0 || lng == 0.0) && trip.uniqueSchools.isNotEmpty) {
+        lat = trip.uniqueSchools.first.lat;
+        lng = trip.uniqueSchools.first.lng;
+      }
+      if ((lat == 0.0 || lng == 0.0) && trip.uniqueHomeAddresses.isNotEmpty) {
+        lat = trip.uniqueHomeAddresses.first.lat;
+        lng = trip.uniqueHomeAddresses.first.lng;
+      }
+      effectiveSingleTrack = LiveTrackingModel(
+        tripId: trip.tripId,
+        status: trip.status,
+        driverLat: lat,
+        driverLng: lng,
+        driverName: trip.driver.name,
+        lastUpdated: 'من الباك إند',
+      );
+    }
+
+    if (!widget.isMultiMode && effectiveSingleTrack != null) {
       final driverLatLng = LatLng(
-        widget.singleTrack!.driverLat,
-        widget.singleTrack!.driverLng,
+        effectiveSingleTrack.driverLat != 0.0 ? effectiveSingleTrack.driverLat : defaultLocation.latitude,
+        effectiveSingleTrack.driverLng != 0.0 ? effectiveSingleTrack.driverLng : defaultLocation.longitude,
       );
       initialCenter = driverLatLng;
 
@@ -112,7 +241,7 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    'السائق: ${widget.singleTrip?.driverName ?? "السائق"}',
+                    'السائق: ${widget.singleTrip?.driverName ?? effectiveSingleTrack?.driverName ?? "السائق"}',
                   ),
                   duration: const Duration(seconds: 2),
                 ),
@@ -121,7 +250,7 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
             child: _buildDriverBusMarker(
               context,
               context.primaryColor,
-              widget.singleTrip?.driverName ?? 'السائق',
+              widget.singleTrip?.driverName ?? effectiveSingleTrack.driverName ?? 'السائق',
             ),
           ),
         ),
@@ -129,11 +258,9 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
 
       // Destination / Schools / Home markers with Name Tag above
       final List<ChildSchoolModel> uniqueSchools = widget.singleTrip?.uniqueSchools ??
-          widget.singleTrack?.uniqueSchools ??
-          [];
+          effectiveSingleTrack.uniqueSchools;
       final List<ChildAddressModel> uniqueHomes = widget.singleTrip?.uniqueHomeAddresses ??
-          widget.singleTrack?.uniqueHomeAddresses ??
-          [];
+          effectiveSingleTrack.uniqueHomeAddresses;
 
       // Render Unique Schools (Deduplicated)
       for (final school in uniqueSchools) {
@@ -153,7 +280,7 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
 
         polylines.add(
           Polyline(
-            points: [driverLatLng, schoolLatLng],
+            points: _getPolylinePoints(driverLatLng, schoolLatLng),
             strokeWidth: 5.0,
             color: context.primaryColor,
           ),
@@ -178,7 +305,7 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
 
         polylines.add(
           Polyline(
-            points: [driverLatLng, homeLatLng],
+            points: _getPolylinePoints(driverLatLng, homeLatLng),
             strokeWidth: 5.0,
             color: AppColors.accentPurple,
           ),
@@ -187,10 +314,10 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
 
       // Fallback for destination if unique arrays are empty
       if (uniqueSchools.isEmpty && uniqueHomes.isEmpty) {
-        final destName = widget.singleTrip?.destination.name ?? widget.singleTrack?.destination?.name;
-        final destType = widget.singleTrip?.destination.type ?? widget.singleTrack?.destination?.type ?? 'school';
-        final destLat = widget.singleTrip?.destination.lat ?? widget.singleTrack?.destination?.lat;
-        final destLng = widget.singleTrip?.destination.lng ?? widget.singleTrack?.destination?.lng;
+        final destName = widget.singleTrip?.destination.name ?? effectiveSingleTrack.destination?.name;
+        final destType = widget.singleTrip?.destination.type ?? effectiveSingleTrack.destination?.type ?? 'school';
+        final destLat = widget.singleTrip?.destination.lat ?? effectiveSingleTrack.destination?.lat;
+        final destLng = widget.singleTrip?.destination.lng ?? effectiveSingleTrack.destination?.lng;
 
         if (destLat != null && destLng != null && destLat != 0.0 && destLng != 0.0) {
           final destLatLng = LatLng(destLat, destLng);
@@ -213,23 +340,26 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
 
           polylines.add(
             Polyline(
-              points: [driverLatLng, destLatLng],
+              points: _getPolylinePoints(driverLatLng, destLatLng),
               strokeWidth: 5.0,
               color: isHomeDest ? AppColors.accentPurple : context.primaryColor,
             ),
           );
         }
       }
-    } else if (widget.isMultiMode && widget.multiTracks.isNotEmpty) {
+    } else if (widget.isMultiMode && effectiveMultiTracks.isNotEmpty) {
       initialCenter = LatLng(
-        widget.multiTracks.first.driverLat,
-        widget.multiTracks.first.driverLng,
+        effectiveMultiTracks.first.driverLat != 0.0 ? effectiveMultiTracks.first.driverLat : defaultLocation.latitude,
+        effectiveMultiTracks.first.driverLng != 0.0 ? effectiveMultiTracks.first.driverLng : defaultLocation.longitude,
       );
 
-      for (int i = 0; i < widget.multiTracks.length; i++) {
-        final track = widget.multiTracks[i];
+      for (int i = 0; i < effectiveMultiTracks.length; i++) {
+        final track = effectiveMultiTracks[i];
         final color = _paletteColors[i % _paletteColors.length];
-        final driverLatLng = LatLng(track.driverLat, track.driverLng);
+        final driverLatLng = LatLng(
+          track.driverLat != 0.0 ? track.driverLat : defaultLocation.latitude,
+          track.driverLng != 0.0 ? track.driverLng : defaultLocation.longitude,
+        );
 
         ActiveTripModel? tripMatch;
         try {
@@ -253,7 +383,7 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
               child: _buildDriverBusMarker(
                 context,
                 color,
-                tripMatch?.driverName ?? 'حافلة ${i + 1}',
+                tripMatch?.driverName ?? track.driverName ?? 'حافلة ${i + 1}',
               ),
             ),
           ),
@@ -280,7 +410,7 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
             );
             polylines.add(
               Polyline(
-                points: [driverLatLng, schoolLatLng],
+                points: _getPolylinePoints(driverLatLng, schoolLatLng),
                 strokeWidth: 5.0,
                 color: color,
               ),
@@ -305,7 +435,7 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
             );
             polylines.add(
               Polyline(
-                points: [driverLatLng, homeLatLng],
+                points: _getPolylinePoints(driverLatLng, homeLatLng),
                 strokeWidth: 5.0,
                 color: color,
               ),
@@ -340,7 +470,7 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
 
             polylines.add(
               Polyline(
-                points: [driverLatLng, destLatLng],
+                points: _getPolylinePoints(driverLatLng, destLatLng),
                 strokeWidth: 5.0,
                 color: color,
               ),
@@ -349,6 +479,17 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
         }
       }
     }
+
+    debugPrint(
+      '\n🗺️ ==================== [MAP RENDER DEBUG] ====================\n'
+      'Mode: ${widget.isMultiMode ? "Multi (All Trips)" : "Single (One Child)"}\n'
+      'SingleTrack Driver Lat: ${widget.singleTrack?.driverLat}, Lng: ${widget.singleTrack?.driverLng}\n'
+      'Effective Single Driver Lat: ${effectiveSingleTrack?.driverLat}, Lng: ${effectiveSingleTrack?.driverLng}\n'
+      'Firebase MultiTracks Count: ${widget.multiTracks.length}\n'
+      'Effective MultiTracks Count: ${effectiveMultiTracks.length}\n'
+      'Total Generated Markers: ${markers.length} | Polylines: ${polylines.length}\n'
+      '=================================================================\n',
+    );
 
     return Stack(
       children: [
@@ -360,7 +501,8 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
           ),
           children: [
             TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+              subdomains: const ['a', 'b', 'c'],
               userAgentPackageName: 'com.kids_transport.app',
             ),
             PolylineLayer(polylines: polylines),
