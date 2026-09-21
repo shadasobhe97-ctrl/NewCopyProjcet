@@ -680,7 +680,6 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                                     SizedBox(height: 4.h),
                                     _breakdownDetailRow(Icons.school_outlined, 'المدرسة', breakdownItem.schoolName.isNotEmpty ? breakdownItem.schoolName : kid.schoolName, isDark),
                                     _breakdownDetailRow(Icons.linear_scale_rounded, 'المسافة', '${breakdownItem.distanceKm.toStringAsFixed(1)} كم', isDark),
-                                    _breakdownDetailRow(Icons.calendar_month_outlined, 'نوع الاشتراك', breakdownItem.subscriptionTypeLabel.isNotEmpty ? breakdownItem.subscriptionTypeLabel : label, isDark),
                                     _breakdownDetailRow(Icons.date_range_rounded, 'أيام العمل', '${breakdownItem.workingDays} يوم', isDark),
                                   ],
                                 ],

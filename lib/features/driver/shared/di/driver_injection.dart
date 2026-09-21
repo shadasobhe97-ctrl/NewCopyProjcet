@@ -23,6 +23,9 @@ import 'package:kids_transport/features/driver/vehicles/logic/vehicle_cubit.dart
 import 'package:kids_transport/features/driver/requests/data/datasources/driver_requests_remote_data_source.dart';
 import 'package:kids_transport/features/driver/requests/data/repositories/driver_requests_repository.dart';
 import 'package:kids_transport/features/driver/requests/logic/driver_requests_cubit.dart';
+import 'package:kids_transport/features/driver/requests/data/datasources/driver_location_change_remote_data_source.dart';
+import 'package:kids_transport/features/driver/requests/data/repositories/driver_location_change_repository.dart';
+import 'package:kids_transport/features/driver/requests/logic/driver_location_change_cubit.dart';
 
 // Subscriptions
 import 'package:kids_transport/features/driver/subscriptions/data/datasources/driver_subscriptions_remote_data_source.dart';
@@ -131,6 +134,25 @@ void initDriverInjection() {
   if (!driverSl.isRegistered<DriverRequestsCubit>()) {
     driverSl.registerFactory<DriverRequestsCubit>(
       () => DriverRequestsCubit(driverSl<DriverRequestsRepository>()),
+    );
+  }
+  if (!driverSl.isRegistered<DriverLocationChangeRemoteDataSource>()) {
+    driverSl.registerLazySingleton<DriverLocationChangeRemoteDataSource>(
+      () => DriverLocationChangeRemoteDataSource(driverSl<ApiClient>()),
+    );
+  }
+  if (!driverSl.isRegistered<DriverLocationChangeRepository>()) {
+    driverSl.registerLazySingleton<DriverLocationChangeRepository>(
+      () => DriverLocationChangeRepository(
+        driverSl<DriverLocationChangeRemoteDataSource>(),
+      ),
+    );
+  }
+  if (!driverSl.isRegistered<DriverLocationChangeCubit>()) {
+    driverSl.registerFactory<DriverLocationChangeCubit>(
+      () => DriverLocationChangeCubit(
+        driverSl<DriverLocationChangeRepository>(),
+      ),
     );
   }
 

@@ -19,7 +19,7 @@ class SavedAddressModel {
       userId: json['user_id'] != null
           ? int.tryParse(json['user_id'].toString())
           : null,
-      label: json['label']?.toString() ?? '',
+      label: json['label']?.toString() ?? json['address_name']?.toString() ?? 'عنوان',
       lat: double.tryParse(json['lat']?.toString() ?? '') ?? 0.0,
       lng: double.tryParse(json['lng']?.toString() ?? '') ?? 0.0,
     );
@@ -42,6 +42,39 @@ class LocationPointModel {
       lat: double.tryParse(json['lat']?.toString() ?? '') ?? 0.0,
       lng: double.tryParse(json['lng']?.toString() ?? '') ?? 0.0,
       label: json['label']?.toString() ?? '',
+    );
+  }
+}
+
+class ChildOptionModel {
+  final int id;
+  final String name;
+  final String? photoUrl;
+  final String? schoolName;
+  final SavedAddressModel? defaultHomeAddress;
+
+  ChildOptionModel({
+    required this.id,
+    required this.name,
+    this.photoUrl,
+    this.schoolName,
+    this.defaultHomeAddress,
+  });
+
+  factory ChildOptionModel.fromJson(Map<String, dynamic> json) {
+    final schoolObj = json['school'] is Map ? json['school'] as Map<String, dynamic> : {};
+    final defaultAddressObj = json['default_home_address'] is Map
+        ? json['default_home_address'] as Map<String, dynamic>
+        : null;
+
+    return ChildOptionModel(
+      id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      name: json['name']?.toString() ?? json['full_name']?.toString() ?? 'طفل',
+      photoUrl: json['photo_url']?.toString() ?? json['avatar']?.toString() ?? json['photo']?.toString(),
+      schoolName: schoolObj['name']?.toString() ?? json['school_name']?.toString(),
+      defaultHomeAddress: defaultAddressObj != null
+          ? SavedAddressModel.fromJson(defaultAddressObj)
+          : null,
     );
   }
 }
@@ -80,7 +113,7 @@ class ActiveSubscriptionItemModel {
       activeSubscriptionId: int.tryParse(json['active_subscription_id']?.toString() ?? '') ?? 0,
       childId: int.tryParse(childObj['id']?.toString() ?? '') ?? 0,
       childName: childObj['name']?.toString() ?? 'طفل',
-      childPhotoUrl: childObj['photo_url']?.toString(),
+      childPhotoUrl: childObj['photo_url']?.toString() ?? childObj['avatar']?.toString(),
       driverId: int.tryParse(driverObj['id']?.toString() ?? '') ?? 0,
       driverName: driverObj['name']?.toString() ?? 'سائق',
       tripTiming: tripObj['timing']?.toString(),
@@ -96,10 +129,12 @@ class ActiveSubscriptionItemModel {
 }
 
 class LocationChangeOptionsModel {
+  final List<ChildOptionModel> children;
   final List<SavedAddressModel> addresses;
   final List<ActiveSubscriptionItemModel> activeSubscriptions;
 
   LocationChangeOptionsModel({
+    required this.children,
     required this.addresses,
     required this.activeSubscriptions,
   });
@@ -107,7 +142,13 @@ class LocationChangeOptionsModel {
   factory LocationChangeOptionsModel.fromJson(Map<String, dynamic> json) {
     final data = json['data'] is Map ? json['data'] as Map<String, dynamic> : json;
 
-    final addressList = (data['addresses'] as List? ?? [])
+    final childrenList = (data['children'] as List? ?? [])
+        .whereType<Map<String, dynamic>>()
+        .map((e) => ChildOptionModel.fromJson(e))
+        .toList();
+
+    final addressListRaw = (data['saved_addresses'] as List? ?? data['addresses'] as List? ?? []);
+    final addressList = addressListRaw
         .whereType<Map<String, dynamic>>()
         .map((e) => SavedAddressModel.fromJson(e))
         .toList();
@@ -118,6 +159,7 @@ class LocationChangeOptionsModel {
         .toList();
 
     return LocationChangeOptionsModel(
+      children: childrenList,
       addresses: addressList,
       activeSubscriptions: subList,
     );

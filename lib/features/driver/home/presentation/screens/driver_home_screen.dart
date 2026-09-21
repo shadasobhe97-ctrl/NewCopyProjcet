@@ -10,9 +10,12 @@ import 'package:kids_transport/features/driver/work_areas/presentation/widgets/w
 import 'package:kids_transport/features/driver/home/presentation/widgets/welcome_guide_card.dart';
 import 'package:kids_transport/features/driver/home/presentation/widgets/daily_stats_row.dart';
 import 'package:kids_transport/features/driver/home/presentation/widgets/active_trip_card.dart';
+import 'package:kids_transport/features/driver/home/presentation/widgets/driver_services_widget.dart';
 import 'package:kids_transport/features/driver/requests/presentation/widgets/new_requests_section.dart';
 
 import 'package:kids_transport/features/driver/home/logic/driver_home_cubit/driver_home_cubit.dart';
+import 'package:kids_transport/features/driver/requests/logic/driver_location_change_cubit.dart';
+import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 
 class DriverHomeScreen extends StatefulWidget {
   const DriverHomeScreen({super.key});
@@ -49,17 +52,21 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
       builder: (context, state) {
         final loadedState = state is DriverHomeLoaded ? state : null;
 
-        return Scaffold(
-          body: SafeArea(
-            child: state is DriverHomeLoading
-                ? const Center(child: CircularProgressIndicator())
-                : loadedState == null
-                    ? const Center(child: Text('حدث خطأ في التحميل'))
-                    : RefreshIndicator(
-                        onRefresh: _onRefresh,
-                        color: AppColors.primaryLight,
-                        child: _HomeBody(state: loadedState),
-                      ),
+        return BlocProvider(
+          create: (_) =>
+              driverSl<DriverLocationChangeCubit>()..fetchPendingCount(),
+          child: Scaffold(
+            body: SafeArea(
+              child: state is DriverHomeLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : loadedState == null
+                      ? const Center(child: Text('حدث خطأ في التحميل'))
+                      : RefreshIndicator(
+                          onRefresh: _onRefresh,
+                          color: AppColors.primaryLight,
+                          child: _HomeBody(state: loadedState),
+                        ),
+            ),
           ),
         );
       },
@@ -87,6 +94,10 @@ class _HomeBody extends StatelessWidget {
 
           // كرت حالة الاتصال (متصل/غير متصل) — يظهر دائماً
           OnlineStatusCard(isOnline: state.isOnline),
+          const SizedBox(height: 24),
+
+          // قسم الخدمات السريعة للسائق (يحتوي كرت طلبات التعديل باللون الأحمر)
+          const DriverServicesWidget(),
           const SizedBox(height: 24),
 
           // رسالة الترحيب الأولى — تظهر مرة واحدة فقط لكل سائق

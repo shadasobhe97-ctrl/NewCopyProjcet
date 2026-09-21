@@ -285,11 +285,6 @@ class _DriverSubscriptionDetailsScreenState
                         child: Column(
                           children: [
                             _InfoRow(
-                              icon: Icons.calendar_today_rounded,
-                              label: 'نوع الاشتراك',
-                              value: subscription.typeDisplayLabel,
-                            ),
-                            _InfoRow(
                               icon: Icons.alt_route_rounded,
                               label: 'اتجاه الرحلة',
                               value: subscription.directionDisplayLabel,

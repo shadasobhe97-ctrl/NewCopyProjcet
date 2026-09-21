@@ -32,6 +32,14 @@ class QuickServicesWidget extends StatelessWidget {
             Navigator.pushNamed(context, AppRoutes.parentLocationChange),
       },
       {
+        'title': 'طلبات التغيير',
+        'subtitle': 'متابعة الطلبات',
+        'icon': Icons.history_toggle_off_rounded,
+        'color': AppColors.secondaryDark,
+        'action': () =>
+            Navigator.pushNamed(context, AppRoutes.parentLocationChangeHistory),
+      },
+      {
         'title': 'الغياب',
         'subtitle': 'إدارة الغياب',
         'icon': Icons.calendar_month_outlined,

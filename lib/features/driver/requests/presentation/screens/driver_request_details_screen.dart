@@ -156,11 +156,6 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
                       child: Column(
                         children: [
                           _InfoRow(
-                            icon: Icons.calendar_today_rounded,
-                            label: 'نوع الاشتراك',
-                            value: request.typeDisplayLabel,
-                          ),
-                          _InfoRow(
                             icon: Icons.alt_route_rounded,
                             label: 'اتجاه الرحلة',
                             value: request.directionDisplayLabel,

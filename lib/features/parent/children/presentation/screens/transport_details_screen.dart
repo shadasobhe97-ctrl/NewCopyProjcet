@@ -59,22 +59,6 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
     _fetchSubscription();
   }
 
-  String _translateSub(String val) {
-    switch (val.toLowerCase()) {
-      case 'single_day':
-      case 'daily':
-      case 'days':
-        return 'يوم واحد';
-      case 'multi_day':
-      case 'multi-day':
-      case 'multiday':
-      case 'several_days':
-        return 'عدة أيام';
-      default:
-        return val;
-    }
-  }
-
   String _translatePeriod(String val) => val == 'morning' ? 'صباحية' : 'مسائية';
   String _translateService(String val) => val == 'both'
       ? 'ذهاب وعودة'
@@ -97,8 +81,6 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
     }
 
     final pref = activeChild.transportPref;
-    final subscriptionType =
-        _logistics?.subscriptionType ?? pref.subscriptionType;
     final period = _logistics?.preferredTimeSlot ?? pref.period;
     final serviceType = _logistics?.tripDirection ?? pref.serviceType;
     final startDate = _logistics?.startDate ?? pref.startDate;
@@ -150,10 +132,6 @@ class _TransportDetailsScreenState extends State<TransportDetailsScreen> {
                 title: 'اعدادات  الاشتراك',
                 icon: Icons.assignment_rounded,
                 content: [
-                  _buildDataRow(
-                    'نوع الاشتراك',
-                    _translateSub(subscriptionType),
-                  ),
                   _buildDataRow('الفترة', _translatePeriod(period)),
                   _buildDataRow(
                     'الخدمة المطلوبة',

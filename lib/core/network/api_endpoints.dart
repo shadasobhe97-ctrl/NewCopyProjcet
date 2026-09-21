@@ -2,7 +2,7 @@ class ApiEndpoints {
   const ApiEndpoints._();
 
   // الرابط الأساسي للسيرفر (يحتوي على /api/)
-  static const String baseUrl = 'https://darby-app-api.loca.lt/api/';
+  static const String baseUrl = 'https://popular-dingo-85.loca.lt/api/';
 
   //=========================================
   // Auth Endpoints (مسارات المصادقة العامة)
@@ -219,8 +219,18 @@ class ApiEndpoints {
   // Parent Location Change Requests
   static const String parentLocationChangeOptions =
       'parent/location-change-requests/options';
+  static const String parentLocationChangeAvailableTrips =
+      'parent/location-change-requests/available-trips';
   static const String parentLocationChangePreview =
       'parent/location-change-requests/preview';
   static const String parentLocationChangeRequests =
       'parent/location-change-requests';
+  static String parentLocationChangeCancel(int id) =>
+      'parent/location-change-requests/$id';
+
+  // Driver Location Change Requests
+  static const String driverLocationChangeRequests =
+      'driver/location-change-requests';
+  static String driverLocationChangeRespond(int id) =>
+      'driver/location-change-requests/$id/respond';
 }

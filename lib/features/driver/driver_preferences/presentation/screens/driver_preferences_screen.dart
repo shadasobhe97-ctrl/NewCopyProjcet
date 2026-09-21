@@ -69,10 +69,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
     _selectedShifts['afternoon_go'] = prefs.shiftSlots.afternoonGo;
     _selectedShifts['afternoon_return'] = prefs.shiftSlots.afternoonReturn;
 
-    String rawType = prefs.subscriptionType.toLowerCase();
-    if (rawType == 'daily') rawType = 'single_day';
-    if (rawType == 'monthly') rawType = 'multi_day';
-    _selectedSubtype = rawType.isNotEmpty ? rawType : null;
+    _selectedSubtype = 'multi_day';
 
     _selectedSchoolStages.clear();
     _selectedSchoolStages.addAll(prefs.schoolStages);
@@ -136,11 +133,6 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
       return;
     }
 
-    if (_selectedSubtype == null) {
-      _showErrorDialog('يرجى اختيار نوع الاشتراك المفضل.');
-      return;
-    }
-
     if (_selectedZones.isEmpty) {
       _showErrorDialog('يجب اختيار منطقة خدمة واحدة على الأقل.');
       return;
@@ -151,7 +143,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
       'morning_return': _selectedShifts['morning_return'] ?? false,
       'afternoon_go': _selectedShifts['afternoon_go'] ?? false,
       'afternoon_return': _selectedShifts['afternoon_return'] ?? false,
-      'subscription_type': _selectedSubtype,
+      'subscription_type': 'multi_day',
       'school_stages': _selectedSchoolStages.toList(),
       'zones': _selectedZones.toList(),
     };
@@ -335,18 +327,6 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                           _isEditing
                               ? _buildSchoolStagesSelection()
                               : _buildSchoolStagesView(),
-                          SizedBox(height: 24.h),
-
-                          _buildSectionTitle(
-                            'نوع الاشتراك المفضل',
-                            _isEditing
-                                ? 'حدد طبيعة الاشتراكات التي تفضل استلام رحلاتها'
-                                : 'طبيعة الاشتراكات المختارة',
-                          ),
-                          SizedBox(height: 10.h),
-                          _isEditing
-                              ? _buildSubscriptionDropdown()
-                              : _buildSubscriptionDisplay(),
                           SizedBox(height: 24.h),
 
                           _buildSectionTitle(

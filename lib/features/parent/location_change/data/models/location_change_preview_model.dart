@@ -26,91 +26,79 @@ class FeeBreakdownModel {
   }
 }
 
-class FeeTierItemModel {
-  final String tier;
-  final String label;
-  final double fee;
+class GroupedRequestModel {
+  final int driverId;
+  final String driverName;
+  final List<ChildOptionModel> children;
+  final double extraDistanceKm;
+  final double feeAmount;
 
-  FeeTierItemModel({
-    required this.tier,
-    required this.label,
-    required this.fee,
+  GroupedRequestModel({
+    required this.driverId,
+    required this.driverName,
+    required this.children,
+    required this.extraDistanceKm,
+    required this.feeAmount,
   });
 
-  factory FeeTierItemModel.fromJson(Map<String, dynamic> json) {
-    return FeeTierItemModel(
-      tier: json['tier']?.toString() ?? '',
-      label: json['label']?.toString() ?? '',
-      fee: double.tryParse(json['fee']?.toString() ?? '') ?? 0.0,
+  factory GroupedRequestModel.fromJson(Map<String, dynamic> json) {
+    final childrenList = (json['children'] as List? ?? [])
+        .whereType<Map<String, dynamic>>()
+        .map((e) => ChildOptionModel.fromJson(e))
+        .toList();
+
+    return GroupedRequestModel(
+      driverId: int.tryParse(json['driver_id']?.toString() ?? '') ?? 0,
+      driverName: json['driver_name']?.toString() ?? 'سائق',
+      children: childrenList,
+      extraDistanceKm: double.tryParse(json['extra_distance_km']?.toString() ?? '') ?? 0.0,
+      feeAmount: double.tryParse(json['fee_amount']?.toString() ?? '') ?? 0.0,
     );
   }
 }
 
 class LocationChangePreviewModel {
-  final int activeSubscriptionId;
+  final String date;
   final String pointType;
-  final String changeDate;
-  final LocationPointModel? currentLocation;
   final LocationPointModel? newLocation;
-  final double distanceKm;
-  final String feeTier;
-  final String feeTierLabel;
-  final FeeBreakdownModel feeBreakdown;
-  final List<FeeTierItemModel> feeTiers;
+  final List<GroupedRequestModel> groupedRequests;
+  final double totalFee;
   final String currency;
-  final String? childName;
-  final String? driverName;
 
   LocationChangePreviewModel({
-    required this.activeSubscriptionId,
+    required this.date,
     required this.pointType,
-    required this.changeDate,
-    this.currentLocation,
     this.newLocation,
-    required this.distanceKm,
-    required this.feeTier,
-    required this.feeTierLabel,
-    required this.feeBreakdown,
-    required this.feeTiers,
+    required this.groupedRequests,
+    required this.totalFee,
     required this.currency,
-    this.childName,
-    this.driverName,
   });
 
   factory LocationChangePreviewModel.fromJson(Map<String, dynamic> json) {
     final data = json['data'] is Map ? json['data'] as Map<String, dynamic> : json;
 
-    final tripObj = data['trip'] is Map ? data['trip'] as Map<String, dynamic> : {};
-    final childObj = tripObj['child'] is Map ? tripObj['child'] as Map<String, dynamic> : {};
-    final driverObj = tripObj['driver'] is Map ? tripObj['driver'] as Map<String, dynamic> : {};
+    final newLocObj = data['new_location'] is Map
+        ? LocationPointModel.fromJson(Map<String, dynamic>.from(data['new_location']))
+        : null;
 
-    final breakdownObj = data['fee_breakdown'] is Map
-        ? Map<String, dynamic>.from(data['fee_breakdown'])
-        : <String, dynamic>{};
-
-    final tiersList = (data['fee_tiers'] as List? ?? [])
+    final groupedList = (data['grouped_requests'] as List? ?? [])
         .whereType<Map<String, dynamic>>()
-        .map((e) => FeeTierItemModel.fromJson(e))
+        .map((e) => GroupedRequestModel.fromJson(e))
         .toList();
 
+    final summaryObj = data['summary'] is Map ? data['summary'] as Map<String, dynamic> : {};
+    final totalFeeVal = double.tryParse(summaryObj['total_fee']?.toString() ?? '') ??
+        groupedList.fold<double>(0.0, (sum, g) => sum + g.feeAmount);
+
+    final currencyVal = summaryObj['currency']?.toString() ?? data['currency']?.toString() ?? 'د.ل';
+
     return LocationChangePreviewModel(
-      activeSubscriptionId: int.tryParse(data['active_subscription_id']?.toString() ?? '') ?? 0,
+      date: data['date']?.toString() ?? '',
       pointType: data['point_type']?.toString() ?? 'pickup',
-      changeDate: data['change_date']?.toString() ?? '',
-      currentLocation: data['current_location'] is Map
-          ? LocationPointModel.fromJson(Map<String, dynamic>.from(data['current_location']))
-          : null,
-      newLocation: data['new_location'] is Map
-          ? LocationPointModel.fromJson(Map<String, dynamic>.from(data['new_location']))
-          : null,
-      distanceKm: double.tryParse(data['distance_km']?.toString() ?? '') ?? 0.0,
-      feeTier: data['fee_tier']?.toString() ?? '',
-      feeTierLabel: data['fee_tier_label']?.toString() ?? '',
-      feeBreakdown: FeeBreakdownModel.fromJson(breakdownObj),
-      feeTiers: tiersList,
-      currency: data['currency']?.toString() ?? 'د.ل',
-      childName: childObj['name']?.toString(),
-      driverName: driverObj['name']?.toString(),
+      newLocation: newLocObj,
+      groupedRequests: groupedList,
+      totalFee: totalFeeVal,
+      currency: currencyVal,
     );
   }
 }

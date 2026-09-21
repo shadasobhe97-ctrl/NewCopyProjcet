@@ -33,7 +33,7 @@ class SmartSearchBottomSheetWidget extends StatefulWidget {
     required this.kids,
     required this.initialSelectedKidsIds,
     this.initialTripDirection = 'both',
-    this.initialSubscriptionType = 'single_day',
+    this.initialSubscriptionType = 'multi_day',
     this.initialStartDate,
     this.initialEndDate,
     this.buttonLabel,
@@ -58,7 +58,7 @@ class _SmartSearchBottomSheetWidgetState
     super.initState();
     _selectedKidsIds = List.from(widget.initialSelectedKidsIds);
     _tripDirection = widget.initialTripDirection;
-    _subscriptionType = widget.initialSubscriptionType;
+    _subscriptionType = 'multi_day';
     _startDate = widget.initialStartDate ?? DateTime.now();
     _endDate = widget.initialEndDate ?? DateTime.now();
   }
@@ -100,9 +100,7 @@ class _SmartSearchBottomSheetWidgetState
       setState(() {
         if (isStart) {
           _startDate = picked;
-          if (_subscriptionType == 'single_day') {
-            _endDate = picked;
-          } else if (_endDate != null && _endDate!.isBefore(picked)) {
+          if (_endDate != null && _endDate!.isBefore(picked)) {
             _endDate = picked;
           }
         } else {
@@ -406,100 +404,18 @@ class _SmartSearchBottomSheetWidgetState
                     ),
                     SizedBox(height: 16.h),
 
-                    // ── 3. نوع الاشتراك ──
+                    // ── 3. تاريخ الرحلة / الاشتراك ──
                     Text(
-                      "3. نوع الاشتراك",
+                      "3. تاريخ الرحلة",
                       style: AppTextStyles.style(
                         fontWeight: FontWeight.bold,
                         fontSize: 13.sp,
                       ),
                     ),
                     SizedBox(height: 8.h),
+
+                    // حقلين: تاريخ البداية والنهاية (Pill Shape)
                     Row(
-                      children: [
-                        Expanded(
-                          child: _buildOptionChip(
-                            label: "يومي (يوم واحد)",
-                            isSelected: _subscriptionType == 'single_day',
-                            onTap: () {
-                              setState(() {
-                                _subscriptionType = 'single_day';
-                                if (_startDate != null) {
-                                  _endDate = _startDate;
-                                }
-                              });
-                            },
-                            theme: theme,
-                            isDark: isDark,
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: _buildOptionChip(
-                            label: "أكثر من يوم",
-                            isSelected: _subscriptionType == 'multi_day',
-                            onTap: () =>
-                                setState(() => _subscriptionType = 'multi_day'),
-                            theme: theme,
-                            isDark: isDark,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // ── 4. تاريخ الرحلة / الاشتراك ──
-                    Text(
-                      "4. تاريخ الرحلة",
-                      style: AppTextStyles.style(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13.sp,
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-
-                    if (_subscriptionType == 'single_day')
-                      // حقل واحد تاريخ اليوم (Pill Shape)
-                      InkWell(
-                        onTap: () => _pickDate(true),
-                        borderRadius: BorderRadius.circular(30.r),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 16.w, vertical: 12.h),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.grey900 : AppColors.grey100,
-                            borderRadius: BorderRadius.circular(30.r),
-                            border: Border.all(
-                              color: _startDate != null
-                                  ? AppColors.secondaryDark
-                                  : (isDark
-                                      ? AppColors.grey800
-                                      : AppColors.grey300),
-                              width: _startDate != null ? 1.5 : 1.0,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.calendar_today_rounded,
-                                  color: theme.primaryColor, size: 18.r),
-                              SizedBox(width: 12.w),
-                              Text(
-                                _startDate != null
-                                    ? DateFormat('yyyy/MM/dd')
-                                        .format(_startDate!)
-                                    : "اختر تاريخ اليوم المطلوب...",
-                                style: AppTextStyles.style(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13.sp,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else
-                      // حقلين: تاريخ البداية والنهاية (Pill Shape)
-                      Row(
                         children: [
                           Expanded(
                             child: InkWell(

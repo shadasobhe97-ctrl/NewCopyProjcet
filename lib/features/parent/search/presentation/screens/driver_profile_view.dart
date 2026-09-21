@@ -2060,14 +2060,6 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                       isDark,
                     ),
                     _breakdownDetailRow(
-                      Icons.calendar_month_outlined,
-                      'نوع الاشتراك',
-                      item.subscriptionTypeLabel.isNotEmpty
-                          ? item.subscriptionTypeLabel
-                          : 'اشتراك مخصص',
-                      isDark,
-                    ),
-                    _breakdownDetailRow(
                       Icons.date_range_rounded,
                       'أيام العمل',
                       '${item.workingDays} يوم',

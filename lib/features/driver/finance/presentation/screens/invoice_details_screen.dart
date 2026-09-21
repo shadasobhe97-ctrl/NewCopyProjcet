@@ -53,8 +53,6 @@ class _InvoiceDetailsScreenState extends State<InvoiceDetailsScreen> {
                           _InfoRow(label: 'ولي الأمر', value: d.parentName!),
                         _InfoRow(label: 'المبلغ', value: '${d.amount} د.ل'),
                         _InfoRow(label: 'نوع الفاتورة', value: d.typeLabel),
-                        if (d.subscriptionType != null)
-                          _InfoRow(label: 'نوع الاشتراك', value: d.subscriptionTypeLabel),
                         _InfoRow(
                           label: 'الحالة',
                           valueWidget: StatusChip(status: d.statusLabel),

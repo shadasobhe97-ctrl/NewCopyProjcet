@@ -463,7 +463,6 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
       title: 'تفاصيل الاشتراك',
       child: Column(
         children: [
-          _row('نوع الاشتراك', sub.typeDisplayLabel, isDark),
           _row('اتجاه الرحلة', sub.directionDisplayLabel, isDark),
           _row('تاريخ البداية', _formatDate(sub.startDate), isDark),
           if (sub.endDate != null)

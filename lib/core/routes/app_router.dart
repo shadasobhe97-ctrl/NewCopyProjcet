@@ -53,6 +53,8 @@ import 'package:kids_transport/features/driver/trips/logic/driver_trips_history_
 import 'package:kids_transport/features/driver/trips/logic/driver_absence_cubit/driver_absence_cubit.dart';
 import 'package:kids_transport/features/driver/statistics/presentation/screen/driver_statistics_screen.dart';
 import 'package:kids_transport/features/driver/statistics/logic/cubit/driver_statistics_cubit.dart';
+import 'package:kids_transport/features/driver/requests/presentation/screens/driver_location_change_requests_screen.dart';
+import 'package:kids_transport/features/driver/requests/logic/driver_location_change_cubit.dart';
 
 import 'package:kids_transport/features/parent/addresses/presentation/screens/saved_addresses_screen.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
@@ -199,6 +201,8 @@ class AppRoutes {
   static const String driverTripHistoryDetails = '/driverTripHistoryDetails';
   static const String driverAbsence = '/driverAbsence';
   static const String driverStatistics = '/driverStatistics';
+  static const String driverLocationChangeRequests =
+      '/driver-location-change-requests';
 
   static String getInitialRoute() {
     return splash;
@@ -567,6 +571,14 @@ class AppRoutes {
           BlocProvider(
             create: (_) => driverSl<DriverStatisticsCubit>()..loadStatistics(),
             child: const DriverStatisticsScreen(),
+          ),
+        );
+      case driverLocationChangeRequests:
+        return _route(
+          settings,
+          BlocProvider(
+            create: (_) => driverSl<DriverLocationChangeCubit>(),
+            child: const DriverLocationChangeRequestsScreen(),
           ),
         );
 

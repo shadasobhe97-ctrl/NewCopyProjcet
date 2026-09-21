@@ -349,7 +349,6 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
       title: 'تفاصيل الاشتراك',
       child: Column(
         children: [
-          _detailRow('نوع الاشتراك', sub.typeDisplayLabel, isDark),
           _detailRow('اتجاه الرحلة', sub.directionDisplayLabel, isDark),
           _detailRow('تاريخ البداية', _formatDate(sub.startDate), isDark),
           if (sub.endDate != null)

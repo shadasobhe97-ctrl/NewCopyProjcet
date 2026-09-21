@@ -201,12 +201,6 @@ class _ChildSelectionCardWidgetState extends State<ChildSelectionCardWidget> {
                     const SizedBox(height: 6),
                     _buildDetailRow(
                       context,
-                      "• نوع الاشتراك:",
-                      kid.transportPref.subscriptionTypeDisplay,
-                    ),
-                    const SizedBox(height: 6),
-                    _buildDetailRow(
-                      context,
                       "• توقيت الدوام:",
                       kid.transportPref.schoolHoursDisplay,
                     ),

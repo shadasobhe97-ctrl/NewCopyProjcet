@@ -8,18 +8,7 @@ class SubscriptionEnums {
 
   /// يحوّل أي قيمة قديمة (daily / days / weekly / monthly ...) إلى قيمة العقد.
   static String normalizeType(String? raw) {
-    switch ((raw ?? '').trim().toLowerCase()) {
-      case 'single_day':
-      case 'single-day':
-      case 'singleday':
-      case 'daily':
-      case 'days':
-      case 'day':
-      case 'one_day':
-        return singleDay;
-      default:
-        return multiDay;
-    }
+    return multiDay;
   }
 
   static String typeLabel(String? raw) =>
