@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../parent/location_change/data/models/location_change_request_model.dart';
-import '../repositories/driver_location_change_repository.dart';
+import 'package:kids_transport/features/parent/location_change/data/models/location_change_request_model.dart';
+import '../data/repositories/driver_location_change_repository.dart';
+
 
 abstract class DriverLocationChangeState {}
 

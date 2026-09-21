@@ -37,14 +37,16 @@ class LiveTripCubit extends Cubit<LiveTripState> {
       final live = results[0] as DriverTripLiveModel;
       final stopsResponse = results[1] as DriverTripStopsResponseModel;
       final details = results[2] as DriverTripDetailsModel;
+      final sortedStops = _sortedBySequenceOrder(stopsResponse.stops);
 
       emit(
         LiveTripLoaded(
           tripStatus: stopsResponse.tripStatus,
           stops: stopsResponse.stops,
-          childItems: _buildChildItems(details, stopsResponse.stops),
+          childItems: _buildChildItems(details, sortedStops),
           currentChild: live.currentChild,
           progress: live.progress,
+          routeName: details.routeName,
         ),
       );
     } catch (e) {
@@ -52,9 +54,19 @@ class LiveTripCubit extends Cubit<LiveTripState> {
     }
   }
 
+  /// نسخة مُرتّبة من stops[] حسب sequence_order فقط — المصدر الرسمي الوحيد
+  /// لترتيب المحطات بالرحلة الحية. لا تُستخدم لتعديل [LiveTripLoaded.stops]
+  /// نفسها (تبقى بترتيبها الأصلي من الـ Backend لرسم الخريطة/الـ Polyline
+  /// كما وصلت دون أي تعديل).
+  List<DriverTripStopModel> _sortedBySequenceOrder(List<DriverTripStopModel> stops) {
+    final sorted = List<DriverTripStopModel>.of(stops);
+    sorted.sort((a, b) => a.sequenceOrder.compareTo(b.sequenceOrder));
+    return sorted;
+  }
+
   List<LiveTripChildItem> _buildChildItems(
     DriverTripDetailsModel details,
-    List<DriverTripStopModel> stops,
+    List<DriverTripStopModel> sortedStops,
   ) {
     final schoolNameToId = <String, int>{};
     for (final school in details.schools) {
@@ -63,7 +75,7 @@ class LiveTripCubit extends Cubit<LiveTripState> {
 
     final homeStopByChildId = <int, DriverTripStopModel>{};
     final schoolStopBySchoolId = <int, DriverTripStopModel>{};
-    for (final stop in stops) {
+    for (final stop in sortedStops) {
       if (stop.isHome && stop.childId != null) {
         homeStopByChildId[stop.childId!] = stop;
       } else if (stop.isSchool && stop.schoolId != null) {
@@ -97,6 +109,7 @@ class LiveTripCubit extends Cubit<LiveTripState> {
       return LiveTripChildItem(
         tripChildId: child.tripChildId,
         childId: child.childId,
+        // Single Source of Truth لاسم الطفل: children[].name من /driver/trips/{id}
         name: child.name,
         photo: child.photo,
         school: child.school,
@@ -104,6 +117,10 @@ class LiveTripCubit extends Cubit<LiveTripState> {
         dropoffAddress: child.dropoffAddress,
         status: child.status,
         sequenceOrder: child.sequenceOrder,
+        // ترتيب المحطة الرسمي: stops[].sequence_order للمحطة المطابقة عبر
+        // child_id/school_id فقط — هذا هو المُعتمد لترتيب القائمة أدناه،
+        // وليس sequenceOrder أعلاه (يبقى للعرض فقط كرقم مرجعي بالبطاقة).
+        stopSequenceOrder: targetStop?.sequenceOrder,
         eta: targetStop?.eta ?? child.eta,
         targetLatitude: targetLat,
         targetLongitude: targetLng,
@@ -111,7 +128,17 @@ class LiveTripCubit extends Cubit<LiveTripState> {
       );
     }).toList();
 
-    items.sort((a, b) => a.sequenceOrder.compareTo(b.sequenceOrder));
+    // الترتيب حصراً حسب stopSequenceOrder (من stops[].sequence_order).
+    // أي عنصر بلا محطة مطابقة (بيانات Backend ناقصة) يُدفع لنهاية القائمة
+    // دون اختراع رقم ترتيب له.
+    items.sort((a, b) {
+      final orderA = a.stopSequenceOrder;
+      final orderB = b.stopSequenceOrder;
+      if (orderA != null && orderB != null) return orderA.compareTo(orderB);
+      if (orderA != null) return -1;
+      if (orderB != null) return 1;
+      return 0;
+    });
     return items;
   }
 
@@ -127,17 +154,30 @@ class LiveTripCubit extends Cubit<LiveTripState> {
       final live = results[0] as DriverTripLiveModel;
       final stopsResponse = results[1] as DriverTripStopsResponseModel;
       final details = results[2] as DriverTripDetailsModel;
+      final sortedStops = _sortedBySequenceOrder(stopsResponse.stops);
 
       final latest = state;
       if (latest is! LiveTripLoaded) return;
+
+      // إن كانت next_stop/next_child المخزّنة سابقاً أصبحت الآن هي نفسها
+      // current_child الجديد (تطابق IDs)، فهذا تأكيد من الـ Backend أن
+      // الرحلة تقدّمت فعلاً — نُفرغها بانتظار next_stop رسمية جديدة من
+      // الإجراء التالي، بدل تركها مُعروضة خطأً كـ"تالية" وهي أصبحت حالية.
+      final storedNextTripChildId = latest.nextChild?.tripChildId ?? latest.nextStop?.tripChildId;
+      final nextBecameCurrent =
+          storedNextTripChildId != null && storedNextTripChildId == live.currentChild?.tripChildId;
+
       emit(
         latest.copyWith(
           tripStatus: stopsResponse.tripStatus,
           stops: stopsResponse.stops,
-          childItems: _buildChildItems(details, stopsResponse.stops),
+          childItems: _buildChildItems(details, sortedStops),
           currentChild: live.currentChild,
           clearCurrentChild: live.currentChild == null,
           progress: live.progress,
+          routeName: details.routeName,
+          clearNextStop: nextBecameCurrent,
+          clearNextChild: nextBecameCurrent,
         ),
       );
     } catch (_) {
@@ -148,13 +188,22 @@ class LiveTripCubit extends Cubit<LiveTripState> {
   void startBackgroundSync(int tripId) {
     _locationTimer?.cancel();
     _refreshTimer?.cancel();
+    _sendLocationPing(tripId);
     _locationTimer = Timer.periodic(
       const Duration(seconds: 12),
       (_) => _sendLocationPing(tripId),
     );
     _refreshTimer = Timer.periodic(
       const Duration(seconds: 15),
-      (_) => _refreshSilently(tripId),
+      (_) {
+        // لا نسمح للتحديث الدوري بالكتابة فوق حالة إجراء لم يُؤكَّد بعد —
+        // يمنع Race Condition/Flicker بين Action قيد التنفيذ والـ Refresh.
+        // الإجراء نفسه ينادي _refreshSilently مباشرة بعد نجاحه، فلا تفويت
+        // بأي تحديث فعلي.
+        final current = state;
+        if (current is LiveTripLoaded && current.pendingActionTripChildId != null) return;
+        _refreshSilently(tripId);
+      },
     );
   }
 
@@ -165,12 +214,23 @@ class LiveTripCubit extends Cubit<LiveTripState> {
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
-      await _repository.updateLocation(
-        tripId,
-        latitude: position.latitude,
-        longitude: position.longitude,
-        speed: position.speed,
-      );
+      await Future.wait([
+        _repository.updateLocation(
+          tripId,
+          latitude: position.latitude,
+          longitude: position.longitude,
+          speed: position.speed,
+        ),
+        // 🌟 بث فوري لموقع السائق عبر Firebase Firestore لتتبع ولي الأمر اللحظي
+        _repository.pushLiveTrackingToFirestore(
+          tripId,
+          latitude: position.latitude,
+          longitude: position.longitude,
+          heading: position.heading,
+          speed: position.speed,
+          status: current.tripStatus,
+        ),
+      ]);
     } catch (_) {
       // فشل صامت لتحديث الموقع الدوري، لا نكسر واجهة السائق أثناء القيادة
     }
@@ -203,7 +263,7 @@ class LiveTripCubit extends Cubit<LiveTripState> {
     LiveTripChildItem item,
     String action, {
     String? stage,
-    required Future<dynamic> Function() call,
+    required Future<ChildStatusActionResultModel> Function() call,
   }) async {
     final current = state;
     if (current is! LiveTripLoaded) return;
@@ -223,7 +283,19 @@ class LiveTripCubit extends Cubit<LiveTripState> {
     );
 
     try {
-      await call();
+      // نلتقط next_stop/next_child فعلياً من استجابة الـ Backend بدل تجاهلها
+      final result = await call();
+      final afterAction = state;
+      if (afterAction is LiveTripLoaded) {
+        emit(
+          afterAction.copyWith(
+            nextStop: result.nextStop,
+            clearNextStop: result.nextStop == null,
+            nextChild: result.nextChild,
+            clearNextChild: result.nextChild == null,
+          ),
+        );
+      }
       await _refreshSilently(tripId);
       final after = state;
       if (after is LiveTripLoaded) {
@@ -370,6 +442,7 @@ class LiveTripCubit extends Cubit<LiveTripState> {
     emit(current.copyWith(clearActionError: true, clearBlockingError: true));
     try {
       final summary = await _repository.completeTrip(tripId);
+      unawaited(_repository.updateFirestoreTripStatus(tripId, 'completed'));
       emit(current.copyWith(tripStatus: 'completed', completedSummary: summary));
     } catch (e) {
       if (e is ApiException) {
@@ -389,6 +462,7 @@ class LiveTripCubit extends Cubit<LiveTripState> {
     if (current is! LiveTripLoaded) return;
     try {
       final result = await _repository.reportBreakdown(tripId, request);
+      unawaited(_repository.updateFirestoreTripStatus(tripId, 'suspended_breakdown'));
       emit(current.copyWith(
         tripStatus: 'suspended_breakdown',
         breakdownResult: result,
@@ -404,6 +478,7 @@ class LiveTripCubit extends Cubit<LiveTripState> {
     if (current is! LiveTripLoaded) return;
     try {
       final result = await _repository.resumeTrip(tripId);
+      unawaited(_repository.updateFirestoreTripStatus(tripId, result.status));
       emit(current.copyWith(tripStatus: result.status));
     } catch (e) {
       final message = e is ApiException ? e.message : 'فشل استئناف الرحلة: ${e.toString()}';

@@ -34,6 +34,15 @@ class LiveTripLoaded extends LiveTripState {
 
   final VehicleBreakdownResponseModel? breakdownResult;
 
+  /// اسم المسار (route_name) من GET /driver/trips/{tripId}.
+  final String routeName;
+
+  /// المحطة/الطفل التالي — يُعتمَد فقط من next_stop/next_child المُرجعة
+  /// فعلياً ضمن استجابة آخر إجراء ناجح (Pickup/Dropoff/Absent/Skip/QR).
+  /// null يعني "غير معروفة بعد" وليس بالضرورة "انتهت الرحلة".
+  final NextStopModel? nextStop;
+  final NextChildModel? nextChild;
+
   const LiveTripLoaded({
     required this.tripStatus,
     required this.stops,
@@ -46,6 +55,9 @@ class LiveTripLoaded extends LiveTripState {
     this.blockingErrorMessage,
     this.completedSummary,
     this.breakdownResult,
+    this.routeName = '',
+    this.nextStop,
+    this.nextChild,
   });
 
   bool get isInProgress => tripStatus == 'in_progress';
@@ -70,6 +82,11 @@ class LiveTripLoaded extends LiveTripState {
     TripCompleteSummaryModel? completedSummary,
     VehicleBreakdownResponseModel? breakdownResult,
     bool clearBreakdownResult = false,
+    String? routeName,
+    NextStopModel? nextStop,
+    bool clearNextStop = false,
+    NextChildModel? nextChild,
+    bool clearNextChild = false,
   }) {
     return LiveTripLoaded(
       tripStatus: tripStatus ?? this.tripStatus,
@@ -86,6 +103,9 @@ class LiveTripLoaded extends LiveTripState {
           clearBlockingError ? null : (blockingErrorMessage ?? this.blockingErrorMessage),
       completedSummary: completedSummary ?? this.completedSummary,
       breakdownResult: clearBreakdownResult ? null : (breakdownResult ?? this.breakdownResult),
+      routeName: routeName ?? this.routeName,
+      nextStop: clearNextStop ? null : (nextStop ?? this.nextStop),
+      nextChild: clearNextChild ? null : (nextChild ?? this.nextChild),
     );
   }
 
@@ -102,5 +122,8 @@ class LiveTripLoaded extends LiveTripState {
         blockingErrorMessage,
         completedSummary,
         breakdownResult,
+        routeName,
+        nextStop,
+        nextChild,
       ];
 }

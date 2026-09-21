@@ -48,7 +48,7 @@ class _ParentAlternativePhoneScreenState
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new,
-            color: isDark ? AppColors.white : AppColors.black,
+            color: theme.colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -59,7 +59,7 @@ class _ParentAlternativePhoneScreenState
             child: Text(
               "تخطي",
               style: AppTextStyles.style(
-                color: theme.primaryColor,
+                color: theme.colorScheme.primary,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
@@ -81,6 +81,7 @@ class _ParentAlternativePhoneScreenState
                   "رقم هاتف بديل",
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
                   ),
                   textAlign: TextAlign.right,
                 ),
@@ -88,7 +89,9 @@ class _ParentAlternativePhoneScreenState
                 Text(
                   "يمكنكِ إضافة رقم هاتف احتياطي آخر للاتصال به في حالات الطوارئ (اختياري).",
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.grey,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.right,
                 ),
@@ -96,7 +99,10 @@ class _ParentAlternativePhoneScreenState
 
                 Text(
                   "رقم الهاتف البديل",
-                  style: AppTextStyles.style(fontWeight: FontWeight.bold),
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
                   textAlign: TextAlign.right,
                 ),
                 const SizedBox(height: 8),
@@ -105,10 +111,13 @@ class _ParentAlternativePhoneScreenState
                   keyboardType: TextInputType.phone,
                   textDirection: TextDirection.ltr,
                   textAlign: TextAlign.left,
+                  style: AppTextStyles.inputTextStyle(
+                    color: isDark ? AppColors.white : AppColors.textPrimary,
+                  ),
                   decoration: AppTheme.inputDecoration(
                     context,
                     hintText: "09XXXXXXXX",
-                    prefixIcon: Icon(Icons.phone_enabled_outlined),
+                    prefixIcon: const Icon(Icons.phone_enabled_outlined),
                   ),
                   validator: (value) => AppValidators.validateLibyanPhone(
                     value,

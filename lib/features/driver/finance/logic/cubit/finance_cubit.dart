@@ -132,10 +132,10 @@ class FinanceCubit extends Cubit<FinanceState> {
   Future<bool> createWithdrawal(Map<String, dynamic> body) async {
     emit(FinanceSubmitting());
     try {
-      final createdWithdrawal = await _repository.createWithdrawal(body);
+      final result = await _repository.createWithdrawal(body);
       emit(FinanceSuccess(
-        "تم تقديم طلب السحب بنجاح. بانتظار مراجعة الإدارة.",
-        withdrawal: createdWithdrawal,
+        result.message,
+        withdrawal: result.withdrawal,
       ));
       return true;
     } catch (e) {

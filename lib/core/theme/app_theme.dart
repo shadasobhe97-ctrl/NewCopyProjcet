@@ -13,44 +13,88 @@ class AppTheme {
     vertical: 18,
   );
 
-  static TextTheme _buildTextTheme(TextTheme baseTheme) {
+  static TextTheme _buildTextTheme(TextTheme baseTheme, {bool isDark = false}) {
+    final primaryTextColor =
+        isDark ? AppColors.textOnDark : AppColors.textPrimary;
+    final secondaryTextColor =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+
     return GoogleFonts.cairoTextTheme(baseTheme).copyWith(
       displayLarge: GoogleFonts.cairo(
         fontSize: 32,
         fontWeight: FontWeight.bold,
+        color: primaryTextColor,
       ),
       displayMedium: GoogleFonts.cairo(
         fontSize: 28,
         fontWeight: FontWeight.bold,
+        color: primaryTextColor,
       ),
       displaySmall: GoogleFonts.cairo(
         fontSize: 24,
         fontWeight: FontWeight.bold,
+        color: primaryTextColor,
       ),
       headlineLarge: GoogleFonts.cairo(
         fontSize: 22,
         fontWeight: FontWeight.bold,
+        color: primaryTextColor,
       ),
       headlineMedium: GoogleFonts.cairo(
         fontSize: 20,
         fontWeight: FontWeight.bold,
+        color: primaryTextColor,
       ),
       headlineSmall: GoogleFonts.cairo(
         fontSize: 18,
         fontWeight: FontWeight.bold,
+        color: primaryTextColor,
       ),
-      titleLarge: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.w600),
-      titleMedium: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.w600),
-      titleSmall: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w500),
-      bodyLarge: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.normal),
+      titleLarge: GoogleFonts.cairo(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: primaryTextColor,
+      ),
+      titleMedium: GoogleFonts.cairo(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: primaryTextColor,
+      ),
+      titleSmall: GoogleFonts.cairo(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: primaryTextColor,
+      ),
+      bodyLarge: GoogleFonts.cairo(
+        fontSize: 16,
+        fontWeight: FontWeight.normal,
+        color: primaryTextColor,
+      ),
       bodyMedium: GoogleFonts.cairo(
         fontSize: 14,
         fontWeight: FontWeight.normal,
+        color: primaryTextColor,
       ),
-      bodySmall: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.normal),
-      labelLarge: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600),
-      labelMedium: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.w500),
-      labelSmall: GoogleFonts.cairo(fontSize: 10, fontWeight: FontWeight.w500),
+      bodySmall: GoogleFonts.cairo(
+        fontSize: 12,
+        fontWeight: FontWeight.normal,
+        color: secondaryTextColor,
+      ),
+      labelLarge: GoogleFonts.cairo(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: primaryTextColor,
+      ),
+      labelMedium: GoogleFonts.cairo(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: secondaryTextColor,
+      ),
+      labelSmall: GoogleFonts.cairo(
+        fontSize: 10,
+        fontWeight: FontWeight.w500,
+        color: secondaryTextColor,
+      ),
     );
   }
 
@@ -167,6 +211,7 @@ class AppTheme {
     Icon? icon,
     String? counterText,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context).inputDecorationTheme;
     return InputDecoration(
       labelText: labelText,
@@ -185,8 +230,18 @@ class AppTheme {
       focusedBorder: focusedBorder ?? theme.focusedBorder,
       errorBorder: errorBorder ?? theme.errorBorder,
       focusedErrorBorder: focusedErrorBorder ?? theme.focusedErrorBorder,
-      hintStyle: hintStyle ?? theme.hintStyle,
-      labelStyle: labelStyle ?? theme.labelStyle,
+      hintStyle: hintStyle ??
+          theme.hintStyle ??
+          GoogleFonts.cairo(
+            color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+            fontSize: 14,
+          ),
+      labelStyle: labelStyle ??
+          theme.labelStyle ??
+          GoogleFonts.cairo(
+            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+            fontSize: 14,
+          ),
       alignLabelWithHint: alignLabelWithHint,
       floatingLabelBehavior: floatingLabelBehavior,
       isDense: isDense,
@@ -381,8 +436,8 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.backgroundLight,
     );
     return baseTheme.copyWith(
-      textTheme: _buildTextTheme(baseTheme.textTheme),
-      primaryTextTheme: _buildTextTheme(baseTheme.primaryTextTheme),
+      textTheme: _buildTextTheme(baseTheme.textTheme, isDark: false),
+      primaryTextTheme: _buildTextTheme(baseTheme.primaryTextTheme, isDark: true),
       cardTheme: const CardThemeData(
         color: AppColors.surfaceLight,
         elevation: 2,
@@ -423,6 +478,8 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.white,
+        prefixIconColor: AppColors.primary,
+        suffixIconColor: AppColors.textSecondary,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 18,
@@ -454,8 +511,8 @@ class AppTheme {
             width: 1.5,
           ),
         ),
-        labelStyle: GoogleFonts.cairo(color: AppColors.grey600),
-        hintStyle: GoogleFonts.cairo(color: AppColors.grey400),
+        labelStyle: GoogleFonts.cairo(color: AppColors.textSecondary),
+        hintStyle: GoogleFonts.cairo(color: AppColors.textMuted),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
@@ -511,8 +568,8 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.backgroundDark,
     );
     return baseTheme.copyWith(
-      textTheme: _buildTextTheme(baseTheme.textTheme),
-      primaryTextTheme: _buildTextTheme(baseTheme.primaryTextTheme),
+      textTheme: _buildTextTheme(baseTheme.textTheme, isDark: true),
+      primaryTextTheme: _buildTextTheme(baseTheme.primaryTextTheme, isDark: true),
       cardTheme: CardThemeData(
         color: AppColors.surfaceDark,
         elevation: 0,
@@ -553,6 +610,8 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceDark,
+        prefixIconColor: AppColors.primaryLight,
+        suffixIconColor: AppColors.textSecondaryDark,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 18,
@@ -584,8 +643,8 @@ class AppTheme {
             width: 1.5,
           ),
         ),
-        labelStyle: GoogleFonts.cairo(color: AppColors.grey400),
-        hintStyle: GoogleFonts.cairo(color: AppColors.grey600),
+        labelStyle: GoogleFonts.cairo(color: AppColors.textSecondaryDark),
+        hintStyle: GoogleFonts.cairo(color: AppColors.textMutedDark),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {

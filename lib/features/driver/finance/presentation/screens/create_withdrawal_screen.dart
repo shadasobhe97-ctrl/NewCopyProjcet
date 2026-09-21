@@ -16,21 +16,12 @@ class CreateWithdrawalScreen extends StatefulWidget {
 }
 
 class _CreateWithdrawalScreenState extends State<CreateWithdrawalScreen> {
-  String _method = 'bank';
   final _amountController = TextEditingController();
-  final _bankNameController = TextEditingController();
-  final _accountNameController = TextEditingController();
-  final _accountNumberController = TextEditingController();
-  final _mobileNumberController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
     _amountController.dispose();
-    _bankNameController.dispose();
-    _accountNameController.dispose();
-    _accountNumberController.dispose();
-    _mobileNumberController.dispose();
     super.dispose();
   }
 
@@ -40,26 +31,7 @@ class _CreateWithdrawalScreenState extends State<CreateWithdrawalScreen> {
     final amount = double.tryParse(_amountController.text.trim()) ?? 0;
     if (amount < 50 || amount > widget.balance) return;
 
-    final Map<String, dynamic> body;
-    if (_method == 'bank') {
-      body = {
-        'amount': amount,
-        'payment_method_details': {
-          'bank_name': _bankNameController.text.trim(),
-          'account_number': _accountNumberController.text.trim(),
-          'account_name': _accountNameController.text.trim(),
-        },
-      };
-    } else {
-      body = {
-        'amount': amount,
-        'payment_method_details': {
-          'bank_name': 'ليبيانا',
-          'account_number': _mobileNumberController.text.trim(),
-          'account_name': 'رقم المحفظة',
-        },
-      };
-    }
+    final body = {'amount': amount};
 
     final success = await context.read<FinanceCubit>().createWithdrawal(body);
     if (success && mounted) {
@@ -112,10 +84,6 @@ class _CreateWithdrawalScreenState extends State<CreateWithdrawalScreen> {
                     _buildBalanceCard(isDark),
                     const SizedBox(height: 16),
                     _buildAmountField(),
-                    const SizedBox(height: 20),
-                    _buildMethodSection(isDark),
-                    const SizedBox(height: 20),
-                    if (_method == 'bank') _buildBankFields(isDark) else _buildLibyanaFields(isDark),
                     const SizedBox(height: 24),
                     _buildSubmitButton(isSubmitting),
                     const SizedBox(height: 16),
@@ -232,219 +200,6 @@ class _CreateWithdrawalScreenState extends State<CreateWithdrawalScreen> {
               if (amount > widget.balance) return 'المبلغ يتجاوز الرصيد المتاح';
               return null;
             },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMethodSection(bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: AppTheme.boxDecoration(
-        color: context.cardSurface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          AppTheme.boxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'طريقة السحب',
-            style: AppTextStyles.style(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: context.isDarkMode ? AppColors.white : AppColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _methodOption('حساب مصرفي', 'bank', isDark)),
-              const SizedBox(width: 12),
-              Expanded(child: _methodOption('ليبيانا', 'libyana', isDark)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _methodOption(String label, String value, bool isDark) {
-    final isSelected = _method == value;
-    return GestureDetector(
-      onTap: () => setState(() => _method = value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: AppTheme.boxDecoration(
-          color: isSelected
-              ? context.primaryColor.withValues(alpha: 0.1)
-              : (isDark ? AppColors.surfaceDark : AppColors.grey100),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? context.primaryColor : AppColors.grey200,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              value == 'bank' ? Icons.account_balance_rounded : Icons.phone_android_rounded,
-              color: isSelected ? context.primaryColor : AppColors.textMuted,
-              size: 28,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: AppTextStyles.style(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected
-                    ? (isDark ? AppColors.white : AppColors.textDark)
-                    : AppColors.textMuted,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBankFields(bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: AppTheme.boxDecoration(
-        color: context.cardSurface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          AppTheme.boxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.account_balance_rounded, size: 18, color: context.primaryColor),
-              const SizedBox(width: 8),
-              Text(
-                'بيانات الحساب المصرفي',
-                style: AppTextStyles.style(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: context.isDarkMode ? AppColors.white : AppColors.textDark,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _bankNameController,
-            decoration: const InputDecoration(
-              labelText: 'اسم المصرف',
-              hintText: 'أدخل اسم المصرف',
-            ),
-            validator: (v) => (v == null || v.isEmpty) ? 'اسم المصرف مطلوب' : null,
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _accountNameController,
-            decoration: const InputDecoration(
-              labelText: 'اسم صاحب الحساب',
-              hintText: 'أدخل اسم صاحب الحساب',
-            ),
-            validator: (v) => (v == null || v.isEmpty) ? 'اسم صاحب الحساب مطلوب' : null,
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _accountNumberController,
-            decoration: const InputDecoration(
-              labelText: 'رقم الحساب',
-              hintText: 'أدخل رقم الحساب',
-            ),
-            validator: (v) => (v == null || v.isEmpty) ? 'رقم الحساب مطلوب' : null,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLibyanaFields(bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: AppTheme.boxDecoration(
-        color: context.cardSurface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          AppTheme.boxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.phone_android_rounded, size: 18, color: context.primaryColor),
-              const SizedBox(width: 8),
-              Text(
-                'بيانات ليبيانا',
-                style: AppTextStyles.style(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: context.isDarkMode ? AppColors.white : AppColors.textDark,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _mobileNumberController,
-            keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: 'رقم الهاتف',
-              hintText: 'أدخل رقم الهاتف',
-            ),
-            validator: (v) => (v == null || v.isEmpty) ? 'رقم الهاتف مطلوب' : null,
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: AppTheme.boxDecoration(
-              color: AppColors.success.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.check_circle, color: AppColors.success, size: 22),
-                const SizedBox(width: 10),
-                Text(
-                  'سيتم الإرسال عبر ليبيانا',
-                  style: AppTextStyles.style(
-                    fontSize: 14,
-                    color: AppColors.success,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

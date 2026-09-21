@@ -159,7 +159,7 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new,
-            color: isDark ? AppColors.white : AppColors.black,
+            color: theme.colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -251,7 +251,9 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                             : "أضف صورة شخصية (اختياري)",
                         style: AppTextStyles.style(
                           fontSize: 12,
-                          color: AppColors.grey,
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondary,
                         ),
                       ),
                     ),
@@ -261,6 +263,9 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                     TextFormField(
                       controller: _nameController,
                       textAlign: TextAlign.right,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: AppTheme.inputDecoration(
                         context,
                         labelText: "الاسم الكامل (الثلاثي بالعربي)",
@@ -276,6 +281,9 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                       keyboardType: TextInputType.emailAddress,
                       textDirection: TextDirection.ltr,
                       textAlign: TextAlign.left,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: AppTheme.inputDecoration(
                         context,
                         labelText: "البريد الإلكتروني",
@@ -292,6 +300,9 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                       keyboardType: TextInputType.phone,
                       textDirection: TextDirection.ltr,
                       textAlign: TextAlign.left,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: AppTheme.inputDecoration(
                         context,
                         labelText: "رقم الهاتف",
@@ -309,6 +320,9 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                       keyboardType: TextInputType.phone,
                       textDirection: TextDirection.ltr,
                       textAlign: TextAlign.left,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: AppTheme.inputDecoration(
                         context,
                         labelText: "رقم هاتف بديل/الطوارئ (اختياري)",
@@ -329,6 +343,7 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                       style: AppTextStyles.style(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -367,6 +382,9 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                       obscureText: !_isPasswordVisible,
                       textDirection: TextDirection.ltr,
                       textAlign: TextAlign.left,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: AppTheme.inputDecoration(
                         context,
                         labelText: "كلمة المرور",
@@ -392,6 +410,9 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                       obscureText: !_isConfirmPasswordVisible,
                       textDirection: TextDirection.ltr,
                       textAlign: TextAlign.left,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: AppTheme.inputDecoration(
                         context,
                         labelText: "تأكيد كلمة المرور",

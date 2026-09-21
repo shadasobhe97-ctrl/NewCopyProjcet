@@ -7,6 +7,10 @@ class DriverTripStopModel extends Equatable {
   final int sequenceOrder;
   final String status; // trip_stops.status values
   final int? childId;
+  // ⚠️ Single Source of Truth لاسم الطفل هو children[].name من
+  // GET /driver/trips/{tripId} (عبر TripDetailsChildModel.name). هذا الحقل
+  // (stops[].child_name) يُقرأ ويُحفظ فقط للمطابقة/التوثيق الداخلي، ولا
+  // يُستخدم لعرض اسم الطفل بواجهة الرحلة الحية — تجنباً لخلط مصدرين.
   final String? childName;
   final int? schoolId;
   final String? schoolName;
@@ -52,7 +56,25 @@ class DriverTripStopModel extends Equatable {
 
   bool get isHome => stopType == 'home';
   bool get isSchool => stopType == 'school';
-  bool get isResolved => status != 'pending' && status != 'boarded';
+
+  /// نفس مجموعة الحالات النهائية المعتمدة بـ [LiveTripChildItem] — أي status
+  /// غير معروف يبقى "غير منتهٍ" (لا يتحول تلقائياً لمكتمل) لتفادي تلوين
+  /// المحطة كمكتملة (أخضر) خطأً على الخريطة.
+  static const Set<String> _terminalStatuses = {
+    'completed',
+    'skipped',
+    'skipped_unresponsive',
+    'absent',
+    'absent_late',
+    'absent_pre',
+    'dropped_off',
+    'dropped_off_school',
+    'delivered_home',
+    'dropoff_failed',
+    'direct_parent_handling',
+  };
+
+  bool get isResolved => _terminalStatuses.contains(status);
 
   static int _parseInt(dynamic val) {
     if (val is int) return val;

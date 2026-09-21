@@ -19,6 +19,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -27,9 +28,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen> {
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new,
-            color: theme.brightness == Brightness.dark
-                ? AppColors.white
-                : AppColors.black,
+            color: theme.colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -41,11 +40,11 @@ class _SelectRoleScreenState extends State<SelectRoleScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 10),
-              // 🌟 هنا حطي الويدجت تبيعتكِ الجاهزة المعتمدة للهيدر (AuthHeaderSection)
               Text(
                 "انضم إلينا كـ...",
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -53,7 +52,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen> {
               Text(
                 "الرجاء اختيار نوع الحساب لإتمام عملية التسجيل بشكل صحيح",
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColors.grey,
+                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -119,7 +118,13 @@ class _SelectRoleScreenState extends State<SelectRoleScreen> {
                 ),
                 child: Text(
                   "التالي",
-                  style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: _currentSelectedRole == null
+                        ? (isDark ? AppColors.grey600 : AppColors.grey400)
+                        : AppColors.white,
+                  ),
                 ),
               ),
               const SizedBox(height: 24),

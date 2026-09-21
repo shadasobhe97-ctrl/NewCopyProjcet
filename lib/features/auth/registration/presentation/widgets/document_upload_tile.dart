@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:kids_transport/core/services/image_quality_service.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 
@@ -67,32 +66,17 @@ class _DocumentUploadTileState extends State<DocumentUploadTile> {
     );
   }
 
-  // دالة جلب الصورة النظيفة بناءً على خيار المستخدم
+  // دالة جلب الصورة بناءً على خيار المستخدم
   Future<void> _pickDocumentImage(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
         maxWidth: 1280,
         maxHeight: 1280,
-        imageQuality: 60, // ضغط ممتاز لحجم صغير وقراءة واضحة للوثائق
+        imageQuality: 75,
       );
 
       if (image != null) {
-        final qualityResult = await ImageQualityService.validateImage(image);
-        if (!qualityResult.isValid) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                qualityResult.errorMessage ?? 'جودة الصورة ضعيفة',
-                textAlign: TextAlign.right,
-              ),
-              backgroundColor: AppColors.red,
-            ),
-          );
-          return;
-        }
-
         setState(() {
           _pickedXFile = image;
         });

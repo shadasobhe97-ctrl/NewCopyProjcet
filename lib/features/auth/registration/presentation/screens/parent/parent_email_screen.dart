@@ -35,7 +35,7 @@ class _ParentEmailScreenState extends State<ParentEmailScreen> {
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new,
-            color: isDark ? AppColors.white : AppColors.black,
+            color: theme.colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -81,6 +81,7 @@ class _ParentEmailScreenState extends State<ParentEmailScreen> {
                       "التحقق من البريد",
                       style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.right,
                     ),
@@ -88,7 +89,9 @@ class _ParentEmailScreenState extends State<ParentEmailScreen> {
                     Text(
                       "يرجى إدخال بريدك الإلكتروني لإرسال كود التحقق (OTP) وتأمين حسابك.",
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.grey,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondary,
                       ),
                       textAlign: TextAlign.right,
                     ),
@@ -96,7 +99,10 @@ class _ParentEmailScreenState extends State<ParentEmailScreen> {
 
                     Text(
                       "البريد الإلكتروني",
-                      style: AppTextStyles.style(fontWeight: FontWeight.bold),
+                      style: AppTextStyles.style(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
                       textAlign: TextAlign.right,
                     ),
                     const SizedBox(height: 8),
@@ -105,9 +111,13 @@ class _ParentEmailScreenState extends State<ParentEmailScreen> {
                       keyboardType: TextInputType.emailAddress,
                       textDirection: TextDirection.ltr,
                       textAlign: TextAlign.left,
-                      decoration: AppTheme.inputDecoration(context, 
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
+                      decoration: AppTheme.inputDecoration(
+                        context,
                         hintText: "example@gmail.com",
-                        prefixIcon: Icon(Icons.email_outlined),
+                        prefixIcon: const Icon(Icons.email_outlined),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {

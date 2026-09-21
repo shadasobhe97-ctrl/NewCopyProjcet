@@ -70,7 +70,7 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
             child: Text(
               "تخطي",
               style: AppTextStyles.style(
-                color: theme.primaryColor,
+                color: theme.colorScheme.primary,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
@@ -111,7 +111,9 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
                   child: Text(
                     "يرجى تحديد نقطة انطلاق الحافلة الأساسية (مثل موقع منزلك أو الجراج) لتسهيل حساب المسارات للطلاب.",
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: AppColors.grey,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondary,
                     ),
                     textAlign: TextAlign.right,
                   ),
@@ -178,7 +180,11 @@ class _DriverLocationScreenState extends State<DriverLocationScreen> {
                       TextFormField(
                         controller: _labelController,
                         textAlign: TextAlign.right,
-                        decoration: AppTheme.inputDecoration(context, 
+                        style: AppTextStyles.inputTextStyle(
+                          color: isDark ? AppColors.white : AppColors.textPrimary,
+                        ),
+                        decoration: AppTheme.inputDecoration(
+                          context,
                           labelText: "تسمية موقع الانطلاق",
                           prefixIcon: const Icon(Icons.pin_drop_outlined),
                         ),

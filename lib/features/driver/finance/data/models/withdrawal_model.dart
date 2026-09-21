@@ -50,6 +50,7 @@ class WithdrawalModel {
   final String status;
   final String? rejectionReason;
   final DateTime createdAt;
+  final DateTime? updatedAt;
   final PaymentMethodDetails? paymentMethodDetails;
 
   WithdrawalModel({
@@ -61,6 +62,7 @@ class WithdrawalModel {
     required this.status,
     this.rejectionReason,
     required this.createdAt,
+    this.updatedAt,
     this.paymentMethodDetails,
   });
 
@@ -83,6 +85,11 @@ class WithdrawalModel {
       parsedDate = DateTime.now();
     }
 
+    DateTime? parsedUpdatedAt;
+    if (json['updated_at'] != null) {
+      parsedUpdatedAt = DateTime.tryParse(json['updated_at'].toString());
+    }
+
     return WithdrawalModel(
       id: parseInt(json['id']),
       driverId: json['driver_id'] != null ? parseInt(json['driver_id']) : null,
@@ -94,6 +101,7 @@ class WithdrawalModel {
       status: json['status'] as String? ?? 'pending',
       rejectionReason: json['rejection_reason'] as String?,
       createdAt: parsedDate,
+      updatedAt: parsedUpdatedAt,
       paymentMethodDetails: details,
     );
   }

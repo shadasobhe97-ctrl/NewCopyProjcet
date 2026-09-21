@@ -25,6 +25,8 @@ class CustomTextField extends StatelessWidget {
   final String? initialValue;
   final FocusNode? focusNode;
 
+  final TextStyle? style;
+
   const CustomTextField({
     super.key,
     this.controller,
@@ -44,10 +46,13 @@ class CustomTextField extends StatelessWidget {
     this.controllerBuilder,
     this.initialValue,
     this.focusNode,
+    this.style,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return TextFormField(
       controller: controller,
       readOnly: readOnly,
@@ -61,19 +66,26 @@ class CustomTextField extends StatelessWidget {
       inputFormatters: inputFormatters,
       focusNode: focusNode,
       initialValue: controller == null ? initialValue : null,
-      style: AppTextStyles.style(fontSize: 15),
+      style: style ??
+          AppTextStyles.style(
+            fontSize: 15,
+            color: isDark ? AppColors.white : AppColors.textPrimary,
+          ),
       decoration: AppTheme.inputDecoration(
         context,
         hintText: hintText,
         labelText: labelText,
         hintStyle: AppTextStyles.style(
-          color: AppColors.textMuted,
+          color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
           fontSize: 13,
         ),
-        prefixIcon:
-            prefixIcon != null
-                ? Icon(prefixIcon, color: AppColors.primaryLight, size: 20)
-                : null,
+        prefixIcon: prefixIcon != null
+            ? Icon(
+                prefixIcon,
+                color: isDark ? AppColors.primaryLight : AppColors.primary,
+                size: 20,
+              )
+            : null,
         suffixIcon: suffix,
       ),
     );

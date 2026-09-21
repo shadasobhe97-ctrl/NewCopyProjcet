@@ -76,11 +76,16 @@ class AppTextStyles {
     );
   }
 
-  static TextStyle inputTextStyle({required Color color}) {
+  static TextStyle inputTextStyle({Color? color, BuildContext? context}) {
+    Color resolvedColor = color ?? AppColors.textPrimary;
+    if (context != null && color == null) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      resolvedColor = isDark ? AppColors.white : AppColors.textPrimary;
+    }
     return GoogleFonts.cairo(
       fontSize: 16,
       fontWeight: FontWeight.normal,
-      color: color,
+      color: resolvedColor,
     );
   }
 

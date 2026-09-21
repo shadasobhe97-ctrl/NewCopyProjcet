@@ -159,7 +159,7 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new,
-            color: isDark ? AppColors.white : AppColors.black,
+            color: theme.colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -203,6 +203,7 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                       "حساب ولي الأمر الجديد",
                       style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.right,
                     ),
@@ -210,7 +211,9 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                     Text(
                       "أدخل بياناتك الشخصية للتحقق وإنشاء الحساب.",
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.grey,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondary,
                       ),
                       textAlign: TextAlign.right,
                     ),
@@ -271,7 +274,9 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                             : "أضف صورة شخصية (اختياري)",
                         style: AppTextStyles.style(
                           fontSize: 12,
-                          color: AppColors.grey,
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondary,
                         ),
                       ),
                     ),
@@ -281,6 +286,9 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                     TextFormField(
                       controller: _nameController,
                       textAlign: TextAlign.right,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: AppTheme.inputDecoration(
                         context,
                         labelText: "الاسم الكامل (الثلاثي بالعربي)",
@@ -296,6 +304,9 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                       keyboardType: TextInputType.emailAddress,
                       textDirection: TextDirection.ltr,
                       textAlign: TextAlign.left,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: AppTheme.inputDecoration(
                         context,
                         labelText: "البريد الإلكتروني",
@@ -312,6 +323,9 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                       keyboardType: TextInputType.phone,
                       textDirection: TextDirection.ltr,
                       textAlign: TextAlign.left,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: AppTheme.inputDecoration(
                         context,
                         labelText: "رقم الهاتف الأساسي",
@@ -329,6 +343,9 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                       keyboardType: TextInputType.phone,
                       textDirection: TextDirection.ltr,
                       textAlign: TextAlign.left,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: AppTheme.inputDecoration(
                         context,
                         labelText: "رقم الهاتف الاحتياطي (اختياري)",
@@ -349,6 +366,9 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                       obscureText: _isPasswordObscured,
                       textDirection: TextDirection.ltr,
                       textAlign: TextAlign.left,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: AppTheme.inputDecoration(
                         context,
                         labelText: "كلمة المرور",
@@ -374,6 +394,9 @@ class _ParentBasicInfoScreenState extends State<ParentBasicInfoScreen> {
                       obscureText: _isConfirmPasswordObscured,
                       textDirection: TextDirection.ltr,
                       textAlign: TextAlign.left,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: AppTheme.inputDecoration(
                         context,
                         labelText: "تأكيد كلمة المرور",

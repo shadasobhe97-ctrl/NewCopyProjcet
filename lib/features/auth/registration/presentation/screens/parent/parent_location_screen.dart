@@ -229,6 +229,9 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     textAlign: TextAlign.right,
+                    style: AppTextStyles.inputTextStyle(
+                      color: isDark ? AppColors.white : AppColors.textPrimary,
+                    ),
                     decoration: AppTheme.inputDecoration(
                       context,
                       labelText: "ابحث باسم المنطقة...",
@@ -568,6 +571,9 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
                         TextFormField(
                           controller: _labelController,
                           textAlign: TextAlign.right,
+                          style: AppTextStyles.inputTextStyle(
+                            color: isDark ? AppColors.white : AppColors.textPrimary,
+                          ),
                           decoration: AppTheme.inputDecoration(
                             context,
                             labelText: "تسمية الموقع (مثال: المنزل الرئيسي)",

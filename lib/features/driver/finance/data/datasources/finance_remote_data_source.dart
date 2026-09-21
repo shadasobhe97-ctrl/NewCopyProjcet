@@ -47,7 +47,9 @@ class FinanceRemoteDataSource {
     );
   }
 
-  Future<WithdrawalModel> createWithdrawal(Map<String, dynamic> body) async {
+  Future<({WithdrawalModel withdrawal, String message})> createWithdrawal(
+    Map<String, dynamic> body,
+  ) async {
     final response = await _apiClient.post(
       'v1/driver/withdrawals',
       data: body,
@@ -55,7 +57,12 @@ class FinanceRemoteDataSource {
     );
     final data = _handleResponse(response.data);
     final responseData = data['data'] as Map<String, dynamic>? ?? data;
-    return WithdrawalModel.fromJson(responseData);
+    final message = data['message'] as String? ??
+        'تم تقديم طلب السحب بنجاح. بانتظار مراجعة الإدارة.';
+    return (
+      withdrawal: WithdrawalModel.fromJson(responseData),
+      message: message,
+    );
   }
 
   Future<PaginatedResponse<InvoiceModel>> getInvoices({

@@ -318,7 +318,7 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
           leading: IconButton(
             icon: Icon(
               Icons.arrow_back_ios_new,
-              color: isDark ? AppColors.white : AppColors.black,
+              color: theme.colorScheme.onSurface,
             ),
             onPressed: _showExitRegistrationDialog,
           ),
@@ -336,6 +336,7 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                   "تفاصيل المركبة",
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
                   ),
                   textAlign: TextAlign.right,
                 ),
@@ -343,7 +344,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                 Text(
                   "الرجاء إدخال معلومات الحافلة أو السيارة لتفعيل حسابك.",
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.grey600,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.right,
                 ),
@@ -356,6 +359,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                     TextFormField(
                       controller: _brandController,
                       textAlign: TextAlign.right,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: _buildInputDecoration(
                         "الشركة المصنعة (مثال: Toyota)",
                         Icons.directions_car,
@@ -371,6 +377,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                     TextFormField(
                       controller: _modelController,
                       textAlign: TextAlign.right,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: _buildInputDecoration(
                         "الموديل (مثال: Hiace / Camry)",
                         Icons.local_offer_outlined,
@@ -399,6 +408,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                             child: Text(
                               type['ar']!,
                               textDirection: TextDirection.rtl,
+                              style: AppTextStyles.style(
+                                color: isDark ? AppColors.white : AppColors.textPrimary,
+                              ),
                             ),
                           ),
                         );
@@ -420,6 +432,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                     TextFormField(
                       controller: _plateNumberController,
                       textAlign: TextAlign.right,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: _buildInputDecoration(
                         "رقم لوحة المركبة الرسمي",
                         Icons.pin_outlined,
@@ -436,6 +451,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                       controller: _yearController,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.right,
+                      style: AppTextStyles.inputTextStyle(
+                        color: isDark ? AppColors.white : AppColors.textPrimary,
+                      ),
                       decoration: _buildInputDecoration(
                         "سنة الصنع (مثال: 2023)",
                         Icons.calendar_today_outlined,
@@ -462,6 +480,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                             controller: _capacityController,
                             keyboardType: TextInputType.number,
                             textAlign: TextAlign.right,
+                            style: AppTextStyles.inputTextStyle(
+                              color: isDark ? AppColors.white : AppColors.textPrimary,
+                            ),
                             decoration: _buildInputDecoration(
                               "عدد المقاعد",
                               Icons.airline_seat_recline_normal,
@@ -483,6 +504,9 @@ class _DriverVehicleStageScreenState extends State<DriverVehicleStageScreen> {
                           child: TextFormField(
                             controller: _colorController,
                             textAlign: TextAlign.right,
+                            style: AppTextStyles.inputTextStyle(
+                              color: isDark ? AppColors.white : AppColors.textPrimary,
+                            ),
                             decoration: _buildInputDecoration(
                               "اللون (أبيض..)",
                               Icons.color_lens_outlined,

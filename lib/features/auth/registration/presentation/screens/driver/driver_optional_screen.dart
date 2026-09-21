@@ -31,7 +31,10 @@ class _DriverOptionalScreenState extends State<DriverOptionalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final cubit = context.read<RegisterCubit>();
+
     return Scaffold(
       appBar: AppBar(backgroundColor: AppColors.transparent, elevation: 0),
       body: BlocConsumer<RegisterCubit, RegisterState>(
@@ -51,6 +54,7 @@ class _DriverOptionalScreenState extends State<DriverOptionalScreen> {
                   style: AppTextStyles.style(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
                   ),
                   textAlign: TextAlign.right,
                 ),
@@ -81,6 +85,9 @@ class _DriverOptionalScreenState extends State<DriverOptionalScreen> {
                 TextFormField(
                   controller: _altPhoneController,
                   keyboardType: TextInputType.phone,
+                  style: AppTextStyles.inputTextStyle(
+                    color: isDark ? AppColors.white : AppColors.textPrimary,
+                  ),
                   decoration: AppTheme.inputDecoration(
                     context,
                     labelText: "رقم هاتف احتياطي (اختياري)",

@@ -13,6 +13,11 @@ class TripChildActionCard extends StatelessWidget {
   final bool isCurrent;
   final bool isPendingAction;
   final double? distanceMeters;
+
+  /// false يعني إحداثيات المحطة الهدف غير متوفرة أصلاً من Backend (بيانات
+  /// ناقصة) — حالة مختلفة عن "بعيد عن المحطة"، ويجب توضيحها للسائق بدل
+  /// تعطيل زر التأكيد اليدوي بصمت.
+  final bool hasTargetCoordinates;
   final VoidCallback onManualConfirm;
   final VoidCallback onScanQr;
   final VoidCallback onAbsent;
@@ -26,6 +31,7 @@ class TripChildActionCard extends StatelessWidget {
     required this.isCurrent,
     required this.isPendingAction,
     required this.distanceMeters,
+    required this.hasTargetCoordinates,
     required this.onManualConfirm,
     required this.onScanQr,
     required this.onAbsent,
@@ -202,10 +208,14 @@ class TripChildActionCard extends StatelessWidget {
             ),
           ],
         ),
-        if (!manualEnabled && distanceMeters != null) ...[
+        if (!manualEnabled) ...[
           const SizedBox(height: 6),
           Text(
-            'اقترب ${distanceMeters!.round()}م، أو استخدم مسح QR',
+            !hasTargetCoordinates
+                ? 'لا تتوفر إحداثيات دقيقة لهذه المحطة، يرجى استخدام مسح QR للتأكيد.'
+                : (distanceMeters == null
+                    ? 'بانتظار تحديد موقعك الحالي...'
+                    : 'اقترب ${distanceMeters!.round()}م، أو استخدم مسح QR'),
             style: AppTextStyles.style(fontSize: 11, color: AppColors.pending),
           ),
         ],

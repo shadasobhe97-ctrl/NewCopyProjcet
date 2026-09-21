@@ -37,6 +37,29 @@ class DriverTripsRepository {
         speed: speed,
       );
 
+  Future<void> pushLiveTrackingToFirestore(
+    int tripId, {
+    required double latitude,
+    required double longitude,
+    double? heading,
+    double? speed,
+    String? status,
+    int? driverId,
+    String? driverName,
+  }) => _remoteDataSource.pushLiveTrackingToFirestore(
+        tripId,
+        latitude: latitude,
+        longitude: longitude,
+        heading: heading,
+        speed: speed,
+        status: status,
+        driverId: driverId,
+        driverName: driverName,
+      );
+
+  Future<void> updateFirestoreTripStatus(int tripId, String status) =>
+      _remoteDataSource.updateFirestoreTripStatus(tripId, status);
+
   Future<DriverTripStopsResponseModel> getStops(int tripId) => _remoteDataSource.fetchStops(tripId);
 
   Future<ChildStatusActionResultModel> updateChildStatus(

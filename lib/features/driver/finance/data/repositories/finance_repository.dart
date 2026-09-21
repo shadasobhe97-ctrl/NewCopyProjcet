@@ -19,7 +19,9 @@ class FinanceRepository {
   }) =>
       _remoteDataSource.getWithdrawals(status: status, page: page);
 
-  Future<WithdrawalModel> createWithdrawal(Map<String, dynamic> body) =>
+  Future<({WithdrawalModel withdrawal, String message})> createWithdrawal(
+    Map<String, dynamic> body,
+  ) =>
       _remoteDataSource.createWithdrawal(body);
 
   Future<PaginatedResponse<InvoiceModel>> getInvoices({

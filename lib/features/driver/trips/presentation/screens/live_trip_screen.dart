@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_animations/flutter_map_animations.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -27,16 +30,29 @@ class LiveTripScreen extends StatefulWidget {
   State<LiveTripScreen> createState() => _LiveTripScreenState();
 }
 
-class _LiveTripScreenState extends State<LiveTripScreen> {
-  final MapController _mapController = MapController();
+class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStateMixin {
+  late final AnimatedMapController _animatedMapController;
   Position? _driverPosition;
+  bool _isLocating = true;
+  bool _mapReady = false;
 
   @override
   void initState() {
     super.initState();
+    _animatedMapController = AnimatedMapController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.easeInOut,
+    );
     context.read<LiveTripCubit>().loadAll(widget.tripId);
     context.read<LiveTripCubit>().startBackgroundSync(widget.tripId);
     _listenToPosition();
+  }
+
+  @override
+  void dispose() {
+    _animatedMapController.dispose();
+    super.dispose();
   }
 
   Future<void> _listenToPosition() async {
@@ -46,14 +62,54 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
         permission = await Geolocator.requestPermission();
       }
       if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        if (mounted) setState(() => _isLocating = false);
         return;
       }
+
+      // نجيب أول إحداثي فعلي قبل ما نرسم الخريطة، حتى ما نتمركز غلط على أول محطة
+      // بدل موقع السائق الحقيقي (كان هذا سبب ظهور السائق "واقف" بالخريطة).
+      final initialPosition = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      debugPrint(
+        '📍 [LiveTripScreen] أول إحداثي GPS: lat=${initialPosition.latitude}, lng=${initialPosition.longitude}',
+      );
+      if (mounted) {
+        setState(() {
+          _driverPosition = initialPosition;
+          _isLocating = false;
+        });
+      }
+
       Geolocator.getPositionStream(
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 5),
-      ).listen((position) {
-        if (mounted) setState(() => _driverPosition = position);
-      });
-    } catch (_) {}
+      ).listen(
+        (position) {
+          // فحص احترازي: نتأكد إن الـ Stream ينبض ولا يتوقف بسبب توفير الطاقة بالنظام
+          debugPrint(
+            '📍 [LiveTripScreen] تحديث GPS: lat=${position.latitude}, lng=${position.longitude}, '
+            'heading=${position.heading}°, speed=${position.speed} م/ث',
+          );
+          if (!mounted) return;
+          setState(() => _driverPosition = position);
+          _followDriver(position);
+        },
+        onError: (e) => debugPrint('❌ [LiveTripScreen] خطأ ببث الموقع: $e'),
+      );
+    } catch (e) {
+      debugPrint('❌ [LiveTripScreen] تعذر جلب الموقع الأولي: $e');
+      if (mounted) setState(() => _isLocating = false);
+    }
+  }
+
+  /// يحرّك الكاميرا بسلاسة (Pan) لتتبع السائق تلقائياً مع كل تحديث GPS،
+  /// بدل ما تتجمد الخريطة على أول تمركز.
+  void _followDriver(Position position) {
+    if (!_mapReady) return;
+    _animatedMapController.animateTo(
+      dest: LatLng(position.latitude, position.longitude),
+      zoom: _animatedMapController.mapController.camera.zoom,
+    );
   }
 
   double? _distanceToChild(LiveTripChildItem item) {
@@ -107,6 +163,11 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
     if (token == null || token.isEmpty || !mounted) return;
     final stage = item.isDropoffPhase ? 'dropoff' : null;
     await context.read<LiveTripCubit>().scanQr(widget.tripId, item, token, stage: stage);
+    // Show success snackbar if the cubit did not set an error message
+    final cubitState = context.read<LiveTripCubit>().state;
+    if (cubitState is LiveTripLoaded && cubitState.actionErrorMessage == null) {
+      _showSnack('تم التحقق من QR بنجاح');
+    }
   }
 
   Future<void> _confirmAndRunWithLocation(
@@ -160,6 +221,42 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
   }
 
   Future<void> _handleComplete() async {
+    final state = context.read<LiveTripCubit>().state;
+    if (state is LiveTripLoaded && !state.canComplete) {
+      final remaining = state.progress.remaining;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dCtx) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            shape: AppTheme.roundedRectangleBorder(borderRadius: AppTheme.radius(16)),
+            title: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 26),
+                const SizedBox(width: 8),
+                const Expanded(child: Text('لا تزال هناك محطات متبقية')),
+              ],
+            ),
+            content: Text(
+              'يوجد $remaining من أصل ${state.progress.total} لم تُحسم حالتهم بعد. '
+              'هل تريد إنهاء الرحلة رغم ذلك؟',
+              textAlign: TextAlign.right,
+              style: AppTextStyles.style(fontSize: 14),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(dCtx).pop(false), child: const Text('رجوع')),
+              ElevatedButton(
+                onPressed: () => Navigator.of(dCtx).pop(true),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+                child: const Text('إنهاء رغم ذلك'),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+    if (!mounted) return;
     await context.read<LiveTripCubit>().completeTrip(widget.tripId);
   }
 
@@ -339,7 +436,15 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
       child: Scaffold(
         backgroundColor: context.backgroundSurface,
         appBar: AppBar(
-          title: const Text('الرحلة الحية'),
+          // اسم المسار (route_name) من /driver/trips/{id} — يظهر بمجرد توفره بالحالة
+          title: BlocBuilder<LiveTripCubit, LiveTripState>(
+            buildWhen: (previous, current) =>
+                current is LiveTripLoaded && current.routeName != (previous is LiveTripLoaded ? previous.routeName : ''),
+            builder: (context, state) {
+              final routeName = state is LiveTripLoaded ? state.routeName : '';
+              return Text(routeName.isNotEmpty ? routeName : 'الرحلة الحية');
+            },
+          ),
           actions: [
             BlocBuilder<LiveTripCubit, LiveTripState>(
               builder: (context, state) {
@@ -414,7 +519,10 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
             final loaded = state as LiveTripLoaded;
             return Column(
               children: [
-                SizedBox(height: 220, child: _buildMap(loaded.stops)),
+                SizedBox(
+                  height: 220,
+                  child: _isLocating ? _buildMapLoadingPlaceholder() : _buildMap(loaded.stops),
+                ),
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: TripProgressBar(
@@ -423,6 +531,7 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
                   ),
                 ),
                 if (loaded.isSuspended) _buildSuspendedBanner(),
+                if (loaded.isInProgress) _buildNextStationSection(loaded),
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -435,6 +544,7 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
                         isCurrent: isCurrent,
                         isPendingAction: loaded.pendingActionTripChildId == item.tripChildId,
                         distanceMeters: _distanceToChild(item),
+                        hasTargetCoordinates: item.targetLatitude != null && item.targetLongitude != null,
                         onManualConfirm: loaded.isSuspended ? () {} : () => _handleManualConfirm(item),
                         onScanQr: loaded.isSuspended ? () {} : () => _handleScanQr(item),
                         onAbsent: loaded.isSuspended
@@ -530,6 +640,120 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
     );
   }
 
+  /// يعرض "المحطة التالية" بالاعتماد حصراً على next_stop/next_child القادمين
+  /// فعلياً من استجابة آخر إجراء ناجح (Backend Authoritative Source). عند
+  /// عدم توفرهما (لم يُنفَّذ أي إجراء بعد، أو تقدّمت الرحلة والانتظار لإجراء
+  /// جديد)، لا نفترض مباشرة انتهاء الرحلة — نتحقق من trip_status وprogress
+  /// أولاً، تماشياً مع الـ Backend Contract الفعلي.
+  Widget _buildNextStationSection(LiveTripLoaded loaded) {
+    final nextStop = loaded.nextStop;
+    final nextChild = loaded.nextChild;
+
+    if (nextStop != null || nextChild != null) {
+      final title = nextChild?.name ??
+          nextStop?.childName ??
+          nextStop?.name ??
+          nextStop?.title ??
+          nextStop?.schoolName ??
+          'المحطة التالية';
+      final subtitleParts = <String>[
+        if (nextStop?.address != null && nextStop!.address!.isNotEmpty) nextStop.address!,
+        if (nextStop?.eta != null && nextStop!.eta!.isNotEmpty) 'الوصول التقديري: ${nextStop.eta}',
+      ];
+      final isSchool = nextStop?.isSchool ?? false;
+
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.all(12),
+        decoration: AppTheme.boxDecoration(
+          color: AppColors.primaryLight.withValues(alpha: 0.1),
+          borderRadius: AppTheme.radius(12),
+          border: AppTheme.border(color: AppColors.primaryLight.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isSchool ? Icons.school_rounded : Icons.home_rounded,
+              color: AppColors.primaryLight,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'المحطة التالية',
+                    style: AppTextStyles.style(fontSize: 11, color: AppColors.textMuted),
+                  ),
+                  Text(
+                    title,
+                    style: AppTextStyles.style(fontSize: 13, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (subtitleParts.isNotEmpty)
+                    Text(
+                      subtitleParts.join(' • '),
+                      style: AppTextStyles.style(fontSize: 11, color: AppColors.textMuted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // next_stop غير متوفرة بعد — لا نفسّرها كنهاية للرحلة إلا بدليل إضافي
+    final looksFinished = loaded.tripStatus == 'completed' || loaded.progress.remaining <= 0;
+    final message =
+        looksFinished ? 'هذه آخر محطة في الرحلة' : 'سيتم تحديد المحطة التالية بعد إتمام الإجراء الحالي';
+    final icon = looksFinished ? Icons.flag_circle_rounded : Icons.hourglass_bottom_rounded;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: AppTheme.boxDecoration(
+        color: AppColors.grey.withValues(alpha: 0.08),
+        borderRadius: AppTheme.radius(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.textMuted, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(message, style: AppTextStyles.style(fontSize: 12, color: AppColors.textMuted)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// يُعرض ريثما نحصل على أول إحداثي GPS حقيقي، بدل رسم الخريطة على موقع
+  /// محطة عشوائية ثم القفز لموقع السائق لاحقاً.
+  Widget _buildMapLoadingPlaceholder() {
+    return Container(
+      color: context.backgroundSurface,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 8),
+          Text(
+            'جارٍ تحديد موقعك...',
+            style: AppTextStyles.style(fontSize: 12, color: AppColors.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMap(List<DriverTripStopModel> stops) {
     final driverLatLng = _driverPosition != null
         ? LatLng(_driverPosition!.latitude, _driverPosition!.longitude)
@@ -541,9 +765,13 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
           point: driverLatLng,
           width: 46,
           height: 46,
-          child: Container(
-            decoration: const BoxDecoration(color: AppColors.primaryLight, shape: BoxShape.circle),
-            child: const Icon(Icons.directions_bus_filled_rounded, color: AppColors.white, size: 22),
+          child: Transform.rotate(
+            // اتجاه السير (Heading) يوصل بالدرجات من GPS، وTransform.rotate يحتاجه بالراديان
+            angle: _driverPosition!.heading * math.pi / 180,
+            child: Container(
+              decoration: const BoxDecoration(color: AppColors.primaryLight, shape: BoxShape.circle),
+              child: const Icon(Icons.directions_bus_filled_rounded, color: AppColors.white, size: 22),
+            ),
           ),
         ),
       ...stops.map(
@@ -568,8 +796,12 @@ class _LiveTripScreenState extends State<LiveTripScreen> {
     ];
 
     return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(initialCenter: driverLatLng, initialZoom: 14),
+      mapController: _animatedMapController.mapController,
+      options: MapOptions(
+        initialCenter: driverLatLng,
+        initialZoom: 14,
+        onMapReady: () => _mapReady = true,
+      ),
       children: [
         TileLayer(
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',

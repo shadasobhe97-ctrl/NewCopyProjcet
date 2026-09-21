@@ -382,7 +382,7 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
           leading: IconButton(
             icon: Icon(
               Icons.arrow_back_ios_new,
-              color: isDark ? AppColors.white : AppColors.black,
+              color: theme.colorScheme.onSurface,
             ),
             onPressed: _onBackPressed,
           ),
@@ -452,6 +452,9 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                               controller: _nationalIdController,
                               keyboardType: TextInputType.number,
                               textAlign: TextAlign.right,
+                              style: AppTextStyles.inputTextStyle(
+                                color: isDark ? AppColors.white : AppColors.textPrimary,
+                              ),
                               inputFormatters: [
                                 FilteringTextInputFormatter.digitsOnly,
                                 LengthLimitingTextInputFormatter(12),
@@ -481,6 +484,9 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                                   controller: _licenseNumberController,
                                   keyboardType: TextInputType.text,
                                   textAlign: TextAlign.right,
+                                  style: AppTextStyles.inputTextStyle(
+                                    color: isDark ? AppColors.white : AppColors.textPrimary,
+                                  ),
                                   decoration: AppTheme.inputDecoration(
                                     context,
                                     labelText: "رقم رخصة القيادة",
@@ -501,6 +507,9 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                                   readOnly: true,
                                   textAlign: TextAlign.right,
                                   onTap: () => _selectExpiryDate(context),
+                                  style: AppTextStyles.inputTextStyle(
+                                    color: isDark ? AppColors.white : AppColors.textPrimary,
+                                  ),
                                   decoration: AppTheme.inputDecoration(
                                     context,
                                     labelText: "تاريخ انتهاء رخصة القيادة",
@@ -650,6 +659,9 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                                   readOnly: true,
                                   textAlign: TextAlign.right,
                                   onTap: () => _selectStampExpiryDate(context),
+                                  style: AppTextStyles.inputTextStyle(
+                                    color: isDark ? AppColors.white : AppColors.textPrimary,
+                                  ),
                                   decoration: AppTheme.inputDecoration(
                                     context,
                                     labelText: "تاريخ انتهاء / تجديد الدمغ",
@@ -714,6 +726,9 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                                   readOnly: true,
                                   textAlign: TextAlign.right,
                                   onTap: () => _selectInsuranceExpiryDate(context),
+                                  style: AppTextStyles.inputTextStyle(
+                                    color: isDark ? AppColors.white : AppColors.textPrimary,
+                                  ),
                                   decoration: AppTheme.inputDecoration(
                                     context,
                                     labelText: "تاريخ انتهاء وثيقة التأمين",
@@ -779,6 +794,9 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
                                   textAlign: TextAlign.right,
                                   onTap: () =>
                                       _selectInspectionExpiryDate(context),
+                                  style: AppTextStyles.inputTextStyle(
+                                    color: isDark ? AppColors.white : AppColors.textPrimary,
+                                  ),
                                   decoration: AppTheme.inputDecoration(
                                     context,
                                     labelText: "تاريخ انتهاء الفحص الفني",

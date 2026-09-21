@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
@@ -15,8 +16,10 @@ import 'package:kids_transport/features/driver/trips/data/models/vehicle_breakdo
 /// مصدر بيانات الرحلات الخاص بالسائق — مرتبط 100% بالـ Backend الحقيقي
 class DriverTripsRemoteDataSource {
   final ApiClient _apiClient;
+  final FirebaseFirestore _firestore;
 
-  DriverTripsRemoteDataSource(this._apiClient);
+  DriverTripsRemoteDataSource(this._apiClient, {FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   Map<String, dynamic> get _authHeader {
     final token = StorageService.getAuthorizationHeader();
@@ -113,6 +116,55 @@ class DriverTripsRemoteDataSource {
       headers: _authHeader,
     );
     _unwrap(response.data, 'تعذر تحديث الموقع.');
+  }
+
+  /// 🌟 يكتب موقع السائق الحي مباشرة في Firebase Firestore: trips_tracking/{tripId}
+  /// حتى تستقبل شاشة تتبع ولي الأمر (trackTripLiveStream) التحديث لحظياً دون انتظار Backend.
+  Future<void> pushLiveTrackingToFirestore(
+    int tripId, {
+    required double latitude,
+    required double longitude,
+    double? heading,
+    double? speed,
+    String? status,
+    int? driverId,
+    String? driverName,
+  }) async {
+    try {
+      await _firestore.collection('trips_tracking').doc(tripId.toString()).set(
+        {
+          'trip_id': tripId,
+          'driver_lat': latitude,
+          'driver_lng': longitude,
+          if (heading != null) 'heading': heading,
+          if (speed != null) 'speed': speed,
+          if (status != null) 'status': status,
+          if (driverId != null) 'driver_id': driverId,
+          if (driverName != null) 'driver_name': driverName,
+          'updated_at': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } catch (_) {
+      // فشل صامت لتحديث Firestore، لا نكسر واجهة السائق أثناء القيادة
+    }
+  }
+
+  /// يحدّث فقط حالة الرحلة في Firestore (مثلاً عند التعطل أو الاستئناف أو الإنهاء)
+  /// دون الحاجة لموقع جديد.
+  Future<void> updateFirestoreTripStatus(int tripId, String status) async {
+    try {
+      await _firestore.collection('trips_tracking').doc(tripId.toString()).set(
+        {
+          'trip_id': tripId,
+          'status': status,
+          'updated_at': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } catch (_) {
+      // فشل صامت
+    }
   }
 
   Future<DriverTripStopsResponseModel> fetchStops(int tripId) async {
