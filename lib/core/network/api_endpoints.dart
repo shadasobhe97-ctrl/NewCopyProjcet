@@ -58,6 +58,8 @@ class ApiEndpoints {
       'admin/sub-municipalities/$subId/zones';
   static const String driverProfile = 'v1/driver/profile';
   static const String driverProfileUpdate = 'v1/driver/profile/update';
+  static const String driverChangePassword =
+      'v1/driver/profile/change-password';
   static const String driverCancelEmailChange =
       'v1/driver/profile/email-change/cancel';
   static const String driverEmailChangeStatus =
@@ -108,6 +110,8 @@ class ApiEndpoints {
 
   static const String parentProfile = 'parent/profile';
   static const String parentProfileUpdate = 'parent/profile/update';
+  static const String parentChangePassword =
+      'parent/profile/change-password';
   static const String parentCancelEmailChange =
       'parent/profile/email-change/cancel';
   static const String parentEmailChangeStatus =
@@ -233,4 +237,14 @@ class ApiEndpoints {
       'driver/location-change-requests';
   static String driverLocationChangeRespond(int id) =>
       'driver/location-change-requests/$id/respond';
+
+  // Driver Emergency Dispatches (المهام الطارئة والسائق البديل)
+  static const String driverEmergencyDispatchesAvailable =
+      'driver/emergency-dispatches/available';
+  static String driverEmergencyDispatchDetails(dynamic id) =>
+      'driver/emergency-dispatches/$id';
+  static String driverEmergencyDispatchAccept(dynamic id) =>
+      'driver/emergency-dispatches/$id/accept';
+  static String driverEmergencyDispatchReject(dynamic id) =>
+      'driver/emergency-dispatches/$id/reject';
 }

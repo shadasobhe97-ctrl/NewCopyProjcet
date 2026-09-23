@@ -19,6 +19,9 @@ import 'package:kids_transport/features/chat/presentation/cubit/chat_list_cubit.
 import 'package:kids_transport/features/chat/presentation/cubit/chat_room_cubit.dart';
 
 import 'package:kids_transport/core/services/battery_service.dart';
+import 'package:kids_transport/features/auth/change_password/data/datasources/change_password_remote_data_source.dart';
+import 'package:kids_transport/features/auth/change_password/data/repositories/change_password_repository.dart';
+import 'package:kids_transport/features/auth/change_password/logic/change_password_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -26,6 +29,23 @@ void setupDependencyInjection() {
   // ApiClient الموحد
   if (!getIt.isRegistered<ApiClient>()) {
     getIt.registerLazySingleton<ApiClient>(() => ApiClient());
+  }
+
+  // Change Password Feature
+  if (!getIt.isRegistered<ChangePasswordRemoteDataSource>()) {
+    getIt.registerLazySingleton<ChangePasswordRemoteDataSource>(
+      () => ChangePasswordRemoteDataSource(getIt<ApiClient>()),
+    );
+  }
+  if (!getIt.isRegistered<ChangePasswordRepository>()) {
+    getIt.registerLazySingleton<ChangePasswordRepository>(
+      () => ChangePasswordRepository(getIt<ChangePasswordRemoteDataSource>()),
+    );
+  }
+  if (!getIt.isRegistered<ChangePasswordCubit>()) {
+    getIt.registerFactory<ChangePasswordCubit>(
+      () => ChangePasswordCubit(getIt<ChangePasswordRepository>()),
+    );
   }
 
   // BatteryService

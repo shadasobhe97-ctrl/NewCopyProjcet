@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../logic/register_cubit.dart';
 import '../widgets/custom_role_card.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
-import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 
 class SelectRoleScreen extends StatefulWidget {

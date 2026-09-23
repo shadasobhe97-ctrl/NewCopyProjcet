@@ -15,6 +15,7 @@ import 'package:kids_transport/features/driver/requests/presentation/widgets/new
 
 import 'package:kids_transport/features/driver/home/logic/driver_home_cubit/driver_home_cubit.dart';
 import 'package:kids_transport/features/driver/requests/logic/driver_location_change_cubit.dart';
+import 'package:kids_transport/features/driver/trips/logic/driver_emergency_cubit/driver_emergency_cubit.dart';
 import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
 
 class DriverHomeScreen extends StatefulWidget {
@@ -52,9 +53,17 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
       builder: (context, state) {
         final loadedState = state is DriverHomeLoaded ? state : null;
 
-        return BlocProvider(
-          create: (_) =>
-              driverSl<DriverLocationChangeCubit>()..fetchPendingCount(),
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (_) =>
+                  driverSl<DriverLocationChangeCubit>()..fetchPendingCount(),
+            ),
+            BlocProvider(
+              create: (_) =>
+                  driverSl<DriverEmergencyCubit>()..fetchAvailableCount(),
+            ),
+          ],
           child: Scaffold(
             body: SafeArea(
               child: state is DriverHomeLoading

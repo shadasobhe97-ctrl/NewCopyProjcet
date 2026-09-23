@@ -113,6 +113,19 @@ class ParentDrawer extends StatelessWidget {
                         },
                       ),
                       AppDrawerItem(
+                        icon: Icons.lock_reset_rounded,
+                        iconColor: context.primaryColor,
+                        label: 'تغيير كلمة المرور',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.changePassword,
+                            arguments: false,
+                          );
+                        },
+                      ),
+                      AppDrawerItem(
                         icon: Icons.event_busy_rounded,
                         iconColor: context.warningColor,
                         label: 'إدارة الغياب',

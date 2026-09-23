@@ -9,6 +9,8 @@ import 'package:kids_transport/features/auth/login/presentation/screens/login_sc
 import 'package:kids_transport/features/auth/login/presentation/screens/reset_password_screen.dart';
 import 'package:kids_transport/features/auth/login/presentation/screens/verify_otp_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/select_role_screen.dart';
+import 'package:kids_transport/features/auth/change_password/presentation/screens/change_password_screen.dart';
+import 'package:kids_transport/features/auth/change_password/logic/change_password_cubit.dart';
 
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_avatar_screen.dart';
 import 'package:kids_transport/features/auth/registration/presentation/screens/driver/driver_basic_info_screen.dart';
@@ -55,6 +57,9 @@ import 'package:kids_transport/features/driver/statistics/presentation/screen/dr
 import 'package:kids_transport/features/driver/statistics/logic/cubit/driver_statistics_cubit.dart';
 import 'package:kids_transport/features/driver/requests/presentation/screens/driver_location_change_requests_screen.dart';
 import 'package:kids_transport/features/driver/requests/logic/driver_location_change_cubit.dart';
+import 'package:kids_transport/features/driver/trips/presentation/screens/driver_emergency_dispatches_screen.dart';
+import 'package:kids_transport/features/driver/trips/presentation/screens/emergency_dispatch_details_screen.dart';
+import 'package:kids_transport/features/driver/trips/logic/driver_emergency_cubit/driver_emergency_cubit.dart';
 
 import 'package:kids_transport/features/parent/addresses/presentation/screens/saved_addresses_screen.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
@@ -112,6 +117,7 @@ class AppRoutes {
   static const String resetPassword = '/resetPassword';
   static const String selectRole = '/selectRole';
   static const String notifications = '/notifications';
+  static const String changePassword = '/changePassword';
 
   static const String adminLogin = '/adminLogin';
   static const String adminDashboard = '/admin/dashboard';
@@ -203,6 +209,10 @@ class AppRoutes {
   static const String driverStatistics = '/driverStatistics';
   static const String driverLocationChangeRequests =
       '/driver-location-change-requests';
+  static const String driverEmergencyDispatches =
+      '/driver-emergency-dispatches';
+  static const String driverEmergencyDispatchDetails =
+      '/driver-emergency-dispatch-details';
 
   static String getInitialRoute() {
     return splash;
@@ -244,6 +254,15 @@ class AppRoutes {
         return _route(settings, const SelectRoleScreen());
       case notifications:
         return _route(settings, const NotificationsScreen());
+      case changePassword:
+        final isDriver = settings.arguments as bool?;
+        return _route(
+          settings,
+          BlocProvider(
+            create: (_) => getIt<ChangePasswordCubit>(),
+            child: ChangePasswordScreen(isDriver: isDriver),
+          ),
+        );
       default:
         return null;
     }
@@ -579,6 +598,23 @@ class AppRoutes {
           BlocProvider(
             create: (_) => driverSl<DriverLocationChangeCubit>(),
             child: const DriverLocationChangeRequestsScreen(),
+          ),
+        );
+      case driverEmergencyDispatches:
+        return _route(
+          settings,
+          BlocProvider(
+            create: (_) => driverSl<DriverEmergencyCubit>(),
+            child: const DriverEmergencyDispatchesScreen(),
+          ),
+        );
+      case driverEmergencyDispatchDetails:
+        final dispatchId = settings.arguments as int;
+        return _route(
+          settings,
+          BlocProvider(
+            create: (_) => driverSl<DriverEmergencyCubit>(),
+            child: EmergencyDispatchDetailsScreen(dispatchId: dispatchId),
           ),
         );
 

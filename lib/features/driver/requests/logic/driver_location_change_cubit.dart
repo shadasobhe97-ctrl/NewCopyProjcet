@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/features/driver/requests/data/repositories/driver_location_change_repository.dart';
 import 'package:kids_transport/features/parent/location_change/data/models/location_change_request_model.dart';
-import '../data/repositories/driver_location_change_repository.dart';
-
 
 abstract class DriverLocationChangeState {}
 
@@ -40,7 +39,7 @@ class DriverLocationChangeCubit extends Cubit<DriverLocationChangeState> {
   final DriverLocationChangeRepository _repository;
 
   DriverLocationChangeCubit(this._repository)
-      : super(DriverLocationChangeInitial());
+    : super(DriverLocationChangeInitial());
 
   int _pendingCount = 0;
   int get pendingCount => _pendingCount;
@@ -72,13 +71,17 @@ class DriverLocationChangeCubit extends Cubit<DriverLocationChangeState> {
         requests = await _repository.getRequests(status: filter);
       }
 
-      emit(DriverLocationChangeLoaded(
-        requests: requests,
-        currentFilter: filter,
-        pendingCount: _pendingCount,
-      ));
+      emit(
+        DriverLocationChangeLoaded(
+          requests: requests,
+          currentFilter: filter,
+          pendingCount: _pendingCount,
+        ),
+      );
     } catch (e) {
-      emit(DriverLocationChangeError(e.toString().replaceAll('Exception: ', '')));
+      emit(
+        DriverLocationChangeError(e.toString().replaceAll('Exception: ', '')),
+      );
     }
   }
 
@@ -97,7 +100,8 @@ class DriverLocationChangeCubit extends Cubit<DriverLocationChangeState> {
         rejectionReason: rejectionReason,
       );
 
-      final message = res['message']?.toString() ??
+      final message =
+          res['message']?.toString() ??
           (status == 'approved' ? 'تمت الموافقة بنجاح' : 'تم الرفض بنجاح');
 
       emit(DriverLocationChangeActionSuccess(message));
@@ -105,7 +109,9 @@ class DriverLocationChangeCubit extends Cubit<DriverLocationChangeState> {
       // إعادة تحميل القائمة والعداد بعد تنفيذ الإجراء
       await loadRequests(filter: currentFilter);
     } catch (e) {
-      emit(DriverLocationChangeError(e.toString().replaceAll('Exception: ', '')));
+      emit(
+        DriverLocationChangeError(e.toString().replaceAll('Exception: ', '')),
+      );
     }
   }
 }

@@ -92,6 +92,20 @@ class DriverDrawer extends StatelessWidget {
                     },
                   ),
 
+                  AppDrawerItem(
+                    icon: Icons.lock_reset_rounded,
+                    iconColor: context.primaryColor,
+                    label: 'تغيير كلمة المرور',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.changePassword,
+                        arguments: true,
+                      );
+                    },
+                  ),
+
                   // ── إدارة المركبة والوثائق ──
                   AppDrawerItem(
                     icon: Icons.directions_car_filled_rounded,

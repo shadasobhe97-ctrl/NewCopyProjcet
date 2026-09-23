@@ -6,6 +6,7 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/features/driver/requests/logic/driver_location_change_cubit.dart';
+import 'package:kids_transport/features/driver/trips/logic/driver_emergency_cubit/driver_emergency_cubit.dart';
 
 class DriverServicesWidget extends StatelessWidget {
   const DriverServicesWidget({super.key});
@@ -38,14 +39,17 @@ class DriverServicesWidget extends StatelessWidget {
                   if (state is DriverLocationChangeLoaded) {
                     pendingCount = state.pendingCount;
                   } else {
-                    pendingCount =
-                        context.read<DriverLocationChangeCubit>().pendingCount;
+                    pendingCount = context
+                        .read<DriverLocationChangeCubit>()
+                        .pendingCount;
                   }
 
-                  return _buildRedLocationChangeCard(
+                  return _buildBadgeCard(
                     context,
                     title: 'طلبات التعديل',
                     subtitle: 'تغيير الموقع',
+                    icon: Icons.edit_location_alt_rounded,
+                    cardColor: AppColors.error,
                     badgeCount: pendingCount,
                     isDark: isDark,
                     onTap: () {
@@ -64,6 +68,42 @@ class DriverServicesWidget extends StatelessWidget {
                 },
               ),
 
+              // 2. كرت المهام الطارئة والبديل (باللون البرتقالي التحذيري مع عداد الطلبات الجديدة)
+              BlocBuilder<DriverEmergencyCubit, DriverEmergencyState>(
+                builder: (context, state) {
+                  int emergencyCount = 0;
+                  if (state is DriverEmergencyLoaded) {
+                    emergencyCount = state.availableCount;
+                  } else {
+                    emergencyCount = context
+                        .read<DriverEmergencyCubit>()
+                        .availableCount;
+                  }
+
+                  return _buildBadgeCard(
+                    context,
+                    title: 'الطلبات الطارئة',
+                    subtitle: 'بديل الحافلات',
+                    icon: Icons.warning_amber_rounded,
+                    cardColor: AppColors.warning,
+                    badgeCount: emergencyCount,
+                    isDark: isDark,
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.driverEmergencyDispatches,
+                      ).then((_) {
+                        if (context.mounted) {
+                          context
+                              .read<DriverEmergencyCubit>()
+                              .fetchAvailableCount();
+                        }
+                      });
+                    },
+                  );
+                },
+              ),
+
               // 2. كرت التفضيلات
               _buildStandardServiceCard(
                 context,
@@ -72,10 +112,8 @@ class DriverServicesWidget extends StatelessWidget {
                 icon: Icons.tune_rounded,
                 color: context.primaryColor,
                 isDark: isDark,
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  AppRoutes.driverPreferences,
-                ),
+                onTap: () =>
+                    Navigator.pushNamed(context, AppRoutes.driverPreferences),
               ),
 
               // 3. كرت الإحصائيات
@@ -86,10 +124,8 @@ class DriverServicesWidget extends StatelessWidget {
                 icon: Icons.bar_chart_rounded,
                 color: AppColors.accentBlue,
                 isDark: isDark,
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  AppRoutes.driverStatistics,
-                ),
+                onTap: () =>
+                    Navigator.pushNamed(context, AppRoutes.driverStatistics),
               ),
 
               // 4. كرت سجل الرحلات
@@ -100,10 +136,8 @@ class DriverServicesWidget extends StatelessWidget {
                 icon: Icons.history_rounded,
                 color: AppColors.success,
                 isDark: isDark,
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  AppRoutes.driverTripsHistory,
-                ),
+                onTap: () =>
+                    Navigator.pushNamed(context, AppRoutes.driverTripsHistory),
               ),
 
               // 5. كرت تسجيل الغياب
@@ -114,10 +148,8 @@ class DriverServicesWidget extends StatelessWidget {
                 icon: Icons.event_busy_rounded,
                 color: AppColors.pending,
                 isDark: isDark,
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  AppRoutes.driverAbsence,
-                ),
+                onTap: () =>
+                    Navigator.pushNamed(context, AppRoutes.driverAbsence),
               ),
             ],
           ),
@@ -126,17 +158,17 @@ class DriverServicesWidget extends StatelessWidget {
     );
   }
 
-  /// بناء كرت طلبات التعديل باللون الأحمر المميز مع عداد التنبيهات
-  Widget _buildRedLocationChangeCard(
+  /// بناء كرت ممتاز ملون مع عداد التنبيهات (Badge Counter)
+  Widget _buildBadgeCard(
     BuildContext context, {
     required String title,
     required String subtitle,
+    required IconData icon,
+    required Color cardColor,
     required int badgeCount,
     required bool isDark,
     required VoidCallback onTap,
   }) {
-    const redColor = AppColors.error;
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16.r),
@@ -151,12 +183,12 @@ class DriverServicesWidget extends StatelessWidget {
               color: isDark ? AppColors.grey900 : AppColors.white,
               borderRadius: BorderRadius.circular(16.r),
               border: Border.all(
-                color: redColor.withValues(alpha: isDark ? 0.6 : 0.4),
+                color: cardColor.withValues(alpha: isDark ? 0.6 : 0.4),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: redColor.withValues(alpha: isDark ? 0.25 : 0.08),
+                  color: cardColor.withValues(alpha: isDark ? 0.25 : 0.08),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -168,14 +200,10 @@ class DriverServicesWidget extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(8.r),
                   decoration: BoxDecoration(
-                    color: redColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                    color: cardColor.withValues(alpha: isDark ? 0.2 : 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.edit_location_alt_rounded,
-                    color: redColor,
-                    size: 22.r,
-                  ),
+                  child: Icon(icon, color: cardColor, size: 22.r),
                 ),
                 SizedBox(height: 8.h),
                 Text(
@@ -186,7 +214,7 @@ class DriverServicesWidget extends StatelessWidget {
                   style: AppTextStyles.style(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w900,
-                    color: redColor,
+                    color: cardColor,
                   ),
                 ),
                 SizedBox(height: 2.h),
@@ -212,7 +240,7 @@ class DriverServicesWidget extends StatelessWidget {
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
                 decoration: BoxDecoration(
-                  color: redColor,
+                  color: AppColors.red,
                   borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(color: AppColors.white, width: 1.5),
                   boxShadow: [
@@ -222,10 +250,7 @@ class DriverServicesWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                constraints: BoxConstraints(
-                  minWidth: 20.w,
-                  minHeight: 20.h,
-                ),
+                constraints: BoxConstraints(minWidth: 20.w, minHeight: 20.h),
                 child: Center(
                   child: Text(
                     badgeCount.toString(),
@@ -282,11 +307,7 @@ class DriverServicesWidget extends StatelessWidget {
                 color: color.withValues(alpha: isDark ? 0.15 : 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 20.r,
-              ),
+              child: Icon(icon, color: color, size: 20.r),
             ),
             SizedBox(height: 8.h),
             Text(
