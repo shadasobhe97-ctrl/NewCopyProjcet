@@ -11,6 +11,7 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/widgets/app_drawer_item.dart';
+import 'package:kids_transport/features/terms/presentation/screens/terms_and_conditions_screen.dart';
 
 // ==========================================
 // السايد بار (الدروار) الخاص بالسائق
@@ -230,6 +231,25 @@ class DriverDrawer extends StatelessWidget {
                     },
                   ),
 
+                  // ── الشروط والسياسات ──
+                  AppDrawerItem(
+                    icon: Icons.policy_outlined,
+                    iconColor: context.textMuted,
+                    label: 'الشروط والسياسات',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TermsAndConditionsScreen(
+                            audience: 'driver',
+                            isRegistrationFlow: false,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
                   // ── التواصل مع الدعم ──
                   AppDrawerItem(
                     icon: Icons.support_agent_rounded,
@@ -237,8 +257,6 @@ class DriverDrawer extends StatelessWidget {
                     label: 'التواصل مع الدعم',
                     onTap: () {
                       Navigator.pop(context);
-                      // TODO: فتح قناة الدعم (واتساب / اتصال / شات)
-                      // _launchSupportChannel();
                     },
                   ),
 

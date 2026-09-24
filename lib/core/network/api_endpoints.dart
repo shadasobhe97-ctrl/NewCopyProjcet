@@ -247,4 +247,10 @@ class ApiEndpoints {
       'driver/emergency-dispatches/$id/accept';
   static String driverEmergencyDispatchReject(dynamic id) =>
       'driver/emergency-dispatches/$id/reject';
+
+  // Terms & Conditions (الشروط والأحكام والسياسات)
+  static String termsCurrent(String audience) =>
+      'terms/current?audience=$audience';
+  static const String termsAccept = 'terms/accept';
 }
+

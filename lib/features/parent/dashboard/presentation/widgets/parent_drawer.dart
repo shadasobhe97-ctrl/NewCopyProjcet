@@ -12,6 +12,7 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/widgets/app_drawer_item.dart';
+import 'package:kids_transport/features/terms/presentation/screens/terms_and_conditions_screen.dart';
 
 class ParentDrawer extends StatelessWidget {
   const ParentDrawer({super.key});
@@ -199,6 +200,23 @@ class ParentDrawer extends StatelessWidget {
                         iconColor: context.textMuted,
                         label: 'ميزات دربي',
                         onTap: () => Navigator.pop(context),
+                      ),
+                      AppDrawerItem(
+                        icon: Icons.policy_outlined,
+                        iconColor: context.textMuted,
+                        label: 'الشروط والسياسات',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const TermsAndConditionsScreen(
+                                audience: 'parent',
+                                isRegistrationFlow: false,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                       AppDrawerItem(
                         icon: Icons.support_agent_rounded,

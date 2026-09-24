@@ -14,6 +14,7 @@ import 'package:kids_transport/features/auth/registration/logic/register_state.d
 import 'package:latlong2/latlong.dart';
 
 import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/features/terms/presentation/screens/terms_and_conditions_screen.dart';
 
 class ParentLocationScreen extends StatefulWidget {
   const ParentLocationScreen({super.key});
@@ -355,11 +356,15 @@ class _ParentLocationScreenState extends State<ParentLocationScreen> {
   }
 
   void _navigateToNextStep() {
-    StorageService.saveParentRegStage('add_child');
-    Navigator.pushNamedAndRemoveUntil(
+    StorageService.saveParentRegStage('terms');
+    Navigator.pushReplacement(
       context,
-      '/parentAddFirstChild',
-      (route) => false,
+      MaterialPageRoute(
+        builder: (_) => const TermsAndConditionsScreen(
+          audience: 'parent',
+          isRegistrationFlow: true,
+        ),
+      ),
     );
   }
 

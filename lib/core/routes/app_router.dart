@@ -65,7 +65,6 @@ import 'package:kids_transport/features/parent/addresses/presentation/screens/sa
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
 import 'package:kids_transport/features/parent/subscriptions/data/models/active_subscription_model.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/child_data_details_screen.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/child_pass_screen.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/my_children_screen.dart';
 import 'package:kids_transport/features/parent/children/presentation/screens/transport_details_screen.dart';
 import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
@@ -307,8 +306,7 @@ class AppRoutes {
           settings,
           (child) => ChildDataDetailsScreen(child: child),
         );
-      case childPass:
-        return _childRoute(settings, (child) => ChildPassScreen(child: child));
+
       case transportDetails:
         return _childRoute(
           settings,

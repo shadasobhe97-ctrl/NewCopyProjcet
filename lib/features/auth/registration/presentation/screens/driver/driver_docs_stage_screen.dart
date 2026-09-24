@@ -11,6 +11,7 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/utils/app_validators.dart';
 import 'package:kids_transport/core/widgets/app_image_widget.dart';
+import 'package:kids_transport/features/terms/presentation/screens/terms_and_conditions_screen.dart';
 
 class DriverDocsStageScreen extends StatefulWidget {
   final Map<String, dynamic> finalData;
@@ -392,11 +393,15 @@ class _DriverDocsStageScreenState extends State<DriverDocsStageScreen> {
             listener: (context, state) {
               if (state is DriverCompleteProfileSuccess) {
                 StorageService.clearDriverRegDraft();
-                StorageService.saveDriverRegStage('waiting');
-                Navigator.pushNamedAndRemoveUntil(
+                StorageService.saveDriverRegStage('terms');
+                Navigator.pushReplacement(
                   context,
-                  '/driverWaiting',
-                  (route) => false,
+                  MaterialPageRoute(
+                    builder: (_) => const TermsAndConditionsScreen(
+                      audience: 'driver',
+                      isRegistrationFlow: true,
+                    ),
+                  ),
                 );
               } else if (state is DriverCompleteProfileError) {
                 ScaffoldMessenger.of(context).showSnackBar(
