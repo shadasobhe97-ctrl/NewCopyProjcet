@@ -25,6 +25,7 @@ class DriverProfileScreen extends StatefulWidget {
 
 class _DriverProfileScreenState extends State<DriverProfileScreen> {
   bool _isEditing = false;
+  bool _isEmailDialogShowing = false;
   final _formKey = GlobalKey<FormState>();
 
   dynamic _avatarImage;
@@ -105,36 +106,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     if (_emailController.text != _email) _emailController.text = _email;
   }
 
-  void _showSensitiveDataNotice() {
-    showDialog(
-      context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Icon(Icons.info_outline, color: context.primaryColor),
-              const SizedBox(width: 8),
-              const Text('تنبيه الإدارة'),
-            ],
-          ),
-          content: Text(
-            'لقد قمت بتعديل "الاسم بالكامل". هذا التعديل يتطلب موافقة الإدارة ولن يظهر في ملفك حتى يتم اعتماده.',
-            style: AppTextStyles.style(fontSize: 14, height: 1.5),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('حسناً'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Future<void> _pickImage(ImageSource source) async {
     Navigator.pop(context);
@@ -285,15 +257,17 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
               backgroundColor: context.successColor,
             ),
           );
-          if (state.isNameChanged) {
-            _showSensitiveDataNotice();
-          }
-          if (state.emailVerification != null) {
+          if (state.emailVerification != null && !_isEmailDialogShowing) {
+            _isEmailDialogShowing = true;
             EmailVerificationDialog.show(
               context,
               onCancel: () async {
-                final cubit = context.read<DriverProfileCubit>();
-                await cubit.cancelEmailChange();
+                try {
+                  final cubit = context.read<DriverProfileCubit>();
+                  await cubit.cancelEmailChange();
+                } finally {
+                  _isEmailDialogShowing = false;
+                }
               },
               onCheckStatus: () async {
                 final cubit = context.read<DriverProfileCubit>();
@@ -313,33 +287,29 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                       ),
                     ),
                   );
-                } else if (status == 'verified') {
+                } else if (status == 'verified' || status == 'rejected' || status == 'expired') {
+                  _isEmailDialogShowing = false;
                   navigator.pop();
+                  String msg = 'تم تأكيد البريد الإلكتروني بنجاح.';
+                  Color col = successColor;
+                  if (status == 'rejected') {
+                    msg = 'تم رفض طلب تغيير البريد الإلكتروني.';
+                    col = errorColor;
+                  } else if (status == 'expired') {
+                    msg = 'انتهت صلاحية رابط تأكيد البريد الإلكتروني.';
+                    col = errorColor;
+                  }
                   messenger.showSnackBar(
                     SnackBar(
-                      content: const Text('تم تأكيد البريد الإلكتروني بنجاح.'),
-                      backgroundColor: successColor,
-                    ),
-                  );
-                } else if (status == 'rejected') {
-                  navigator.pop();
-                  messenger.showSnackBar(
-                    SnackBar(
-                      content: const Text('تم رفض طلب تغيير البريد الإلكتروني.'),
-                      backgroundColor: errorColor,
-                    ),
-                  );
-                } else if (status == 'expired') {
-                  navigator.pop();
-                  messenger.showSnackBar(
-                    SnackBar(
-                      content: const Text('انتهت صلاحية رابط تأكيد البريد الإلكتروني.'),
-                      backgroundColor: errorColor,
+                      content: Text(msg),
+                      backgroundColor: col,
                     ),
                   );
                 }
               },
-            );
+            ).then((_) {
+              _isEmailDialogShowing = false;
+            });
           }
         } else if (state is DriverProfileError) {
           ScaffoldMessenger.of(context).showSnackBar(

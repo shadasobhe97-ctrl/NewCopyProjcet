@@ -50,6 +50,13 @@ class VehicleModel {
   });
 
   factory VehicleModel.fromJson(Map<String, dynamic> json) {
+    if (json['vehicles'] is List && (json['vehicles'] as List).isNotEmpty) {
+      final firstVehicle = (json['vehicles'] as List).first;
+      if (firstVehicle is Map) {
+        json = Map<String, dynamic>.from(firstVehicle);
+      }
+    }
+
     int parsedYear = 2022;
     if (json['year'] is int) {
       parsedYear = json['year'];

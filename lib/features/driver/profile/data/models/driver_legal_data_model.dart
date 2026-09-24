@@ -38,7 +38,8 @@ class DriverLegalDataModel {
 
   factory DriverLegalDataModel.fromJson(Map<String, dynamic> json) {
     debugPrint('📜 [DriverLegalDataModel.fromJson] Incoming json keys: ${json.keys.toList()}');
-    final rawFiles = json['uploaded_files'] ?? json['files'] ?? [];
+    final legalDataMap = json['legal_data'] is Map ? json['legal_data'] as Map : json;
+    final rawFiles = json['documents'] ?? json['uploaded_files'] ?? json['files'] ?? [];
     final List<DriverUploadedFileModel> filesList = [];
     if (rawFiles is List) {
       debugPrint('📜 [DriverLegalDataModel.fromJson] rawFiles length: ${rawFiles.length}');
@@ -48,7 +49,7 @@ class DriverLegalDataModel {
             Map<String, dynamic>.from(item),
           );
           filesList.add(fileModel);
-          debugPrint('   ➕ Added from uploaded_files: type=${fileModel.type}, url=${fileModel.fileUrl}');
+          debugPrint('   ➕ Added from uploaded_files/documents: type=${fileModel.type}, url=${fileModel.fileUrl}');
         }
       }
     }
@@ -78,19 +79,23 @@ class DriverLegalDataModel {
     }
 
     return DriverLegalDataModel(
-      nationalId: json['national_id']?.toString() ?? '',
-      licenseNumber: json['license_number']?.toString() ?? '',
+      nationalId: legalDataMap['national_id']?.toString() ?? json['national_id']?.toString() ?? '',
+      licenseNumber: legalDataMap['license_number']?.toString() ?? json['license_number']?.toString() ?? '',
       licenseExpiry:
+          legalDataMap['license_expiry']?.toString() ??
           json['license_expiry']?.toString() ??
           json['license_expiry_date']?.toString() ??
           '',
       insuranceExpiry:
+          legalDataMap['insurance_expiry']?.toString() ??
           json['insurance_expiry']?.toString() ??
           json['insurance_expiry_date']?.toString(),
       stampExpiry:
+          legalDataMap['stamp_expiry']?.toString() ??
           json['stamp_expiry']?.toString() ??
           json['stamp_expiry_date']?.toString(),
       technicalInspectionExpiry:
+          legalDataMap['technical_inspection_expiry']?.toString() ??
           json['technical_inspection_expiry']?.toString() ??
           json['technical_inspection_expiry_date']?.toString() ??
           json['inspection_expiry']?.toString(),
@@ -163,11 +168,11 @@ class DriverUploadedFileModel {
           json['uploaded_at']?.toString() ??
           json['created_at']?.toString() ??
           '',
-      licenseExpiryDate: json['license_expiry_date']?.toString(),
-      insuranceExpiryDate: json['insurance_expiry_date']?.toString(),
-      stampExpiryDate: json['stamp_expiry_date']?.toString(),
+      licenseExpiryDate: json['license_expiry_date']?.toString() ?? json['expiry_date']?.toString(),
+      insuranceExpiryDate: json['insurance_expiry_date']?.toString() ?? json['expiry_date']?.toString(),
+      stampExpiryDate: json['stamp_expiry_date']?.toString() ?? json['expiry_date']?.toString(),
       technicalInspectionExpiryDate:
-          json['technical_inspection_expiry_date']?.toString(),
+          json['technical_inspection_expiry_date']?.toString() ?? json['expiry_date']?.toString(),
       feedback:
           json['feedback']?.toString() ??
           json['rejection_reason']?.toString(),

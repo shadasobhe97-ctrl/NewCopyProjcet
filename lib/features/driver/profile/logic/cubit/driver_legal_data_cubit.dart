@@ -19,7 +19,10 @@ class DriverLegalDataCubit extends Cubit<DriverLegalDataState> {
       _cachedLegalData = legalData;
       emit(DriverLegalDataLoaded(legalData));
     } catch (e) {
-      final errorMsg = e.toString().replaceAll('Exception: ', '').replaceAll('Exception:', '');
+      final errorMsg = e
+          .toString()
+          .replaceAll('Exception: ', '')
+          .replaceAll('Exception:', '');
       emit(DriverLegalDataError(errorMsg));
     }
   }
@@ -55,13 +58,18 @@ class DriverLegalDataCubit extends Cubit<DriverLegalDataState> {
       final freshData = await repository.getLegalData();
       _cachedLegalData = freshData;
 
-      emit(DriverLegalDataSuccess(
-        freshData: freshData,
-        message: 'تم إرسال طلب تعديل الوثائق بنجاح.\nسيتم مراجعة الوثائق من قبل الإدارة.\nسيتم إيقاف الحساب مؤقتًا حتى انتهاء المراجعة.',
-      ));
+      emit(
+        DriverLegalDataSuccess(
+          freshData: freshData,
+          message: 'تم إرسال طلب تعديل الوثائق بنجاح للإدارة.',
+        ),
+      );
       emit(DriverLegalDataLoaded(freshData));
     } catch (e) {
-      final errorMsg = e.toString().replaceAll('Exception: ', '').replaceAll('Exception:', '');
+      final errorMsg = e
+          .toString()
+          .replaceAll('Exception: ', '')
+          .replaceAll('Exception:', '');
       if (currentModel != null) {
         emit(DriverLegalDataLoaded(currentModel));
       }

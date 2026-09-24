@@ -11,6 +11,7 @@ import '../../data/models/driver_preferences_model.dart';
 import '../../data/models/zone_model.dart';
 import '../../logic/driver_preferences_cubit.dart';
 import '../../logic/driver_preferences_state.dart';
+import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
 
 class DriverPreferencesScreen extends StatefulWidget {
@@ -54,6 +55,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
   void initState() {
     super.initState();
     if (widget.isMandatory) {
+      _isEditing = true;
       StorageService.saveDriverRegStage('preferences');
     }
     _loadData();
@@ -207,6 +209,73 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
     );
   }
 
+  void _showSuccessCompletionDialog(BuildContext context) {
+    final isDark = context.isDarkMode;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24.r),
+        ),
+        backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 28.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: EdgeInsets.all(16.r),
+                decoration: BoxDecoration(
+                  color: context.primaryColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  color: context.primaryColor,
+                  size: 56.r,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              Text(
+                'تم حفظ إعدادات النقل بنجاح',
+                style: AppTextStyles.style(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.white : AppColors.textDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                'سيتم بناءً على الإعدادات التي حددتها عرض طلبات التوصيل المناسبة لك من أولياء الأمور.',
+                style: AppTextStyles.style(
+                  fontSize: 13.5.sp,
+                  height: 1.5,
+                  color: isDark ? AppColors.white70 : AppColors.grey700,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 24.h),
+              PrimaryButton(
+                label: 'الانتقال للشاشة الرئيسية',
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.driverMainWrapper,
+                    (route) => false,
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
@@ -238,33 +307,41 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                 ),
         ),
         body: BlocConsumer<DriverPreferencesCubit, DriverPreferencesState>(
-          listener: (context, state) {
+          listener: (context, state) async {
             if (state is UpdatePreferencesSuccess) {
-              setState(() {
-                _isEditing = false;
-                _isMorningExpanded = false;
-                _isAfternoonExpanded = false;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'تم حفظ إعدادات النقل بنجاح',
-                    style: AppTextStyles.style(
-                      fontSize: 14.sp,
-                      color: AppColors.white,
+              if (widget.isMandatory) {
+                await StorageService.saveDriverRegStage('completed');
+                await StorageService.setIsPreferencesSet(true);
+                if (!context.mounted) return;
+                _showSuccessCompletionDialog(context);
+              } else {
+                setState(() {
+                  _isEditing = false;
+                  _isMorningExpanded = false;
+                  _isAfternoonExpanded = false;
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'تم حفظ إعدادات النقل بنجاح',
+                      style: AppTextStyles.style(
+                        fontSize: 14.sp,
+                        color: AppColors.white,
+                      ),
                     ),
+                    backgroundColor: AppColors.success,
+                    behavior: SnackBarBehavior.floating,
                   ),
-                  backgroundColor: AppColors.success,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+                );
+              }
             } else if (state is DriverPreferencesLoaded) {
-              if (state.preferences != null && !_isEditing) {
+              if (state.preferences != null && !_isInitialized) {
                 setState(() {
                   _populateFromPreferences(state.preferences!);
                   _isInitialized = true;
-                  _isMorningExpanded = false;
-                  _isAfternoonExpanded = false;
+                  if (widget.isMandatory) {
+                    _isEditing = true;
+                  }
                 });
               }
             } else if (state is UpdatePreferencesError) {
@@ -389,6 +466,9 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
 
   Widget _buildHeaderBanner() {
     final isDark = context.isDarkMode;
+    final text = widget.isMandatory
+        ? 'يرجى تحديد إعدادات النقل الخاصة بك للبدء في استقبال طلبات التوصيل المناسبة لك.'
+        : 'اختر إعدادات النقل بعناية، حيث سيتم إرسال طلبات الرحلات والتوصيل إليك بناءً على هذه الإعدادات.';
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: AppTheme.boxDecoration(
@@ -396,7 +476,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
         borderRadius: BorderRadius.circular(30.r),
       ),
       child: Text(
-        'اختر إعدادات النقل بعناية، حيث سيتم إرسال طلبات الرحلات إليك بناءً على هذه الإعدادات ومواصفات حافلتك.',
+        text,
         style: AppTextStyles.style(
           fontSize: 13.sp,
           height: 1.4,
@@ -1067,7 +1147,44 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
 
   Widget _buildStickyBottomButton(DriverPreferencesState state) {
     final isDark = context.isDarkMode;
+    final isSaving = state is UpdatingPreferences;
 
+    final hasAnyShift = _selectedShifts.values.any((isSelected) => isSelected);
+    final isFormIncomplete =
+        _selectedSubtype == null ||
+        _selectedSchoolStages.isEmpty ||
+        _selectedZones.isEmpty ||
+        !hasAnyShift;
+
+    // 🌟 حالة الإضافة الأولى الإجبارية (بعد شاشة الانتظار مباشرة)
+    if (widget.isMandatory) {
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+        decoration: AppTheme.boxDecoration(
+          color: isDark ? AppColors.surfaceDark : AppColors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30.r),
+            topRight: Radius.circular(30.r),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.transparent
+                  : AppColors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: PrimaryButton(
+          label: 'حفظ إعدادات النقل',
+          isLoading: isSaving,
+          onPressed: isFormIncomplete ? null : _onSave,
+        ),
+      );
+    }
+
+    // 🌟 حالة العرض في الإعدادات لاحقاً
     if (!_isEditing) {
       return Container(
         padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
@@ -1101,15 +1218,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
       );
     }
 
-    final isSaving = state is UpdatingPreferences;
-
-    final hasAnyShift = _selectedShifts.values.any((isSelected) => isSelected);
-    final isFormIncomplete =
-        _selectedSubtype == null ||
-        _selectedSchoolStages.isEmpty ||
-        _selectedZones.isEmpty ||
-        !hasAnyShift;
-
+    // 🌟 حالة التعديل لاحقاً من الإعدادات
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
       decoration: AppTheme.boxDecoration(
