@@ -18,7 +18,7 @@ import 'package:kids_transport/features/parent/children/data/models/child_model.
 import 'package:kids_transport/features/parent/children/data/models/logistics_model.dart';
 import 'package:kids_transport/features/parent/children/data/models/school_model.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/child_pass_screen.dart';
+
 import 'package:latlong2/latlong.dart';
 
 class AddChildScreen extends StatefulWidget {
@@ -955,19 +955,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
         if (isEditMode) {
           Navigator.pop(context, resultChild);
         } else {
-          // عرض بطاقة QR Code الخاصة بالطفل فوراً لولي الأمر
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ChildPassScreen(child: resultChild),
-            ),
-          ).then((_) {
-            if (widget.isFirstChildMandatory && _isFirstChildHeaderShown && mounted) {
-              _showAddAnotherChildDialog();
-            } else if (mounted) {
-              Navigator.pop(context, resultChild);
-            }
-          });
+          if (widget.isFirstChildMandatory && _isFirstChildHeaderShown && mounted) {
+            _showAddAnotherChildDialog();
+          } else if (mounted) {
+            Navigator.pop(context, resultChild);
+          }
         }
       }
     } on ApiException catch (e) {

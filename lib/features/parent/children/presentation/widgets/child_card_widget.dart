@@ -9,7 +9,7 @@ import '../../data/models/child_model.dart';
 
 class ChildCardWidget extends StatefulWidget {
   final ChildModel child;
-  final VoidCallback onPassTap;
+  final VoidCallback? onPassTap;
   final VoidCallback onDataTap;
   final VoidCallback onTransportTap;
   final VoidCallback onDelete;
@@ -17,7 +17,7 @@ class ChildCardWidget extends StatefulWidget {
   const ChildCardWidget({
     super.key,
     required this.child,
-    required this.onPassTap,
+    this.onPassTap,
     required this.onDataTap,
     required this.onTransportTap,
     required this.onDelete,
@@ -184,23 +184,7 @@ class _ChildCardWidgetState extends State<ChildCardWidget> {
                     ),
                   ),
 
-                  // 2. رمز QR
-                  TextButton.icon(
-                    onPressed: widget.onPassTap,
-                    icon: Icon(
-                      Icons.qr_code_rounded,
-                      color: context.primaryColor,
-                      size: 18.r,
-                    ),
-                    label: Text(
-                      'رمز QR',
-                      style: AppTextStyles.style(
-                        color: context.primaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.sp,
-                      ),
-                    ),
-                  ),
+
 
                   // 3. حذف
                   TextButton.icon(

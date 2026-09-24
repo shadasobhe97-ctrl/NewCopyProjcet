@@ -19,7 +19,7 @@ class TripChildActionCard extends StatelessWidget {
   /// تعطيل زر التأكيد اليدوي بصمت.
   final bool hasTargetCoordinates;
   final VoidCallback onManualConfirm;
-  final VoidCallback onScanQr;
+  final VoidCallback? onScanQr;
   final VoidCallback onAbsent;
   final VoidCallback onSkip;
   final VoidCallback onDropoffFailed;
@@ -33,7 +33,7 @@ class TripChildActionCard extends StatelessWidget {
     required this.distanceMeters,
     required this.hasTargetCoordinates,
     required this.onManualConfirm,
-    required this.onScanQr,
+    this.onScanQr,
     required this.onAbsent,
     required this.onSkip,
     required this.onDropoffFailed,
@@ -179,43 +179,28 @@ class TripChildActionCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: onScanQr,
-                icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
-                label: const Text('مسح QR'),
-                style: AppTheme.elevatedButtonStyle(
-                  backgroundColor: context.primaryColor,
-                  foregroundColor: AppColors.white,
-                  minimumSize: const Size(0, 42),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: manualEnabled ? onManualConfirm : null,
+            icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+            label: Text(manualLabel, style: AppTextStyles.style(fontSize: 13, fontWeight: FontWeight.bold)),
+            style: AppTheme.elevatedButtonStyle(
+              backgroundColor: context.primaryColor,
+              foregroundColor: AppColors.white,
+              minimumSize: const Size(0, 44),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: manualEnabled ? onManualConfirm : null,
-                icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
-                label: Text(manualLabel, style: AppTextStyles.style(fontSize: 12)),
-                style: AppTheme.outlinedButtonStyle(
-                  minimumSize: const Size(0, 42),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
         if (!manualEnabled) ...[
           const SizedBox(height: 6),
           Text(
             !hasTargetCoordinates
-                ? 'لا تتوفر إحداثيات دقيقة لهذه المحطة، يرجى استخدام مسح QR للتأكيد.'
+                ? 'لا تتوفر إحداثيات دقيقة لهذه المحطة.'
                 : (distanceMeters == null
                     ? 'بانتظار تحديد موقعك الحالي...'
-                    : 'اقترب ${distanceMeters!.round()}م، أو استخدم مسح QR'),
+                    : 'أنت بعيد عن المحطة (${distanceMeters!.round()}م)، يرجى الاقتراب لتأكيد الوصول'),
             style: AppTextStyles.style(fontSize: 11, color: AppColors.pending),
           ),
         ],

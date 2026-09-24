@@ -15,7 +15,7 @@ import 'package:kids_transport/features/driver/trips/data/models/driver_trip_sto
 import 'package:kids_transport/features/driver/trips/data/models/live_trip_child_item.dart';
 import 'package:kids_transport/features/driver/trips/logic/live_trip_cubit/live_trip_cubit.dart';
 import 'package:kids_transport/features/driver/trips/presentation/widgets/forgotten_children_dialog.dart';
-import 'package:kids_transport/features/driver/trips/presentation/widgets/qr_scan_sheet.dart';
+
 import 'package:kids_transport/features/driver/trips/presentation/widgets/trip_progress_bar.dart';
 import 'package:kids_transport/features/driver/trips/presentation/widgets/trip_child_action_card.dart';
 import 'package:kids_transport/features/driver/trips/data/models/vehicle_breakdown_model.dart';
@@ -158,17 +158,7 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
     }
   }
 
-  Future<void> _handleScanQr(LiveTripChildItem item) async {
-    final token = await QrScanSheet.show(context, title: item.name);
-    if (token == null || token.isEmpty || !mounted) return;
-    final stage = item.isDropoffPhase ? 'dropoff' : null;
-    await context.read<LiveTripCubit>().scanQr(widget.tripId, item, token, stage: stage);
-    // Show success snackbar if the cubit did not set an error message
-    final cubitState = context.read<LiveTripCubit>().state;
-    if (cubitState is LiveTripLoaded && cubitState.actionErrorMessage == null) {
-      _showSnack('تم التحقق من QR بنجاح');
-    }
-  }
+
 
   Future<void> _confirmAndRunWithLocation(
     String title,
@@ -202,7 +192,7 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
       if (pos == null) {
         if (!mounted) return;
         _showSnack(
-          'يتعذر الحصول على الموقع الجغرافي الحالي لتأكيد الإجراء، يرجى تفعيل الموقع أو استخدام مسح QR.',
+          'يتعذر الحصول على الموقع الجغرافي الحالي لتأكيد الإجراء، يرجى تفعيل الموقع.',
           isError: true,
         );
         return;
@@ -546,7 +536,6 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
                         distanceMeters: _distanceToChild(item),
                         hasTargetCoordinates: item.targetLatitude != null && item.targetLongitude != null,
                         onManualConfirm: loaded.isSuspended ? () {} : () => _handleManualConfirm(item),
-                        onScanQr: loaded.isSuspended ? () {} : () => _handleScanQr(item),
                         onAbsent: loaded.isSuspended
                             ? () {}
                             : () => _confirmAndRunWithLocation(

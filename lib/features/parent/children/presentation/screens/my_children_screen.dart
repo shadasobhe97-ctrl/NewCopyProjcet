@@ -10,7 +10,7 @@ import 'package:kids_transport/core/widgets/empty_state_placeholder.dart';
 import '../../data/models/child_model.dart';
 import '../../logic/children_cubit/children_cubit.dart';
 import 'add_child_step1_screen.dart';
-import 'child_pass_screen.dart';
+
 import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
 
 class MyChildrenScreen extends StatefulWidget {
@@ -630,98 +630,44 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                   SizedBox(height: 14.h),
 
                   // الأزرار تحت الصورة وتحت الاسم: جنب بعض بنفس المقاس وتمتد بكامل العرض
-                  Row(
-                    children: [
-                      // 1️⃣ زر عرض QR (يمين الواجهة RTL)
-                      Expanded(
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => ChildPassScreen(child: child),
-                                ),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(12.r),
-                            child: Container(
-                              height: 40.h,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.22),
-                                borderRadius: BorderRadius.circular(12.r),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.45),
-                                  width: 1.0,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.qr_code_rounded,
-                                    size: 17.r,
-                                    color: Colors.white,
-                                  ),
-                                  SizedBox(width: 6.w),
-                                  Text(
-                                    'عرض QR',
-                                    style: AppTextStyles.style(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                  // زر الحذف
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _confirmDelete(context, child),
+                      borderRadius: BorderRadius.circular(12.r),
+                      child: Container(
+                        height: 40.h,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.35),
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.4),
+                            width: 1.0,
                           ),
                         ),
-                      ),
-                      SizedBox(width: 10.w),
-
-                      // 2️⃣ زر الحذف (يسار الواجهة RTL)
-                      Expanded(
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => _confirmDelete(context, child),
-                            borderRadius: BorderRadius.circular(12.r),
-                            child: Container(
-                              height: 40.h,
-                              decoration: BoxDecoration(
-                                color: Colors.red.withValues(alpha: 0.35),
-                                borderRadius: BorderRadius.circular(12.r),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.4),
-                                  width: 1.0,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.delete_outline_rounded,
-                                    size: 17.r,
-                                    color: Colors.white,
-                                  ),
-                                  SizedBox(width: 6.w),
-                                  Text(
-                                    'حذف',
-                                    style: AppTextStyles.style(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.delete_outline_rounded,
+                              size: 17.r,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              'حذف الطفل',
+                              style: AppTextStyles.style(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
