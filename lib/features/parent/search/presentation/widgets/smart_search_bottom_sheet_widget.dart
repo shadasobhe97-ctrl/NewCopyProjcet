@@ -75,15 +75,23 @@ class _SmartSearchBottomSheetWidgetState
 
   Future<void> _pickDate(bool isStart) async {
     final now = DateTime.now();
+    final minEndDate = (_startDate ?? now).add(const Duration(days: 7));
+
     final initial = isStart
         ? (_startDate ?? now)
-        : (_endDate ?? (_startDate ?? now));
-    final firstDate = now.subtract(const Duration(days: 1));
+        : (_endDate != null && !_endDate!.isBefore(minEndDate)
+            ? _endDate!
+            : minEndDate);
+
+    final firstDate = isStart
+        ? now.subtract(const Duration(days: 1))
+        : minEndDate;
+
     final lastDate = now.add(const Duration(days: 365));
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: initial,
+      initialDate: initial.isBefore(firstDate) ? firstDate : initial,
       firstDate: firstDate,
       lastDate: lastDate,
       builder: (ctx, child) => Theme(
@@ -100,8 +108,9 @@ class _SmartSearchBottomSheetWidgetState
       setState(() {
         if (isStart) {
           _startDate = picked;
-          if (_endDate != null && _endDate!.isBefore(picked)) {
-            _endDate = picked;
+          final minEnd = picked.add(const Duration(days: 7));
+          if (_endDate == null || _endDate!.isBefore(minEnd)) {
+            _endDate = minEnd;
           }
         } else {
           _endDate = picked;
@@ -527,6 +536,22 @@ class _SmartSearchBottomSheetWidgetState
                             ),
                           );
                           return;
+                        }
+
+                        if (_startDate != null && _endDate != null) {
+                          final daysDiff = _endDate!.difference(_startDate!).inDays;
+                          if (daysDiff < 7) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "الحد الأدنى مسموح به للاشتراك هو أسبوع واحد (7 أيام).",
+                                  style: AppTextStyles.style(fontSize: 12.sp),
+                                ),
+                                backgroundColor: AppColors.orange,
+                              ),
+                            );
+                            return;
+                          }
                         }
 
                         widget.onApply(
