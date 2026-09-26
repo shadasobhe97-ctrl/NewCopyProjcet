@@ -139,16 +139,16 @@ class LiveTrackingModel {
 
     if (json['driver_location'] is Map<String, dynamic>) {
       final loc = json['driver_location'] as Map<String, dynamic>;
-      lat = (loc['lat'] as num?)?.toDouble() ?? (loc['latitude'] as num?)?.toDouble() ?? 0.0;
-      lng = (loc['lng'] as num?)?.toDouble() ?? (loc['longitude'] as num?)?.toDouble() ?? 0.0;
+      lat = _parseDouble(loc['lat'] ?? loc['latitude']);
+      lng = _parseDouble(loc['lng'] ?? loc['longitude']);
     } else {
-      lat = (json['driver_lat'] as num?)?.toDouble() ?? (json['lat'] as num?)?.toDouble() ?? 0.0;
-      lng = (json['driver_lng'] as num?)?.toDouble() ?? (json['lng'] as num?)?.toDouble() ?? 0.0;
+      lat = _parseDouble(json['driver_lat'] ?? json['lat']);
+      lng = _parseDouble(json['driver_lng'] ?? json['lng']);
     }
 
-    final double? headingVal = (json['heading'] as num?)?.toDouble() ??
-        (json['driver_heading'] as num?)?.toDouble() ??
-        (json['bearing'] as num?)?.toDouble();
+    final double? headingVal = _parseNullableDouble(
+      json['heading'] ?? json['driver_heading'] ?? json['bearing'],
+    );
 
     DestinationInfo? dest;
     if (json['destination'] is Map<String, dynamic>) {
@@ -169,13 +169,27 @@ class LiveTrackingModel {
       status: json['status']?.toString() ?? 'active',
       driverLat: lat,
       driverLng: lng,
-      speed: (json['speed'] as num?)?.toDouble(),
+      speed: _parseNullableDouble(json['speed']),
       heading: headingVal,
       destination: dest,
       children: childrenList,
       lastUpdated: json['last_updated']?.toString() ?? 'الآن',
       isOnline: json['is_online'] as bool? ?? true,
     );
+  }
+
+  static double _parseDouble(dynamic val) {
+    if (val is double) return val;
+    if (val is num) return val.toDouble();
+    if (val != null) return double.tryParse(val.toString()) ?? 0.0;
+    return 0.0;
+  }
+
+  static double? _parseNullableDouble(dynamic val) {
+    if (val is double) return val;
+    if (val is num) return val.toDouble();
+    if (val != null) return double.tryParse(val.toString());
+    return null;
   }
 
   static int _parseInt(dynamic val) {

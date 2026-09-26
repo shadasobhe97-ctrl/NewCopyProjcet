@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../data/models/complaint_model.dart';
 import '../data/models/driver_trip_model.dart';
+import '../data/models/parent_driver_model.dart';
 
 abstract class ComplaintsState extends Equatable {
   const ComplaintsState();
@@ -10,6 +11,17 @@ abstract class ComplaintsState extends Equatable {
 }
 
 class ComplaintsInitial extends ComplaintsState {}
+
+class ParentDriversLoading extends ComplaintsState {}
+
+class ParentDriversLoaded extends ComplaintsState {
+  final List<ParentDriverModel> drivers;
+
+  const ParentDriversLoaded(this.drivers);
+
+  @override
+  List<Object?> get props => [drivers];
+}
 
 class ComplaintsLoading extends ComplaintsState {}
 

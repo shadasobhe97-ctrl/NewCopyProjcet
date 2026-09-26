@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/repositories/reviews_repository.dart';
@@ -11,7 +12,11 @@ class ReviewsCubit extends Cubit<ReviewsState> {
   ReviewsCubit(this._repository) : super(ReviewsInitial());
 
   Future<void> loadReviews(int driverId) async {
-    if (state is ReviewsLoading) return;
+    debugPrint('\n🔍 [ReviewsCubit] loadReviews triggered for driverId: $driverId');
+    if (state is ReviewsLoading) {
+      debugPrint('⚠️ [ReviewsCubit] loadReviews skipped: state is already ReviewsLoading');
+      return;
+    }
     emit(ReviewsLoading());
 
     ReviewsResponse? reviewsRes;
@@ -20,18 +25,23 @@ class ReviewsCubit extends Cubit<ReviewsState> {
 
     try {
       reviewsRes = await _repository.getReviews(driverId, 1);
+      debugPrint('✨ [ReviewsCubit] getReviews succeeded (${reviewsRes.reviews.length} reviews fetched)');
     } catch (e) {
       errorMessage = _parseError(e);
+      debugPrint('❌ [ReviewsCubit] getReviews failed: $e -> parsed: $errorMessage');
     }
 
     try {
       final checkRes = await _repository.checkSubscription(driverId);
       hasSub = checkRes.hasSubscription == true;
+      debugPrint('✨ [ReviewsCubit] checkSubscription succeeded: hasSubscription = $hasSub');
     } catch (e) {
       hasSub = false;
+      debugPrint('❌ [ReviewsCubit] checkSubscription failed with exception: $e. Defaulting hasSubscription to FALSE.');
     }
 
     if (reviewsRes != null) {
+      debugPrint('✅ [ReviewsCubit] Emitting ReviewsLoaded (hasSubscription: $hasSub, reviewsCount: ${reviewsRes.reviews.length})');
       emit(
         ReviewsLoaded(
           reviews: reviewsRes.reviews,
@@ -41,6 +51,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
         ),
       );
     } else {
+      debugPrint('❌ [ReviewsCubit] Emitting ReviewsError: $errorMessage');
       emit(ReviewsError(errorMessage ?? 'تعذر تحميل التقييمات'));
     }
   }
@@ -55,6 +66,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
 
     _isLoadingMore = true;
     final nextPage = currentState.currentPage + 1;
+    debugPrint('🔍 [ReviewsCubit] loadMoreReviews page $nextPage for driverId: $driverId');
 
     try {
       final reviewsRes = await _repository.getReviews(driverId, nextPage);
@@ -68,7 +80,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
         ),
       );
     } catch (e) {
-      // Maintain current state, just stop loading more
+      debugPrint('❌ [ReviewsCubit] loadMoreReviews failed: $e');
     } finally {
       _isLoadingMore = false;
     }
@@ -79,7 +91,11 @@ class ReviewsCubit extends Cubit<ReviewsState> {
     required int rating,
     required String comment,
   }) async {
-    if (state is ReviewsSubmitting) return;
+    debugPrint('\n🚀 [ReviewsCubit] addReview triggered: driverId=$driverId, rating=$rating, comment="$comment"');
+    if (state is ReviewsSubmitting) {
+      debugPrint('⚠️ [ReviewsCubit] addReview skipped: already submitting');
+      return;
+    }
     final currentState = state;
     List<ReviewModel> currentList = [];
     bool hasSub = false;
@@ -87,6 +103,9 @@ class ReviewsCubit extends Cubit<ReviewsState> {
     if (currentState is ReviewsLoaded) {
       currentList = currentState.reviews;
       hasSub = currentState.hasSubscription;
+      debugPrint('ℹ️ [ReviewsCubit] Current state is ReviewsLoaded (hasSub=$hasSub, currentCount=${currentList.length})');
+    } else {
+      debugPrint('ℹ️ [ReviewsCubit] Current state is: ${currentState.runtimeType}');
     }
 
     emit(ReviewsSubmitting(reviews: currentList, hasSubscription: hasSub));
@@ -97,11 +116,14 @@ class ReviewsCubit extends Cubit<ReviewsState> {
         comment: comment,
       );
 
+      debugPrint('🎉 [ReviewsCubit] postReview succeeded! Emitting ReviewsSuccess and reloading reviews...');
       emit(const ReviewsSuccess('تم إضافة تقييمك بنجاح'));
       // Reload reviews
       await loadReviews(driverId);
     } catch (e) {
-      emit(ReviewsError(_parseError(e)));
+      final parsedErr = _parseError(e);
+      debugPrint('💥 [ReviewsCubit] postReview failed with error: $e -> parsed: $parsedErr');
+      emit(ReviewsError(parsedErr));
       if (currentState is ReviewsLoaded) {
         emit(
           ReviewsLoaded(
@@ -121,6 +143,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
     required int rating,
     required String comment,
   }) async {
+    debugPrint('\n🚀 [ReviewsCubit] editReview triggered: driverId=$driverId, reviewId=$reviewId, rating=$rating, comment="$comment"');
     if (state is ReviewsSubmitting) return;
     final currentState = state;
     List<ReviewModel> currentList = [];
@@ -139,11 +162,14 @@ class ReviewsCubit extends Cubit<ReviewsState> {
         comment: comment,
       );
 
+      debugPrint('🎉 [ReviewsCubit] updateReview succeeded!');
       emit(const ReviewsSuccess('تم تعديل تقييمك بنجاح'));
       // Reload reviews
       await loadReviews(driverId);
     } catch (e) {
-      emit(ReviewsError(_parseError(e)));
+      final parsedErr = _parseError(e);
+      debugPrint('💥 [ReviewsCubit] updateReview failed: $e -> parsed: $parsedErr');
+      emit(ReviewsError(parsedErr));
       if (currentState is ReviewsLoaded) {
         emit(
           ReviewsLoaded(
@@ -161,6 +187,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
     required int driverId,
     required int reviewId,
   }) async {
+    debugPrint('\n🚀 [ReviewsCubit] deleteReview triggered: driverId=$driverId, reviewId=$reviewId');
     if (state is ReviewsSubmitting) return;
     final currentState = state;
     List<ReviewModel> currentList = [];
@@ -175,11 +202,14 @@ class ReviewsCubit extends Cubit<ReviewsState> {
     try {
       await _repository.deleteReview(reviewId);
 
+      debugPrint('🎉 [ReviewsCubit] deleteReview succeeded!');
       emit(const ReviewsSuccess('تم حذف التقييم بنجاح'));
       // Reload reviews
       await loadReviews(driverId);
     } catch (e) {
-      emit(ReviewsError(_parseError(e)));
+      final parsedErr = _parseError(e);
+      debugPrint('💥 [ReviewsCubit] deleteReview failed: $e -> parsed: $parsedErr');
+      emit(ReviewsError(parsedErr));
       if (currentState is ReviewsLoaded) {
         emit(
           ReviewsLoaded(
@@ -194,10 +224,14 @@ class ReviewsCubit extends Cubit<ReviewsState> {
   }
 
   String _parseError(dynamic e) {
+    debugPrint('🔎 [ReviewsCubit] Parsing Exception: $e');
     if (e is DioException) {
+      debugPrint('   DioException Type: ${e.type}');
       if (e.response != null) {
         final code = e.response!.statusCode;
         final data = e.response!.data;
+        debugPrint('   StatusCode: $code');
+        debugPrint('   Response Data: $data');
         if (data is Map && data['message'] != null) {
           return data['message'].toString();
         }
@@ -221,3 +255,4 @@ class ReviewsCubit extends Cubit<ReviewsState> {
     return e.toString().replaceAll('Exception:', '');
   }
 }
+

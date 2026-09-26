@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart';
+import 'package:dio/dio.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
 import '../models/complaint_model.dart';
 import '../models/driver_trip_model.dart';
+import '../models/parent_driver_model.dart';
 
 class ComplaintsRemoteDataSource {
   final ApiClient _client;
@@ -13,6 +16,65 @@ class ComplaintsRemoteDataSource {
   Map<String, dynamic> get _authHeader {
     final token = StorageService.getAuthorizationHeader();
     return {'Authorization': token ?? ''};
+  }
+
+  /// GET /api/parent/subscriptions/drivers
+  Future<List<ParentDriverModel>> getParentDrivers() async {
+    const endpoint = ApiEndpoints.parentSubscriptionDrivers;
+    debugPrint('\n================ [API COMPLAINTS] getParentDrivers ================');
+    debugPrint('📌 GET Endpoint: $endpoint');
+    try {
+      final response = await _client.get(
+        endpoint,
+        headers: _authHeader,
+      );
+
+      debugPrint('✅ Get Drivers Status: ${response.statusCode}');
+      debugPrint('📄 Response Body: ${response.data}');
+
+      final data = response.data;
+      if (data is Map) {
+        final success = data['success'] ?? data['status'];
+        if (success == false) {
+          final msg = ApiException.extractMessage(data);
+          throw ApiException(msg ?? 'تعذر جلب قائمة السائقين');
+        }
+        final rawList =
+            data['data'] as List<dynamic>? ??
+            data['drivers'] as List<dynamic>? ??
+            [];
+        final drivers = rawList
+            .map(
+              (e) => ParentDriverModel.fromJson(
+                Map<String, dynamic>.from(e as Map),
+              ),
+            )
+            .toList();
+        debugPrint('✨ Fetched ${drivers.length} drivers for parent');
+        debugPrint('===================================================================\n');
+        return drivers;
+      } else if (data is List) {
+        final drivers = data
+            .map(
+              (e) => ParentDriverModel.fromJson(
+                Map<String, dynamic>.from(e as Map),
+              ),
+            )
+            .toList();
+        debugPrint('✨ Fetched ${drivers.length} drivers for parent');
+        debugPrint('===================================================================\n');
+        return drivers;
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [API COMPLAINTS ERROR] getParentDrivers Failed: $e');
+      if (e is DioException) {
+        debugPrint('   Status Code: ${e.response?.statusCode}');
+        debugPrint('   Response Data: ${e.response?.data}');
+      }
+      debugPrint('===================================================================\n');
+      rethrow;
+    }
   }
 
   /// GET /api/parent/complaints or /api/parent/complaints?type={type}
@@ -172,3 +234,4 @@ class ComplaintsRemoteDataSource {
     return [];
   }
 }
+

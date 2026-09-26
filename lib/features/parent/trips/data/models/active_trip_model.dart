@@ -64,6 +64,13 @@ class BusOccupancyModel {
   String get displayOccupancy => '$currentOnboardCount / $totalTripChildren';
 }
 
+double _parseDouble(dynamic val) {
+  if (val is double) return val;
+  if (val is num) return val.toDouble();
+  if (val != null) return double.tryParse(val.toString()) ?? 0.0;
+  return 0.0;
+}
+
 class ChildAddressModel {
   final String title;
   final String? street;
@@ -81,14 +88,8 @@ class ChildAddressModel {
     return ChildAddressModel(
       title: json['title']?.toString() ?? '',
       street: json['street']?.toString(),
-      lat:
-          (json['lat'] as num?)?.toDouble() ??
-          (json['latitude'] as num?)?.toDouble() ??
-          0.0,
-      lng:
-          (json['lng'] as num?)?.toDouble() ??
-          (json['longitude'] as num?)?.toDouble() ??
-          0.0,
+      lat: _parseDouble(json['lat'] ?? json['latitude']),
+      lng: _parseDouble(json['lng'] ?? json['longitude']),
     );
   }
 }
@@ -116,14 +117,8 @@ class ChildSchoolModel {
       name: json['name']?.toString() ?? '',
       branch: json['branch']?.toString(),
       address: json['address']?.toString(),
-      lat:
-          (json['lat'] as num?)?.toDouble() ??
-          (json['latitude'] as num?)?.toDouble() ??
-          0.0,
-      lng:
-          (json['lng'] as num?)?.toDouble() ??
-          (json['longitude'] as num?)?.toDouble() ??
-          0.0,
+      lat: _parseDouble(json['lat'] ?? json['latitude']),
+      lng: _parseDouble(json['lng'] ?? json['longitude']),
     );
   }
 }
@@ -201,14 +196,8 @@ class DestinationInfo {
     return DestinationInfo(
       name: json['name']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
-      lat:
-          (json['lat'] as num?)?.toDouble() ??
-          (json['latitude'] as num?)?.toDouble() ??
-          0.0,
-      lng:
-          (json['lng'] as num?)?.toDouble() ??
-          (json['longitude'] as num?)?.toDouble() ??
-          0.0,
+      lat: _parseDouble(json['lat'] ?? json['latitude']),
+      lng: _parseDouble(json['lng'] ?? json['longitude']),
     );
   }
 }
@@ -323,8 +312,8 @@ class ActiveTripModel {
       destObj = DestinationInfo(
         name: json['destination_name']?.toString() ?? '',
         type: json['destination_type']?.toString() ?? '',
-        lat: (json['dest_lat'] as num?)?.toDouble() ?? 0.0,
-        lng: (json['dest_lng'] as num?)?.toDouble() ?? 0.0,
+        lat: _parseDouble(json['dest_lat']),
+        lng: _parseDouble(json['dest_lng']),
       );
     }
 

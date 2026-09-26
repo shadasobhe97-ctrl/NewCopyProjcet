@@ -43,20 +43,22 @@ class TripsRemoteDataSource {
 
       final data = snapshot.data() as Map<String, dynamic>;
 
-      final double driverLat = (data['driver_lat'] as num?)?.toDouble() ??
-          (data['lat'] as num?)?.toDouble() ??
-          baseModel.driverLat;
-      final double driverLng = (data['driver_lng'] as num?)?.toDouble() ??
-          (data['lng'] as num?)?.toDouble() ??
-          baseModel.driverLng;
-      final double heading = (data['heading'] as num?)?.toDouble() ??
-          (data['driver_heading'] as num?)?.toDouble() ??
-          (data['bearing'] as num?)?.toDouble() ??
-          baseModel.heading ??
-          0.0;
-      final double speed = (data['speed'] as num?)?.toDouble() ??
-          baseModel.speed ??
-          0.0;
+      final double driverLat = _parseDouble(
+        data['driver_lat'] ?? data['lat'],
+        baseModel.driverLat,
+      );
+      final double driverLng = _parseDouble(
+        data['driver_lng'] ?? data['lng'],
+        baseModel.driverLng,
+      );
+      final double heading = _parseDouble(
+        data['heading'] ?? data['driver_heading'] ?? data['bearing'],
+        baseModel.heading ?? 0.0,
+      );
+      final double speed = _parseDouble(
+        data['speed'],
+        baseModel.speed ?? 0.0,
+      );
       final String status = data['status']?.toString() ?? baseModel.status;
 
       debugPrint(
@@ -79,6 +81,13 @@ class TripsRemoteDataSource {
     });
   }
 
+  static double _parseDouble(dynamic val, [double defaultValue = 0.0]) {
+    if (val is double) return val;
+    if (val is num) return val.toDouble();
+    if (val != null) return double.tryParse(val.toString()) ?? defaultValue;
+    return defaultValue;
+  }
+
   /// 🌟 Stream Multiple Active Trips Live Tracking from Firebase Firestore
   Stream<List<LiveTrackingModel>> trackMultipleTripsLiveStream() {
     return _firestore.collection('trips_tracking').snapshots().map((snapshot) {
@@ -87,11 +96,9 @@ class TripsRemoteDataSource {
         final data = doc.data();
         final parsedTripId =
             int.tryParse(doc.id) ?? (data['trip_id'] as num?)?.toInt() ?? 0;
-        final double driverLat =
-            (data['driver_lat'] as num?)?.toDouble() ?? 0.0;
-        final double driverLng =
-            (data['driver_lng'] as num?)?.toDouble() ?? 0.0;
-        final double heading = (data['heading'] as num?)?.toDouble() ?? 0.0;
+        final double driverLat = _parseDouble(data['driver_lat'] ?? data['lat']);
+        final double driverLng = _parseDouble(data['driver_lng'] ?? data['lng']);
+        final double heading = _parseDouble(data['heading'] ?? data['driver_heading'] ?? data['bearing']);
 
         debugPrint(
           '🔥 [Firestore Multi-Tracking Update] Trip ID: ${doc.id} | '
@@ -105,7 +112,7 @@ class TripsRemoteDataSource {
             driverLat: driverLat,
             driverLng: driverLng,
             heading: heading,
-            speed: (data['speed'] as num?)?.toDouble(),
+            speed: _parseDouble(data['speed']),
             lastUpdated: 'الآن',
             isOnline: true,
           ),

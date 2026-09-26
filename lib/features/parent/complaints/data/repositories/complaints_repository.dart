@@ -1,11 +1,16 @@
 import '../datasources/complaints_remote_data_source.dart';
 import '../models/complaint_model.dart';
 import '../models/driver_trip_model.dart';
+import '../models/parent_driver_model.dart';
 
 class ComplaintsRepository {
   final ComplaintsRemoteDataSource _remoteDataSource;
 
   ComplaintsRepository(this._remoteDataSource);
+
+  Future<List<ParentDriverModel>> getParentDrivers() async {
+    return await _remoteDataSource.getParentDrivers();
+  }
 
   Future<List<ComplaintModel>> getComplaints({String? type}) async {
     return await _remoteDataSource.getComplaints(type: type);

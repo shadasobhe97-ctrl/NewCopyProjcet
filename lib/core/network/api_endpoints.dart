@@ -110,8 +110,7 @@ class ApiEndpoints {
 
   static const String parentProfile = 'parent/profile';
   static const String parentProfileUpdate = 'parent/profile/update';
-  static const String parentChangePassword =
-      'parent/profile/change-password';
+  static const String parentChangePassword = 'parent/profile/change-password';
   static const String parentCancelEmailChange =
       'parent/profile/email-change/cancel';
   static const String parentEmailChangeStatus =
@@ -179,6 +178,8 @@ class ApiEndpoints {
   static String parentComplaintDetail(int id) => 'parent/complaints/$id';
   static String parentDriverTrips(int driverId) =>
       'parent/driver/$driverId/trips';
+  static const String parentSubscriptionDrivers =
+      'parent/subscriptions/drivers';
 
   // Parent Child Absence
   static String childAvailableAbsenceDates(int childId) =>
@@ -253,4 +254,3 @@ class ApiEndpoints {
       'terms/current?audience=$audience';
   static const String termsAccept = 'terms/accept';
 }
-

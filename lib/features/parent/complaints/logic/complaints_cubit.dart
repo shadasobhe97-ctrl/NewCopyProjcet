@@ -9,6 +9,17 @@ class ComplaintsCubit extends Cubit<ComplaintsState> {
 
   ComplaintsCubit(this._repository) : super(ComplaintsInitial());
 
+  /// Fetch list of drivers that the parent interacted with
+  Future<void> fetchParentDrivers() async {
+    emit(ParentDriversLoading());
+    try {
+      final drivers = await _repository.getParentDrivers();
+      emit(ParentDriversLoaded(drivers));
+    } catch (e) {
+      emit(ComplaintsError(_parseError(e)));
+    }
+  }
+
   /// Load complaints list with optional type filter ('all', 'pending', 'action_taken')
   Future<void> fetchComplaints({String type = 'all'}) async {
     emit(ComplaintsLoading());

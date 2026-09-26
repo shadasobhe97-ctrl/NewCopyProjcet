@@ -43,7 +43,9 @@ class _ReviewFormState extends State<ReviewForm> {
   }
 
   void _submit() {
+    debugPrint('🔘 [ReviewForm] Submit button clicked. Rating: $_rating, Comment: "${_commentController.text.trim()}"');
     if (_rating == 0) {
+      debugPrint('⚠️ [ReviewForm] Submit blocked: Rating is 0 stars!');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -56,7 +58,10 @@ class _ReviewFormState extends State<ReviewForm> {
       return;
     }
     if (_formKey.currentState!.validate()) {
+      debugPrint('✅ [ReviewForm] Form valid. Calling onSubmit callback...');
       widget.onSubmit(_rating, _commentController.text.trim());
+    } else {
+      debugPrint('⚠️ [ReviewForm] Form validation failed (comment text invalid or empty).');
     }
   }
 

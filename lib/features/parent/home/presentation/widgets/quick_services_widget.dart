@@ -24,6 +24,14 @@ class QuickServicesWidget extends StatelessWidget {
     // أيقونات ملونة بألوان موجودة في ملف AppColors
     final List<Map<String, dynamic>> services = [
       {
+        'title': 'تقديم شكوى',
+        'subtitle': 'عن سائق',
+        'icon': Icons.report_problem_rounded,
+        'color': AppColors.error,
+        'action': () =>
+            Navigator.pushNamed(context, AppRoutes.createComplaint),
+      },
+      {
         'title': 'تغيير الموقع',
         'subtitle': 'تعديل الاستلام',
         'icon': Icons.edit_location_alt_outlined,
@@ -63,10 +71,10 @@ class QuickServicesWidget extends StatelessWidget {
         'action': onSubscriptions ?? () => ParentMainWrapper.changeTab(3),
       },
       {
-        'title': 'الشكاوى',
-        'subtitle': 'سجل الشكاوى',
-        'icon': Icons.report_problem_outlined,
-        'color': AppColors.error,
+        'title': 'سجل الشكاوى',
+        'subtitle': 'الشكاوى السابقة',
+        'icon': Icons.history_edu_rounded,
+        'color': AppColors.amber,
         'action': () =>
             Navigator.pushNamed(context, AppRoutes.parentComplaints),
       },

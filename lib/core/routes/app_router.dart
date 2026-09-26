@@ -436,13 +436,13 @@ class AppRoutes {
       case parentComplaints:
         return _route(settings, const ComplaintsListScreen());
       case createComplaint:
-        final args = settings.arguments as Map<String, dynamic>;
+        final args = settings.arguments as Map<String, dynamic>?;
         return _route(
           settings,
           CreateComplaintScreen(
-            driverId: args['driverId'] as int,
-            driverName: args['driverName'] as String,
-            driverAvatar: args['driverAvatar'] as String?,
+            driverId: args?['driverId'] as int?,
+            driverName: args?['driverName'] as String?,
+            driverAvatar: args?['driverAvatar'] as String?,
           ),
         );
       case complaintDetails:

@@ -32,7 +32,6 @@ import 'package:kids_transport/features/parent/reviews/presention/reviews/empty_
 import 'package:kids_transport/features/parent/reviews/presention/reviews/loading_reviews_widget.dart';
 
 // Complaints imports
-import 'package:kids_transport/features/parent/complaints/presentation/screens/create_complaint_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:kids_transport/features/chat/presentation/screens/chat_room_screen.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
@@ -1125,16 +1124,79 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Icon(Icons.rate_review_rounded, color: AppColors.amber),
-            const SizedBox(width: 8),
-            Text(
-              'التقييمات والمراجعات',
-              style: AppTextStyles.style(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.white : AppColors.textDark,
-              ),
+            Row(
+              children: [
+                const Icon(Icons.rate_review_rounded, color: AppColors.amber),
+                const SizedBox(width: 8),
+                Text(
+                  'التقييمات والمراجعات',
+                  style: AppTextStyles.style(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.white : AppColors.textDark,
+                  ),
+                ),
+              ],
+            ),
+            BlocBuilder<ReviewsCubit, ReviewsState>(
+              builder: (ctx, state) {
+                final isLoading = state is ReviewsLoading || state is ReviewsInitial;
+                return InkWell(
+                  onTap: isLoading
+                      ? null
+                      : () {
+                          debugPrint(
+                            '🔄 [DriverProfileView] Refresh reviews button clicked for driverId: ${widget.driver.driverId}',
+                          );
+                          ctx.read<ReviewsCubit>().loadReviews(
+                                widget.driver.driverId,
+                              );
+                        },
+                  borderRadius: BorderRadius.circular(20.r),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.surfaceDark : AppColors.white,
+                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(
+                        color: isDark ? AppColors.grey700 : AppColors.grey300,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isLoading)
+                          SizedBox(
+                            width: 14.w,
+                            height: 14.h,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: theme.colorScheme.primary,
+                            ),
+                          )
+                        else
+                          Icon(
+                            Icons.refresh_rounded,
+                            size: 16.r,
+                            color: theme.colorScheme.primary,
+                          ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          'تحديث',
+                          style: AppTextStyles.style(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -1159,6 +1221,53 @@ class _DriverProfileViewState extends State<DriverProfileView> {
               reviewsList = state.reviews;
               hasSub = state.hasSubscription;
               isSubmitting = true;
+            } else if (state is ReviewsError) {
+              return Container(
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.surfaceDark : AppColors.white,
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(
+                    color: AppColors.error.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      state.message,
+                      style: AppTextStyles.style(
+                        fontSize: 12.5.sp,
+                        color: AppColors.error,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 10.h),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        context.read<ReviewsCubit>().loadReviews(
+                          widget.driver.driverId,
+                        );
+                      },
+                      icon: Icon(Icons.refresh_rounded, size: 16.r),
+                      label: Text(
+                        'إعادة المحاولة',
+                        style: AppTextStyles.style(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
             }
 
             final averageRating = widget.driver.rating;
@@ -1180,6 +1289,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                   ReviewForm(
                     isSubmitting: isSubmitting,
                     onSubmit: (rating, comment) {
+                      debugPrint('📥 [DriverProfileView] onSubmit callback fired! DriverId: ${widget.driver.driverId}, Rating: $rating, Comment: "$comment"');
                       context.read<ReviewsCubit>().addReview(
                         driverId: widget.driver.driverId,
                         rating: rating,
@@ -1238,96 +1348,11 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                     ),
                   ],
                 ],
-
-                // Submit Complaint section (visible only if hasSub == true)
-                if (hasSub) _buildComplaintSection(context, theme, isDark),
               ],
             );
           },
         ),
       ],
-    );
-  }
-
-  Widget _buildComplaintSection(
-    BuildContext context,
-    ThemeData theme,
-    bool isDark,
-  ) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.report_problem_outlined, color: AppColors.error),
-              const SizedBox(width: 8),
-              Text(
-                'تقديم شكوى ضد الكابتن',
-                style: AppTextStyles.style(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? AppColors.white : AppColors.textDark,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'في حال وجود أي مشكلة مع الكابتن أثناء التوصيل، يمكنك تقديم شكوى فورية لمتابعتها مع الإدارة.',
-            style: AppTextStyles.style(
-              fontSize: 11.5,
-              color: isDark ? AppColors.grey400 : AppColors.textMuted,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: AppColors.error.withValues(alpha: 0.6)),
-                foregroundColor: AppColors.error,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              icon: const Icon(Icons.report_gmailerrorred_rounded, size: 18),
-              label: Text(
-                'تقديم شكوى ضد الكابتن',
-                style: AppTextStyles.style(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.error,
-                ),
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => CreateComplaintScreen(
-                      driverId: widget.driver.driverId,
-                      driverName: widget.driver.fullName,
-                      driverAvatar: widget.driver.photoUrl,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
     );
   }
 
