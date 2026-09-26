@@ -135,6 +135,35 @@ class ChatFirebaseDataSource {
     });
   }
 
+  /// Streams total unread messages count across all active rooms for currentUserId.
+  Stream<int> getTotalUnreadCountStream(String currentUserId) {
+    if (currentUserId.isEmpty) return Stream.value(0);
+    return _firestore
+        .collectionGroup('messages')
+        .where('is_read', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) {
+      int count = 0;
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final senderId =
+            (data['sender_id'] ?? data['senderId'] ?? '').toString();
+        final rawDeletedUsers =
+            data['deleted_for_users'] ?? data['deletedForUsers'];
+        final List<String> deletedList = rawDeletedUsers is List
+            ? rawDeletedUsers.map((e) => e.toString()).toList()
+            : [];
+
+        if (senderId.isNotEmpty &&
+            senderId != currentUserId &&
+            !deletedList.contains(currentUserId)) {
+          count++;
+        }
+      }
+      return count;
+    }).handleError((_) => 0);
+  }
+
   /// Marks all unread messages sent by the other party as read.
   Future<void> markMessagesAsRead({
     required String chatRoomId,
@@ -409,15 +438,26 @@ class ChatFirebaseDataSource {
 
             if (receiverToken != null && receiverToken.isNotEmpty) {
               String bodyText = message.message;
-              if (message.type == 'image') bodyText = '📷 أرسل صورة';
-              if (message.type == 'video') bodyText = '🎥 أرسل فيديو';
-              if (message.type == 'audio') bodyText = '🎤 أرسل رسالة صوتية';
+              String? imageUrl;
+              if (message.type == 'image') {
+                bodyText = message.message.isNotEmpty
+                    ? '📷 ${message.message}'
+                    : '📷 أرسل صورة';
+                imageUrl = message.mediaUrl;
+              } else if (message.type == 'video') {
+                bodyText = message.message.isNotEmpty
+                    ? '🎥 ${message.message}'
+                    : '🎥 أرسل فيديو';
+              } else if (message.type == 'audio') {
+                bodyText = '🎤 أرسل رسالة صوتية';
+              }
 
               await NotificationService.sendPushNotification(
                 receiverToken: receiverToken,
                 title: senderTitle,
                 body: bodyText,
                 chatRoomId: chatRoomId,
+                imageUrl: imageUrl,
               );
             }
           }

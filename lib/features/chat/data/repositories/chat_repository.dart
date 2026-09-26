@@ -47,9 +47,14 @@ class ChatRepository {
     return _firebaseDataSource.getDeletedRoomIdsStream(currentUserId);
   }
 
-  /// Get real-time stream of unread messages count.
+  /// Get real-time stream of unread messages count for a specific room.
   Stream<int> getUnreadCountStream(String chatRoomId, String currentUserId) {
     return _firebaseDataSource.getUnreadCountStream(chatRoomId, currentUserId);
+  }
+
+  /// Get real-time stream of total unread messages count across all active chat rooms.
+  Stream<int> getTotalUnreadCountStream(String currentUserId) {
+    return _firebaseDataSource.getTotalUnreadCountStream(currentUserId);
   }
 
   /// Marks all unread messages sent by the other party as read.

@@ -86,8 +86,8 @@ class ChildAddressModel {
 
   factory ChildAddressModel.fromJson(Map<String, dynamic> json) {
     return ChildAddressModel(
-      title: json['title']?.toString() ?? '',
-      street: json['street']?.toString(),
+      title: json['title']?.toString() ?? json['address']?.toString() ?? '',
+      street: json['street']?.toString() ?? json['address']?.toString(),
       lat: _parseDouble(json['lat'] ?? json['latitude']),
       lng: _parseDouble(json['lng'] ?? json['longitude']),
     );

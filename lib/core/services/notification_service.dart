@@ -184,6 +184,7 @@ class NotificationService {
     required String title,
     required String body,
     required String chatRoomId,
+    String? imageUrl,
   }) async {
     if (receiverToken.isEmpty) return;
 
@@ -207,17 +208,27 @@ class NotificationService {
       final Uri url = Uri.parse(
           'https://fcm.googleapis.com/v1/projects/$projectId/messages:send');
 
+      final Map<String, dynamic> notificationPayload = {
+        'title': title,
+        'body': body,
+      };
+      if (imageUrl != null && imageUrl.isNotEmpty) {
+        notificationPayload['image'] = imageUrl;
+      }
+
+      final Map<String, dynamic> dataPayload = {
+        'type': 'chat_message',
+        'chat_room_id': chatRoomId,
+      };
+      if (imageUrl != null && imageUrl.isNotEmpty) {
+        dataPayload['image_url'] = imageUrl;
+      }
+
       final Map<String, dynamic> payload = {
         'message': {
           'token': receiverToken,
-          'notification': {
-            'title': title,
-            'body': body,
-          },
-          'data': {
-            'type': 'chat_message',
-            'chat_room_id': chatRoomId,
-          },
+          'notification': notificationPayload,
+          'data': dataPayload,
         },
       };
 

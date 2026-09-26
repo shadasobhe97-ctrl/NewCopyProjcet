@@ -15,6 +15,8 @@ import 'package:kids_transport/features/parent/subscriptions/presentation/screen
 import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profile_cubit.dart';
 import 'package:kids_transport/features/parent/trips/presentation/screens/trips_home_screen.dart';
 
+import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
+import 'package:kids_transport/features/chat/data/repositories/chat_repository.dart';
 import 'package:kids_transport/core/enums/user_role.dart';
 import 'package:kids_transport/features/chat/presentation/screens/chat_list_screen.dart';
 
@@ -211,20 +213,62 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
 
                 const Spacer(),
 
-                // أيقونة الرسائل
-                IconButton(
-                  icon: Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    color: context.primaryColor,
-                    size: 20,
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            const ChatListScreen(userRole: UserRole.parent),
-                      ),
+                // أيقونة الرسائل مع عداد الرسائل غير المقروءة
+                Builder(
+                  builder: (context) {
+                    final currentUserId = getIt<SessionRepository>().getUserId() ?? '';
+                    return StreamBuilder<int>(
+                      stream: getIt<ChatRepository>().getTotalUnreadCountStream(currentUserId),
+                      builder: (context, snapshot) {
+                        final chatUnreadCount = snapshot.data ?? 0;
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                color: context.primaryColor,
+                                size: 20,
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ChatListScreen(userRole: UserRole.parent),
+                                  ),
+                                );
+                              },
+                            ),
+                            if (chatUnreadCount > 0)
+                              Positioned(
+                                right: 4,
+                                top: 4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.error,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 14,
+                                    minHeight: 14,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      chatUnreadCount > 99 ? '99+' : '$chatUnreadCount',
+                                      style: AppTextStyles.style(
+                                        color: AppColors.white,
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     );
                   },
                 ),
