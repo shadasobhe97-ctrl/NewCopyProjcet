@@ -37,7 +37,8 @@ class TripCard extends StatelessWidget {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: AppTheme.radius(18),
         border: AppTheme.border(
-          color: isDark ? AppColors.grey800 : AppColors.grey.withValues(alpha: 0.15),
+          color: isDark ? AppColors.grey700 : AppColors.grey300,
+          width: 1.2,
         ),
         boxShadow: [
           AppTheme.boxShadow(

@@ -1,4 +1,5 @@
 import 'active_trip_model.dart';
+import 'package:kids_transport/core/utils/app_date_formatter.dart';
 
 class UpcomingTripDriver {
   final String name;
@@ -133,8 +134,9 @@ class UpcomingTripModel {
   String get driverName => driver.name;
   String get schoolName => destination.name.isNotEmpty ? destination.name : (children.isNotEmpty ? children.first.schoolName : '');
   String get childName => children.isNotEmpty ? children.first.childName : '';
-  String get scheduledDate => scheduledFor;
-  String get scheduledTime => '';
+  String get scheduledDate => AppDateFormatter.formatDate(scheduledFor);
+  String get scheduledTime => AppDateFormatter.formatTime(scheduledFor);
+  String get scheduledDateTime => AppDateFormatter.formatDateTime(scheduledFor);
   VehicleInfoModel get vehicle => const VehicleInfoModel(info: 'حافلة مدرسية');
 
   factory UpcomingTripModel.fromJson(Map<String, dynamic> json) {

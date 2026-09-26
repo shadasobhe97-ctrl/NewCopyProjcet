@@ -44,8 +44,11 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
 
       if (batteryLevel != null && batteryLevel < 50) {
         if (!mounted) return;
-        await LowBatteryDialog.show(context, batteryLevel: batteryLevel);
-        return;
+        final proceed = await LowBatteryDialog.show(context, batteryLevel: batteryLevel);
+        if (proceed != true) {
+          if (mounted) setState(() => _isStarting = false);
+          return;
+        }
       }
 
       Position? position;

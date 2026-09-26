@@ -5,6 +5,7 @@ import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
+import 'package:kids_transport/core/widgets/app_section_header.dart';
 import 'package:kids_transport/features/driver/requests/logic/driver_location_change_cubit.dart';
 import 'package:kids_transport/features/driver/trips/logic/driver_emergency_cubit/driver_emergency_cubit.dart';
 
@@ -18,17 +19,10 @@ class DriverServicesWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'الخدمات السريعة',
-          style: AppTextStyles.style(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.bold,
-            color: isDark ? AppColors.white : AppColors.textDark,
-          ),
-        ),
-        SizedBox(height: 12.h),
+        const AppSectionHeader(title: 'الخدمات السريعة'),
+        SizedBox(height: 6.h),
         SizedBox(
-          height: 118.h,
+          height: 132.h,
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
@@ -178,7 +172,7 @@ class DriverServicesWidget extends StatelessWidget {
           Container(
             width: 110.w,
             margin: EdgeInsets.symmetric(horizontal: 4.w),
-            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 4.w),
+            padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
             decoration: BoxDecoration(
               color: isDark ? AppColors.grey900 : AppColors.white,
               borderRadius: BorderRadius.circular(16.r),
@@ -283,12 +277,13 @@ class DriverServicesWidget extends StatelessWidget {
       child: Container(
         width: 108.w,
         margin: EdgeInsets.symmetric(horizontal: 4.w),
-        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 2.w),
+        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 2.w),
         decoration: BoxDecoration(
           color: isDark ? AppColors.grey900 : AppColors.white,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
-            color: isDark ? AppColors.grey800 : AppColors.grey200,
+            color: isDark ? AppColors.grey700 : AppColors.grey300,
+            width: 1.2,
           ),
           boxShadow: [
             BoxShadow(

@@ -82,6 +82,12 @@ class ApiEndpoints {
       'v1/driver/trips/$tripId/stops';
   static String driverTripChildStatus(dynamic tripId, dynamic tripChildId) =>
       'v1/driver/trips/$tripId/children/$tripChildId/status';
+  static String driverTripPickup(dynamic tripId) =>
+      'driver/trips/$tripId/pickup';
+  static String driverTripDropoff(dynamic tripId) =>
+      'driver/trips/$tripId/dropoff';
+  static String driverRouteDetails(dynamic routeId) =>
+      'v1/driver/routes/$routeId';
   static String driverTripSkipChild(dynamic tripId, dynamic childId) =>
       'v1/driver/trips/$tripId/skip/$childId';
   static String driverTripVerifyQr(dynamic tripId, dynamic childId) =>

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -116,7 +116,8 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
         color: isDark ? context.cardSurface : AppColors.white,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
+          color: isDark ? AppColors.grey700 : AppColors.grey300,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
@@ -215,7 +216,8 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
         color: isDark ? context.cardSurface : AppColors.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
+          color: isDark ? AppColors.grey700 : AppColors.grey300,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(

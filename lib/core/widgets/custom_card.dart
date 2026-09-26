@@ -38,10 +38,10 @@ class CustomCard extends StatelessWidget {
       decoration: AppTheme.boxDecoration(
         color: cardColor,
         borderRadius: AppTheme.radius(borderRadius),
-        border:
-            borderColor != null
-                ? AppTheme.border(color: borderColor!, width: borderWidth)
-                : null,
+        border: AppTheme.border(
+          color: borderColor ?? (isDark ? AppColors.grey700 : AppColors.grey300),
+          width: borderWidth,
+        ),
         boxShadow: [
           AppTheme.boxShadow(
             color: AppColors.black.withValues(alpha: isDark ? 0.2 : 0.06),

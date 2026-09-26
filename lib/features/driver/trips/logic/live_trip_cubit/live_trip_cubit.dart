@@ -326,10 +326,9 @@ class LiveTripCubit extends Cubit<LiveTripState> {
       tripId,
       item,
       'pickup',
-      call: () => _repository.updateChildStatus(
+      call: () => _repository.pickupChild(
         tripId,
         item.tripChildId,
-        action: 'pickup',
         latitude: latitude,
         longitude: longitude,
       ),
@@ -346,10 +345,9 @@ class LiveTripCubit extends Cubit<LiveTripState> {
       tripId,
       item,
       'dropoff',
-      call: () => _repository.updateChildStatus(
+      call: () => _repository.dropoffChild(
         tripId,
         item.tripChildId,
-        action: 'dropoff',
         latitude: latitude,
         longitude: longitude,
       ),

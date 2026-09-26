@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/utils/app_date_formatter.dart';
 import '../../data/models/driver_trip_model.dart';
 
 class ComplaintTripDropdown extends StatelessWidget {
@@ -96,7 +97,7 @@ class ComplaintTripDropdown extends StatelessWidget {
                 _ => trip.status ?? 'غير متوفر',
               };
               final String dateStr = trip.scheduledFor != null
-                  ? trip.scheduledFor!.split('T').first
+                  ? AppDateFormatter.formatDate(trip.scheduledFor)
                   : 'غير متوفر';
 
               return DropdownMenuItem<int?>(

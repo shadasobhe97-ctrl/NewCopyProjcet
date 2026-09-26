@@ -236,7 +236,7 @@ class _ChildTripsScreenState extends State<ChildTripsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(upcoming.title, style: AppTextStyles.style(fontSize: 13.sp, fontWeight: FontWeight.bold, color: context.textPrimary)),
-                            Text('${upcoming.scheduledDate} ${upcoming.scheduledTime}', style: AppTextStyles.style(fontSize: 11.sp, color: AppColors.textMuted)),
+                            Text(upcoming.scheduledDateTime, style: AppTextStyles.style(fontSize: 11.sp, color: AppColors.textMuted)),
                           ],
                         ),
                       ),

@@ -37,8 +37,11 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> {
 
       if (batteryLevel != null && batteryLevel < 50) {
         if (!mounted) return;
-        await LowBatteryDialog.show(context, batteryLevel: batteryLevel);
-        return;
+        final proceed = await LowBatteryDialog.show(context, batteryLevel: batteryLevel);
+        if (proceed != true) {
+          if (mounted) setState(() => _startingTripId = null);
+          return;
+        }
       }
 
       final position = await _capturePosition();

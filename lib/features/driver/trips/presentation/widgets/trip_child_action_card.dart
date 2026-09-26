@@ -18,6 +18,7 @@ class TripChildActionCard extends StatelessWidget {
   /// ناقصة) — حالة مختلفة عن "بعيد عن المحطة"، ويجب توضيحها للسائق بدل
   /// تعطيل زر التأكيد اليدوي بصمت.
   final bool hasTargetCoordinates;
+  final bool isTripCompleted;
   final VoidCallback onManualConfirm;
   final VoidCallback? onScanQr;
   final VoidCallback onAbsent;
@@ -32,6 +33,7 @@ class TripChildActionCard extends StatelessWidget {
     required this.isPendingAction,
     required this.distanceMeters,
     required this.hasTargetCoordinates,
+    this.isTripCompleted = false,
     required this.onManualConfirm,
     this.onScanQr,
     required this.onAbsent,
@@ -63,8 +65,8 @@ class TripChildActionCard extends StatelessWidget {
         border: AppTheme.border(
           color: isCurrent
               ? context.primaryColor
-              : (isDark ? AppColors.grey800 : AppColors.grey.withValues(alpha: 0.15)),
-          width: isCurrent ? 1.6 : 1,
+              : (isDark ? AppColors.grey700 : AppColors.grey300),
+          width: isCurrent ? 1.8 : 1.2,
         ),
       ),
       child: Column(
@@ -154,7 +156,7 @@ class TripChildActionCard extends StatelessWidget {
               ),
             ),
           ],
-          if (!resolved) ...[
+          if (!resolved && !isTripCompleted) ...[
             const SizedBox(height: 12),
             _buildActions(context),
           ],

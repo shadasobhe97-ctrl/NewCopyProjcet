@@ -535,6 +535,7 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
                         isPendingAction: loaded.pendingActionTripChildId == item.tripChildId,
                         distanceMeters: _distanceToChild(item),
                         hasTargetCoordinates: item.targetLatitude != null && item.targetLongitude != null,
+                        isTripCompleted: loaded.isCompleted || loaded.tripStatus == 'completed',
                         onManualConfirm: loaded.isSuspended ? () {} : () => _handleManualConfirm(item),
                         onAbsent: loaded.isSuspended
                             ? () {}

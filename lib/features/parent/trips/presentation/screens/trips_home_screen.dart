@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -6,6 +6,7 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/app_user_avatar.dart';
+import 'package:kids_transport/core/widgets/app_section_header.dart';
 import '../../data/models/active_trip_model.dart';
 import '../../data/models/upcoming_trip_model.dart';
 import '../../data/models/trip_history_model.dart';
@@ -239,7 +240,8 @@ class _TripsHomeScreenState extends State<TripsHomeScreen> {
         color: isDark ? context.cardSurface : AppColors.white,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
+          color: isDark ? AppColors.grey700 : AppColors.grey300,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
@@ -386,41 +388,28 @@ class _TripsHomeScreenState extends State<TripsHomeScreen> {
     );
   }
 
-  // Section Header without Emojis, refined font size & RTL Arrow
+  // Section Header with Grey Title and Grey Divider Line
   Widget _buildSectionHeader(
     BuildContext context, {
     required String title,
     required VoidCallback onViewAll,
   }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: AppTextStyles.style(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.bold,
-            color: context.textPrimary,
+    return AppSectionHeader(
+      title: title,
+      actionWidget: InkWell(
+        onTap: onViewAll,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+          child: Text(
+            'عرض الكل',
+            style: AppTextStyles.style(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.bold,
+              color: context.primaryColor,
+            ),
           ),
         ),
-        InkWell(
-          onTap: onViewAll,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'عرض الكل',
-                style: AppTextStyles.style(
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.bold,
-                  color: context.primaryColor,
-                ),
-              ),
-              SizedBox(width: 6.w),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -437,7 +426,8 @@ class _TripsHomeScreenState extends State<TripsHomeScreen> {
         color: isDark ? context.cardSurface : AppColors.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
+          color: isDark ? AppColors.grey700 : AppColors.grey300,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
@@ -619,7 +609,8 @@ class _TripsHomeScreenState extends State<TripsHomeScreen> {
         color: isDark ? context.cardSurface : AppColors.white,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
+          color: isDark ? AppColors.grey700 : AppColors.grey300,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
@@ -649,7 +640,7 @@ class _TripsHomeScreenState extends State<TripsHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${trip.scheduledDate} - ${trip.scheduledTime}',
+                  trip.scheduledDateTime,
                   style: AppTextStyles.style(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.bold,
@@ -689,7 +680,8 @@ class _TripsHomeScreenState extends State<TripsHomeScreen> {
         color: isDark ? context.cardSurface : AppColors.white,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
+          color: isDark ? AppColors.grey700 : AppColors.grey300,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(

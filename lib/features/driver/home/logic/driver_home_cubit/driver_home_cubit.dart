@@ -35,8 +35,9 @@ class DriverHomeCubit extends Cubit<DriverHomeState> {
       //    الرحلة النشطة = العنصر الذي status == 'in_progress'.
       //    عند فشل الطلب، لا نُفشل تحميل الشاشة — نعتبرها بلا رحلة نشطة.
       int? activeTripId;
+      List<DriverTripModel> todayTrips = [];
       try {
-        final todayTrips =
+        todayTrips =
             await driverSl<DriverTripsRepository>().getTripsToday();
         final DriverTripModel? activeTrip =
             todayTrips.where((t) => t.isInProgress).cast<DriverTripModel?>().firstWhere(
@@ -48,11 +49,9 @@ class DriverHomeCubit extends Cubit<DriverHomeState> {
         }
       } catch (_) {
         activeTripId = null;
+        todayTrips = [];
       }
 
-      // 4. قراءة الحالتين المستقلَّتين من التخزين المحلي:
-      //    - showFirstWelcome: مرة واحدة فقط لكل سائق.
-      //    - isOnline: آخر حالة اتصال محفوظة للسائق.
       final welcomeAlreadyShown =
           StorageService.hasDriverWelcomeBeenShown(driver.driverId);
       final savedOnlineStatus =
@@ -62,9 +61,10 @@ class DriverHomeCubit extends Cubit<DriverHomeState> {
         DriverHomeLoaded(
           driver: driver,
           isOnline: savedOnlineStatus,
-          todayTripsCount: 0,
+          todayTripsCount: todayTrips.length,
           todayStudentsCount: 0,
           newRequests: newRequests.data,
+          todayTrips: todayTrips,
           hasActiveTrip: activeTripId != null,
           activeTripId: activeTripId,
           showFirstWelcome: !welcomeAlreadyShown,

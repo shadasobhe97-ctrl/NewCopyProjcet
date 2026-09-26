@@ -15,8 +15,8 @@ class DriverHomeLoaded extends DriverHomeState {
   final bool isOnline;
   final int todayTripsCount;
   final int todayStudentsCount;
-  // تم التغيير إلى DriverRequestModel
   final List<DriverRequestModel> newRequests;
+  final List<DriverTripModel> todayTrips;
   final bool hasActiveTrip;
   final int? activeTripId;
   final bool showFirstWelcome;
@@ -27,19 +27,19 @@ class DriverHomeLoaded extends DriverHomeState {
     this.todayTripsCount = 0,
     this.todayStudentsCount = 0,
     this.newRequests = const [],
+    this.todayTrips = const [],
     this.hasActiveTrip = false,
     this.activeTripId,
     this.showFirstWelcome = false,
   });
 
-  /// إنشاء نسخة جديدة. `showFirstWelcome` و `isOnline` حالتان مستقلتان
-  /// تماماً — تعديل إحداهما لا يمس الأخرى.
   DriverHomeLoaded copyWith({
     DriverModel? driver,
     bool? isOnline,
     int? todayTripsCount,
     int? todayStudentsCount,
     List<DriverRequestModel>? newRequests,
+    List<DriverTripModel>? todayTrips,
     bool? hasActiveTrip,
     int? activeTripId,
     bool? showFirstWelcome,
@@ -50,6 +50,7 @@ class DriverHomeLoaded extends DriverHomeState {
       todayTripsCount: todayTripsCount ?? this.todayTripsCount,
       todayStudentsCount: todayStudentsCount ?? this.todayStudentsCount,
       newRequests: newRequests ?? this.newRequests,
+      todayTrips: todayTrips ?? this.todayTrips,
       hasActiveTrip: hasActiveTrip ?? this.hasActiveTrip,
       activeTripId: activeTripId ?? this.activeTripId,
       showFirstWelcome: showFirstWelcome ?? this.showFirstWelcome,

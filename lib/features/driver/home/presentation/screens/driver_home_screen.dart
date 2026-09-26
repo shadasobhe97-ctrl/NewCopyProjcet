@@ -3,14 +3,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/utils/theme_context.dart';
+import 'package:kids_transport/core/widgets/app_section_header.dart';
 
 // Components
-import 'package:kids_transport/features/driver/home/presentation/widgets/online_status_card.dart';
 import 'package:kids_transport/features/driver/work_areas/presentation/widgets/work_areas_card.dart';
 import 'package:kids_transport/features/driver/home/presentation/widgets/welcome_guide_card.dart';
-import 'package:kids_transport/features/driver/home/presentation/widgets/daily_stats_row.dart';
 import 'package:kids_transport/features/driver/home/presentation/widgets/active_trip_card.dart';
 import 'package:kids_transport/features/driver/home/presentation/widgets/driver_services_widget.dart';
+import 'package:kids_transport/features/driver/trips/presentation/widgets/trip_card.dart';
 import 'package:kids_transport/features/driver/requests/presentation/widgets/new_requests_section.dart';
 
 import 'package:kids_transport/features/driver/home/logic/driver_home_cubit/driver_home_cubit.dart';
@@ -93,54 +94,70 @@ class _HomeBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ترحيب عادي دائم باسم السائق
-          _NormalGreeting(fullName: state.driver.fullName),
-          const SizedBox(height: 18),
+          // 1) كرت الترحيب الأزرق في أعلى الصفحة الرئيسية بدلاً من كرت الاتصال
+          WelcomeGuideCard(
+            driverName: state.driver.fullName,
+            onDismiss: state.showFirstWelcome
+                ? () => context.read<DriverHomeCubit>().dismissFirstWelcome()
+                : null,
+          ),
+          const SizedBox(height: 20),
 
-          // كرت حالة الاتصال (متصل/غير متصل) — يظهر دائماً
-          OnlineStatusCard(isOnline: state.isOnline),
-          const SizedBox(height: 24),
-
-          // قسم الخدمات السريعة للسائق (يحتوي كرت طلبات التعديل باللون الأحمر)
+          // 2) قسم الخدمات السريعة للسائق
           const DriverServicesWidget(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
-          // رسالة الترحيب الأولى — تظهر مرة واحدة فقط لكل سائق
-          // ومستقلة تماماً عن حالة Online/Offline.
-          if (state.showFirstWelcome) ...[
-            WelcomeGuideCard(
-              driverName: state.driver.fullName,
-              onDismiss: () =>
-                  context.read<DriverHomeCubit>().dismissFirstWelcome(),
-            ),
-            const SizedBox(height: 24),
-          ],
-
-          // كرت مناطق العمل
+          // 3) كرت مناطق العمل
           const WorkAreasCard(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
-          // إحصائيات سريعة (رحلات وطلاب اليوم) — قابلة للضغط لفتح شاشة الإحصائيات
-          InkWell(
-            onTap: () => Navigator.pushNamed(
-              context,
-              AppRoutes.driverStatistics,
-            ),
-            borderRadius: BorderRadius.circular(20),
-            child: DailyStatsRow(
-              tripsCount: state.todayTripsCount,
-              studentsCount: state.todayStudentsCount,
+          // 4) قسم رحلات اليوم — عرض أول رحلة مع زر عرض الكل
+          AppSectionHeader(
+            title: 'رحلات اليوم (${state.todayTrips.length})',
+            actionWidget: InkWell(
+              onTap: () => Navigator.pushNamed(
+                context,
+                AppRoutes.driverTripsHistory,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                child: Text(
+                  'عرض الكل',
+                  style: AppTextStyles.style(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: context.primaryColor,
+                  ),
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 30),
-
-          // قسم الرحلة الحالية — قابل للضغط فقط عند وجود رحلة نشطة حقيقية
-          // ولديها tripId حقيقي قادم من Backend.
-          if (state.hasActiveTrip && state.activeTripId != null)
+          const SizedBox(height: 10),
+          if (state.todayTrips.isNotEmpty)
+            TripCard(
+              trip: state.todayTrips.first,
+              isStarting: false,
+              onDetails: () => Navigator.pushNamed(
+                context,
+                AppRoutes.driverTripDetails,
+                arguments: state.todayTrips.first.tripId,
+              ),
+              onStart: () => Navigator.pushNamed(
+                context,
+                AppRoutes.driverLiveTrip,
+                arguments: state.todayTrips.first.tripId,
+              ),
+              onLive: () => Navigator.pushNamed(
+                context,
+                AppRoutes.driverLiveTrip,
+                arguments: state.todayTrips.first.tripId,
+              ),
+            )
+          else if (state.hasActiveTrip && state.activeTripId != null)
             InkWell(
               onTap: () => Navigator.pushNamed(
                 context,
@@ -148,59 +165,21 @@ class _HomeBody extends StatelessWidget {
                 arguments: state.activeTripId,
               ),
               borderRadius: BorderRadius.circular(20),
-              child: ActiveTripCard(hasActiveTrip: true),
+              child: const ActiveTripCard(hasActiveTrip: true),
             )
           else
             ActiveTripCard(hasActiveTrip: state.hasActiveTrip),
-          const SizedBox(height: 30),
+          const SizedBox(height: 24),
 
-          // قسم طلبات الاشتراك الجديدة
-          NewRequestsSection(requests: state.newRequests),
+          // 5) قسم طلبات الاشتراك الجديدة — عرض أول طلب مع زر عرض الكل
+          NewRequestsSection(
+            requests: state.newRequests,
+            onViewAll: () => Navigator.pushNamed(
+              context,
+              AppRoutes.driverLocationChangeRequests,
+            ),
+          ),
           const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-}
-
-/// ترحيب افتراضي: "مرحباً، الاسم 👋" — يظهر دائماً.
-/// مستقل عن OnlineStatusCard و WelcomeGuideCard.
-class _NormalGreeting extends StatelessWidget {
-  final String fullName;
-  const _NormalGreeting({required this.fullName});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).primaryColor;
-    final firstName = fullName.trim().isNotEmpty
-        ? fullName.trim().split(' ').first
-        : '';
-
-    return RichText(
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: 'مرحباً',
-            style: AppTextStyles.style(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: isDark ? AppColors.white : AppColors.textDark,
-            ),
-          ),
-          if (firstName.isNotEmpty)
-            TextSpan(
-              text: '، $firstName',
-              style: AppTextStyles.style(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: isDark ? AppColors.primaryLight : primaryColor,
-              ),
-            ),
-          const TextSpan(
-            text: ' 👋',
-            style: TextStyle(fontSize: 18),
-          ),
         ],
       ),
     );

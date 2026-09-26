@@ -3,54 +3,52 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
+import 'package:kids_transport/core/widgets/app_section_header.dart';
 import 'package:kids_transport/features/driver/requests/data/models/driver_request_model.dart';
 import 'package:kids_transport/features/driver/requests/presentation/screens/driver_request_details_screen.dart';
 
 /// قسم طلبات الاشتراك الجديدة في الصفحة الرئيسية للسائق
-/// يعرض قائمة الطلبات الجديدة الموحدة
+/// يعرض أول طلب جديد مع زر "عرض الكل"
 class NewRequestsSection extends StatelessWidget {
   final List<DriverRequestModel> requests;
+  final VoidCallback? onViewAll;
 
-  const NewRequestsSection({super.key, required this.requests});
+  const NewRequestsSection({
+    super.key,
+    required this.requests,
+    this.onViewAll,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // عنوان القسم مع العداد
-        Row(
-          children: [
-            Container(
-              width: 4,
-              height: 20,
-              decoration: AppTheme.boxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: AppTheme.radius(2),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'طلبات الاشتراك الجديدة (${requests.length})',
-              style: AppTextStyles.style(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+        AppSectionHeader(
+          title: 'طلبات الاشتراك الجديدة (${requests.length})',
+          actionWidget: onViewAll != null
+              ? InkWell(
+                  onTap: onViewAll,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: Text(
+                      'عرض الكل',
+                      style: AppTextStyles.style(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: context.primaryColor,
+                      ),
+                    ),
+                  ),
+                )
+              : null,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
 
-        // عرض الطلبات أو الحالة الفارغة
         if (requests.isEmpty)
           const _EmptyRequestsState()
         else
-          ...requests.map(
-            (req) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _HomeRequestCard(request: req),
-            ),
-          ),
+          _HomeRequestCard(request: requests.first),
       ],
     );
   }

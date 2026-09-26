@@ -62,6 +62,30 @@ class DriverTripsRepository {
 
   Future<DriverTripStopsResponseModel> getStops(int tripId) => _remoteDataSource.fetchStops(tripId);
 
+  Future<ChildStatusActionResultModel> pickupChild(
+    int tripId,
+    int tripChildId, {
+    required double latitude,
+    required double longitude,
+  }) => _remoteDataSource.pickupChild(
+        tripId,
+        tripChildId,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
+  Future<ChildStatusActionResultModel> dropoffChild(
+    int tripId,
+    int tripChildId, {
+    required double latitude,
+    required double longitude,
+  }) => _remoteDataSource.dropoffChild(
+        tripId,
+        tripChildId,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
   Future<ChildStatusActionResultModel> updateChildStatus(
     int tripId,
     int tripChildId, {

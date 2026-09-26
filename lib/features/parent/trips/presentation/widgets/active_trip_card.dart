@@ -47,7 +47,8 @@ class ActiveTripCard extends StatelessWidget {
         color: isDark ? context.cardSurface : AppColors.white,
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
+          color: isDark ? AppColors.grey700 : AppColors.grey300,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(

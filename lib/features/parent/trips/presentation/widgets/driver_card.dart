@@ -96,7 +96,8 @@ class DriverCard extends StatelessWidget {
         color: isDark ? AppColors.grey900 : AppColors.grey50,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
+          color: isDark ? AppColors.grey700 : AppColors.grey300,
+          width: 1.2,
         ),
       ),
       child: Row(

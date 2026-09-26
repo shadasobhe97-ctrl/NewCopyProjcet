@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
@@ -23,7 +23,8 @@ class VehicleCard extends StatelessWidget {
         color: isDark ? AppColors.grey900 : AppColors.grey50,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
+          color: isDark ? AppColors.grey700 : AppColors.grey300,
+          width: 1.2,
         ),
       ),
       child: Row(

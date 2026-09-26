@@ -136,11 +136,11 @@ class DriverTripsRemoteDataSource {
           'trip_id': tripId,
           'driver_lat': latitude,
           'driver_lng': longitude,
-          if (heading != null) 'heading': heading,
-          if (speed != null) 'speed': speed,
-          if (status != null) 'status': status,
-          if (driverId != null) 'driver_id': driverId,
-          if (driverName != null) 'driver_name': driverName,
+          'heading': ?heading,
+          'speed': ?speed,
+          'status': ?status,
+          'driver_id': ?driverId,
+          'driver_name': ?driverName,
           'updated_at': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
@@ -180,6 +180,44 @@ class DriverTripsRemoteDataSource {
     throw const ApiException('تعذر تحميل محطات الرحلة.');
   }
 
+  Future<ChildStatusActionResultModel> pickupChild(
+    int tripId,
+    int tripChildId, {
+    required double latitude,
+    required double longitude,
+  }) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.driverTripPickup(tripId),
+      data: {
+        'trip_child_id': tripChildId,
+        'latitude': latitude,
+        'longitude': longitude,
+      },
+      headers: _authHeader,
+    );
+    final map = _unwrap(response.data, 'تعذر تأكيد صعود الطفل.');
+    return ChildStatusActionResultModel.fromJson(map);
+  }
+
+  Future<ChildStatusActionResultModel> dropoffChild(
+    int tripId,
+    int tripChildId, {
+    required double latitude,
+    required double longitude,
+  }) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.driverTripDropoff(tripId),
+      data: {
+        'trip_child_id': tripChildId,
+        'latitude': latitude,
+        'longitude': longitude,
+      },
+      headers: _authHeader,
+    );
+    final map = _unwrap(response.data, 'تعذر تأكيد نزول الطفل.');
+    return ChildStatusActionResultModel.fromJson(map);
+  }
+
   Future<ChildStatusActionResultModel> updateChildStatus(
     int tripId,
     int tripChildId, {
@@ -187,6 +225,11 @@ class DriverTripsRemoteDataSource {
     required double latitude,
     required double longitude,
   }) async {
+    if (action == 'pickup' || action == 'onboard') {
+      return pickupChild(tripId, tripChildId, latitude: latitude, longitude: longitude);
+    } else if (action == 'dropoff' || action == 'dropped') {
+      return dropoffChild(tripId, tripChildId, latitude: latitude, longitude: longitude);
+    }
     final response = await _apiClient.post(
       ApiEndpoints.driverTripChildStatus(tripId, tripChildId),
       data: {

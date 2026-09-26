@@ -116,7 +116,8 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
         color: isDark ? context.cardSurface : AppColors.white,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
+          color: isDark ? AppColors.grey700 : AppColors.grey300,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
@@ -215,7 +216,8 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
         color: isDark ? context.cardSurface : AppColors.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: isDark ? AppColors.grey800 : AppColors.grey200,
+          color: isDark ? AppColors.grey700 : AppColors.grey300,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
@@ -247,7 +249,7 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Text(
-                  trip.scheduledFor,
+                  trip.scheduledDateTime,
                   style: AppTextStyles.style(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.bold,

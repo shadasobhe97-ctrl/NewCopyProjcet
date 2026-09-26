@@ -6,6 +6,7 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/app_user_avatar.dart';
+import 'package:kids_transport/core/widgets/app_section_header.dart';
 import '../../data/models/active_trip_model.dart';
 import '../../logic/trip_details_cubit/trip_details_cubit.dart';
 import '../../logic/trip_details_cubit/trip_details_state.dart';
@@ -190,8 +191,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                           borderRadius: BorderRadius.circular(16.r),
                           border: Border.all(
                             color: isDark
-                                ? AppColors.grey800
-                                : AppColors.grey200,
+                                ? AppColors.grey700
+                                : AppColors.grey300,
+                            width: 1.2,
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -256,13 +258,8 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                       SizedBox(height: 14.h),
 
                       // 4) CHILDREN IN THIS TRIP SECTION (NON-CLICKABLE CLEAN CARDS)
-                      Text(
-                        'الأطفال في هذه الرحلة (${trip.children.length}):',
-                        style: AppTextStyles.style(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.bold,
-                          color: context.textPrimary,
-                        ),
+                      AppSectionHeader(
+                        title: 'الأطفال في هذه الرحلة (${trip.children.length})',
                       ),
                       SizedBox(height: 8.h),
                       ...trip.children.map((child) {
@@ -274,8 +271,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                             borderRadius: BorderRadius.circular(12.r),
                             border: Border.all(
                               color: isDark
-                                  ? AppColors.grey800
-                                  : AppColors.grey200,
+                                  ? AppColors.grey700
+                                  : AppColors.grey300,
+                              width: 1.2,
                             ),
                           ),
                           child: Row(
