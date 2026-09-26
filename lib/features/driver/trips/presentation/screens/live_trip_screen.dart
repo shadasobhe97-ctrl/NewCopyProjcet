@@ -16,6 +16,7 @@ import 'package:kids_transport/features/driver/trips/data/models/live_trip_child
 import 'package:kids_transport/features/driver/trips/logic/live_trip_cubit/live_trip_cubit.dart';
 import 'package:kids_transport/features/driver/trips/presentation/widgets/forgotten_children_dialog.dart';
 
+import 'package:kids_transport/core/services/osrm_routing_service.dart';
 import 'package:kids_transport/features/driver/trips/presentation/widgets/trip_progress_bar.dart';
 import 'package:kids_transport/features/driver/trips/presentation/widgets/trip_child_action_card.dart';
 import 'package:kids_transport/features/driver/trips/data/models/vehicle_breakdown_model.dart';
@@ -35,6 +36,8 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
   Position? _driverPosition;
   bool _isLocating = true;
   bool _mapReady = false;
+  List<LatLng> _roadPolylinePoints = [];
+  String _cachedRouteKey = '';
 
   @override
   void initState() {
@@ -749,41 +752,134 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
         ? LatLng(_driverPosition!.latitude, _driverPosition!.longitude)
         : (stops.isNotEmpty ? LatLng(stops.first.latitude, stops.first.longitude) : const LatLng(0, 0));
 
+    // Fetch road route asynchronously if stops or driver position changed
+    final waypoints = <LatLng>[
+      if (_driverPosition != null) driverLatLng,
+      ...stops
+          .where((s) => s.latitude != 0.0 && s.longitude != 0.0)
+          .map((s) => LatLng(s.latitude, s.longitude)),
+    ];
+
+    if (waypoints.length >= 2) {
+      final routeKey = waypoints
+          .map((w) => '${w.latitude.toStringAsFixed(4)},${w.longitude.toStringAsFixed(4)}')
+          .join(';');
+      if (routeKey != _cachedRouteKey) {
+        _cachedRouteKey = routeKey;
+        OsrmRoutingService.fetchRoute(waypoints).then((result) {
+          if (mounted && result.points.isNotEmpty) {
+            setState(() => _roadPolylinePoints = result.points);
+          }
+        });
+      }
+    }
+
+    final currentState = context.read<LiveTripCubit>().state;
+    LiveTripLoaded? loadedState;
+    if (currentState is LiveTripLoaded) {
+      loadedState = currentState;
+    }
+
     final markers = <Marker>[
       if (_driverPosition != null)
         Marker(
           point: driverLatLng,
-          width: 46,
-          height: 46,
+          width: 48,
+          height: 48,
           child: Transform.rotate(
-            // اتجاه السير (Heading) يوصل بالدرجات من GPS، وTransform.rotate يحتاجه بالراديان
             angle: _driverPosition!.heading * math.pi / 180,
             child: Container(
-              decoration: const BoxDecoration(color: AppColors.primaryLight, shape: BoxShape.circle),
-              child: const Icon(Icons.directions_bus_filled_rounded, color: AppColors.white, size: 22),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.white, width: 2.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.directions_bus_filled_rounded,
+                color: AppColors.white,
+                size: 24,
+              ),
             ),
           ),
         ),
-      ...stops.map(
-        (stop) => Marker(
+      ...List.generate(stops.length, (i) {
+        final stop = stops[i];
+        final badgeNum = stop.sequenceOrder > 0 ? stop.sequenceOrder : (i + 1);
+        final isCompleted = stop.isResolved;
+        final isCurrentTarget = loadedState?.currentChild != null &&
+            ((stop.isHome && stop.childId == loadedState!.currentChild!.childId) ||
+                (stop.isSchool && stop.schoolId != null));
+
+        return Marker(
           point: LatLng(stop.latitude, stop.longitude),
-          width: 40,
-          height: 40,
-          child: Container(
-            decoration: BoxDecoration(
-              color: stop.isResolved ? AppColors.success : AppColors.error,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.white, width: 2),
-            ),
-            child: Icon(
-              stop.isSchool ? Icons.school_rounded : Icons.home_rounded,
-              color: AppColors.white,
-              size: 16,
-            ),
+          width: 50,
+          height: 50,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: isCompleted
+                      ? AppColors.success
+                      : (isCurrentTarget ? AppColors.orange : AppColors.primaryLight),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.white,
+                    width: isCurrentTarget ? 3 : 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 5,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  isCompleted
+                      ? Icons.check_circle_rounded
+                      : (stop.isSchool ? Icons.school_rounded : Icons.home_rounded),
+                  color: AppColors.white,
+                  size: 18,
+                ),
+              ),
+              Positioned(
+                top: -3,
+                right: -3,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isCompleted ? AppColors.green700 : AppColors.secondaryDark,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.white, width: 1.5),
+                  ),
+                  child: Text(
+                    '$badgeNum',
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-      ),
+        );
+      }),
     ];
+
+    final effectivePolylinePoints = _roadPolylinePoints.isNotEmpty
+        ? _roadPolylinePoints
+        : stops.map((s) => LatLng(s.latitude, s.longitude)).toList();
 
     return FlutterMap(
       mapController: _animatedMapController.mapController,
@@ -800,8 +896,8 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
         PolylineLayer(
           polylines: [
             Polyline(
-              points: stops.map((s) => LatLng(s.latitude, s.longitude)).toList(),
-              strokeWidth: 4,
+              points: effectivePolylinePoints,
+              strokeWidth: 4.5,
               color: AppColors.primaryLight,
             ),
           ],

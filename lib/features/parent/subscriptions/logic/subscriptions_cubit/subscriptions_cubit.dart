@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/repositories/subscriptions_repository.dart';
-import '../../data/models/active_subscription_model.dart';
 import 'subscriptions_state.dart';
 
 export 'subscriptions_state.dart';
@@ -55,31 +54,6 @@ class SubscriptionsCubit extends Cubit<SubscriptionsState> {
       emit(SubscriptionDetailError(error));
     } else {
       emit(SubscriptionDetailLoaded(detail!));
-    }
-  }
-
-  /// إلغاء الطلب
-  Future<void> cancelSubscription(int id) async {
-    final currentList = state is SubscriptionsLoaded
-        ? (state as SubscriptionsLoaded).subscriptions
-        : <ActiveSubscriptionModel>[];
-
-    emit(SubscriptionCancelLoading(id));
-    emit(SubscriptionsActionLoading(List.from(currentList), id));
-
-    final (success, message) = await _repository.cancelSubscriptionRequest(id);
-    if (success) {
-      final updatedList = List<ActiveSubscriptionModel>.from(currentList)
-        ..removeWhere((sub) => sub.id == id);
-      emit(SubscriptionCancelSuccess(message));
-      if (updatedList.isEmpty) {
-        emit(SubscriptionsActionSuccess([], message));
-      } else {
-        emit(SubscriptionsActionSuccess(updatedList, message));
-      }
-    } else {
-      emit(SubscriptionCancelError(message));
-      emit(SubscriptionsActionError(List.from(currentList), message));
     }
   }
 }

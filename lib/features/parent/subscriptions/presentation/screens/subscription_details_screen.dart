@@ -413,13 +413,9 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
       ThemeData theme, bool isDark) {
     final isFemale = child.isFemale;
     final avatarColor = isFemale ? AppColors.femalePink : theme.colorScheme.primary;
-    final isCancellable = ['active', 'accepted', 'pending_start']
-        .contains(subscription.status.toLowerCase());
 
     return BlocBuilder<SubscriptionsCubit, SubscriptionsState>(
       builder: (context, state) {
-        final isCancelling = state is SubscriptionsActionLoading &&
-            state.actionId == subscription.id;
 
         return Container(
           margin: EdgeInsets.only(bottom: 14.h),
@@ -564,44 +560,6 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
                       ),
                       _buildChildPricing(child.pricing!, isDark),
                     ],
-
-                    // زر الإلغاء
-                    if (isCancellable) ...[
-                      SizedBox(height: 14.h),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: isCancelling
-                              ? null
-                              : () => _confirmCancel(context, subscription.id),
-                          icon: isCancelling
-                              ? SizedBox(
-                                  width: 14.r,
-                                  height: 14.r,
-                                  child: const CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.white,
-                                  ),
-                                )
-                              : Icon(Icons.cancel_outlined, size: 16.r),
-                          label: Text(
-                            isCancelling ? 'جارٍ الإلغاء...' : 'إلغاء اشتراك هذا الطفل',
-                            style: AppTextStyles.style(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13.sp,
-                              color: AppColors.white,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.error,
-                            foregroundColor: AppColors.white,
-                            padding: EdgeInsets.symmetric(vertical: 12.h),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r)),
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -708,91 +666,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
   // ───────────────────────────────────────────────────────────────
   // Helpers
   // ───────────────────────────────────────────────────────────────
-  void _confirmCancel(BuildContext context, int id) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cubit = context.read<SubscriptionsCubit>();
 
-    showDialog(
-      context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.r)),
-          backgroundColor:
-              isDark ? AppColors.surfaceDark : AppColors.white,
-          title: Text(
-            'إلغاء الاشتراك',
-            style: AppTextStyles.style(
-              fontWeight: FontWeight.bold,
-              fontSize: 16.sp,
-              color: isDark ? AppColors.white : AppColors.textDark,
-            ),
-          ),
-          content: Text(
-            'هل أنت متأكد من إلغاء اشتراك هذا الطفل؟ سيتم إشعار السائق فوراً.',
-            style: AppTextStyles.style(
-              fontSize: 13.sp,
-              color: isDark ? AppColors.grey300 : AppColors.grey700,
-              height: 1.5,
-            ),
-          ),
-          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
-          actions: [
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                          color: isDark
-                              ? AppColors.grey700
-                              : AppColors.grey300),
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r)),
-                    ),
-                    child: Text(
-                      'تراجع',
-                      style: AppTextStyles.style(
-                        fontWeight: FontWeight.bold,
-                        color: isDark
-                            ? AppColors.grey300
-                            : AppColors.textMuted,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      cubit.cancelSubscription(id);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      foregroundColor: AppColors.white,
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r)),
-                    ),
-                    child: Text(
-                      'نعم، إلغاء',
-                      style: AppTextStyles.style(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {

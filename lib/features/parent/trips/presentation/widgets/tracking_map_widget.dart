@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:latlong2/latlong.dart';
@@ -7,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
+import 'package:kids_transport/core/services/osrm_routing_service.dart';
 import '../../data/models/active_trip_model.dart';
 import '../../data/models/trip_track_model.dart';
 
@@ -37,8 +37,8 @@ class TrackingMapWidget extends StatefulWidget {
 class _TrackingMapWidgetState extends State<TrackingMapWidget> {
   static const LatLng defaultLocation = LatLng(32.8872, 13.1913);
 
-  final Dio _dio = Dio();
   final Map<String, List<LatLng>> _routeCache = {};
+  final Map<String, RouteResult> _routeResultCache = {};
   final Set<String> _pendingRouteRequests = {};
 
   final List<Color> _paletteColors = const [
@@ -62,53 +62,17 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
 
     if (!_pendingRouteRequests.contains(key)) {
       _pendingRouteRequests.add(key);
-      _fetchOSRMRoute(key, start, end);
+      OsrmRoutingService.fetchRoute([start, end]).then((result) {
+        _pendingRouteRequests.remove(key);
+        _routeCache[key] = result.points;
+        _routeResultCache[key] = result;
+        if (mounted) {
+          setState(() {});
+        }
+      });
     }
 
     return [start, end];
-  }
-
-  Future<void> _fetchOSRMRoute(String key, LatLng start, LatLng end) async {
-    try {
-      final url = 'https://router.project-osrm.org/route/v1/driving/'
-          '${start.longitude},${start.latitude};${end.longitude},${end.latitude}'
-          '?overview=full&geometries=geojson';
-
-      final response = await _dio.get(url).timeout(const Duration(seconds: 4));
-
-      if (response.statusCode == 200 && response.data is Map) {
-        final data = response.data as Map;
-        if (data['code'] == 'Ok' && data['routes'] is List && (data['routes'] as List).isNotEmpty) {
-          final route = data['routes'][0];
-          final geometry = route['geometry'];
-          if (geometry is Map && geometry['coordinates'] is List) {
-            final List coords = geometry['coordinates'] as List;
-            final List<LatLng> path = coords.map<LatLng>((c) {
-              final List pair = c as List;
-              final double lng = (pair[0] as num).toDouble();
-              final double lat = (pair[1] as num).toDouble();
-              return LatLng(lat, lng);
-            }).toList();
-
-            if (path.isNotEmpty) {
-              _routeCache[key] = path;
-              debugPrint('🛣️ [OSRM ROUTE SUCCESS] Loaded ${path.length} road waypoints for key: $key');
-              if (mounted) {
-                setState(() {});
-              }
-              return;
-            }
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('⚠️ [OSRM ROUTE FALLBACK] Failed to fetch road route ($key): $e');
-    } finally {
-      _pendingRouteRequests.remove(key);
-    }
-
-    // Fallback if network or routing failed
-    _routeCache[key] = [start, end];
   }
 
   Future<void> _openGoogleMaps(double lat, double lng) async {
@@ -509,6 +473,90 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
             MarkerLayer(markers: markers),
           ],
         ),
+
+        // Live ETA & Distance Overlay Banner for Parents
+        if (_routeResultCache.isNotEmpty) ...[
+          Builder(
+            builder: (context) {
+              final validResult = _routeResultCache.values.firstWhere(
+                (r) => r.distanceMeters > 0,
+                orElse: () => _routeResultCache.values.first,
+              );
+              if (validResult.distanceMeters <= 0) return const SizedBox.shrink();
+              final destTitle = widget.singleTrip?.destination.name ??
+                  widget.singleTrack?.destination?.name ??
+                  'المحطة المستهدفة';
+              return Positioned(
+                top: 16.h,
+                right: 16.w,
+                left: 75.w,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                  decoration: BoxDecoration(
+                    color: context.isDarkMode ? AppColors.surfaceDark : AppColors.white,
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(
+                      color: context.isDarkMode
+                          ? AppColors.grey700
+                          : AppColors.primaryLight.withValues(alpha: 0.3),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8.r),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.directions_bus_filled_rounded,
+                          color: AppColors.primaryLight,
+                          size: 20.r,
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'الوصول المتوقع إلى $destTitle',
+                              style: AppTextStyles.style(
+                                fontSize: 11.sp,
+                                color: AppColors.textMuted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              '${validResult.formattedDuration} (${validResult.formattedDistance})',
+                              style: AppTextStyles.style(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryLight,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
 
         // Re-arranged Floating Buttons: 📍 Locate -> 🧭 Navigation -> ➕ Zoom In -> ➖ Zoom Out
         Positioned(

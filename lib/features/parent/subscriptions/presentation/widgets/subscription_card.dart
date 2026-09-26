@@ -8,15 +8,11 @@ import '../../data/models/active_subscription_model.dart';
 class SubscriptionCard extends StatelessWidget {
   final ActiveSubscriptionModel subscription;
   final VoidCallback onDetailsPressed;
-  final void Function(int subscriptionId) onCancelPressed;
-  final bool isCancelling;
 
   const SubscriptionCard({
     super.key,
     required this.subscription,
     required this.onDetailsPressed,
-    required this.onCancelPressed,
-    required this.isCancelling,
   });
 
   Color _statusColor(BuildContext context) {

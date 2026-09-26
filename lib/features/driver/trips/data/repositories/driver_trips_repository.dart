@@ -30,11 +30,33 @@ class DriverTripsRepository {
     required double latitude,
     required double longitude,
     double? speed,
-  }) => _remoteDataSource.updateLocation(
+    double? accuracy,
+    double? heading,
+    String? recordedAt,
+  }) =>
+      _remoteDataSource.updateLocation(
         tripId,
         latitude: latitude,
         longitude: longitude,
         speed: speed,
+        accuracy: accuracy,
+        heading: heading,
+        recordedAt: recordedAt,
+      );
+
+  Future<void> updateGeneralDriverLocation({
+    required int tripId,
+    required double driverLat,
+    required double driverLng,
+    double? heading,
+    bool? isOnline,
+  }) =>
+      _remoteDataSource.updateGeneralDriverLocation(
+        tripId: tripId,
+        driverLat: driverLat,
+        driverLng: driverLng,
+        heading: heading,
+        isOnline: isOnline,
       );
 
   Future<void> pushLiveTrackingToFirestore(

@@ -78,6 +78,8 @@ class ApiEndpoints {
       'v1/driver/trips/$tripId/live';
   static String driverTripLocation(dynamic tripId) =>
       'v1/driver/trips/$tripId/location';
+  static const String driverGeneralUpdateLocation =
+      'v1/driver/driver/update-location';
   static String driverTripStops(dynamic tripId) =>
       'v1/driver/trips/$tripId/stops';
   static String driverTripChildStatus(dynamic tripId, dynamic tripChildId) =>

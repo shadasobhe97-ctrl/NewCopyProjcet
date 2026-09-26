@@ -214,12 +214,16 @@ class LiveTripCubit extends Cubit<LiveTripState> {
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
+      final recordedAt = position.timestamp.toUtc().toIso8601String();
       await Future.wait([
         _repository.updateLocation(
           tripId,
           latitude: position.latitude,
           longitude: position.longitude,
           speed: position.speed,
+          accuracy: position.accuracy,
+          heading: position.heading,
+          recordedAt: recordedAt,
         ),
         // 🌟 بث فوري لموقع السائق عبر Firebase Firestore لتتبع ولي الأمر اللحظي
         _repository.pushLiveTrackingToFirestore(

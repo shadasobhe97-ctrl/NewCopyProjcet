@@ -105,6 +105,9 @@ class DriverTripsRemoteDataSource {
     required double latitude,
     required double longitude,
     double? speed,
+    double? accuracy,
+    double? heading,
+    String? recordedAt,
   }) async {
     final response = await _apiClient.post(
       ApiEndpoints.driverTripLocation(tripId),
@@ -112,10 +115,34 @@ class DriverTripsRemoteDataSource {
         'latitude': latitude,
         'longitude': longitude,
         'speed': ?speed,
+        'accuracy': ?accuracy,
+        'heading': ?heading,
+        'recorded_at': ?recordedAt,
       },
       headers: _authHeader,
     );
     _unwrap(response.data, 'تعذر تحديث الموقع.');
+  }
+
+  Future<void> updateGeneralDriverLocation({
+    required int tripId,
+    required double driverLat,
+    required double driverLng,
+    double? heading,
+    bool? isOnline,
+  }) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.driverGeneralUpdateLocation,
+      data: {
+        'trip_id': tripId,
+        'driver_lat': driverLat,
+        'driver_lng': driverLng,
+        'heading': ?heading,
+        'is_online': ?isOnline,
+      },
+      headers: _authHeader,
+    );
+    _unwrap(response.data, 'تعذر تحديث موقع السائق العام.');
   }
 
   /// 🌟 يكتب موقع السائق الحي مباشرة في Firebase Firestore: trips_tracking/{tripId}
