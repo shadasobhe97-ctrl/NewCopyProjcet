@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -517,9 +517,9 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
               SizedBox(height: 8.h),
               ...trip.children.map((c) {
                 final isSelectedChild = c.childId == childItem.childId;
-                final childSchool = c.school?.name ??
-                    c.homeAddress?.title ??
-                    trip.destination.name;
+                final homeTitle = c.homeAddress?.title ??
+                    (trip.uniqueHomeAddresses.isNotEmpty ? trip.uniqueHomeAddresses.first.title : null);
+                final schoolName = c.school?.name ?? trip.destination.name;
 
                 return Container(
                   margin: EdgeInsets.only(bottom: 6.h),
@@ -577,19 +577,42 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                                 ],
                               ],
                             ),
-                            if (childSchool.isNotEmpty) ...[
-                              SizedBox(height: 2.h),
-                              Text(
-                                childSchool,
-                                style: AppTextStyles.style(
-                                  fontSize: 9.5.sp,
-                                  color: AppColors.textMuted,
+                            SizedBox(height: 2.h),
+                            Row(
+                              children: [
+                                Icon(Icons.home_rounded, size: 12.r, color: AppColors.orange),
+                                SizedBox(width: 4.w),
+                                Expanded(
+                                  child: Text(
+                                    homeTitle ?? 'المنزل',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTextStyles.style(
+                                      fontSize: 9.5.sp,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
+                                SizedBox(width: 6.w),
+                                Icon(Icons.school_rounded, size: 12.r, color: context.primaryColor),
+                                SizedBox(width: 4.w),
+                                Expanded(
+                                  child: Text(
+                                    schoolName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTextStyles.style(
+                                      fontSize: 9.5.sp,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
+                      SizedBox(width: 6.w),
                       TripStatusChip.fromStatusString(c.childStatus),
                     ],
                   ),
@@ -640,7 +663,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     final isDark = context.isDarkMode;
     return Expanded(
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 6.w),
+        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
         decoration: BoxDecoration(
           color: isDark ? AppColors.grey900 : AppColors.grey50,
           borderRadius: BorderRadius.circular(12.r),
@@ -649,23 +672,33 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
           ),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 16.r, color: context.primaryColor),
             SizedBox(height: 4.h),
-            Text(
-              title,
-              style: AppTextStyles.style(
-                fontSize: 10.sp,
-                color: AppColors.textMuted,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                title,
+                maxLines: 1,
+                style: AppTextStyles.style(
+                  fontSize: 10.sp,
+                  color: AppColors.textMuted,
+                ),
               ),
             ),
             SizedBox(height: 2.h),
-            Text(
-              value,
-              style: AppTextStyles.style(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.bold,
-                color: context.textPrimary,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                maxLines: 1,
+                style: AppTextStyles.style(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.bold,
+                  color: context.textPrimary,
+                ),
               ),
             ),
           ],

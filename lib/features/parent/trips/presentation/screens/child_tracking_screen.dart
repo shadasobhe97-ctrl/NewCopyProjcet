@@ -233,7 +233,7 @@ class _ChildTrackingScreenState extends State<ChildTrackingScreen> {
     final isDark = context.isDarkMode;
     return Expanded(
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 6.w),
+        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
         decoration: BoxDecoration(
           color: isDark ? AppColors.grey900 : AppColors.grey50,
           borderRadius: BorderRadius.circular(12.r),
@@ -242,23 +242,33 @@ class _ChildTrackingScreenState extends State<ChildTrackingScreen> {
           ),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 16.r, color: context.primaryColor),
             SizedBox(height: 4.h),
-            Text(
-              title,
-              style: AppTextStyles.style(
-                fontSize: 10.sp,
-                color: AppColors.textMuted,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                title,
+                maxLines: 1,
+                style: AppTextStyles.style(
+                  fontSize: 10.sp,
+                  color: AppColors.textMuted,
+                ),
               ),
             ),
             SizedBox(height: 2.h),
-            Text(
-              value,
-              style: AppTextStyles.style(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.bold,
-                color: context.textPrimary,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                maxLines: 1,
+                style: AppTextStyles.style(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.bold,
+                  color: context.textPrimary,
+                ),
               ),
             ),
           ],
@@ -268,6 +278,10 @@ class _ChildTrackingScreenState extends State<ChildTrackingScreen> {
   }
 
   Widget _buildChildStatusCard(BuildContext context, TripChildInfo child, bool isDark) {
+    final homeTitle = child.homeAddress?.title ??
+        (widget.trip.uniqueHomeAddresses.isNotEmpty ? widget.trip.uniqueHomeAddresses.first.title : 'عنوان منزل الطفل');
+    final schoolName = child.school?.name ?? widget.trip.destination.name;
+
     return Container(
       padding: EdgeInsets.all(12.r),
       decoration: BoxDecoration(
@@ -280,59 +294,96 @@ class _ChildTrackingScreenState extends State<ChildTrackingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'حالة ${widget.childName.split(" ")[0]} في الرحلة',
-            style: AppTextStyles.style(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.bold,
-              color: context.textPrimary,
-            ),
-          ),
-          SizedBox(height: 8.h),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.check_circle_rounded, size: 16.r, color: AppColors.success),
-              SizedBox(width: 8.w),
               Text(
-                'تم الصعود',
+                'حالة ${widget.childName.split(" ")[0]} في الرحلة',
                 style: AppTextStyles.style(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.bold,
                   color: context.textPrimary,
                 ),
               ),
-              const Spacer(),
-              Text(
-                child.pickupTime ?? '07:35 AM',
-                style: AppTextStyles.style(
-                  fontSize: 11.sp,
-                  color: AppColors.textMuted,
-                ),
-              ),
+              TripStatusChip.fromStatusString(child.childStatus),
             ],
           ),
-          SizedBox(height: 6.h),
+          SizedBox(height: 10.h),
+          // Home / Pickup Location
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.location_on_rounded, size: 16.r, color: context.primaryColor),
+              Icon(Icons.home_rounded, size: 16.r, color: AppColors.orange),
               SizedBox(width: 8.w),
               Text(
-                'الوجهة: ',
+                'موقع الخروج / المنزل: ',
                 style: AppTextStyles.style(
                   fontSize: 11.sp,
                   color: AppColors.textMuted,
                 ),
               ),
-              Text(
-                widget.trip.destination.name,
-                style: AppTextStyles.style(
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.bold,
-                  color: context.textPrimary,
+              Expanded(
+                child: Text(
+                  homeTitle,
+                  style: AppTextStyles.style(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.bold,
+                    color: context.textPrimary,
+                  ),
                 ),
               ),
             ],
           ),
+          SizedBox(height: 8.h),
+          // School / Destination Location
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.school_rounded, size: 16.r, color: context.primaryColor),
+              SizedBox(width: 8.w),
+              Text(
+                'المدرسة / الوجهة: ',
+                style: AppTextStyles.style(
+                  fontSize: 11.sp,
+                  color: AppColors.textMuted,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  schoolName,
+                  style: AppTextStyles.style(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.bold,
+                    color: context.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (child.pickupTime != null && child.pickupTime!.isNotEmpty) ...[
+            SizedBox(height: 8.h),
+            Row(
+              children: [
+                Icon(Icons.access_time_rounded, size: 16.r, color: AppColors.textMuted),
+                SizedBox(width: 8.w),
+                Text(
+                  'وقت الصعود: ',
+                  style: AppTextStyles.style(
+                    fontSize: 11.sp,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                Text(
+                  child.pickupTime!,
+                  style: AppTextStyles.style(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.bold,
+                    color: context.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
