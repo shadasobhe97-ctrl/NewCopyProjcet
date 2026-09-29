@@ -2177,6 +2177,9 @@ class _DriverProfileViewState extends State<DriverProfileView> {
   // Section: Bottom Action Bar
   // ══════════════════════════════════════════════════════════════════
   Widget _buildBottomBar(ThemeData theme, bool isDark) {
+    if (widget.fromChat) {
+      return const SizedBox.shrink();
+    }
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
