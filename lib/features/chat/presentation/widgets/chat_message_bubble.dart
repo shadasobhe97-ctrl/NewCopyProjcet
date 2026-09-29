@@ -243,10 +243,21 @@ class ChatMessageBubble extends StatelessWidget {
                     ),
                   ),
                   if (isMe) ...[
-                    SizedBox(width: 4.w),
+                    SizedBox(width: 6.w),
+                    Text(
+                      message.isRead ? 'مقروءة' : 'تم الإرسال',
+                      style: AppTextStyles.style(
+                        fontSize: 9.5.sp,
+                        fontWeight: FontWeight.w600,
+                        color: readCheckmarkColor,
+                      ),
+                    ),
+                    SizedBox(width: 2.w),
                     Icon(
-                      Icons.done_all_rounded,
-                      size: 16.r,
+                      message.isRead
+                          ? Icons.done_all_rounded
+                          : Icons.done_rounded,
+                      size: 14.r,
                       color: readCheckmarkColor,
                     ),
                   ],
