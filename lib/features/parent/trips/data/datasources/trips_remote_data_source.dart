@@ -34,23 +34,46 @@ class TripsRemoteDataSource {
     final String docId = tripId.toString();
     return _firestore
         .collection('trips_tracking')
-        .doc(docId)
         .snapshots()
         .map((snapshot) {
-      if (!snapshot.exists || snapshot.data() == null) {
+      if (snapshot.docs.isEmpty) {
         return baseModel;
       }
 
-      final data = snapshot.data() as Map<String, dynamic>;
+      Map<String, dynamic>? data;
+      String matchedDocId = docId;
 
-      final double driverLat = _parseDouble(
-        data['driver_lat'] ?? data['lat'],
-        baseModel.driverLat,
-      );
-      final double driverLng = _parseDouble(
-        data['driver_lng'] ?? data['lng'],
-        baseModel.driverLng,
-      );
+      // 1. Try finding doc by exact ID match
+      for (final doc in snapshot.docs) {
+        if (doc.id == docId) {
+          data = doc.data();
+          matchedDocId = doc.id;
+          break;
+        }
+      }
+
+      // 2. Fallback: try finding doc by trip_id field inside document data
+      if (data == null) {
+        for (final doc in snapshot.docs) {
+          final docData = doc.data();
+          final parsedId = (docData['trip_id'] as num?)?.toInt() ??
+              int.tryParse(docData['trip_id']?.toString() ?? '');
+          if (parsedId == tripId) {
+            data = docData;
+            matchedDocId = doc.id;
+            break;
+          }
+        }
+      }
+
+      if (data == null) {
+        return baseModel;
+      }
+
+      final loc = _extractLocationFromMap(data);
+      final double driverLat = loc['lat'] != 0.0 ? loc['lat']! : baseModel.driverLat;
+      final double driverLng = loc['lng'] != 0.0 ? loc['lng']! : baseModel.driverLng;
+
       final double heading = _parseDouble(
         data['heading'] ?? data['driver_heading'] ?? data['bearing'],
         baseModel.heading ?? 0.0,
@@ -63,7 +86,7 @@ class TripsRemoteDataSource {
 
       debugPrint(
         '\n🔥 ==================== [FIREBASE LIVE TRACKING UPDATE] ====================\n'
-        '📌 Firestore Document ID (Trip ID): $docId\n'
+        '📌 Firestore Doc: $matchedDocId | Target Trip ID: $tripId\n'
         '🚗 Driver Location: Lat = $driverLat, Lng = $driverLng\n'
         '🧭 Heading: $heading° | Speed: $speed km/h | Status: $status\n'
         '=========================================================================\n',
@@ -81,6 +104,58 @@ class TripsRemoteDataSource {
     });
   }
 
+  /// 🌟 Robust location extractor that handles GeoPoint, nested maps, and all key variants
+  static Map<String, double> _extractLocationFromMap(Map<String, dynamic> data) {
+    double lat = 0.0;
+    double lng = 0.0;
+
+    // 1. Check GeoPoint objects (Firestore native location type)
+    for (final key in ['location', 'driver_location', 'position', 'coords', 'geo']) {
+      final val = data[key];
+      if (val is GeoPoint) {
+        return {'lat': val.latitude, 'lng': val.longitude};
+      }
+    }
+
+    // 2. Check nested maps: data['driver_location'], data['location'], data['driver']
+    for (final key in ['driver_location', 'location', 'driver', 'position', 'coords']) {
+      final val = data[key];
+      if (val is Map) {
+        final map = Map<String, dynamic>.from(val);
+        final nestedLat = _parseDouble(
+          map['driver_lat'] ?? map['latitude'] ?? map['lat'] ?? map['current_lat'] ?? map['driverLat'],
+        );
+        final nestedLng = _parseDouble(
+          map['driver_lng'] ?? map['longitude'] ?? map['lng'] ?? map['current_lng'] ?? map['driverLng'],
+        );
+        if (nestedLat != 0.0 && nestedLng != 0.0) {
+          return {'lat': nestedLat, 'lng': nestedLng};
+        }
+      }
+    }
+
+    // 3. Check flat fields: driver_lat/lng, latitude/longitude, lat/lng, driverLat/driverLng, current_lat/lng
+    lat = _parseDouble(
+      data['driver_lat'] ??
+          data['latitude'] ??
+          data['lat'] ??
+          data['driverLat'] ??
+          data['current_lat'] ??
+          data['lat_val'],
+    );
+
+    lng = _parseDouble(
+      data['driver_lng'] ??
+          data['longitude'] ??
+          data['lng'] ??
+          data['driverLng'] ??
+          data['current_lng'] ??
+          data['lng_val'],
+    );
+
+    return {'lat': lat, 'lng': lng};
+  }
+
   static double _parseDouble(dynamic val, [double defaultValue = 0.0]) {
     if (val is double) return val;
     if (val is num) return val.toDouble();
@@ -96,9 +171,12 @@ class TripsRemoteDataSource {
         final data = doc.data();
         final parsedTripId =
             int.tryParse(doc.id) ?? (data['trip_id'] as num?)?.toInt() ?? 0;
-        final double driverLat = _parseDouble(data['driver_lat'] ?? data['lat']);
-        final double driverLng = _parseDouble(data['driver_lng'] ?? data['lng']);
-        final double heading = _parseDouble(data['heading'] ?? data['driver_heading'] ?? data['bearing']);
+        final loc = _extractLocationFromMap(data);
+        final double driverLat = loc['lat']!;
+        final double driverLng = loc['lng']!;
+        final double heading = _parseDouble(
+          data['heading'] ?? data['driver_heading'] ?? data['bearing'],
+        );
 
         debugPrint(
           '🔥 [Firestore Multi-Tracking Update] Trip ID: ${doc.id} | '
