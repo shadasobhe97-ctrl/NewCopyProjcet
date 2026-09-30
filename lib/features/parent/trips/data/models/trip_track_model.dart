@@ -177,7 +177,7 @@ class LiveTrackingModel {
       heading: headingVal,
       destination: dest,
       children: childrenList,
-      lastUpdated: json['last_updated']?.toString() ?? 'الآن',
+      lastUpdated: json['updated_at']?.toString() ?? json['last_updated']?.toString() ?? 'الآن',
       isOnline: json['is_online'] as bool? ?? true,
     );
   }
