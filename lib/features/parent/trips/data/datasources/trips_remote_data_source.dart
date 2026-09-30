@@ -147,40 +147,6 @@ class TripsRemoteDataSource {
     return docs.isNotEmpty ? docs.first.data() : null;
   }
 
-      final loc = _extractLocationFromMap(data);
-      final double driverLat = loc['lat'] != 0.0 ? loc['lat']! : baseModel.driverLat;
-      final double driverLng = loc['lng'] != 0.0 ? loc['lng']! : baseModel.driverLng;
-
-      final double heading = _parseDouble(
-        data['heading'] ?? data['driver_heading'] ?? data['bearing'],
-        baseModel.heading ?? 0.0,
-      );
-      final double speed = _parseDouble(
-        data['speed'],
-        baseModel.speed ?? 0.0,
-      );
-      final String status = data['status']?.toString() ?? baseModel.status;
-
-      debugPrint(
-        '\n🔥 ==================== [FIREBASE LIVE TRACKING UPDATE] ====================\n'
-        '📌 Firestore Doc: $matchedDocId | Target Trip ID: $tripId\n'
-        '🚗 Driver Location: Lat = $driverLat, Lng = $driverLng\n'
-        '🧭 Heading: $heading° | Speed: $speed km/h | Status: $status\n'
-        '=========================================================================\n',
-      );
-
-      return baseModel.copyWith(
-        driverLat: driverLat,
-        driverLng: driverLng,
-        heading: heading,
-        speed: speed,
-        status: status,
-        lastUpdated: 'الآن',
-        isOnline: true,
-      );
-    });
-  }
-
   /// 🌟 Robust location extractor that handles GeoPoint, nested maps, and all key variants
   static Map<String, double> _extractLocationFromMap(Map<String, dynamic> data) {
     double lat = 0.0;
