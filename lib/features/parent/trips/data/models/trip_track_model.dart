@@ -141,9 +141,13 @@ class LiveTrackingModel {
       final loc = json['driver_location'] as Map<String, dynamic>;
       lat = _parseDouble(loc['lat'] ?? loc['latitude']);
       lng = _parseDouble(loc['lng'] ?? loc['longitude']);
+    } else if (json['driver'] is Map<String, dynamic>) {
+      final loc = json['driver'] as Map<String, dynamic>;
+      lat = _parseDouble(loc['lat'] ?? loc['latitude'] ?? loc['current_lat'] ?? loc['driver_lat']);
+      lng = _parseDouble(loc['lng'] ?? loc['longitude'] ?? loc['current_lng'] ?? loc['driver_lng']);
     } else {
-      lat = _parseDouble(json['driver_lat'] ?? json['lat']);
-      lng = _parseDouble(json['driver_lng'] ?? json['lng']);
+      lat = _parseDouble(json['driver_lat'] ?? json['lat'] ?? json['current_lat']);
+      lng = _parseDouble(json['driver_lng'] ?? json['lng'] ?? json['current_lng']);
     }
 
     final double? headingVal = _parseNullableDouble(

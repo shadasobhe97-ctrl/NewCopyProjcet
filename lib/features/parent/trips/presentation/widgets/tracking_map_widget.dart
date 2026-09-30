@@ -165,26 +165,37 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
 
     // Build effective single track
     LiveTrackingModel? effectiveSingleTrack = widget.singleTrack;
-    if (!widget.isMultiMode && effectiveSingleTrack == null && widget.singleTrip != null) {
+    if (!widget.isMultiMode && (effectiveSingleTrack == null || effectiveSingleTrack.driverLat == 0.0) && widget.singleTrip != null) {
       final trip = widget.singleTrip!;
-      double lat = trip.destination.lat;
-      double lng = trip.destination.lng;
-      if ((lat == 0.0 || lng == 0.0) && trip.uniqueSchools.isNotEmpty) {
-        lat = trip.uniqueSchools.first.lat;
-        lng = trip.uniqueSchools.first.lng;
-      }
+      double lat = trip.driver.lat;
+      double lng = trip.driver.lng;
       if ((lat == 0.0 || lng == 0.0) && trip.uniqueHomeAddresses.isNotEmpty) {
         lat = trip.uniqueHomeAddresses.first.lat;
         lng = trip.uniqueHomeAddresses.first.lng;
       }
-      effectiveSingleTrack = LiveTrackingModel(
-        tripId: trip.tripId,
-        status: trip.status,
-        driverLat: lat,
-        driverLng: lng,
-        driverName: trip.driver.name,
-        lastUpdated: 'من الباك إند',
-      );
+      if ((lat == 0.0 || lng == 0.0) && trip.uniqueSchools.isNotEmpty) {
+        lat = trip.uniqueSchools.first.lat;
+        lng = trip.uniqueSchools.first.lng;
+      }
+      if ((lat == 0.0 || lng == 0.0)) {
+        lat = trip.destination.lat;
+        lng = trip.destination.lng;
+      }
+      if (effectiveSingleTrack == null) {
+        effectiveSingleTrack = LiveTrackingModel(
+          tripId: trip.tripId,
+          status: trip.status,
+          driverLat: lat,
+          driverLng: lng,
+          driverName: trip.driver.name,
+          lastUpdated: 'من الباك إند',
+        );
+      } else {
+        effectiveSingleTrack = effectiveSingleTrack.copyWith(
+          driverLat: lat != 0.0 ? lat : effectiveSingleTrack.driverLat,
+          driverLng: lng != 0.0 ? lng : effectiveSingleTrack.driverLng,
+        );
+      }
     }
 
     if (!widget.isMultiMode && effectiveSingleTrack != null) {

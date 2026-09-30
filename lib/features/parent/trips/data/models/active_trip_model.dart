@@ -3,12 +3,16 @@ class DriverInfo {
   final String name;
   final String phone;
   final String? photo;
+  final double lat;
+  final double lng;
 
   const DriverInfo({
     required this.id,
     required this.name,
     required this.phone,
     this.photo,
+    this.lat = 0.0,
+    this.lng = 0.0,
   });
 
   factory DriverInfo.fromJson(Map<String, dynamic> json) {
@@ -18,6 +22,8 @@ class DriverInfo {
       phone:
           json['phone']?.toString() ?? json['driver_phone']?.toString() ?? '',
       photo: json['photo']?.toString() ?? json['driver_photo']?.toString(),
+      lat: _parseDouble(json['lat'] ?? json['latitude'] ?? json['current_lat'] ?? json['driver_lat']),
+      lng: _parseDouble(json['lng'] ?? json['longitude'] ?? json['current_lng'] ?? json['driver_lng']),
     );
   }
 }

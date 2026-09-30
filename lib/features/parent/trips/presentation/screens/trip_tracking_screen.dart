@@ -200,7 +200,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                         builder: (context, state) {
                           return TrackingMapWidget(
                             mapController: _mapController,
-                            isMultiMode: _isAllSelected || state is TripTrackingMultiLoaded,
+                            isMultiMode: _isAllSelected,
                             singleTrack: state is TripTrackingSingleLoaded ? state.trackData : null,
                             singleTrip: _currentDisplayedTrip,
                             multiTracks: state is TripTrackingMultiLoaded ? state.tracks : [],
