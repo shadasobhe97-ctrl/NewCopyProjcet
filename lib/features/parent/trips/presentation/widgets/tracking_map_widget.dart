@@ -205,32 +205,6 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
       );
       initialCenter = driverLatLng;
 
-      // Driver marker
-      markers.add(
-        Marker(
-          point: driverLatLng,
-          width: 70.w,
-          height: 70.h,
-          child: GestureDetector(
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'السائق: ${widget.singleTrip?.driverName ?? effectiveSingleTrack?.driverName ?? "السائق"}',
-                  ),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            },
-            child: _buildDriverBusMarker(
-              context,
-              context.primaryColor,
-              widget.singleTrip?.driverName ?? effectiveSingleTrack.driverName ?? 'السائق',
-            ),
-          ),
-        ),
-      );
-
       // Destination / Schools / Home markers with Name Tag above
       final List<ChildSchoolModel> uniqueSchools = widget.singleTrip?.uniqueSchools ??
           effectiveSingleTrack.uniqueSchools;
@@ -322,6 +296,32 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
           );
         }
       }
+
+      // 🌟 DRIVER MARKER ADDED LAST (To render ON TOP of destination/home markers Z-Index)
+      markers.add(
+        Marker(
+          point: driverLatLng,
+          width: 75.w,
+          height: 75.h,
+          child: GestureDetector(
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'السائق: ${widget.singleTrip?.driverName ?? effectiveSingleTrack?.driverName ?? "السائق"}',
+                  ),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            child: _buildDriverBusMarker(
+              context,
+              context.primaryColor,
+              widget.singleTrip?.driverName ?? effectiveSingleTrack.driverName ?? 'السائق',
+            ),
+          ),
+        ),
+      );
     } else if (widget.isMultiMode && effectiveMultiTracks.isNotEmpty) {
       initialCenter = LatLng(
         effectiveMultiTracks.first.driverLat != 0.0 ? effectiveMultiTracks.first.driverLat : defaultLocation.latitude,
@@ -476,8 +476,7 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
           ),
           children: [
             TileLayer(
-              urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-              subdomains: const ['a', 'b', 'c'],
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.kids_transport.app',
             ),
             PolylineLayer(polylines: polylines),
