@@ -49,6 +49,55 @@ class _TrackingMapWidgetState extends State<TrackingMapWidget> {
     AppColors.maleBlue,
   ];
 
+  @override
+  void didUpdateWidget(covariant TrackingMapWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (!widget.isMultiMode && widget.singleTrack != null) {
+      final oldLat = oldWidget.singleTrack?.driverLat ?? 0.0;
+      final oldLng = oldWidget.singleTrack?.driverLng ?? 0.0;
+      final newLat = widget.singleTrack!.driverLat;
+      final newLng = widget.singleTrack!.driverLng;
+
+      if (newLat != 0.0 && newLng != 0.0 && (newLat != oldLat || newLng != oldLng)) {
+        debugPrint('🚗 [LIVE TRACKING] Driver moved to Lat: $newLat, Lng: $newLng. Auto-moving camera!');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            try {
+              widget.mapController.move(
+                LatLng(newLat, newLng),
+                widget.mapController.camera.zoom,
+              );
+            } catch (_) {}
+          }
+        });
+      }
+    } else if (widget.isMultiMode && widget.multiTracks.isNotEmpty) {
+      final newValid = widget.multiTracks.firstWhere(
+        (t) => t.driverLat != 0.0 && t.driverLng != 0.0,
+        orElse: () => widget.multiTracks.first,
+      );
+      if (newValid.driverLat != 0.0 && newValid.driverLng != 0.0) {
+        final oldValid = oldWidget.multiTracks.firstWhere(
+          (t) => t.driverLat != 0.0 && t.driverLng != 0.0,
+          orElse: () => newValid,
+        );
+        if (newValid.driverLat != oldValid.driverLat || newValid.driverLng != oldValid.driverLng) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              try {
+                widget.mapController.move(
+                  LatLng(newValid.driverLat, newValid.driverLng),
+                  widget.mapController.camera.zoom,
+                );
+              } catch (_) {}
+            }
+          });
+        }
+      }
+    }
+  }
+
   List<LatLng> _getPolylinePoints(LatLng start, LatLng end) {
     if (start.latitude == 0.0 || start.longitude == 0.0 || end.latitude == 0.0 || end.longitude == 0.0) {
       return [start, end];

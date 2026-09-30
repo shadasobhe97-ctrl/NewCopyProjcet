@@ -66,6 +66,33 @@ class TripsRemoteDataSource {
         }
       }
 
+      // 3. Fallback: try finding doc by driver_id field if available in baseModel
+      if (data == null && baseModel.driverId != null && baseModel.driverId != 0) {
+        for (final doc in snapshot.docs) {
+          final docData = doc.data();
+          final parsedDriverId = (docData['driver_id'] as num?)?.toInt() ??
+              int.tryParse(docData['driver_id']?.toString() ?? '');
+          if (parsedDriverId == baseModel.driverId) {
+            data = docData;
+            matchedDocId = doc.id;
+            break;
+          }
+        }
+      }
+
+      // 4. Fallback: if single doc or active doc exists in collection, use it so parent tracks active bus
+      if (data == null && snapshot.docs.isNotEmpty) {
+        final activeDoc = snapshot.docs.firstWhere(
+          (d) {
+            final loc = _extractLocationFromMap(d.data());
+            return loc['lat'] != 0.0 && loc['lng'] != 0.0;
+          },
+          orElse: () => snapshot.docs.first,
+        );
+        data = activeDoc.data();
+        matchedDocId = activeDoc.id;
+      }
+
       if (data == null) {
         return baseModel;
       }

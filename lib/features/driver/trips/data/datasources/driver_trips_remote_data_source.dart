@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:kids_transport/core/network/api_client.dart';
@@ -122,6 +123,16 @@ class DriverTripsRemoteDataSource {
       headers: _authHeader,
     );
     _unwrap(response.data, 'تعذر تحديث الموقع.');
+
+    // 🌟 push live location to Firestore as well for instant parent live stream sync
+    unawaited(pushLiveTrackingToFirestore(
+      tripId,
+      latitude: latitude,
+      longitude: longitude,
+      heading: heading,
+      speed: speed,
+      status: 'active',
+    ));
   }
 
   Future<void> updateGeneralDriverLocation({
