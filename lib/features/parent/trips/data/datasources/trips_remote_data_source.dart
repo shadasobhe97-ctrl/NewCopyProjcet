@@ -31,7 +31,6 @@ class TripsRemoteDataSource {
     int tripId,
     LiveTrackingModel baseModel,
   ) {
-    final String docId = tripId.toString();
     return _firestore
         .collection('trips_tracking')
         .snapshots()
@@ -40,62 +39,113 @@ class TripsRemoteDataSource {
         return baseModel;
       }
 
-      Map<String, dynamic>? data;
-      String matchedDocId = docId;
-
-      // 1. Try finding doc by exact ID match
-      for (final doc in snapshot.docs) {
-        if (doc.id == docId) {
-          data = doc.data();
-          matchedDocId = doc.id;
-          break;
-        }
-      }
-
-      // 2. Fallback: try finding doc by trip_id field inside document data
-      if (data == null) {
-        for (final doc in snapshot.docs) {
-          final docData = doc.data();
-          final parsedId = (docData['trip_id'] as num?)?.toInt() ??
-              int.tryParse(docData['trip_id']?.toString() ?? '');
-          if (parsedId == tripId) {
-            data = docData;
-            matchedDocId = doc.id;
-            break;
-          }
-        }
-      }
-
-      // 3. Fallback: try finding doc by driver_id field if available in baseModel
-      if (data == null && baseModel.driverId != null && baseModel.driverId != 0) {
-        for (final doc in snapshot.docs) {
-          final docData = doc.data();
-          final parsedDriverId = (docData['driver_id'] as num?)?.toInt() ??
-              int.tryParse(docData['driver_id']?.toString() ?? '');
-          if (parsedDriverId == baseModel.driverId) {
-            data = docData;
-            matchedDocId = doc.id;
-            break;
-          }
-        }
-      }
-
-      // 4. Fallback: if single doc or active doc exists in collection, use it so parent tracks active bus
-      if (data == null && snapshot.docs.isNotEmpty) {
-        final activeDoc = snapshot.docs.firstWhere(
-          (d) {
-            final loc = _extractLocationFromMap(d.data());
-            return loc['lat'] != 0.0 && loc['lng'] != 0.0;
-          },
-          orElse: () => snapshot.docs.first,
-        );
-        data = activeDoc.data();
-        matchedDocId = activeDoc.id;
-      }
+      final data = _findBestDocWithLocation(
+        snapshot.docs,
+        tripId,
+        baseModel.driverId,
+      );
 
       if (data == null) {
         return baseModel;
       }
+
+      final loc = _extractLocationFromMap(data);
+      final double driverLat = loc['lat'] != 0.0 ? loc['lat']! : baseModel.driverLat;
+      final double driverLng = loc['lng'] != 0.0 ? loc['lng']! : baseModel.driverLng;
+
+      final double heading = _parseDouble(
+        data['heading'] ?? data['driver_heading'] ?? data['bearing'],
+        baseModel.heading ?? 0.0,
+      );
+      final double speed = _parseDouble(
+        data['speed'],
+        baseModel.speed ?? 0.0,
+      );
+      final String status = data['status']?.toString() ?? baseModel.status;
+
+      debugPrint(
+        '\n🔥 ==================== [FIREBASE LIVE TRACKING UPDATE] ====================\n'
+        '📌 Target Trip ID: $tripId | Driver ID: ${baseModel.driverId}\n'
+        '🚗 Driver Location Extracted: Lat = $driverLat, Lng = $driverLng\n'
+        '🧭 Heading: $heading° | Speed: $speed km/h | Status: $status\n'
+        '=========================================================================\n',
+      );
+
+      return baseModel.copyWith(
+        driverLat: driverLat,
+        driverLng: driverLng,
+        heading: heading,
+        speed: speed,
+        status: status,
+        lastUpdated: 'الآن',
+        isOnline: true,
+      );
+    });
+  }
+
+  /// 🌟 5-Tier Resolver to find document with valid live coordinates in Firestore
+  static Map<String, dynamic>? _findBestDocWithLocation(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    int tripId,
+    int? driverId,
+  ) {
+    final String docIdStr = tripId.toString();
+
+    // 1. Try exact doc ID match WITH valid location
+    for (final doc in docs) {
+      if (doc.id == docIdStr) {
+        final loc = _extractLocationFromMap(doc.data());
+        if (loc['lat'] != 0.0 && loc['lng'] != 0.0) {
+          return doc.data();
+        }
+      }
+    }
+
+    // 2. Try trip_id field match WITH valid location
+    for (final doc in docs) {
+      final docData = doc.data();
+      final parsedId = (docData['trip_id'] as num?)?.toInt() ??
+          int.tryParse(docData['trip_id']?.toString() ?? '');
+      if (parsedId == tripId) {
+        final loc = _extractLocationFromMap(docData);
+        if (loc['lat'] != 0.0 && loc['lng'] != 0.0) {
+          return docData;
+        }
+      }
+    }
+
+    // 3. Try driver_id field match WITH valid location
+    if (driverId != null && driverId != 0) {
+      for (final doc in docs) {
+        final docData = doc.data();
+        final parsedDriverId = (docData['driver_id'] as num?)?.toInt() ??
+            int.tryParse(docData['driver_id']?.toString() ?? '');
+        if (parsedDriverId == driverId) {
+          final loc = _extractLocationFromMap(docData);
+          if (loc['lat'] != 0.0 && loc['lng'] != 0.0) {
+            return docData;
+          }
+        }
+      }
+    }
+
+    // 4. Fallback: find ANY active doc in collection that HAS valid non-zero location
+    for (final doc in docs) {
+      final loc = _extractLocationFromMap(doc.data());
+      if (loc['lat'] != 0.0 && loc['lng'] != 0.0) {
+        return doc.data();
+      }
+    }
+
+    // 5. Last resort: return doc matching exact ID even if lat is 0
+    for (final doc in docs) {
+      if (doc.id == docIdStr) {
+        return doc.data();
+      }
+    }
+
+    return docs.isNotEmpty ? docs.first.data() : null;
+  }
 
       final loc = _extractLocationFromMap(data);
       final double driverLat = loc['lat'] != 0.0 ? loc['lat']! : baseModel.driverLat;
