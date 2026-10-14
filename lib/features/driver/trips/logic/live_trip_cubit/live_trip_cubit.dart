@@ -106,17 +106,15 @@ class LiveTripCubit extends Cubit<LiveTripState> {
     // الربط بـ school_id لو نفس المدرسة متكررة بالمسار المدموج
     final schoolStopByChildId = <int, DriverTripStopModel>{};
     // رحلة الإنقاذ/المسار المدموج: "نقطة استلام الأطفال من الحافلة المتوقفة"
-    // محطة home بلا child_id، وبعدها محطات الأطفال العالقين. كل طفل عالق
-    // يتربط بنقطة الاستلام اللي قبله مباشرة (لو صار أكثر من عطل باليوم)
+    // نعتمد على isBreakdownTransfer الصريحة ونربط أطفالها المنقولين
     final rescuePickupByChildId = <int, DriverTripStopModel>{};
-    DriverTripStopModel? lastPickupPoint;
     for (final stop in sortedStops) {
-      if (stop.isHome && stop.childId == null) {
-        lastPickupPoint = stop;
+      if (stop.isBreakdownTransfer) {
+        for (final tc in stop.transferredChildren) {
+          rescuePickupByChildId[tc.childId] = stop;
+          if (tc.id != 0) rescuePickupByChildId[tc.id] = stop;
+        }
         continue;
-      }
-      if (stop.childId != null && lastPickupPoint != null) {
-        rescuePickupByChildId.putIfAbsent(stop.childId!, () => lastPickupPoint!);
       }
       if (stop.isHome && stop.childId != null) {
         homeStopByChildId[stop.childId!] = stop;
@@ -581,6 +579,64 @@ class LiveTripCubit extends Cubit<LiveTripState> {
     final current = state;
     if (current is LiveTripLoaded) {
       emit(current.copyWith(clearBlockingError: true));
+    }
+  }
+
+  void clearActionSuccess() {
+    final current = state;
+    if (current is LiveTripLoaded) {
+      emit(current.copyWith(clearActionSuccess: true));
+    }
+  }
+
+  /// تأكيد استلام ونقل أطفال الحافلة المعطلة جماعياً
+  Future<String?> confirmBreakdownTransfer(
+    int tripId, {
+    required double latitude,
+    required double longitude,
+  }) async {
+    final current = state;
+    if (current is! LiveTripLoaded) return null;
+    if (current.isConfirmingBreakdownTransfer) return null;
+
+    emit(current.copyWith(
+      isConfirmingBreakdownTransfer: true,
+      clearActionError: true,
+      clearActionSuccess: true,
+    ));
+
+    try {
+      final res = await _repository.confirmBreakdownTransfer(
+        tripId,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      final message = res['message']?.toString() ??
+          'تم تأكيد استلام ونقل الطلاب إلى الحافلة بنجاح.';
+
+      // تحديث فوري لبيانات المحطات والأطفال من السيرفر
+      await _refreshSilently(tripId);
+
+      final after = state;
+      if (after is LiveTripLoaded) {
+        emit(after.copyWith(
+          isConfirmingBreakdownTransfer: false,
+          actionSuccessMessage: message,
+        ));
+      }
+      return message;
+    } catch (e) {
+      final message = e is ApiException
+          ? e.message
+          : 'فشل تأكيد استلام الطلاب: ${e.toString()}';
+      final latest = state;
+      if (latest is LiveTripLoaded) {
+        emit(latest.copyWith(
+          isConfirmingBreakdownTransfer: false,
+          actionErrorMessage: message,
+        ));
+      }
+      rethrow;
     }
   }
 

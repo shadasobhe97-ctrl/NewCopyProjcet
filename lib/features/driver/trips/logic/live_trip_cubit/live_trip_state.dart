@@ -51,6 +51,12 @@ class LiveTripLoaded extends LiveTripState {
   /// (SUBSTITUTE_ALREADY_ACCEPTED) — الرحلة تقعد معلّقة والاستئناف مقفول
   final bool substituteAccepted;
 
+  /// تأكيد استلام أطفال الحافلة المعطلة جماعياً قيد التنفيذ
+  final bool isConfirmingBreakdownTransfer;
+
+  /// رسالة نجاح الإجراءات لعرضها كـ SnackBar إيجابي
+  final String? actionSuccessMessage;
+
   const LiveTripLoaded({
     required this.tripStatus,
     required this.stops,
@@ -69,6 +75,8 @@ class LiveTripLoaded extends LiveTripState {
     this.proximityAlert,
     this.proximityAlertReceivedAt,
     this.substituteAccepted = false,
+    this.isConfirmingBreakdownTransfer = false,
+    this.actionSuccessMessage,
   });
 
   bool get isInProgress => tripStatus == 'in_progress';
@@ -87,6 +95,8 @@ class LiveTripLoaded extends LiveTripState {
     bool clearPendingAction = false,
     String? actionErrorMessage,
     bool clearActionError = false,
+    String? actionSuccessMessage,
+    bool clearActionSuccess = false,
     String? blockingErrorCode,
     String? blockingErrorMessage,
     bool clearBlockingError = false,
@@ -102,6 +112,7 @@ class LiveTripLoaded extends LiveTripState {
     DateTime? proximityAlertReceivedAt,
     bool clearProximityAlert = false,
     bool? substituteAccepted,
+    bool? isConfirmingBreakdownTransfer,
   }) {
     return LiveTripLoaded(
       tripStatus: tripStatus ?? this.tripStatus,
@@ -113,6 +124,8 @@ class LiveTripLoaded extends LiveTripState {
           ? null
           : (pendingActionTripChildId ?? this.pendingActionTripChildId),
       actionErrorMessage: clearActionError ? null : (actionErrorMessage ?? this.actionErrorMessage),
+      actionSuccessMessage:
+          clearActionSuccess ? null : (actionSuccessMessage ?? this.actionSuccessMessage),
       blockingErrorCode: clearBlockingError ? null : (blockingErrorCode ?? this.blockingErrorCode),
       blockingErrorMessage:
           clearBlockingError ? null : (blockingErrorMessage ?? this.blockingErrorMessage),
@@ -126,6 +139,8 @@ class LiveTripLoaded extends LiveTripState {
           ? null
           : (proximityAlertReceivedAt ?? this.proximityAlertReceivedAt),
       substituteAccepted: substituteAccepted ?? this.substituteAccepted,
+      isConfirmingBreakdownTransfer:
+          isConfirmingBreakdownTransfer ?? this.isConfirmingBreakdownTransfer,
     );
   }
 
@@ -138,6 +153,7 @@ class LiveTripLoaded extends LiveTripState {
         progress,
         pendingActionTripChildId,
         actionErrorMessage,
+        actionSuccessMessage,
         blockingErrorCode,
         blockingErrorMessage,
         completedSummary,
@@ -148,5 +164,6 @@ class LiveTripLoaded extends LiveTripState {
         proximityAlert,
         proximityAlertReceivedAt,
         substituteAccepted,
+        isConfirmingBreakdownTransfer,
       ];
 }

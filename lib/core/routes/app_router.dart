@@ -554,7 +554,9 @@ class AppRoutes {
           ),
         );
       case driverLiveTrip:
-        final tripId = settings.arguments as int;
+        final rawArg = settings.arguments;
+        final tripId =
+            rawArg is int ? rawArg : int.tryParse(rawArg?.toString() ?? '') ?? 0;
         return _route(
           settings,
           BlocProvider(
@@ -612,7 +614,9 @@ class AppRoutes {
           ),
         );
       case driverEmergencyDispatchDetails:
-        final dispatchId = settings.arguments as int;
+        final dispatchId = settings.arguments is int
+            ? settings.arguments as int
+            : int.tryParse(settings.arguments?.toString() ?? '') ?? 0;
         return _route(
           settings,
           BlocProvider(

@@ -413,4 +413,20 @@ class DriverTripsRemoteDataSource {
     }
     throw const ApiException('تعذر استئناف الرحلة.');
   }
+
+  Future<Map<String, dynamic>> confirmBreakdownTransfer(
+    int tripId, {
+    required double latitude,
+    required double longitude,
+  }) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.driverTripConfirmBreakdownTransfer(tripId),
+      data: {
+        'latitude': latitude,
+        'longitude': longitude,
+      },
+      headers: _authHeader,
+    );
+    return _unwrap(response.data, 'تعذر تأكيد استلام ونقل الطلاب.');
+  }
 }

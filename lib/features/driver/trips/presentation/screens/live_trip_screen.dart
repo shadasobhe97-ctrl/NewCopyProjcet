@@ -507,6 +507,7 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
               current is LiveTripLoaded &&
               (current.blockingErrorMessage != null ||
                   current.actionErrorMessage != null ||
+                  current.actionSuccessMessage != null ||
                   current.isCompleted ||
                   // نتيجة البلاغ تظهر مرة وحدة بس: لحظة وصولها
                   (current.breakdownResult != null &&
@@ -523,6 +524,9 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
             } else if (state.actionErrorMessage != null) {
               _showSnack(state.actionErrorMessage!, isError: true);
               context.read<LiveTripCubit>().clearActionError();
+            } else if (state.actionSuccessMessage != null) {
+              _showSnack(state.actionSuccessMessage!, isError: false);
+              context.read<LiveTripCubit>().clearActionSuccess();
             } else if (state.breakdownResult != null) {
               final result = state.breakdownResult!;
               // نمسحوها طول حتى ما تسبقش ديالوج إنهاء الرحلة ولا تتعاود
@@ -619,14 +623,9 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
                   ),
                 if (loaded.isInProgress) _buildNextStationSection(loaded),
                 Expanded(
-                  child: ListView.builder(
+                  child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: loaded.childItems.length,
-                    itemBuilder: (context, index) {
-                      final item = loaded.childItems[index];
-                      final isCurrent = loaded.currentChild?.tripChildId == item.tripChildId;
-                      return _buildChildActionCard(loaded, item, isCurrent);
-                    },
+                    children: _buildTripItems(loaded),
                   ),
                 ),
                 Padding(
@@ -759,16 +758,371 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
           children: [
             if (loaded.isSuspended) _buildSuspendedBanner(loaded),
             if (loaded.isInProgress) _buildNextStationSection(loaded),
-            if (currentItem != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: _buildChildActionCard(loaded, currentItem, true),
-              ),
+            ..._buildExpandedMapActiveCards(loaded, currentItem),
           ],
         ),
       ),
     );
   }
+
+  /// كروت الشاشة العايمة بالخريطة المكبّرة: تعرض محطة الإنقاذ إذا لم تُؤكَّد بعد، وبطاقة الطفل الحالي
+  List<Widget> _buildExpandedMapActiveCards(LiveTripLoaded loaded, LiveTripChildItem? currentItem) {
+    final widgets = <Widget>[];
+
+    // لو فيه محطة إنقاذ وبحاجة لتأكيد استلام جماعي، نعرضوها فوق بالخريطة
+    DriverTripStopModel? activeBreakdownStop;
+    for (final s in loaded.stops) {
+      if (s.isBreakdownTransfer && s.canBulkConfirm) {
+        activeBreakdownStop = s;
+        break;
+      }
+    }
+
+    if (activeBreakdownStop != null) {
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: _buildBreakdownTransferCard(loaded, activeBreakdownStop),
+        ),
+      );
+    } else if (currentItem != null) {
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: _buildChildActionCard(loaded, currentItem, true),
+        ),
+      );
+    }
+
+    return widgets;
+  }
+
+  /// بناء قائمة عناصر الرحلة: كروت الأطفال مباشرة نفس التصميم الأصلي
+  /// (اسم الطفل، عنوان المنزل عند تأكيد الصعود، والمدرسة عند تأكيد النزول)
+  /// مع بطاقة محطة الإنقاذ فقط عند وجود عطل طارئ، ودون أي كروت منفصلة للمدارس.
+  List<Widget> _buildTripItems(LiveTripLoaded loaded) {
+    final widgets = <Widget>[];
+
+    // مجموعة معرّفات أطفال الإنقاذ لتفادي عرض كروت صعود فردية لهم قبل إتمام النقل الجماعي
+    final transferredChildIds = <int>{};
+    for (final stop in loaded.stops) {
+      if (stop.isBreakdownTransfer) {
+        for (final tc in stop.transferredChildren) {
+          transferredChildIds.add(tc.childId);
+          if (tc.id != 0) transferredChildIds.add(tc.id);
+        }
+        widgets.add(_buildBreakdownTransferCard(loaded, stop));
+      }
+    }
+
+    for (final item in loaded.childItems) {
+      // الأطفال المنقولون من الحافلة المعطلة يتم استلامهم أولاً عبر بطاقة الإنقاذ الجماعية
+      if (transferredChildIds.contains(item.childId) && item.isPickupPhase) {
+        continue;
+      }
+      final isCurrent = loaded.currentChild?.tripChildId == item.tripChildId;
+      widgets.add(_buildChildActionCard(loaded, item, isCurrent));
+    }
+
+    return widgets;
+  }
+
+  /// بطاقة محطة السيارة المتوقفة (محطة الإنقاذ)
+  Widget _buildBreakdownTransferCard(LiveTripLoaded loaded, DriverTripStopModel stop) {
+    final isDark = context.isDarkMode;
+    final count = stop.transferredChildrenCount > 0
+        ? stop.transferredChildrenCount
+        : stop.transferredChildren.length;
+    final isResolved = stop.isResolved;
+    final isConfirming = loaded.isConfirmingBreakdownTransfer;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: AppTheme.boxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: AppTheme.radius(16),
+        border: AppTheme.border(
+          color: isResolved
+              ? AppColors.success.withValues(alpha: 0.6)
+              : AppColors.warning.withValues(alpha: 0.8),
+          width: 1.8,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // رأس البطاقة: الترتيب + الأيقونة + عنوان المحطة + شارة الحالة
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: AppTheme.boxDecoration(
+                  color: (isResolved ? AppColors.success : AppColors.warning).withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '${stop.sequenceOrder}',
+                  style: AppTextStyles.style(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: isResolved ? AppColors.success : AppColors.warning,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isResolved ? Icons.check_circle_rounded : Icons.warning_amber_rounded,
+                  color: isResolved ? AppColors.success : AppColors.warning,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      stop.label.isNotEmpty ? stop.label : 'محطة استلام الطلاب من الحافلة المتعطلة',
+                      style: AppTextStyles.style(fontSize: 14, fontWeight: FontWeight.bold),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      'مهمة إنقاذ طارئة • $count طلاب',
+                      style: AppTextStyles.style(fontSize: 11, color: AppColors.warning),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: (isResolved ? AppColors.success : AppColors.warning).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  isResolved ? 'تم الاستلام' : 'بانتظار النقل',
+                  style: AppTextStyles.style(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: isResolved ? AppColors.success : AppColors.warning,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // قائمة الطلاب المنقولين من الحافلة المتعطلة
+          if (stop.transferredChildren.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: (isDark ? AppColors.grey800 : AppColors.grey100).withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark ? AppColors.grey700 : AppColors.grey300,
+                  width: 0.8,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.people_alt_rounded, size: 14, color: context.textMuted),
+                      const SizedBox(width: 6),
+                      Text(
+                        'الطلاب المنقولون إلى الحافلة:',
+                        style: AppTextStyles.style(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  ...stop.transferredChildren.map((tc) {
+                    final schoolInfo = tc.schoolName?.isNotEmpty == true
+                        ? ' (${tc.schoolName})'
+                        : '';
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          Icon(Icons.circle, size: 6, color: AppColors.warning),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${tc.name}$schoolInfo',
+                              style: AppTextStyles.style(fontSize: 12, color: context.textPrimary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ],
+
+          // زر التأكيد الجماعي لاستلام الأطفال (يظهر فقط عندما can_bulk_confirm == true)
+          if (stop.canBulkConfirm) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: isConfirming ? null : () => _handleBulkConfirm(stop),
+                icon: isConfirming
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
+                      )
+                    : const Icon(Icons.group_add_rounded, size: 18),
+                label: Text(
+                  isConfirming
+                      ? 'جارٍ تأكيد النقل...'
+                      : 'تأكيد استلام ونقل الطلاب إلى الحافلة',
+                  style: AppTextStyles.style(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.warning,
+                  foregroundColor: AppColors.white,
+                  minimumSize: const Size(0, 46),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+          ] else if (isResolved) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'تم تأكيد استلام ونقل جميع الطلاب بنجاح إلى حافلتك.',
+                      style: AppTextStyles.style(
+                        fontSize: 11,
+                        color: AppColors.success,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// تنفيذ زر التأكيد الجماعي لنقل الطلاب
+  Future<void> _handleBulkConfirm(DriverTripStopModel stop) async {
+    final cubit = context.read<LiveTripCubit>();
+    final state = cubit.state;
+    if (state is LiveTripLoaded && state.isConfirmingBreakdownTransfer) {
+      return;
+    }
+
+    final count = stop.transferredChildrenCount > 0
+        ? stop.transferredChildrenCount
+        : stop.transferredChildren.length;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dCtx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: AppTheme.roundedRectangleBorder(borderRadius: AppTheme.radius(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 26),
+              SizedBox(width: 8),
+              Expanded(child: Text('تأكيد استلام ونقل الطلاب')),
+            ],
+          ),
+          content: Text(
+            'هل تؤكد وصولك لموقع الحافلة المتعطلة واستلام جميع الطلاب ($count طلاب) ونقلهم إلى حافلتك؟',
+            textAlign: TextAlign.right,
+            style: AppTextStyles.style(fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dCtx).pop(false),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dCtx).pop(true),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+              child: const Text('تأكيد الاستلام'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    Position? pos = _driverPosition;
+    if (pos == null) {
+      try {
+        pos = await _locationSource.getCurrentPosition().timeout(const Duration(seconds: 10));
+      } catch (_) {}
+    }
+
+    if (pos == null || (pos.latitude == 0.0 && pos.longitude == 0.0)) {
+      if (!mounted) return;
+      _showSnack(
+        'يتعذر الحصول على الموقع الجغرافي الحالي لتأكيد الإجراء، يرجى تفعيل الموقع.',
+        isError: true,
+      );
+      return;
+    }
+
+    try {
+      final msg = await cubit.confirmBreakdownTransfer(
+        widget.tripId,
+        latitude: pos.latitude,
+        longitude: pos.longitude,
+      );
+      if (mounted && msg != null) {
+        _showSnack(msg, isError: false);
+      }
+    } catch (_) {
+      // الخطأ يُعرض تلقائياً عبر actionErrorMessage في الـ BlocConsumer
+    }
+  }
+
+
 
   /// زر إنهاء الرحلة أو استئنافها حسب حالة التوقف
   Widget _buildTripEndButton(LiveTripLoaded loaded) {
@@ -957,10 +1311,72 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
           );
 
     final markers = <Marker>[
-      ...List.generate(stops.length, (i) {
-        final stop = stops[i];
-        final badgeNum = stop.sequenceOrder > 0 ? stop.sequenceOrder : (i + 1);
+      ...stops.map((stop) {
+        if (stop.latitude == 0.0 && stop.longitude == 0.0) {
+          return null;
+        }
+        final badgeNum = stop.sequenceOrder > 0 ? stop.sequenceOrder : 1;
         final isCompleted = stop.isResolved;
+
+        // Marker مميز لمحطة الحافلة المتعطلة (Breakdown Transfer)
+        if (stop.isBreakdownTransfer) {
+          return Marker(
+            point: LatLng(stop.latitude, stop.longitude),
+            width: 52,
+            height: 52,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: isCompleted ? AppColors.success : AppColors.warning,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.white,
+                      width: 2.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    isCompleted
+                        ? Icons.check_circle_rounded
+                        : Icons.warning_amber_rounded,
+                    color: AppColors.white,
+                    size: 22,
+                  ),
+                ),
+                Positioned(
+                  top: -3,
+                  right: -3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isCompleted ? AppColors.green700 : AppColors.error,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.white, width: 1.5),
+                    ),
+                    child: Text(
+                      '$badgeNum',
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         final isCurrentTarget = loadedState?.currentChild != null &&
             ((stop.isHome && stop.childId == loadedState!.currentChild!.childId) ||
                 (stop.isSchool && stop.schoolId != null));
@@ -1022,7 +1438,7 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
             ],
           ),
         );
-      }),
+      }).whereType<Marker>(),
     ];
 
 

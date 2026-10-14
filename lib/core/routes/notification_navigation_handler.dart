@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import 'package:kids_transport/features/parent/trips/data/repositories/trips_repository.dart';
 import 'package:kids_transport/main.dart' show navigatorKey;
@@ -112,14 +113,37 @@ class NotificationNavigationHandler {
           break;
         // نداء إنقاذ لسائق بديل: entity_id هو رقم المهمة (dispatch_id)
         case 'EMERGENCY_DISPATCH':
-          final dispatchId = int.tryParse(data['dispatch_id']?.toString() ?? '') ?? entityId;
-          if (dispatchId != null) {
+        case 'EMERGENCY_DISPATCH_DETAILS':
+        case 'DRIVER_EMERGENCY_DISPATCH_DETAILS':
+          final dispatchId = int.tryParse(data['dispatch_id']?.toString() ?? '') ??
+              (data['entity_type']?.toString().toUpperCase() == 'EMERGENCY_DISPATCH' ? entityId : null) ??
+              int.tryParse(data['id']?.toString() ?? '');
+          if (dispatchId != null && dispatchId > 0) {
+            StorageService.saveLatestEmergencyDispatchId(dispatchId);
             state.pushNamed(AppRoutes.driverEmergencyDispatchDetails, arguments: dispatchId);
           } else {
             state.pushNamed(AppRoutes.driverEmergencyDispatches);
           }
           break;
+        case 'EMERGENCY_DISPATCHES':
+        case 'DRIVER_EMERGENCY_DISPATCHES':
+        case 'EMERGENCY':
+          state.pushNamed(AppRoutes.driverEmergencyDispatches);
+          break;
         default:
+          final entityType = (data['entity_type']?.toString() ?? data['type']?.toString() ?? '').toUpperCase();
+          if (entityType.contains('EMERGENCY_DISPATCH')) {
+            final dispatchId = int.tryParse(data['dispatch_id']?.toString() ?? '') ??
+                entityId ??
+                int.tryParse(data['id']?.toString() ?? '');
+            if (dispatchId != null && dispatchId > 0) {
+              StorageService.saveLatestEmergencyDispatchId(dispatchId);
+              state.pushNamed(AppRoutes.driverEmergencyDispatchDetails, arguments: dispatchId);
+            } else {
+              state.pushNamed(AppRoutes.driverEmergencyDispatches);
+            }
+            break;
+          }
           state.pushNamed(AppRoutes.driverHome);
           break;
       }

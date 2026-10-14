@@ -115,6 +115,35 @@ class StorageService {
     return null;
   }
 
+  static const String _latestEmergencyDispatchIdKey = 'latest_emergency_dispatch_id';
+
+  static Future<bool> saveLatestEmergencyDispatchId(int dispatchId) async {
+    try {
+      return await _prefs.setInt(_latestEmergencyDispatchIdKey, dispatchId);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static int? getLatestEmergencyDispatchId() {
+    try {
+      final value = _prefs.get(_latestEmergencyDispatchIdKey);
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<bool> clearLatestEmergencyDispatchId() async {
+    try {
+      return await _prefs.remove(_latestEmergencyDispatchIdKey);
+    } catch (_) {
+      return false;
+    }
+  }
+
   static bool hasValidSession() {
     final token = getToken();
     final roleId = getRoleId();
@@ -137,6 +166,7 @@ class StorageService {
       _prefs.remove(_driverRegStageKey),
       _prefs.remove(_driverRegDraftKey),
       _prefs.remove(_parentRegStageKey),
+      _prefs.remove(_latestEmergencyDispatchIdKey),
     ]);
     await HiveHelper.clearAllCache();
   }

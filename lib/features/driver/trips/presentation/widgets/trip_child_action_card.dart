@@ -54,7 +54,14 @@ class TripChildActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final resolved = item.isResolved;
-    final address = item.isDropoffPhase ? item.dropoffAddress : item.pickupAddress;
+    final isDropoff = item.isDropoffPhase ||
+        item.status == 'dropped_off' ||
+        item.status == 'dropped_off_school';
+    // في تأكيد النزول يعرض المدرسة، وفي تأكيد الصعود يعرض عنوان المنزل
+    final schoolLabel = item.school.isNotEmpty ? item.school : item.dropoffAddress;
+    final displayLocation = isDropoff
+        ? (schoolLabel.startsWith('مدرسة') ? schoolLabel : 'المدرسة: $schoolLabel')
+        : (item.pickupAddress.isNotEmpty ? item.pickupAddress : item.dropoffAddress);
 
     return Container(
       width: double.infinity,
@@ -130,15 +137,27 @@ class TripChildActionCard extends StatelessWidget {
             ],
           ),
 
-          if (address.isNotEmpty) ...[
+          if (displayLocation.isNotEmpty) ...[
             const SizedBox(height: 6),
             Padding(
               padding: const EdgeInsets.only(right: 40),
-              child: Text(
-                address,
-                style: AppTextStyles.style(fontSize: 12, color: context.textMuted),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: Row(
+                children: [
+                  Icon(
+                    isDropoff ? Icons.school_rounded : Icons.home_rounded,
+                    size: 14,
+                    color: context.textMuted,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      displayLocation,
+                      style: AppTextStyles.style(fontSize: 12, color: context.textMuted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

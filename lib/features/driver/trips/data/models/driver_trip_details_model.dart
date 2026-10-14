@@ -254,10 +254,20 @@ class TripDetailsChildModel extends Equatable {
       childId: DriverTripDetailsModel._parseInt(json['child_id']),
       name: json['name']?.toString() ?? '',
       photo: json['photo']?.toString() ?? json['photo_url']?.toString() ?? json['image']?.toString(),
-      school: json['school']?.toString() ?? json['school_name']?.toString() ?? '',
-      schoolName: json['school_name']?.toString() ?? json['school']?.toString(),
-      pickupAddress: json['pickup_address']?.toString() ?? json['home_location']?['address']?.toString() ?? '',
-      dropoffAddress: json['dropoff_address']?.toString() ?? json['school_location']?['address']?.toString() ?? '',
+      school: json['school']?.toString() ??
+          json['school_name']?.toString() ??
+          json['school_location']?['name']?.toString() ??
+          '',
+      schoolName: json['school_name']?.toString() ??
+          json['school']?.toString() ??
+          json['school_location']?['name']?.toString(),
+      pickupAddress: json['pickup_address']?.toString() ??
+          json['home_location']?['address']?.toString() ??
+          json['home_location']?['title']?.toString() ??
+          '',
+      dropoffAddress: json['dropoff_address']?.toString() ??
+          json['school_location']?['address']?.toString() ??
+          '',
       status: json['status']?.toString() ?? 'pending',
       pickupStatus: json['pickup_status']?.toString() ?? 'pending',
       dropoffStatus: json['dropoff_status']?.toString() ?? 'pending',

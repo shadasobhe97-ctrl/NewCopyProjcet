@@ -159,4 +159,15 @@ class DriverTripsRepository {
 
   Future<TripStatusChangeResultModel> resumeTrip(int tripId) =>
       _remoteDataSource.resumeTrip(tripId);
+
+  Future<Map<String, dynamic>> confirmBreakdownTransfer(
+    int tripId, {
+    required double latitude,
+    required double longitude,
+  }) =>
+      _remoteDataSource.confirmBreakdownTransfer(
+        tripId,
+        latitude: latitude,
+        longitude: longitude,
+      );
 }

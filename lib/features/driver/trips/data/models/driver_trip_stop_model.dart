@@ -1,5 +1,37 @@
 import 'package:equatable/equatable.dart';
 
+/// بيانات طفل منقول من حافلة متعطلة (ضمن محطة الإنقاذ)
+class TransferredChildModel extends Equatable {
+  final int id;
+  final int childId;
+  final String name;
+  final int? schoolId;
+  final String? schoolName;
+
+  const TransferredChildModel({
+    required this.id,
+    required this.childId,
+    required this.name,
+    this.schoolId,
+    this.schoolName,
+  });
+
+  factory TransferredChildModel.fromJson(Map<String, dynamic> json) {
+    return TransferredChildModel(
+      id: DriverTripStopModel._parseInt(json['id']),
+      childId: DriverTripStopModel._parseInt(json['child_id'] ?? json['id']),
+      name: json['name']?.toString() ?? '',
+      schoolId: json['school_id'] == null
+          ? null
+          : DriverTripStopModel._parseInt(json['school_id']),
+      schoolName: json['school_name']?.toString(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, childId, name, schoolId, schoolName];
+}
+
 /// محطة رحلة واحدة (GET /driver/trips/{tripId}/stops)
 class DriverTripStopModel extends Equatable {
   final int id;
@@ -20,6 +52,12 @@ class DriverTripStopModel extends Equatable {
   final String? eta;
   final int? etaMinutes;
 
+  /// حقول محطة إنقاذ الحافلة المتعطلة (Breakdown Transfer)
+  final bool isBreakdownTransfer;
+  final bool canBulkConfirm;
+  final int transferredChildrenCount;
+  final List<TransferredChildModel> transferredChildren;
+
   const DriverTripStopModel({
     required this.id,
     required this.stopType,
@@ -34,9 +72,33 @@ class DriverTripStopModel extends Equatable {
     required this.longitude,
     required this.eta,
     required this.etaMinutes,
+    this.isBreakdownTransfer = false,
+    this.canBulkConfirm = false,
+    this.transferredChildrenCount = 0,
+    this.transferredChildren = const [],
   });
 
   factory DriverTripStopModel.fromJson(Map<String, dynamic> json) {
+    final rawTransferred = json['transferred_children'];
+    final transferredList = rawTransferred is List
+        ? rawTransferred
+            .whereType<Map>()
+            .map((e) => TransferredChildModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList()
+        : const <TransferredChildModel>[];
+
+    final isTransfer = json['is_breakdown_transfer'] == true ||
+        json['is_breakdown_transfer'] == 1 ||
+        json['is_breakdown_transfer']?.toString() == 'true';
+
+    final canConfirm = json['can_bulk_confirm'] == true ||
+        json['can_bulk_confirm'] == 1 ||
+        json['can_bulk_confirm']?.toString() == 'true';
+
+    final transferCount = _parseInt(
+      json['transferred_children_count'] ?? transferredList.length,
+    );
+
     return DriverTripStopModel(
       id: _parseInt(json['id']),
       stopType: json['stop_type']?.toString() ?? '',
@@ -51,6 +113,10 @@ class DriverTripStopModel extends Equatable {
       longitude: _parseDouble(json['longitude']),
       eta: json['eta']?.toString(),
       etaMinutes: json['eta_minutes'] == null ? null : _parseInt(json['eta_minutes']),
+      isBreakdownTransfer: isTransfer,
+      canBulkConfirm: canConfirm,
+      transferredChildrenCount: transferCount,
+      transferredChildren: transferredList,
     );
   }
 
@@ -105,6 +171,10 @@ class DriverTripStopModel extends Equatable {
         longitude,
         eta,
         etaMinutes,
+        isBreakdownTransfer,
+        canBulkConfirm,
+        transferredChildrenCount,
+        transferredChildren,
       ];
 }
 

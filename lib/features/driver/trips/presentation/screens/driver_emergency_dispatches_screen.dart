@@ -66,7 +66,13 @@ class _DriverEmergencyDispatchesScreenState
                   context,
                   AppRoutes.driverLiveTrip,
                   arguments: state.substituteTripId,
-                );
+                ).then((_) {
+                  if (context.mounted) {
+                    context.read<DriverEmergencyCubit>().loadAvailableDispatches();
+                  }
+                });
+              } else {
+                context.read<DriverEmergencyCubit>().loadAvailableDispatches();
               }
             } else if (state is DriverEmergencyError) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -78,37 +84,42 @@ class _DriverEmergencyDispatchesScreenState
             }
           },
           builder: (context, state) {
-            final isLoading = state is DriverEmergencyLoading;
-            final dispatches = state is DriverEmergencyLoaded
-                ? state.dispatches
-                : <EmergencyDispatchModel>[];
+            Widget content;
+
+            if (state is DriverEmergencyLoading) {
+              content = const Center(child: CircularProgressIndicator());
+            } else if (state is DriverEmergencyError) {
+              content = _buildErrorState(context, state.message);
+            } else {
+              final dispatches = state is DriverEmergencyLoaded
+                  ? state.dispatches
+                  : <EmergencyDispatchModel>[];
+
+              content = dispatches.isEmpty
+                  ? _buildEmptyState(context)
+                  : RefreshIndicator(
+                      onRefresh: () async {
+                        await context
+                            .read<DriverEmergencyCubit>()
+                            .loadAvailableDispatches();
+                      },
+                      child: ListView.separated(
+                        padding: EdgeInsets.all(16.r),
+                        itemCount: dispatches.length,
+                        separatorBuilder: (context, index) =>
+                            SizedBox(height: 14.h),
+                        itemBuilder: (context, index) {
+                          final dispatch = dispatches[index];
+                          return _buildDispatchCard(context, dispatch);
+                        },
+                      ),
+                    );
+            }
 
             return Column(
               children: [
                 _buildHeaderNotice(context),
-                Expanded(
-                  child: isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : dispatches.isEmpty
-                          ? _buildEmptyState(context)
-                          : RefreshIndicator(
-                              onRefresh: () async {
-                                await context
-                                    .read<DriverEmergencyCubit>()
-                                    .loadAvailableDispatches();
-                              },
-                              child: ListView.separated(
-                                padding: EdgeInsets.all(16.r),
-                                itemCount: dispatches.length,
-                                separatorBuilder: (context, index) =>
-                                    SizedBox(height: 14.h),
-                                itemBuilder: (context, index) {
-                                  final dispatch = dispatches[index];
-                                  return _buildDispatchCard(context, dispatch);
-                                },
-                              ),
-                            ),
-                ),
+                Expanded(child: content),
               ],
             );
           },
@@ -140,6 +151,57 @@ class _DriverEmergencyDispatchesScreenState
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, String message) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(24.r),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              size: 56.r,
+              color: AppColors.error,
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              'تعذر جلب المهام الطارئة',
+              style: AppTextStyles.style(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: context.textPrimary,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.style(
+                fontSize: 13.sp,
+                color: context.textMuted,
+              ),
+            ),
+            SizedBox(height: 20.h),
+            ElevatedButton.icon(
+              onPressed: () {
+                context.read<DriverEmergencyCubit>().loadAvailableDispatches();
+              },
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('إعادة المحاولة'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: context.primaryColor,
+                foregroundColor: AppColors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -232,7 +294,8 @@ class _DriverEmergencyDispatchesScreenState
                           color: context.textPrimary,
                         ),
                       ),
-                      if (dispatch.originalDriver?.phone != null)
+                      if (dispatch.originalDriver?.phone != null &&
+                          dispatch.originalDriver!.phone.trim().isNotEmpty)
                         Text(
                           'هاتف: ${dispatch.originalDriver!.phone}',
                           style: AppTextStyles.style(
@@ -308,15 +371,14 @@ class _DriverEmergencyDispatchesScreenState
                   value:
                       '${dispatch.breakdownLat.toStringAsFixed(4)}, ${dispatch.breakdownLng.toStringAsFixed(4)}',
                 ),
-                if (dispatch.expiresAt != null) ...[
+                if (dispatch.expiresAt != null &&
+                    _formatExpiresAt(dispatch.expiresAt).isNotEmpty) ...[
                   SizedBox(height: 6.h),
                   _buildInfoRow(
                     context,
                     icon: Icons.timer_outlined,
                     label: 'تنتهي المهلة في:',
-                    value: dispatch.expiresAt!.contains('T')
-                        ? dispatch.expiresAt!.split('T').last.substring(0, 5)
-                        : dispatch.expiresAt!,
+                    value: _formatExpiresAt(dispatch.expiresAt),
                   ),
                 ],
               ],
@@ -342,6 +404,7 @@ class _DriverEmergencyDispatchesScreenState
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
+                    minimumSize: Size(0, 36.h),
                     padding: EdgeInsets.symmetric(vertical: 10.h),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.r),
@@ -356,11 +419,18 @@ class _DriverEmergencyDispatchesScreenState
                     context,
                     AppRoutes.driverEmergencyDispatchDetails,
                     arguments: dispatch.id,
-                  );
+                  ).then((_) {
+                    if (context.mounted) {
+                      context
+                          .read<DriverEmergencyCubit>()
+                          .loadAvailableDispatches();
+                    }
+                  });
                 },
                 style: OutlinedButton.styleFrom(
+                  minimumSize: Size(0, 36.h),
                   padding:
-                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                      EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.r),
                   ),
@@ -421,6 +491,24 @@ class _DriverEmergencyDispatchesScreenState
         ),
       ],
     );
+  }
+
+  String _formatExpiresAt(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return '';
+    try {
+      final text = raw.trim();
+      if (text.contains('T')) {
+        final timePart = text.split('T').last.split('.').first.replaceAll('Z', '');
+        return timePart.length >= 5 ? timePart.substring(0, 5) : timePart;
+      }
+      if (text.contains(' ')) {
+        final timePart = text.split(' ').last;
+        return timePart.length >= 5 ? timePart.substring(0, 5) : timePart;
+      }
+      return text.length >= 5 ? text.substring(0, 5) : text;
+    } catch (_) {
+      return raw;
+    }
   }
 
   void _confirmAccept(BuildContext context, int dispatchId) {

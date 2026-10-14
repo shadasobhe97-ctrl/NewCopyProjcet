@@ -64,13 +64,16 @@ class NotificationModel {
   }
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
+    final dataMap = json['data'] is Map ? Map<String, dynamic>.from(json['data'] as Map) : null;
+
     Map<String, dynamic>? parsedPayload;
-    if (json['payload'] != null) {
-      if (json['payload'] is Map) {
-        parsedPayload = Map<String, dynamic>.from(json['payload'] as Map);
-      } else if (json['payload'] is String) {
+    final rawPayload = json['payload'] ?? dataMap?['payload'];
+    if (rawPayload != null) {
+      if (rawPayload is Map) {
+        parsedPayload = Map<String, dynamic>.from(rawPayload);
+      } else if (rawPayload is String) {
         try {
-          parsedPayload = jsonDecode(json['payload'] as String) as Map<String, dynamic>?;
+          parsedPayload = jsonDecode(rawPayload) as Map<String, dynamic>?;
         } catch (_) {
           // Ignore parse errors
         }
@@ -79,15 +82,22 @@ class NotificationModel {
 
     return NotificationModel(
       id: json['id']?.toString() ?? '',
-      type: json['type']?.toString() ?? '',
-      title: json['title']?.toString() ?? '',
-      message: json['message']?.toString() ?? json['body']?.toString() ?? '',
-      actionUrl: json['action_url']?.toString(),
-      entityType: json['entity_type']?.toString(),
-      entityId: json['entity_id']?.toString(),
-      screen: json['screen']?.toString(),
-      action: json['action']?.toString(),
-      payload: parsedPayload,
+      type: json['type']?.toString() ?? dataMap?['type']?.toString() ?? '',
+      title: json['title']?.toString() ?? dataMap?['title']?.toString() ?? '',
+      message: json['message']?.toString() ??
+          json['body']?.toString() ??
+          dataMap?['message']?.toString() ??
+          dataMap?['body']?.toString() ??
+          '',
+      actionUrl: json['action_url']?.toString() ?? dataMap?['action_url']?.toString(),
+      entityType: json['entity_type']?.toString() ?? dataMap?['entity_type']?.toString(),
+      entityId: json['entity_id']?.toString() ??
+          dataMap?['entity_id']?.toString() ??
+          dataMap?['dispatch_id']?.toString() ??
+          dataMap?['trip_id']?.toString(),
+      screen: json['screen']?.toString() ?? dataMap?['screen']?.toString(),
+      action: json['action']?.toString() ?? dataMap?['action']?.toString(),
+      payload: parsedPayload ?? dataMap,
       readAt: json['read_at'] != null ? DateTime.tryParse(json['read_at'].toString()) : null,
       isRead: json['is_read'] == true || json['read_at'] != null,
       createdAt: json['created_at'] != null

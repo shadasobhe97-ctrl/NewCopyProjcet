@@ -107,6 +107,8 @@ class ApiEndpoints {
       'v1/driver/trips/$tripId/report-breakdown';
   static String driverTripResume(dynamic tripId) =>
       'v1/driver/trips/$tripId/resume';
+  static String driverTripConfirmBreakdownTransfer(dynamic tripId) =>
+      'v1/driver/trips/$tripId/confirm-breakdown-transfer';
 
   // ================= Driver Subscriptions & Statistics =================
   static const String driverActiveSubscriptions = 'driver/active-subscriptions';

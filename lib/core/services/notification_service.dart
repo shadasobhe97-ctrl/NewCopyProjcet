@@ -126,6 +126,7 @@ class NotificationService {
         debugPrint('Body: ${message.notification?.body}');
         debugPrint('Data: ${message.data}');
       }
+      _checkAndRecordEmergencyDispatch(message.data);
       _showLocalNotification(message);
     });
 
@@ -135,6 +136,7 @@ class NotificationService {
         debugPrint('👉 [Background Tap MessageOpenedApp]: ${message.messageId}');
         debugPrint('Data: ${message.data}');
       }
+      _checkAndRecordEmergencyDispatch(message.data);
       _handleNotificationTap(message.data);
     });
 
@@ -148,6 +150,7 @@ class NotificationService {
               '🚀 [Terminated Launch InitialMessage]: ${initialMessage.messageId}');
           debugPrint('Data: ${initialMessage.data}');
         }
+        _checkAndRecordEmergencyDispatch(initialMessage.data);
         _handleNotificationTap(initialMessage.data);
       }
     } catch (e) {
@@ -323,6 +326,31 @@ class NotificationService {
       ),
       payload: payload,
     );
+  }
+
+  /// استخراج وتخزين رقم المهمة الطارئة عند وصول إشعار متعلق بالاستبدال الطارئ
+  static void _checkAndRecordEmergencyDispatch(Map<String, dynamic> data) {
+    try {
+      final type = (data['type']?.toString() ??
+              data['entity_type']?.toString() ??
+              data['event']?.toString() ??
+              '')
+          .toUpperCase();
+      if (type.contains('EMERGENCY') ||
+          data.containsKey('dispatch_id') ||
+          data.containsKey('emergency_dispatch_id')) {
+        final dispatchId = int.tryParse(data['dispatch_id']?.toString() ?? '') ??
+            int.tryParse(data['emergency_dispatch_id']?.toString() ?? '') ??
+            int.tryParse(data['entity_id']?.toString() ?? '') ??
+            int.tryParse(data['id']?.toString() ?? '');
+        if (dispatchId != null && dispatchId > 0) {
+          StorageService.saveLatestEmergencyDispatchId(dispatchId);
+          if (kDebugMode) {
+            debugPrint('🚨 [NotificationService] Saved latest emergency dispatch ID: $dispatchId');
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   /// استدعاء الـ Callback الخاص بالنقر على الإشعارات

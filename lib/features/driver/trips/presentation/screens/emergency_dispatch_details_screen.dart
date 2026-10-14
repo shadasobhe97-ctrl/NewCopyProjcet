@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
@@ -74,7 +75,10 @@ class _EmergencyDispatchDetailsScreenState
                   arguments: state.substituteTripId,
                 );
               } else {
-                Navigator.pop(context);
+                // إعادة تحميل تفاصيل البلاغ لمعرفة الرحلة وإظهار زر الانتقال
+                context
+                    .read<DriverEmergencyCubit>()
+                    .loadDispatchDetails(widget.dispatchId);
               }
             } else if (state is DriverEmergencyError) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -299,36 +303,140 @@ class _EmergencyDispatchDetailsScreenState
                       ),
                     SizedBox(height: 24.h),
 
-                    // Action Buttons: Accept & Reject
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              context
-                                  .read<DriverEmergencyCubit>()
-                                  .acceptDispatch(dispatch.id);
-                            },
-                            icon: Icon(Icons.check_circle_rounded,
-                                color: AppColors.white, size: 20.r),
-                            label: Text(
-                              'قبول وتعييني كسائق بديل',
-                              style: AppTextStyles.style(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.white,
+                    // Action Buttons / Status Views
+                    Builder(
+                      builder: (context) {
+                        final currentDriverId = StorageService.getDriverId();
+                        final isAcceptedByMe = dispatch.isAccepted &&
+                            dispatch.substituteDriverId != null &&
+                            dispatch.substituteDriverId == currentDriverId;
+                        final isAcceptedByOther =
+                            dispatch.isAccepted && !isAcceptedByMe;
+
+                        if (isAcceptedByMe) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(12.r),
+                                decoration: BoxDecoration(
+                                  color:
+                                      AppColors.success.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  border: Border.all(
+                                    color: AppColors.success
+                                        .withValues(alpha: 0.35),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.check_circle_rounded,
+                                        color: AppColors.success, size: 22.r),
+                                    SizedBox(width: 10.w),
+                                    Expanded(
+                                      child: Text(
+                                        'تم قبول هذا البلاغ بنجاح وأنت السائق البديل المعتمد لنقل الطلاب.',
+                                        style: AppTextStyles.style(
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.success,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: 14.h),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  final tripId = dispatch.substituteTripId ??
+                                      dispatch.tripId;
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.driverLiveTrip,
+                                    arguments: tripId,
+                                  );
+                                },
+                                icon: Icon(Icons.navigation_rounded,
+                                    color: AppColors.white, size: 20.r),
+                                label: Text(
+                                  'الانتقال إلى الرحلة الحية',
+                                  style: AppTextStyles.style(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: context.primaryColor,
+                                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+
+                        if (isAcceptedByOther) {
+                          return Container(
+                            padding: EdgeInsets.all(14.r),
+                            decoration: BoxDecoration(
+                              color: AppColors.grey200.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.lock_outline_rounded,
+                                    color: AppColors.textMuted, size: 22.r),
+                                SizedBox(width: 10.w),
+                                Expanded(
+                                  child: Text(
+                                    'تم قبول هذا البلاغ بالفعل بواسطة سائق بديل آخر.',
+                                    style: AppTextStyles.style(
+                                      fontSize: 13.sp,
+                                      color: AppColors.textMuted,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  context
+                                      .read<DriverEmergencyCubit>()
+                                      .acceptDispatch(dispatch.id);
+                                },
+                                icon: Icon(Icons.check_circle_rounded,
+                                    color: AppColors.white, size: 20.r),
+                                label: Text(
+                                  'قبول وتعييني كسائق بديل',
+                                  style: AppTextStyles.style(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.success,
+                                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                  ),
+                                ),
                               ),
                             ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.success,
-                              padding: EdgeInsets.symmetric(vertical: 12.h),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),

@@ -1,4 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../core/network/api_exception.dart';
+import '../../../../../core/services/storage_service.dart';
 import '../../data/models/emergency_dispatch_model.dart';
 import '../../data/repositories/driver_emergency_repository.dart';
 
@@ -107,8 +109,36 @@ class DriverEmergencyCubit extends Cubit<DriverEmergencyState> {
         substituteTripId: substituteTripId,
       ));
 
-      await loadAvailableDispatches();
+      // تحديث عداد المهام بالخلفية دون إطلاق DriverEmergencyLoading قد يلغي حالة النجاح
+      fetchAvailableCount();
     } catch (e) {
+      // التحقق الصارم في حال كان البلاغ مقبولاً بالفعل (كود 409 أو تعارض)
+      // لا نعتمد على النص فقط؛ بل نتحقق من تفاصيل البلاغ وهوية السائق الفعلي المرتبط به
+      final isConflict = (e is ApiException && e.statusCode == 409) ||
+          e.toString().contains('409') ||
+          e.toString().contains('مقبول');
+
+      if (isConflict) {
+        try {
+          final details = await _repository.getDispatchDetails(dispatchId);
+          final currentDriverId = StorageService.getDriverId();
+          final isMine = details.isAccepted &&
+              details.substituteDriverId != null &&
+              details.substituteDriverId == currentDriverId;
+
+          if (isMine) {
+            emit(DriverEmergencyActionSuccess(
+              'أنت السائق البديل المعتمد لهذا البلاغ بالفعل.',
+              substituteTripId: details.substituteTripId ?? details.tripId,
+            ));
+            fetchAvailableCount();
+            return;
+          }
+        } catch (_) {
+          // في حال تعذر فحص التفاصيل نمرر الخطأ الأصلي
+        }
+      }
+
       emit(DriverEmergencyError(e.toString().replaceAll('Exception: ', '')));
     }
   }
