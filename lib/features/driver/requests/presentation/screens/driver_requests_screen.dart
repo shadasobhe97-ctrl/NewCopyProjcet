@@ -518,7 +518,7 @@ class _DriverRequestCard extends StatelessWidget {
     final statusColor = _getStatusColor();
     final parentName = request.parent.name.isNotEmpty
         ? request.parent.name
-        : 'طلب اشتراك #${request.id}';
+        : 'طلب اشتراك';
     final childrenNames = request.children.isNotEmpty
         ? request.children.map((c) => c.name).join('، ')
         : 'لا يوجد أطفال';
@@ -722,7 +722,7 @@ class _DriverSubscriptionCard extends StatelessWidget {
     final statusColor = _getStatusColor();
     final parentName = subscription.parent.name.isNotEmpty
         ? subscription.parent.name
-        : 'اشتراك #${subscription.id}';
+        : 'اشتراك';
     final childrenNames = subscription.children.isNotEmpty
         ? subscription.children.map((c) => c.name).join('، ')
         : 'لا يوجد أطفال';

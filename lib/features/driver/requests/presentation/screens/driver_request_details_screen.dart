@@ -500,7 +500,7 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'تفاصيل الطلب #${widget.requestId}',
+                  'تفاصيل الطلب',
                   style: AppTextStyles.style(
                     color: AppColors.white,
                     fontWeight: FontWeight.bold,
@@ -603,21 +603,7 @@ class _StatusBanner extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-            decoration: AppTheme.boxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: AppTheme.radius(20.r),
-            ),
-            child: Text(
-              'طلب #${request.id}',
-              style: AppTextStyles.style(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ),
+
         ],
       ),
     );

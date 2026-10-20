@@ -164,20 +164,6 @@ class DriverDrawer extends StatelessWidget {
                     },
                   ),
 
-                  // ── تسجيل غياب ──
-                  AppDrawerItem(
-                    icon: Icons.event_busy_rounded,
-                    iconColor: context.primaryColor,
-                    label: 'تسجيل غياب',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.driverAbsence,
-                      );
-                    },
-                  ),
-
 
                   // ── المركبة الاحتياطية ──
                   /*BackupVehicleDrawerItem(
@@ -193,43 +179,8 @@ class DriverDrawer extends StatelessWidget {
                     },
                   ),*/
 
-                  // ── عقودي والتزاماتي ──
-                  AppDrawerItem(
-                    icon: Icons.description_outlined,
-                    iconColor: context.pendingColor,
-                    label: 'عقودي والتزاماتي',
-                    onTap: () {
-                      Navigator.pop(context);
-                      // TODO: التوجيه لشاشة العقود والالتزامات
-                      // Navigator.pushNamed(context, AppRoutes.driverContracts);
-                    },
-                  ),
 
                   const Divider(height: 20, indent: 16, endIndent: 16),
-
-                  // ── الإعدادات ──
-                  AppDrawerItem(
-                    icon: Icons.settings_outlined,
-                    iconColor: context.textMuted,
-                    label: 'إعدادات التطبيق',
-                    onTap: () {
-                      Navigator.pop(context);
-                      // TODO: التوجيه لشاشة الإعدادات
-                      // Navigator.pushNamed(context, AppRoutes.driverSettings);
-                    },
-                  ),
-
-                  // ── ميزات دربي ──
-                  AppDrawerItem(
-                    icon: Icons.auto_awesome_rounded,
-                    iconColor: context.accentPurple,
-                    label: 'ميزات دربي',
-                    onTap: () {
-                      Navigator.pop(context);
-                      // TODO: التوجيه لشاشة ميزات دربي
-                      // Navigator.pushNamed(context, AppRoutes.driverFeatures);
-                    },
-                  ),
 
                   // ── الشروط والسياسات ──
                   AppDrawerItem(

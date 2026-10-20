@@ -15,7 +15,62 @@ class NotificationNavigationHandler {
     _pendingNotification = null;
   }
 
+  static bool canNavigate(Map<String, dynamic> data) {
+    final String screen = (data['screen']?.toString() ?? '').trim().toUpperCase();
+    final String entityIdStr = data['entity_id']?.toString() ??
+        data['trip_id']?.toString() ??
+        data['subscription_id']?.toString() ??
+        data['id']?.toString() ??
+        '';
+    final int? entityId = int.tryParse(entityIdStr);
+    final String entityType = (data['entity_type']?.toString() ?? data['type']?.toString() ?? '').toUpperCase();
+    final String title = data['title']?.toString() ?? '';
+
+    // إشعارات التنبيهات العامة أو الإرشادية غير قابلة للنقر
+    if (title.contains('تنبيه') || entityType.contains('WARNING') || entityType.contains('ALERT')) {
+      if (screen.isEmpty || screen == 'NONE' || screen == 'HOME' || screen == 'DRIVER_HOME' || screen == 'PARENT_HOME') {
+        return false;
+      }
+    }
+
+    if (screen.isEmpty || screen == 'NONE' || screen == 'HOME') {
+      return false;
+    }
+
+    if (screen.contains('EMERGENCY') || entityType.contains('EMERGENCY_DISPATCH')) {
+      return true;
+    }
+
+    switch (screen) {
+      case 'TRIP_LIVE':
+      case 'TRIP_DETAILS':
+      case 'TRIP_TRACKING':
+      case 'DRIVER_TRIP_DETAILS':
+      case 'DRIVER_LIVE_TRIP':
+      case 'LIVE_TRIP':
+        return entityId != null && entityId > 0;
+
+      case 'INVOICE_DETAILS':
+        return entityId != null && entityId > 0;
+
+      case 'WALLET':
+        return true;
+
+      case 'SUBSCRIPTION_DETAILS':
+      case 'DRIVER_SUBSCRIPTION_DETAILS':
+        return entityId != null && entityId > 0;
+
+      default:
+        return false;
+    }
+  }
+
   static void handleNotificationTap(Map<String, dynamic> data) {
+    if (!canNavigate(data)) {
+      debugPrint('ℹ️ [NotificationNavigationHandler]: Notification is not navigable.');
+      return;
+    }
+
     final context = navigatorKey.currentContext;
     final state = navigatorKey.currentState;
 
@@ -43,10 +98,15 @@ class NotificationNavigationHandler {
 
     final data = _pendingNotification!;
     _pendingNotification = null;
+
+    if (!canNavigate(data)) return;
+
     _executeNavigation(state, data, sessionRepo.getRoleName());
   }
 
   static void _executeNavigation(NavigatorState state, Map<String, dynamic> data, String? role) {
+    if (!canNavigate(data)) return;
+
     final String screen = (data['screen']?.toString() ?? '').toUpperCase();
     final String entityIdStr = data['entity_id']?.toString() ??
         data['trip_id']?.toString() ??
@@ -88,7 +148,6 @@ class NotificationNavigationHandler {
           }
           break;
         default:
-          state.pushNamed(AppRoutes.parentHome);
           break;
       }
     } else if (isDriver) {
@@ -142,9 +201,7 @@ class NotificationNavigationHandler {
             } else {
               state.pushNamed(AppRoutes.driverEmergencyDispatches);
             }
-            break;
           }
-          state.pushNamed(AppRoutes.driverHome);
           break;
       }
     }

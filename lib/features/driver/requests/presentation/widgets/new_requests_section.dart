@@ -121,7 +121,7 @@ class _HomeRequestCard extends StatelessWidget {
     final isDark = context.isDarkMode;
     final parentName = request.parent.name.isNotEmpty
         ? request.parent.name
-        : 'طلب اشتراك #${request.id}';
+        : 'طلب اشتراك';
     final childrenSummary = request.children.isNotEmpty
         ? request.children.map((c) => c.name).join('، ')
         : 'لا يوجد أطفال محددين';
@@ -266,32 +266,21 @@ class _HomeRequestCard extends StatelessWidget {
 
             // ── عرض التفاصيل ──
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  'طلب #${request.id}',
+                  'عرض تفاصيل الطلب',
                   style: AppTextStyles.style(
                     fontSize: 11,
-                    color: AppColors.textMuted,
+                    color: context.primaryColor,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Row(
-                  children: [
-                    Text(
-                      'عرض تفاصيل الطلب',
-                      style: AppTextStyles.style(
-                        fontSize: 11,
-                        color: context.primaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 10,
-                      color: context.primaryColor,
-                    ),
-                  ],
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 10,
+                  color: context.primaryColor,
                 ),
               ],
             ),

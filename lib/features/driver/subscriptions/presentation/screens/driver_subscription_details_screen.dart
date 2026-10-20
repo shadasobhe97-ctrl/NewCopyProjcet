@@ -583,21 +583,6 @@ class _StatusBanner extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-            decoration: AppTheme.boxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: AppTheme.radius(20.r),
-            ),
-            child: Text(
-              'اشتراك #${subscription.id}',
-              style: AppTextStyles.style(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ),
         ],
       ),
     );

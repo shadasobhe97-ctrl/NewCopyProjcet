@@ -164,60 +164,41 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _buildNotificationItem(BuildContext context, NotificationModel notification, bool isDark) {
-    return Dismissible(
-      key: Key(notification.id),
-      direction: DismissDirection.startToEnd,
-      onDismissed: (_) {
-        _cubit.deleteNotification(notification.id);
-      },
-      background: Container(
-        margin: EdgeInsets.only(bottom: 12.h),
-        decoration: BoxDecoration(
-          color: context.errorColor.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(16.r),
+    final payload = notification.payload ?? {};
+    final map = {
+      'title': notification.title,
+      'screen': notification.screen,
+      'action': notification.action,
+      'entity_type': notification.entityType,
+      'entity_id': notification.entityId,
+      'type': notification.type,
+      ...payload,
+    };
+    final bool isNavigable = NotificationNavigationHandler.canNavigate(map);
+
+    final cardContent = Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: notification.isRead
+            ? (isDark ? context.cardSurface : Colors.white)
+            : (isDark ? context.cardSurface.withValues(alpha: 0.7) : const Color(0xFFF1F5F9)),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: notification.isRead
+              ? (isDark ? AppColors.grey800 : AppColors.grey200)
+              : Theme.of(context).primaryColor.withValues(alpha: 0.4),
+          width: notification.isRead ? 1 : 1.5,
         ),
-        padding: EdgeInsets.symmetric(horizontal: 20.w),
-        alignment: Alignment.centerRight,
-        child: Icon(Icons.delete_sweep_rounded, color: context.errorColor, size: 28.sp),
-      ),
-      child: InkWell(
-        onTap: () {
-          if (!notification.isRead) {
-            _cubit.markAsRead(notification.id);
-          }
-          final payload = notification.payload ?? {};
-          final map = {
-            'screen': notification.screen,
-            'action': notification.action,
-            'entity_type': notification.entityType,
-            'entity_id': notification.entityId,
-            ...payload,
-          };
-          NotificationNavigationHandler.handleNotificationTap(map);
-        },
-        child: Container(
-          margin: EdgeInsets.only(bottom: 12.h),
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: notification.isRead
-                ? (isDark ? context.cardSurface : Colors.white)
-                : (isDark ? context.cardSurface.withValues(alpha: 0.7) : const Color(0xFFF1F5F9)),
-            borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(
-              color: notification.isRead
-                  ? (isDark ? AppColors.grey800 : AppColors.grey200)
-                  : Theme.of(context).primaryColor.withValues(alpha: 0.4),
-              width: notification.isRead ? 1 : 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-          child: Row(
+        ],
+      ),
+      child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Notification Icon status indicator
@@ -288,8 +269,49 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
             ],
           ),
+        );
+
+    Widget interactiveItem;
+    if (isNavigable) {
+      interactiveItem = InkWell(
+        borderRadius: BorderRadius.circular(16.r),
+        onTap: () {
+          if (!notification.isRead) {
+            _cubit.markAsRead(notification.id);
+          }
+          NotificationNavigationHandler.handleNotificationTap(map);
+        },
+        child: cardContent,
+      );
+    } else {
+      interactiveItem = notification.isRead
+          ? cardContent
+          : GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                _cubit.markAsRead(notification.id);
+              },
+              child: cardContent,
+            );
+    }
+
+    return Dismissible(
+      key: Key(notification.id),
+      direction: DismissDirection.startToEnd,
+      onDismissed: (_) {
+        _cubit.deleteNotification(notification.id);
+      },
+      background: Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        decoration: BoxDecoration(
+          color: context.errorColor.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(16.r),
         ),
+        padding: EdgeInsets.symmetric(horizontal: 20.w),
+        alignment: Alignment.centerRight,
+        child: Icon(Icons.delete_sweep_rounded, color: context.errorColor, size: 28.sp),
       ),
+      child: interactiveItem,
     );
   }
 
