@@ -769,7 +769,7 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                         style: AppTextStyles.style(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.green[700],
+                          color: isDark ? Colors.green[300] : Colors.green[700],
                         ),
                       ),
                     ],
@@ -815,7 +815,7 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                             fileModel.feedback!,
                             style: AppTextStyles.style(
                               fontSize: 12,
-                              color: Colors.red[800],
+                              color: isDark ? Colors.red[200] : Colors.red[800],
                             ),
                           ),
                         ],

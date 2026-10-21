@@ -11,12 +11,14 @@ class HomeSearchSectionWidget extends StatelessWidget {
   final VoidCallback onTapSearch;
   final Function(String query)? onSubmitQuery;
   final VoidCallback? onTapSmartSearch;
+  final bool showOnlySearchField;
 
   const HomeSearchSectionWidget({
     super.key,
     required this.onTapSearch,
     this.onSubmitQuery,
     this.onTapSmartSearch,
+    this.showOnlySearchField = false,
   });
 
   @override
@@ -24,63 +26,69 @@ class HomeSearchSectionWidget extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     const primaryDarkBlue = AppColors.primary;
 
+    final searchInputWidget = InkWell(
+      onTap: onTapSearch,
+      borderRadius: BorderRadius.circular(30.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(30.r),
+          border: Border.all(
+            color: isDark ? AppColors.grey700 : AppColors.grey400,
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.search_rounded,
+              color: isDark ? AppColors.grey400 : AppColors.textMuted,
+              size: 22.r,
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                'ادخل اسم أو رقم سائق تعرفه',
+                style: AppTextStyles.style(
+                  fontSize: 13.sp,
+                  color: isDark ? AppColors.grey400 : AppColors.textMuted,
+                ),
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.all(7.r),
+              decoration: BoxDecoration(
+                color: primaryDarkBlue.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.search_rounded,
+                color: primaryDarkBlue,
+                size: 18,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (showOnlySearchField) {
+      return searchInputWidget;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // 1️⃣ حقل البحث المباشر (حدود دائرية كاملة وأيقونة بحث)
-        InkWell(
-          onTap: onTapSearch,
-          borderRadius: BorderRadius.circular(30.r),
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceDark : Colors.white,
-              borderRadius: BorderRadius.circular(30.r),
-              border: Border.all(
-                color: isDark ? AppColors.grey800 : AppColors.grey300,
-                width: 1.0,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.search_rounded,
-                  color: isDark ? AppColors.grey400 : AppColors.textMuted,
-                  size: 22.r,
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: Text(
-                    'ادخل اسم أو رقم السائق',
-                    style: AppTextStyles.style(
-                      fontSize: 13.sp,
-                      color: isDark ? AppColors.grey400 : AppColors.textMuted,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.all(7.r),
-                  decoration: BoxDecoration(
-                    color: primaryDarkBlue.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.search_rounded,
-                    color: primaryDarkBlue,
-                    size: 18,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        searchInputWidget,
 
         // 2️⃣ فاصل أنيق بكلمة "أو"
         Padding(
@@ -143,7 +151,7 @@ class HomeSearchSectionWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'بحث عن سائق مناسب',
+                  'سائق يناسب احتياجاتك',
                   style: AppTextStyles.style(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.bold,

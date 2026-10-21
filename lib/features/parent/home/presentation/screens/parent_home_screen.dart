@@ -94,29 +94,31 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         children: [
-          // 👋 1️⃣ قسم الترحيب البسيط + كرت تتبع الرحلة المدمج الذكي
-          const WelcomeHeaderWidget(),
-          SizedBox(height: 8.h),
-          const TopCardWidget(),
-          SizedBox(height: 18.h),
-
-          // 🔍 2️⃣ قسم البحث المباشر (حقل دائري + فاصل أو + زر بحث دائري بالأزرق الداكن)
+          // 🔍 1️⃣ أول عنصر فوق: شريط البحث المباشر فقط
           HomeSearchSectionWidget(
+            showOnlySearchField: true,
             onTapSearch: () => _openSearchScreen(),
             onTapSmartSearch: () => _openSearchScreen(),
             onSubmitQuery: (query) => _openSearchScreen(query: query),
           ),
-          SizedBox(height: 20.h),
+          SizedBox(height: 14.h),
 
-          // 👶 3️⃣ قسم أطفالي (كروت بيضاوية كبسولية أنيقة ومودرن)
+          // 👋 2️⃣ رسالة الترحيب كإشعار مؤقت (5 ثوانٍ مع زر إغلاق X)
+          const WelcomeHeaderWidget(),
+
+          // 🚍 3️⃣ كارت الرحلات (سماوي هادئ غير متدرج بحدود وبوتون كحلي ونصوص مختصرة)
+          const TopCardWidget(),
+          SizedBox(height: 26.h),
+
+          // 👶 4️⃣ قسم أطفالي
           const ChildrenSectionWidget(),
-          SizedBox(height: 20.h),
+          SizedBox(height: 26.h),
 
-          // ⚡ 4️⃣ قسم الخدمات السريعة (محفوظ بكامله دون حذف)
+          // ⚡ 5️⃣ قسم الخدمات السريعة
           const QuickServicesWidget(),
-          SizedBox(height: 24.h),
+          SizedBox(height: 32.h),
         ],
       ),
     );

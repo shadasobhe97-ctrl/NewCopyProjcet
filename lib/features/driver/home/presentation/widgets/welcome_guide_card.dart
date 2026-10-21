@@ -70,7 +70,7 @@ class WelcomeGuideCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'تم تفعيل حسابك بنجاح. يمكنك الآن استقبال طلبات أولياء الأمور وتنسيق رحلات المدارس.',
+                  'أنت الآن قادر على استقبال طلبات التوصيل وتنسيق رحلاتك المدرسية بكل سهولة.',
                   style: AppTextStyles.style(
                     fontSize: 13,
                     height: 1.6,

@@ -33,101 +33,117 @@ class _SelectRoleScreenState extends State<SelectRoleScreen> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 10),
-              Text(
-                "انضم إلينا كـ...",
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "الرجاء اختيار نوع الحساب لإتمام عملية التسجيل بشكل صحيح",
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
+        // قابل للتمرير بالشاشات الصغيرة مع الحفاظ على عمل Spacer بالشاشات الكبيرة
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 10),
+                    Text(
+                      "انضم إلينا كـ...",
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "الرجاء اختيار نوع الحساب لإتمام عملية التسجيل بشكل صحيح",
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
 
-              const Spacer(),
+                    const Spacer(),
 
-              // كرت ولي الأمر (Role ID: 3)
-              CustomRoleCard(
-                title: "ولي أمر الطالب",
-                description:
-                    "متابعة أطفالكِ، معرفة موقع الحافلة، واستلام إشعارات الصعود والوصول الحية.",
-                icon: Icons.family_restroom_rounded,
-                isSelected: _currentSelectedRole == 3,
-                onTap: () {
-                  setState(() {
-                    _currentSelectedRole = 3;
-                  });
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              // كرت السائق (Role ID: 4)
-              CustomRoleCard(
-                title: "سائق توصيل",
-                description:
-                    "إدارة الرحلات اليومية، تسجيل حضور الطلاب، وتنبيه أولياء الأمور بنقاط الانطلاق.",
-                icon: Icons.directions_bus_rounded,
-                isSelected: _currentSelectedRole == 4,
-                onTap: () {
-                  setState(() {
-                    _currentSelectedRole = 4;
-                  });
-                },
-              ),
-
-              const Spacer(),
-
-              // زر التالي المعتمد عندكِ بنفس التصميم والـ Identity
-              ElevatedButton(
-                onPressed: _currentSelectedRole == null
-                    ? null
-                    : () {
-                        // 1. حفظ الرول المختار داخل الكيوبت
-                        context.read<RegisterCubit>().updateRole(
-                          _currentSelectedRole!,
-                        );
-
-                        // 2. التوجيه الذكي بناءً على اختيار اليوزر
-                        if (_currentSelectedRole == 3) {
-                          Navigator.pushNamed(context, '/parentBasicInfo');
-                        } else {
-                          if (_currentSelectedRole == 4) {
-                            Navigator.pushNamed(context, '/driverBasicInfo');
-                          }
-                        }
+                    // كرت ولي الأمر (Role ID: 3)
+                    CustomRoleCard(
+                      title: "ولي أمر الطالب",
+                      description:
+                          "متابعة أطفالكِ، معرفة موقع الحافلة، واستلام إشعارات الصعود والوصول الحية.",
+                      icon: Icons.family_restroom_rounded,
+                      isSelected: _currentSelectedRole == 3,
+                      onTap: () {
+                        setState(() {
+                          _currentSelectedRole = 3;
+                        });
                       },
-                style: AppTheme.elevatedButtonStyle(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: AppTheme.roundedRectangleBorder(
-                    borderRadius: AppTheme.radius(30),
-                  ),
-                ),
-                child: Text(
-                  "التالي",
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: _currentSelectedRole == null
-                        ? (isDark ? AppColors.grey600 : AppColors.grey400)
-                        : AppColors.white,
-                  ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // كرت السائق (Role ID: 4)
+                    CustomRoleCard(
+                      title: "سائق توصيل",
+                      description:
+                          "إدارة الرحلات اليومية، تسجيل حضور الطلاب، وتنبيه أولياء الأمور بنقاط الانطلاق.",
+                      icon: Icons.directions_bus_rounded,
+                      isSelected: _currentSelectedRole == 4,
+                      onTap: () {
+                        setState(() {
+                          _currentSelectedRole = 4;
+                        });
+                      },
+                    ),
+
+                    const Spacer(),
+
+                    // زر التالي المعتمد عندكِ بنفس التصميم والـ Identity
+                    ElevatedButton(
+                      onPressed: _currentSelectedRole == null
+                          ? null
+                          : () {
+                              // 1. حفظ الرول المختار داخل الكيوبت
+                              context.read<RegisterCubit>().updateRole(
+                                _currentSelectedRole!,
+                              );
+
+                              // 2. التوجيه الذكي بناءً على اختيار اليوزر
+                              if (_currentSelectedRole == 3) {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/parentBasicInfo',
+                                );
+                              } else {
+                                if (_currentSelectedRole == 4) {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/driverBasicInfo',
+                                  );
+                                }
+                              }
+                            },
+                      style: AppTheme.elevatedButtonStyle(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: AppTheme.roundedRectangleBorder(
+                          borderRadius: AppTheme.radius(30),
+                        ),
+                      ),
+                      child: Text(
+                        "التالي",
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: _currentSelectedRole == null
+                              ? (isDark ? AppColors.grey600 : AppColors.grey400)
+                              : AppColors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         ),
       ),

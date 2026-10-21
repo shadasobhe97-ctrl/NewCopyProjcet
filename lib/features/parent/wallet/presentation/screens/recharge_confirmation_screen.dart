@@ -4,6 +4,7 @@ import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
+import 'package:kids_transport/core/widgets/app_image_widget.dart';
 import 'package:kids_transport/core/widgets/primary_button.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/recharge_mock_pay_response_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/recharge_response_model.dart';
@@ -304,10 +305,11 @@ class _ConfirmationIcon extends StatelessWidget {
     return SizedBox(
       width: 48,
       height: 48,
-      child: Image.network(
-        iconUrl!,
-        fit: BoxFit.contain,
-        errorBuilder: (_, _, _) => fallback(),
+      // AppImageWidget يخزن الصورة مؤقتاً بدل إعادة تحميلها مع كل بناء
+      child: AppImageWidget(
+        image: iconUrl,
+        placeholder: fallback(),
+        errorWidget: fallback(),
       ),
     );
   }
