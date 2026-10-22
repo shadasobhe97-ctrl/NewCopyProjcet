@@ -24,6 +24,8 @@ class ApiEndpoints {
   static const String driverStatus = 'v1/driver/status';
   static const String driverAbandonRegistration =
       'v1/driver/abandon-registration';
+  static const String driverAddresses = 'driver/addresses';
+  static String driverAddressById(dynamic id) => 'driver/addresses/$id';
 
   //=========================================
   // Parent Registration endpoints (أولياء الأمور)

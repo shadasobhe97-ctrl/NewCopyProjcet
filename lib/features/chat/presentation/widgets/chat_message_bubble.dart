@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kids_transport/core/widgets/app_image_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -44,13 +44,13 @@ class ChatMessageBubble extends StatelessWidget {
           children: [
             Center(
               child: InteractiveViewer(
-                child: CachedNetworkImage(
-                  imageUrl: imageUrl,
+                child: AppImageWidget(
+                  image: imageUrl,
                   fit: BoxFit.contain,
-                  placeholder: (context, url) => const CircularProgressIndicator(
-                    color: Colors.white,
+                  placeholder: const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
                   ),
-                  errorWidget: (context, url, error) => const Icon(
+                  errorWidget: const Icon(
                     Icons.broken_image,
                     color: Colors.white,
                     size: 48,
@@ -308,17 +308,17 @@ class ChatMessageBubble extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12.r),
-              child: CachedNetworkImage(
-                imageUrl: message.mediaUrl!,
+              child: AppImageWidget(
+                image: message.mediaUrl,
                 width: 200.w,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
+                placeholder: Container(
                   width: 200.w,
                   height: 150.h,
                   color: isDark ? AppColors.grey800 : AppColors.grey100,
                   child: const Center(child: CircularProgressIndicator()),
                 ),
-                errorWidget: (context, url, error) => Icon(
+                errorWidget: Icon(
                   Icons.broken_image_rounded,
                   color: textColor,
                   size: 40.r,

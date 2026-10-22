@@ -40,3 +40,9 @@ class NavigateToResumeDriverRegistration extends AppEntryState {
     required this.draftData,
   });
 }
+
+// حالة التوجيه لشاشة تحديد موقع انطلاق السائق الإجبارية
+class NavigateToDriverLocationRequired extends AppEntryState {}
+
+// حالة التوجيه لشاشة شروط السائق الإجبارية
+class NavigateToDriverTermsRequired extends AppEntryState {}

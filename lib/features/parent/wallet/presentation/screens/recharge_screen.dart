@@ -6,6 +6,7 @@ import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/custom_text_field.dart';
+import 'package:kids_transport/core/widgets/app_image_widget.dart';
 import 'package:kids_transport/core/widgets/primary_button.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/payment_method_model.dart';
 import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_cubit.dart';
@@ -284,10 +285,11 @@ class _PaymentMethodIcon extends StatelessWidget {
     return SizedBox(
       width: 32,
       height: 32,
-      child: Image.network(
-        iconUrl!,
-        fit: BoxFit.contain,
-        errorBuilder: (_, _, _) => fallback(),
+      // AppImageWidget يخزن الصورة مؤقتاً بدل إعادة تحميلها مع كل بناء
+      child: AppImageWidget(
+        image: iconUrl,
+        placeholder: fallback(),
+        errorWidget: fallback(),
       ),
     );
   }

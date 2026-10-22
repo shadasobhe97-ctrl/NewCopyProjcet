@@ -27,6 +27,7 @@ class DriverProfileRepository {
       fullName: driver.fullName,
       phoneNumber: driver.phoneNumber,
       isActive: sessionRepository.getIsActive() ?? true,
+      avatarUrl: driver.avatarUrl,
     );
 
     return driver;
@@ -67,6 +68,7 @@ class DriverProfileRepository {
           ? driver.phoneNumber
           : (sessionRepository.getPhoneNumber() ?? ''),
       isActive: driver.isActive,
+      avatarUrl: driver.avatarUrl,
     );
 
     return result;

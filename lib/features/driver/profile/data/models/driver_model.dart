@@ -60,7 +60,12 @@ class DriverModel {
       alternativePhone: json['alternative_phone']?.toString(),
       newEmailTemporary: json['new_email_temporary']?.toString(),
       emailChangePending: json['email_change_pending'] ?? false,
-      avatarUrl: json['avatar_url']?.toString(),
+      avatarUrl: (json['avatar_url'] ??
+              json['avatar'] ??
+              json['photo_url'] ??
+              json['photo'] ??
+              json['profile_image'])
+          ?.toString(),
       gender: json['gender']?.toString() ?? '',
       isActive: json['is_active'] ?? true,
       nationalId: json['national_id']?.toString() ?? '',

@@ -64,6 +64,16 @@ class AppEntryCubit extends Cubit<AppEntryState> {
         return;
       }
 
+      if (regStage == 'location') {
+        emit(NavigateToDriverLocationRequired());
+        return;
+      }
+
+      if (regStage == 'terms') {
+        emit(NavigateToDriverTermsRequired());
+        return;
+      }
+
       if (regStage == 'preferences') {
         emit(NavigateToDriverPreferencesRequired());
         return;

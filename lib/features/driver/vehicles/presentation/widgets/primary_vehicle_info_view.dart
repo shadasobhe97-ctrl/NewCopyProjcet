@@ -307,7 +307,7 @@ class PrimaryVehicleInfoView extends StatelessWidget {
                               'رقم اللوحة: $plateNumber',
                               style: AppTextStyles.style(
                                 fontSize: 13,
-                                color: Colors.grey[600],
+                                color: isDark ? Colors.grey[400] : Colors.grey[600],
                               ),
                             ),
                           ],

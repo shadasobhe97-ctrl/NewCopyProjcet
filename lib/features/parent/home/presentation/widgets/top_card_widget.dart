@@ -27,8 +27,13 @@ class TopCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).primaryColor;
-    final darkerPrimary = Color.lerp(primaryColor, Colors.black, 0.22)!;
+
+    // خلفية سماوية هادئة غير متدرجة كأنها شبه شفافة
+    final cardBackgroundColor = isDark ? const Color(0xFF102840) : const Color(0xFFE8F3FA);
+    // حدود زرقاء داكنة
+    final cardBorderColor = isDark ? AppColors.primaryLight : AppColors.primary;
+    // البوتون نفس لون الحدود الزرقاء الداكنة
+    const buttonColor = AppColors.primary;
 
     return BlocBuilder<ActiveTripCubit, ActiveTripState>(
       builder: (context, state) {
@@ -41,9 +46,6 @@ class TopCardWidget extends StatelessWidget {
 
         if (hasActiveTrips) {
           final firstTrip = activeTrips.first;
-          final driverName = firstTrip.driver.name.isNotEmpty
-              ? firstTrip.driver.name
-              : 'السائق';
 
           return Material(
             color: Colors.transparent,
@@ -60,116 +62,110 @@ class TopCardWidget extends StatelessWidget {
                       ),
                     );
                   },
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(18.r),
               child: Container(
                 width: double.infinity,
-                constraints: BoxConstraints(minHeight: 72.h),
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isDark
-                        ? [AppColors.darkGradientStart, AppColors.darkGradientEnd]
-                        : [darkerPrimary, primaryColor],
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
+                  color: cardBackgroundColor,
+                  borderRadius: BorderRadius.circular(18.r),
+                  border: Border.all(
+                    color: cardBorderColor,
+                    width: 1.5,
                   ),
-                  borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
                     BoxShadow(
-                      color: primaryColor.withValues(alpha: isDark ? 0.35 : 0.22),
+                      color: AppColors.primary.withValues(
+                        alpha: isDark ? 0.2 : 0.08,
+                      ),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
                   ],
                 ),
-                child: Row(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 1️⃣ تفاصيل الرحلة النشطة (جهة اليمين)
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
+                    // 1️⃣ السطر العلوي: العنوان في اليمين + أيقونة السيارة في اليسار
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Row(
                             children: [
                               Container(
                                 width: 9.r,
                                 height: 9.r,
                                 decoration: const BoxDecoration(
-                                  color: AppColors.secondary,
+                                  color: Color(0xFF10B981),
                                   shape: BoxShape.circle,
                                 ),
                               ),
-                              SizedBox(width: 6.w),
+                              SizedBox(width: 8.w),
                               Text(
-                                activeTrips.length > 1
-                                    ? '${activeTrips.length} رحلات نشطة حالياً • تتبع مباشر'
-                                    : 'رحلة نشطة حالياً • تتبع مباشر',
+                                'لديك رحلة نشطة',
                                 style: AppTextStyles.style(
-                                  fontSize: 12.5.sp,
+                                  fontSize: 14.5.sp,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.white,
+                                  color: isDark ? AppColors.white : AppColors.primaryDark,
                                 ),
                               ),
                             ],
                           ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            firstTrip.children.isNotEmpty
-                                ? 'مع $driverName (${firstTrip.children.map((c) => c.childName).join('، ')}) • اضغط للتتبع'
-                                : 'اضغط لمتابعة مسار الرحلة على الخريطة مباشرة',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.style(
-                              fontSize: 10.5.sp,
-                              color: AppColors.white.withValues(alpha: 0.92),
-                            ),
+                        ),
+                        SizedBox(width: 12.w),
+
+                        // 🚗 أيقونة السيارات على اليسار
+                        SizedBox(
+                          width: 66.w,
+                          height: 52.h,
+                          child: Image.asset(
+                            'assets/images/hastrips.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.directions_bus_rounded,
+                                size: 36.r,
+                                color: AppColors.primary,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 12.h),
+
+                    // 2️⃣ زر التتبع السفلي بنفس لون الحدود الزرقاء الداكنة
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(vertical: 10.h),
+                      decoration: BoxDecoration(
+                        color: buttonColor,
+                        borderRadius: BorderRadius.circular(24.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: buttonColor.withValues(alpha: 0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
-                    ),
-
-                    // 2️⃣ صورة الحافلة
-                    SizedBox(
-                      width: 52.w,
-                      height: 44.h,
-                      child: Image.asset(
-                        'assets/images/hastrips.png',
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
-                            Icons.directions_bus_rounded,
-                            size: 30.r,
-                            color: AppColors.white.withValues(alpha: 0.8),
-                          );
-                        },
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-
-                    // 3️⃣ زر التتبع
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(20.r),
-                      ),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             Icons.location_on_rounded,
-                            size: 13.r,
-                            color: primaryColor,
+                            size: 16.r,
+                            color: AppColors.white,
                           ),
-                          SizedBox(width: 4.w),
+                          SizedBox(width: 8.w),
                           Text(
-                            'تتبع',
+                            'تتبع مسار الرحلة الآن',
                             style: AppTextStyles.style(
-                              fontSize: 11.sp,
+                              fontSize: 12.5.sp,
                               fontWeight: FontWeight.bold,
-                              color: primaryColor,
+                              color: AppColors.white,
                             ),
                           ),
                         ],
@@ -182,7 +178,7 @@ class TopCardWidget extends StatelessWidget {
           );
         }
 
-        // 🌟 في حال عدم وجود رحلات نشطة حالياً: كرت واضح ومريح لا يفيض أبداً
+        // 🌟 في حال عدم وجود رحلات نشطة
         return Material(
           color: Colors.transparent,
           child: InkWell(
@@ -199,86 +195,100 @@ class TopCardWidget extends StatelessWidget {
                     );
                   }
                 },
-            borderRadius: BorderRadius.circular(16.r),
+            borderRadius: BorderRadius.circular(18.r),
             child: Container(
               width: double.infinity,
-              constraints: BoxConstraints(minHeight: 62.h),
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceDark : AppColors.primarySoft,
-                borderRadius: BorderRadius.circular(16.r),
+                color: cardBackgroundColor,
+                borderRadius: BorderRadius.circular(18.r),
                 border: Border.all(
-                  color: isDark
-                      ? AppColors.grey800
-                      : primaryColor.withValues(alpha: 0.25),
-                  width: 1.0,
+                  color: cardBorderColor,
+                  width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color: AppColors.primary.withValues(
+                      alpha: isDark ? 0.2 : 0.08,
+                    ),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // أيقونة المسارات
-                  Container(
-                    width: 36.r,
-                    height: 36.r,
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.route_rounded,
-                      size: 20.r,
-                      color: isDark ? AppColors.primaryLight : primaryColor,
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-
-                  // النصوص
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'لا توجد رحلات نشطة الآن',
+                  // 1️⃣ السطر العلوي: لا توجد رحلات نشطة فقط + أيقونة السيارة
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'لا توجد رحلات نشطة',
                           style: AppTextStyles.style(
-                            fontSize: 12.sp,
+                            fontSize: 14.5.sp,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? AppColors.white : AppColors.textDark,
+                            color: isDark ? AppColors.white : AppColors.primaryDark,
                           ),
                         ),
-                        SizedBox(height: 2.h),
-                        Text(
-                          'اضغط هنا للاطلاع على جدول ومواعيد الرحلات',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.style(
-                            fontSize: 10.sp,
-                            color: isDark ? AppColors.grey400 : AppColors.textSecondary,
-                          ),
+                      ),
+                      SizedBox(width: 12.w),
+
+                      // 🚗 أيقونة السيارات على اليسار
+                      SizedBox(
+                        width: 66.w,
+                        height: 52.h,
+                        child: Image.asset(
+                          'assets/images/hastrips.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              Icons.directions_bus_rounded,
+                              size: 36.r,
+                              color: AppColors.primary,
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 12.h),
+
+                  // 2️⃣ البوتون بنفس لون الحدود الزرقاء الداكنة
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                    decoration: BoxDecoration(
+                      color: buttonColor,
+                      borderRadius: BorderRadius.circular(24.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: buttonColor.withValues(alpha: 0.25),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                  ),
-
-                  // سهم التنقل (يشير لليسار في واجهة RTL للدلالة على المتابعة)
-                  Container(
-                    padding: EdgeInsets.all(6.r),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.grey800 : AppColors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 13.r,
-                      color: isDark ? AppColors.grey300 : primaryColor,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.route_rounded,
+                          size: 16.r,
+                          color: AppColors.white,
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          'عرض جدول ومسارات الرحلات',
+                          style: AppTextStyles.style(
+                            fontSize: 12.5.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
