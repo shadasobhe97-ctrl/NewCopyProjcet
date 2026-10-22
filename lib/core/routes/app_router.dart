@@ -492,11 +492,17 @@ class AppRoutes {
       /*case driverBackupVehicle:
         return _route(settings, const DriverBackupVehicleScreen());*/
       case driverPrimaryVehicle:
+        final initialIndex = settings.arguments is int
+            ? settings.arguments as int
+            : (settings.arguments is Map &&
+                    (settings.arguments as Map)['initial_index'] is int
+                ? (settings.arguments as Map)['initial_index'] as int
+                : 0);
         return _route(
           settings,
           BlocProvider(
             create: (_) => driverSl<VehicleCubit>(),
-            child: const DriverPrimaryVehicleScreen(),
+            child: DriverPrimaryVehicleScreen(initialIndex: initialIndex),
           ),
         );
       case driverProfile:

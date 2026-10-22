@@ -11,7 +11,9 @@ import '../widgets/primary_vehicle_info_view.dart';
 import '../widgets/driver_legal_documents_tab.dart';
 
 class DriverPrimaryVehicleScreen extends StatefulWidget {
-  const DriverPrimaryVehicleScreen({super.key});
+  final int initialIndex;
+
+  const DriverPrimaryVehicleScreen({super.key, this.initialIndex = 0});
 
   @override
   State<DriverPrimaryVehicleScreen> createState() =>
@@ -137,6 +139,7 @@ class _DriverPrimaryVehicleScreenState
 
     return DefaultTabController(
       length: 2,
+      initialIndex: widget.initialIndex,
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(

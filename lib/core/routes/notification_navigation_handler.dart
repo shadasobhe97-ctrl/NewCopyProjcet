@@ -60,6 +60,13 @@ class NotificationNavigationHandler {
       case 'DRIVER_SUBSCRIPTION_DETAILS':
         return entityId != null && entityId > 0;
 
+      case 'DRIVER_LEGAL_DOCUMENTS':
+      case 'LEGAL_DOCUMENTS':
+      case 'DOCUMENTS':
+      case 'VEHICLE_DOCUMENTS':
+      case 'DRIVER_VEHICLE':
+        return true;
+
       default:
         return false;
     }
@@ -188,6 +195,21 @@ class NotificationNavigationHandler {
         case 'DRIVER_EMERGENCY_DISPATCHES':
         case 'EMERGENCY':
           state.pushNamed(AppRoutes.driverEmergencyDispatches);
+          break;
+        case 'DRIVER_LEGAL_DOCUMENTS':
+        case 'LEGAL_DOCUMENTS':
+        case 'DOCUMENTS':
+        case 'VEHICLE_DOCUMENTS':
+          state.pushNamed(
+            AppRoutes.driverPrimaryVehicle,
+            arguments: 1, // التبويب الثاني: الوثائق الرسمية
+          );
+          break;
+        case 'DRIVER_VEHICLE':
+          state.pushNamed(
+            AppRoutes.driverPrimaryVehicle,
+            arguments: 0, // التبويب الأول: بيانات المركبة
+          );
           break;
         default:
           final entityType = (data['entity_type']?.toString() ?? data['type']?.toString() ?? '').toUpperCase();

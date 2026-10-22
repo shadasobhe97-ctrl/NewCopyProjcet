@@ -253,7 +253,104 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     );
   }
 
+  bool _hasNewFileFor(String typeKey) {
+    final target = typeKey.toUpperCase();
+    return _newFilesMap.entries.any((entry) {
+      if (entry.value == null) return false;
+      final k = entry.key.toUpperCase();
+      if (k == target) {
+        return true;
+      }
+      if (target == 'LICENSE' && (k == 'DOC_LICENSE' || k == 'LICENSE')) {
+        return true;
+      }
+      if (target == 'INSURANCE' && (k == 'DOC_INSURANCE' || k == 'INSURANCE')) {
+        return true;
+      }
+      if (target == 'STAMP' && (k == 'DOC_STAMP' || k == 'STAMP')) {
+        return true;
+      }
+      if (target == 'TECHNICAL_INSPECTION' &&
+          (k == 'DOC_TECHNICAL_INSPECTION' ||
+              k == 'TECHNICAL_INSPECTION' ||
+              k == 'INSPECTION')) {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  String? _validateRequiredImagesForChangedDates(
+      DriverLegalDataModel currentData) {
+    final expiry = _licenseExpiryController.text.trim();
+    final insExpiry = _insuranceExpiryController.text.trim();
+    final stpExpiry = _stampExpiryController.text.trim();
+    final inspExpiry = _inspectionExpiryController.text.trim();
+
+    final originalExpiry = _formatCleanDate(
+      _findDocExpiry(currentData, 'LICENSE') ?? currentData.licenseExpiry,
+    );
+    final originalInsExpiry = _formatCleanDate(
+      _findDocExpiry(currentData, 'INSURANCE') ??
+          currentData.insuranceExpiry ??
+          '',
+    );
+    final originalStpExpiry = _formatCleanDate(
+      _findDocExpiry(currentData, 'STAMP') ?? currentData.stampExpiry ?? '',
+    );
+    final originalInspExpiry = _formatCleanDate(
+      _findDocExpiry(currentData, 'TECHNICAL_INSPECTION') ??
+          currentData.technicalInspectionExpiry ??
+          '',
+    );
+
+    final List<String> missingDocs = [];
+
+    if (expiry.isNotEmpty &&
+        expiry != originalExpiry &&
+        !_hasNewFileFor('LICENSE')) {
+      missingDocs.add('رخصة القيادة');
+    }
+    if (insExpiry.isNotEmpty &&
+        insExpiry != originalInsExpiry &&
+        !_hasNewFileFor('INSURANCE')) {
+      missingDocs.add('وثيقة التأمين');
+    }
+    if (stpExpiry.isNotEmpty &&
+        stpExpiry != originalStpExpiry &&
+        !_hasNewFileFor('STAMP')) {
+      missingDocs.add('صورة الدمغة');
+    }
+    if (inspExpiry.isNotEmpty &&
+        inspExpiry != originalInspExpiry &&
+        !_hasNewFileFor('TECHNICAL_INSPECTION')) {
+      missingDocs.add('الفحص الفني');
+    }
+
+    if (missingDocs.isNotEmpty) {
+      if (missingDocs.length == 1) {
+        return 'لقد قمت بتعديل تاريخ انتهاء (${missingDocs.first})، يرجى إرفاق صورة الوثيقة المجددة لإثبات التعديل.';
+      } else {
+        return 'يرجى إرفاق صور الوثائق المجددة التالية لإثبات تعديل تواريخها:\n• ${missingDocs.join("\n• ")}';
+      }
+    }
+
+    return null;
+  }
+
   void _submitUpdates(DriverLegalDataModel currentData) {
+    final validationError = _validateRequiredImagesForChangedDates(currentData);
+    if (validationError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(validationError),
+          backgroundColor: Colors.red.shade700,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
     final natId = _nationalIdController.text.trim();
     final licNo = _licenseNoController.text.trim();
     final expiry = _licenseExpiryController.text.trim();
@@ -291,6 +388,21 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     if (insExpiry != originalInsExpiry) sendInsExpiry = insExpiry;
     if (stpExpiry != originalStpExpiry) sendStpExpiry = stpExpiry;
     if (inspExpiry != originalInspExpiry) sendInspExpiry = inspExpiry;
+
+    if (sendNatId == null &&
+        sendLicNo == null &&
+        sendExpiry == null &&
+        sendInsExpiry == null &&
+        sendStpExpiry == null &&
+        sendInspExpiry == null &&
+        _newFilesMap.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('لم تقم بإجراء أي تعديل على البيانات أو الوثائق.'),
+        ),
+      );
+      return;
+    }
 
     context.read<DriverLegalDataCubit>().updateLegalData(
           nationalId: sendNatId,
@@ -511,8 +623,10 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                                       lastDate: DateTime(2035),
                                     );
                                     if (picked != null) {
-                                      _licenseExpiryController.text =
-                                          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                                      setState(() {
+                                        _licenseExpiryController.text =
+                                            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                                      });
                                     }
                                   }
                                 : null,
@@ -536,8 +650,10 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                                       lastDate: DateTime(2035),
                                     );
                                     if (picked != null) {
-                                      _insuranceExpiryController.text =
-                                          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                                      setState(() {
+                                        _insuranceExpiryController.text =
+                                            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                                      });
                                     }
                                   }
                                 : null,
@@ -559,8 +675,10 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                                       lastDate: DateTime(2035),
                                     );
                                     if (picked != null) {
-                                      _stampExpiryController.text =
-                                          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                                      setState(() {
+                                        _stampExpiryController.text =
+                                            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                                      });
                                     }
                                   }
                                 : null,
@@ -582,8 +700,10 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                                       lastDate: DateTime(2035),
                                     );
                                     if (picked != null) {
-                                      _inspectionExpiryController.text =
-                                          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                                      setState(() {
+                                        _inspectionExpiryController.text =
+                                            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                                      });
                                     }
                                   }
                                 : null,
@@ -645,6 +765,19 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                           ? null
                           : () {
                               if (_formKey.currentState!.validate()) {
+                                final validationError =
+                                    _validateRequiredImagesForChangedDates(
+                                        legalData);
+                                if (validationError != null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(validationError),
+                                      backgroundColor: Colors.red.shade700,
+                                      duration: const Duration(seconds: 4),
+                                    ),
+                                  );
+                                  return;
+                                }
                                 _showSaveConfirmationDialog(legalData);
                               }
                             },
@@ -692,16 +825,48 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
 
     String? docExpiry;
     final typeUpper = fileModel.type.toUpperCase();
+    bool isDateChangedForThisDoc = false;
     if (typeUpper == 'LICENSE') {
       docExpiry = fileModel.licenseExpiryDate ?? legalData.licenseExpiry;
+      final currentExpiry = _formatCleanDate(
+        _findDocExpiry(legalData, 'LICENSE') ?? legalData.licenseExpiry,
+      );
+      final editedExpiry = _licenseExpiryController.text.trim();
+      isDateChangedForThisDoc =
+          editedExpiry.isNotEmpty && editedExpiry != currentExpiry;
     } else if (typeUpper == 'INSURANCE') {
       docExpiry = fileModel.insuranceExpiryDate ?? legalData.insuranceExpiry;
+      final currentExpiry = _formatCleanDate(
+        _findDocExpiry(legalData, 'INSURANCE') ??
+            legalData.insuranceExpiry ??
+            '',
+      );
+      final editedExpiry = _insuranceExpiryController.text.trim();
+      isDateChangedForThisDoc =
+          editedExpiry.isNotEmpty && editedExpiry != currentExpiry;
     } else if (typeUpper == 'STAMP') {
       docExpiry = fileModel.stampExpiryDate ?? legalData.stampExpiry;
+      final currentExpiry = _formatCleanDate(
+        _findDocExpiry(legalData, 'STAMP') ?? legalData.stampExpiry ?? '',
+      );
+      final editedExpiry = _stampExpiryController.text.trim();
+      isDateChangedForThisDoc =
+          editedExpiry.isNotEmpty && editedExpiry != currentExpiry;
     } else if (typeUpper == 'TECHNICAL_INSPECTION') {
       docExpiry = fileModel.technicalInspectionExpiryDate ??
           legalData.technicalInspectionExpiry;
+      final currentExpiry = _formatCleanDate(
+        _findDocExpiry(legalData, 'TECHNICAL_INSPECTION') ??
+            legalData.technicalInspectionExpiry ??
+            '',
+      );
+      final editedExpiry = _inspectionExpiryController.text.trim();
+      isDateChangedForThisDoc =
+          editedExpiry.isNotEmpty && editedExpiry != currentExpiry;
     }
+
+    final bool isMissingRequiredImage =
+        isEditing && isDateChangedForThisDoc && newFile == null;
 
     return Card(
       key: key,
@@ -889,18 +1054,82 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
               ),
             ),
 
+            // تنبيه مطلوبية الصورة إذا تم تعديل التاريخ
+            if (isMissingRequiredImage) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber.shade700),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.error_outline_rounded,
+                      size: 18,
+                      color: Colors.amber.shade900,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'تم تعديل تاريخ الانتهاء. يلزم رفع صورة الوثيقة المجددة.',
+                        style: AppTextStyles.style(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber.shade900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             // زر استبدال الصورة في وضع التعديل
             if (isEditing) ...[
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: () => _showImageSourceBottomSheet(fileModel.type),
-                icon: const Icon(Icons.camera_alt_outlined),
+                icon: Icon(
+                  isMissingRequiredImage
+                      ? Icons.add_a_photo_rounded
+                      : Icons.camera_alt_outlined,
+                  color: isMissingRequiredImage
+                      ? Colors.orange.shade800
+                      : primaryColor,
+                ),
                 label: Text(
-                  newFile != null ? 'تغيير الصورة المحددة' : 'استبدال الصورة',
+                  newFile != null
+                      ? 'تغيير الصورة المحددة'
+                      : (isMissingRequiredImage
+                          ? 'إرفاق صورة الوثيقة المجددة (إلزامي)'
+                          : 'استبدال الصورة'),
+                  style: TextStyle(
+                    fontWeight: isMissingRequiredImage
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: isMissingRequiredImage
+                        ? Colors.orange.shade900
+                        : primaryColor,
+                  ),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: primaryColor,
-                  side: BorderSide(color: primaryColor),
+                  foregroundColor: isMissingRequiredImage
+                      ? Colors.orange.shade800
+                      : primaryColor,
+                  side: BorderSide(
+                    color: isMissingRequiredImage
+                        ? Colors.orange.shade700
+                        : primaryColor,
+                    width: isMissingRequiredImage ? 1.5 : 1,
+                  ),
+                  backgroundColor: isMissingRequiredImage
+                      ? Colors.orange.withValues(alpha: 0.08)
+                      : null,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
