@@ -19,8 +19,8 @@ class AppSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.grey300 : AppColors.grey800;
-    final lineColor = isDark ? AppColors.grey700 : AppColors.grey500;
+    final textColor = isDark ? AppColors.grey400 : AppColors.grey600;
+    final lineColor = isDark ? AppColors.grey800 : AppColors.grey300;
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 10.h),

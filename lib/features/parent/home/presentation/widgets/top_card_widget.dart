@@ -155,15 +155,15 @@ class TopCardWidget extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.location_on_rounded,
-                            size: 16.r,
+                            Icons.directions_bus_rounded,
+                            size: 17.r,
                             color: AppColors.white,
                           ),
                           SizedBox(width: 8.w),
                           Text(
-                            'تتبع مسار الرحلة الآن',
+                            'تتبع الرحلة',
                             style: AppTextStyles.style(
-                              fontSize: 12.5.sp,
+                              fontSize: 13.sp,
                               fontWeight: FontWeight.bold,
                               color: AppColors.white,
                             ),
