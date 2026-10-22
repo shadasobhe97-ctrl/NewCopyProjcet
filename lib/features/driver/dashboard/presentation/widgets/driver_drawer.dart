@@ -11,6 +11,7 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/widgets/app_drawer_item.dart';
 import 'package:kids_transport/core/widgets/app_user_avatar.dart';
+import 'package:kids_transport/features/driver/home/logic/driver_home_cubit/driver_home_cubit.dart';
 import 'package:kids_transport/features/terms/presentation/screens/terms_and_conditions_screen.dart';
 
 // ==========================================
@@ -87,9 +88,14 @@ class DriverDrawer extends StatelessWidget {
                     icon: Icons.person_outline_rounded,
                     iconColor: context.primaryColor,
                     label: 'الملف الشخصي',
-                    onTap: () {
+                    onTap: () async {
                       Navigator.pop(context);
-                      Navigator.pushNamed(context, AppRoutes.driverProfile);
+                      await Navigator.pushNamed(context, AppRoutes.driverProfile);
+                      if (context.mounted) {
+                        try {
+                          context.read<DriverHomeCubit>().loadDriverHomeData();
+                        } catch (_) {}
+                      }
                     },
                   ),
 
