@@ -110,10 +110,18 @@ class AppUserAvatar extends StatelessWidget {
     // 2. كائن XFile (من الكاميرا أو المعرض)
     if (input is XFile) {
       if (kIsWeb) {
-        return CircleAvatar(
-          radius: radius,
-          backgroundColor: effectiveBg,
-          backgroundImage: NetworkImage(input.path),
+        return FutureBuilder<Uint8List>(
+          future: input.readAsBytes(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return CircleAvatar(
+                radius: radius,
+                backgroundColor: effectiveBg,
+                backgroundImage: MemoryImage(snapshot.data!),
+              );
+            }
+            return fallbackWidget;
+          },
         );
       } else {
         final file = File(input.path);
@@ -129,10 +137,18 @@ class AppUserAvatar extends StatelessWidget {
     // 3. كائن File
     if (input is File) {
       if (kIsWeb) {
-        return CircleAvatar(
-          radius: radius,
-          backgroundColor: effectiveBg,
-          backgroundImage: NetworkImage(input.path),
+        return FutureBuilder<Uint8List>(
+          future: input.readAsBytes(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return CircleAvatar(
+                radius: radius,
+                backgroundColor: effectiveBg,
+                backgroundImage: MemoryImage(snapshot.data!),
+              );
+            }
+            return fallbackWidget;
+          },
         );
       } else {
         if (!input.existsSync()) return fallbackWidget;

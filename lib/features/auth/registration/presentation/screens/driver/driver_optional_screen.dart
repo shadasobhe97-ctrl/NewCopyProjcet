@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,12 +17,13 @@ class DriverOptionalScreen extends StatefulWidget {
 }
 
 class _DriverOptionalScreenState extends State<DriverOptionalScreen> {
-  File? _imageFile;
+  XFile? _imageFile;
+  Uint8List? _imageBytes;
   final _altPhoneController = TextEditingController();
 
   void _submit() {
     final cubit = context.read<RegisterCubit>();
-    cubit.avatarFile = _imageFile;
+    cubit.avatarFile = _imageFile ?? _imageBytes;
     cubit.alternativePhone = _altPhoneController.text.trim().isEmpty
         ? null
         : _altPhoneController.text.trim();
@@ -67,15 +68,19 @@ class _DriverOptionalScreenState extends State<DriverOptionalScreen> {
                         imageQuality: 60,
                       );
                       if (file != null) {
-                        setState(() => _imageFile = File(file.path));
+                        final bytes = await file.readAsBytes();
+                        setState(() {
+                          _imageFile = file;
+                          _imageBytes = bytes;
+                        });
                       }
                     },
                     child: CircleAvatar(
                       radius: 60,
-                      backgroundImage: _imageFile != null
-                          ? FileImage(_imageFile!)
+                      backgroundImage: _imageBytes != null
+                          ? MemoryImage(_imageBytes!)
                           : null,
-                      child: _imageFile == null
+                      child: _imageBytes == null
                           ? const Icon(Icons.camera_alt, size: 40)
                           : null,
                     ),

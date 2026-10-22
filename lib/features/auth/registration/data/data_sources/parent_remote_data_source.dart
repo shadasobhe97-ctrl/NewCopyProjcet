@@ -32,10 +32,13 @@ class ParentRemoteDataSource {
         request.avatar,
         defaultFilename: 'avatar.jpg',
       );
-      data = FormData.fromMap({
+      final Map<String, dynamic> formMap = {
         ...request.toJson(),
-        'avatar': ?multipart,
-      });
+      };
+      if (multipart != null) {
+        formMap['avatar'] = multipart;
+      }
+      data = FormData.fromMap(formMap);
     } else {
       data = request.toJson();
     }

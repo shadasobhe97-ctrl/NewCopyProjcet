@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -29,7 +29,8 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
   final _confirmPasswordController = TextEditingController();
   String _selectedGender = 'male';
 
-  File? _avatarFile;
+  XFile? _avatarXFile;
+  Uint8List? _avatarBytes;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -50,8 +51,10 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
         imageQuality: 75,
       );
       if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
         setState(() {
-          _avatarFile = File(pickedFile.path);
+          _avatarXFile = pickedFile;
+          _avatarBytes = bytes;
         });
       }
     } catch (e) {
@@ -107,7 +110,7 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                   _pickAvatar(ImageSource.gallery);
                 },
               ),
-              if (_avatarFile != null)
+              if (_avatarBytes != null)
                 ListTile(
                   leading: const CircleAvatar(
                     backgroundColor: Color(0x1AF44336),
@@ -117,7 +120,8 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                   onTap: () {
                     Navigator.pop(ctx);
                     setState(() {
-                      _avatarFile = null;
+                      _avatarXFile = null;
+                      _avatarBytes = null;
                     });
                   },
                 ),
@@ -140,7 +144,7 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
     cubit.alternativePhone = altPhone.isNotEmpty ? altPhone : null;
     cubit.gender = _selectedGender;
     cubit.password = _passwordController.text;
-    cubit.avatarFile = _avatarFile;
+    cubit.avatarFile = _avatarXFile ?? _avatarBytes;
 
     // استدعاء المرحلة الأولى للسائق (إرسال البيانات وطلب الـ OTP)
     cubit.registerDriverFirstStage();
@@ -215,14 +219,14 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                                   color: primaryColor,
                                   width: 2.5,
                                 ),
-                                image: _avatarFile != null
+                                image: _avatarBytes != null
                                     ? DecorationImage(
-                                        image: FileImage(_avatarFile!),
+                                        image: MemoryImage(_avatarBytes!),
                                         fit: BoxFit.cover,
                                       )
                                     : null,
                               ),
-                              child: _avatarFile == null
+                              child: _avatarBytes == null
                                   ? Icon(
                                       Icons.person,
                                       size: 54,
@@ -246,7 +250,7 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                     const SizedBox(height: 8),
                     Center(
                       child: Text(
-                        _avatarFile != null
+                        _avatarBytes != null
                             ? "اضغط لتغيير الصورة الشخصية"
                             : "أضف صورة شخصية (اختياري)",
                         style: AppTextStyles.style(

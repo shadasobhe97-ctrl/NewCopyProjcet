@@ -96,12 +96,31 @@ class AppImageWidget extends StatelessWidget {
     if (image is XFile) {
       final xfile = image as XFile;
       if (kIsWeb) {
-        return Image.network(
-          xfile.path,
-          width: width,
-          height: height,
-          fit: fit,
-          errorBuilder: (ctx, err, stack) => errorWidget ?? _defaultErrorWidget(),
+        return FutureBuilder<Uint8List>(
+          future: xfile.readAsBytes(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Image.memory(
+                snapshot.data!,
+                width: width,
+                height: height,
+                fit: fit,
+                errorBuilder: (ctx, err, stack) =>
+                    errorWidget ?? _defaultErrorWidget(),
+              );
+            }
+            if (snapshot.hasError) {
+              return errorWidget ?? _defaultErrorWidget();
+            }
+            return placeholder ??
+                SizedBox(
+                  width: width,
+                  height: height,
+                  child: const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                );
+          },
         );
       } else {
         return Image.file(
@@ -109,7 +128,8 @@ class AppImageWidget extends StatelessWidget {
           width: width,
           height: height,
           fit: fit,
-          errorBuilder: (ctx, err, stack) => errorWidget ?? _defaultErrorWidget(),
+          errorBuilder: (ctx, err, stack) =>
+              errorWidget ?? _defaultErrorWidget(),
         );
       }
     }
@@ -117,12 +137,21 @@ class AppImageWidget extends StatelessWidget {
     if (image is File) {
       final file = image as File;
       if (kIsWeb) {
-        return Image.network(
-          file.path,
-          width: width,
-          height: height,
-          fit: fit,
-          errorBuilder: (ctx, err, stack) => errorWidget ?? _defaultErrorWidget(),
+        return FutureBuilder<Uint8List>(
+          future: file.readAsBytes(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Image.memory(
+                snapshot.data!,
+                width: width,
+                height: height,
+                fit: fit,
+                errorBuilder: (ctx, err, stack) =>
+                    errorWidget ?? _defaultErrorWidget(),
+              );
+            }
+            return errorWidget ?? _defaultErrorWidget();
+          },
         );
       } else {
         return Image.file(
@@ -130,7 +159,8 @@ class AppImageWidget extends StatelessWidget {
           width: width,
           height: height,
           fit: fit,
-          errorBuilder: (ctx, err, stack) => errorWidget ?? _defaultErrorWidget(),
+          errorBuilder: (ctx, err, stack) =>
+              errorWidget ?? _defaultErrorWidget(),
         );
       }
     }
