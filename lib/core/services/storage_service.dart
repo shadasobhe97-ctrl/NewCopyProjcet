@@ -21,6 +21,7 @@ class StorageService {
   static const String _isActiveKey = 'is_active';
   static const String _isPreferencesSetKey = 'is_preferences_set';
   static const String _driverIdKey = 'driver_id';
+  static const String _avatarUrlKey = 'avatar_url';
 
   static const String _driverRegStageKey = 'driver_reg_stage';
   static const String _driverRegDraftKey = 'driver_reg_draft';
@@ -59,6 +60,7 @@ class StorageService {
     String? fullName,
     String? phoneNumber,
     bool? isActive,
+    String? avatarUrl,
   }) async {
     await Future.wait([
       _prefs.setString(_tokenKey, token),
@@ -69,8 +71,18 @@ class StorageService {
       if (fullName != null) _prefs.setString(_fullNameKey, fullName),
       if (phoneNumber != null) _prefs.setString(_phoneNumberKey, phoneNumber),
       if (isActive != null) _prefs.setBool(_isActiveKey, isActive),
+      if (avatarUrl != null) _prefs.setString(_avatarUrlKey, avatarUrl),
     ]);
   }
+
+  static Future<bool> saveAvatarUrl(String? url) {
+    if (url == null || url.isEmpty) {
+      return _prefs.remove(_avatarUrlKey);
+    }
+    return _prefs.setString(_avatarUrlKey, url);
+  }
+
+  static String? getAvatarUrl() => _prefs.getString(_avatarUrlKey);
 
   static String? getToken() => _prefs.getString(_tokenKey);
 
@@ -162,6 +174,7 @@ class StorageService {
       _prefs.remove(_isActiveKey),
       _prefs.remove(_isPreferencesSetKey),
       _prefs.remove(_driverIdKey),
+      _prefs.remove(_avatarUrlKey),
       _prefs.remove(_fcmTokenKey),
       _prefs.remove(_driverRegStageKey),
       _prefs.remove(_driverRegDraftKey),

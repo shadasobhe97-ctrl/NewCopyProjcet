@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/enums/user_role.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
@@ -297,63 +297,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     Stack(
                                       clipBehavior: Clip.none,
                                       children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            24.r,
-                                          ),
-                                          child: Container(
-                                            width: 48.w,
-                                            height: 48.w,
-                                            color: isDark
-                                                ? AppColors.grey800
-                                                : AppColors.grey100,
-                                            child:
-                                                item.otherUserPhoto != null &&
-                                                    item
-                                                        .otherUserPhoto!
-                                                        .isNotEmpty
-                                                ? CachedNetworkImage(
-                                                    imageUrl:
-                                                        item.otherUserPhoto!,
-                                                    fit: BoxFit.cover,
-                                                    placeholder:
-                                                        (
-                                                          context,
-                                                          url,
-                                                        ) => const Center(
-                                                          child: SizedBox(
-                                                            width: 20,
-                                                            height: 20,
-                                                            child:
-                                                                CircularProgressIndicator(
-                                                                  strokeWidth:
-                                                                      2,
-                                                                ),
-                                                          ),
-                                                        ),
-                                                    errorWidget:
-                                                        (
-                                                          context,
-                                                          url,
-                                                          error,
-                                                        ) => Icon(
-                                                          Icons.person_rounded,
-                                                          color: isDark
-                                                              ? AppColors
-                                                                    .grey400
-                                                              : AppColors
-                                                                    .grey600,
-                                                          size: 24.r,
-                                                        ),
-                                                  )
-                                                : Icon(
-                                                    Icons.person_rounded,
-                                                    color: isDark
-                                                        ? AppColors.grey400
-                                                        : AppColors.grey600,
-                                                    size: 24.r,
-                                                  ),
-                                          ),
+                                        AppUserAvatar(
+                                          image: item.otherUserPhoto,
+                                          radius: 24.r,
+                                          backgroundColor: isDark
+                                              ? AppColors.grey800
+                                              : AppColors.grey100,
+                                          iconColor: isDark
+                                              ? AppColors.grey400
+                                              : AppColors.grey600,
+                                          iconSize: 24.r,
                                         ),
 
                                         // Real-time Unread Badge

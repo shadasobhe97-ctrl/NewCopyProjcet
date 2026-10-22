@@ -2,7 +2,7 @@ class ApiEndpoints {
   const ApiEndpoints._();
 
   // الرابط الأساسي للسيرفر (يحتوي على /api/)
-  static const String baseUrl = 'https://silly-bobcat-70.loca.lt/api/';
+  static const String baseUrl = 'https://darby-app-api.loca.lt/api/';
 
   //=========================================
   // Auth Endpoints (مسارات المصادقة العامة)
@@ -24,6 +24,8 @@ class ApiEndpoints {
   static const String driverStatus = 'v1/driver/status';
   static const String driverAbandonRegistration =
       'v1/driver/abandon-registration';
+  static const String driverAddresses = 'driver/addresses';
+  static String driverAddressById(dynamic id) => 'driver/addresses/$id';
 
   //=========================================
   // Parent Registration endpoints (أولياء الأمور)

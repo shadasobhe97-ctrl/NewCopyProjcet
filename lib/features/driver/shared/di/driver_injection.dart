@@ -43,6 +43,11 @@ import 'package:kids_transport/features/driver/trips/data/repositories/driver_tr
 import 'package:kids_transport/features/driver/trips/logic/driver_trips_cubit/driver_trips_cubit.dart';
 import 'package:kids_transport/features/driver/trips/logic/live_trip_cubit/live_trip_cubit.dart';
 import 'package:kids_transport/features/driver/trips/logic/driver_trips_history_cubit/driver_trips_history_cubit.dart';
+
+// Address
+import 'package:kids_transport/features/driver/address/data/datasources/driver_address_remote_data_source.dart';
+import 'package:kids_transport/features/driver/address/data/repositories/driver_address_repository.dart';
+import 'package:kids_transport/features/driver/address/logic/driver_address_cubit.dart';
 import 'package:kids_transport/features/driver/trips/logic/driver_absence_cubit/driver_absence_cubit.dart';
 import 'package:kids_transport/features/driver/trips/data/datasources/driver_emergency_remote_data_source.dart';
 import 'package:kids_transport/features/driver/trips/data/repositories/driver_emergency_repository.dart';
@@ -266,6 +271,27 @@ void initDriverInjection() {
   if (!driverSl.isRegistered<DriverStatisticsCubit>()) {
     driverSl.registerFactory<DriverStatisticsCubit>(
       () => DriverStatisticsCubit(driverSl<DriverStatisticsRepository>()),
+    );
+  }
+
+  // =========================================
+  // 9. Address Feature (نقطة الانطلاق)
+  // =========================================
+  if (!driverSl.isRegistered<DriverAddressRemoteDataSource>()) {
+    driverSl.registerLazySingleton<DriverAddressRemoteDataSource>(
+      () => DriverAddressRemoteDataSource(driverSl<ApiClient>()),
+    );
+  }
+  if (!driverSl.isRegistered<DriverAddressRepository>()) {
+    driverSl.registerLazySingleton<DriverAddressRepository>(
+      () => DriverAddressRepositoryImpl(
+        driverSl<DriverAddressRemoteDataSource>(),
+      ),
+    );
+  }
+  if (!driverSl.isRegistered<DriverAddressCubit>()) {
+    driverSl.registerFactory<DriverAddressCubit>(
+      () => DriverAddressCubit(driverSl<DriverAddressRepository>()),
     );
   }
 }

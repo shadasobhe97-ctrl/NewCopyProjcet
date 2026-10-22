@@ -77,6 +77,7 @@ class DriverHomeCubit extends Cubit<DriverHomeState> {
         final name = profileRepo.getCachedFullName();
         final phone = profileRepo.getCachedPhoneNumber();
         final cachedDriverId = StorageService.getDriverId() ?? 0;
+        final cachedAvatar = StorageService.getAvatarUrl();
 
         final cachedDriver = DriverModel(
           driverId: cachedDriverId,
@@ -85,7 +86,7 @@ class DriverHomeCubit extends Cubit<DriverHomeState> {
           email: '',
           phoneNumber: phone.isNotEmpty ? phone : '',
           alternativePhone: null,
-          avatarUrl: null,
+          avatarUrl: cachedAvatar,
           gender: 'male',
           accountStatus: 'Approved',
         );

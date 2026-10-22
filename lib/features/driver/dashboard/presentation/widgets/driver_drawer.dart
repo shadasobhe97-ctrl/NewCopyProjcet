@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
@@ -11,6 +10,7 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/widgets/app_drawer_item.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import 'package:kids_transport/features/terms/presentation/screens/terms_and_conditions_screen.dart';
 
 // ==========================================
@@ -117,6 +117,20 @@ class DriverDrawer extends StatelessWidget {
                       Navigator.pushNamed(
                         context,
                         AppRoutes.driverPrimaryVehicle,
+                      );
+                    },
+                  ),
+
+                  // ── نقطة الانطلاق ──
+                  AppDrawerItem(
+                    icon: Icons.pin_drop_rounded,
+                    iconColor: context.primaryColor,
+                    label: 'نقطة الانطلاق',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.driverAddress,
                       );
                     },
                   ),
@@ -292,34 +306,12 @@ class _DriverDrawerHeader extends StatelessWidget {
                         width: 3,
                       ),
                     ),
-                    child: CircleAvatar(
+                    child: AppUserAvatar(
+                      image: driver.avatarUrl,
                       radius: 38,
                       backgroundColor: AppColors.white24,
-                      child: driver.avatarUrl != null &&
-                              driver.avatarUrl!.isNotEmpty
-                          ? ClipOval(
-                              child: CachedNetworkImage(
-                                imageUrl: driver.avatarUrl!,
-                                width: 76,
-                                height: 76,
-                                fit: BoxFit.cover,
-                                placeholder: (_, _) => const Icon(
-                                  Icons.person_rounded,
-                                  color: AppColors.white,
-                                  size: 36,
-                                ),
-                                errorWidget: (_, _, _) => const Icon(
-                                  Icons.person_rounded,
-                                  color: AppColors.white,
-                                  size: 36,
-                                ),
-                              ),
-                            )
-                          : const Icon(
-                              Icons.person_rounded,
-                              color: AppColors.white,
-                              size: 36,
-                            ),
+                      iconColor: AppColors.white,
+                      iconSize: 38,
                     ),
                   ),
 

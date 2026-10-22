@@ -31,6 +31,9 @@ class SessionRepository {
       StorageService.saveDriverRegDraft(data);
   Future<void> clearDriverRegDraft() => StorageService.clearDriverRegDraft();
 
+  String? getAvatarUrl() => StorageService.getAvatarUrl();
+  Future<bool> saveAvatarUrl(String? url) => StorageService.saveAvatarUrl(url);
+
   Future<void> saveUserSession({
     required String token,
     required String tokenType,
@@ -40,6 +43,7 @@ class SessionRepository {
     required String fullName,
     required String phoneNumber,
     required bool isActive,
+    String? avatarUrl,
   }) {
     return StorageService.saveUserSession(
       token: token,
@@ -50,6 +54,7 @@ class SessionRepository {
       fullName: fullName,
       phoneNumber: phoneNumber,
       isActive: isActive,
+      avatarUrl: avatarUrl,
     );
   }
 }
