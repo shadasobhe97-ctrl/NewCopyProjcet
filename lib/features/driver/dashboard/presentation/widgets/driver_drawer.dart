@@ -121,11 +121,11 @@ class DriverDrawer extends StatelessWidget {
                     },
                   ),
 
-                  // ── نقطة الانطلاق ──
+                  // ── العنوان / نقطة الانطلاق ──
                   AppDrawerItem(
-                    icon: Icons.pin_drop_rounded,
+                    icon: Icons.location_on_outlined,
                     iconColor: context.primaryColor,
-                    label: 'نقطة الانطلاق',
+                    label: 'العنوان (نقطة الانطلاق)',
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.pushNamed(
