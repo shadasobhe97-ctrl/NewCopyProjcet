@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models/parent_model.dart';
@@ -33,7 +32,7 @@ class ParentProfileCubit extends Cubit<ParentProfileState> {
     required String phoneNumber,
     String? email,
     String? alternativePhone,
-    File? avatarFile,
+    dynamic avatarFile,
   }) async {
     if (_currentParent != null) {
       emit(ParentProfileUpdateLoading(_currentParent!));
@@ -97,4 +96,5 @@ class ParentProfileCubit extends Cubit<ParentProfileState> {
 
   String getCachedFullName() => repository.getCachedFullName();
   String getCachedPhoneNumber() => repository.getCachedPhoneNumber();
+  String? getCachedAvatarUrl() => repository.getCachedAvatarUrl();
 }

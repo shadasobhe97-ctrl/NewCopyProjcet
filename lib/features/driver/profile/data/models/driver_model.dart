@@ -102,5 +102,49 @@ class DriverModel {
       'pending_email': pendingEmail,
     };
   }
+
+  DriverModel copyWith({
+    int? driverId,
+    int? userId,
+    int? roleId,
+    String? fullName,
+    String? email,
+    String? phoneNumber,
+    String? alternativePhone,
+    String? newEmailTemporary,
+    bool? emailChangePending,
+    String? avatarUrl,
+    String? gender,
+    bool? isActive,
+    String? nationalId,
+    String? licenseNumber,
+    String? driverStatus,
+    bool? hasPendingChanges,
+    String? pendingFullName,
+    String? pendingPhoneNumber,
+    String? pendingEmail,
+  }) {
+    return DriverModel(
+      driverId: driverId ?? this.driverId,
+      userId: userId ?? this.userId,
+      roleId: roleId ?? this.roleId,
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      alternativePhone: alternativePhone ?? this.alternativePhone,
+      newEmailTemporary: newEmailTemporary ?? this.newEmailTemporary,
+      emailChangePending: emailChangePending ?? this.emailChangePending,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      gender: gender ?? this.gender,
+      isActive: isActive ?? this.isActive,
+      nationalId: nationalId ?? this.nationalId,
+      licenseNumber: licenseNumber ?? this.licenseNumber,
+      driverStatus: driverStatus ?? this.driverStatus,
+      hasPendingChanges: hasPendingChanges ?? this.hasPendingChanges,
+      pendingFullName: pendingFullName ?? this.pendingFullName,
+      pendingPhoneNumber: pendingPhoneNumber ?? this.pendingPhoneNumber,
+      pendingEmail: pendingEmail ?? this.pendingEmail,
+    );
+  }
 }
 

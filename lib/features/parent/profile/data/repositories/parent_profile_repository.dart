@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:kids_transport/core/models/email_verification_info.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import '../datasources/parent_profile_remote_data_source.dart';
@@ -26,7 +25,7 @@ class ParentProfileRepository {
     required String phoneNumber,
     String? email,
     String? alternativePhone,
-    File? avatarFile,
+    dynamic avatarFile,
   }) async {
     final result = await remoteDataSource.updateParentProfile(
       fullName: fullName,
@@ -48,6 +47,13 @@ class ParentProfileRepository {
   }
 
   Future<void> _cacheParentProfile(ParentModel parent) async {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final versionedAvatar = (parent.avatarUrl != null && parent.avatarUrl!.isNotEmpty)
+        ? (parent.avatarUrl!.contains('?')
+            ? parent.avatarUrl
+            : '${parent.avatarUrl}?v=$timestamp')
+        : null;
+
     await sessionRepository.saveUserSession(
       token: sessionRepository.getToken() ?? '',
       tokenType: 'Bearer',
@@ -57,9 +63,11 @@ class ParentProfileRepository {
       fullName: parent.fullName,
       phoneNumber: parent.phoneNumber,
       isActive: sessionRepository.getIsActive() ?? true,
+      avatarUrl: versionedAvatar ?? parent.avatarUrl,
     );
   }
 
   String getCachedFullName() => sessionRepository.getFullName() ?? '';
   String getCachedPhoneNumber() => sessionRepository.getPhoneNumber() ?? '';
+  String? getCachedAvatarUrl() => sessionRepository.getAvatarUrl();
 }

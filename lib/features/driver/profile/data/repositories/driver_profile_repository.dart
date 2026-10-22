@@ -17,6 +17,13 @@ class DriverProfileRepository {
   Future<DriverModel> getDriverProfile() async {
     final driver = await remoteDataSource.getDriverProfile();
 
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final versionedAvatar = (driver.avatarUrl != null && driver.avatarUrl!.isNotEmpty)
+        ? (driver.avatarUrl!.contains('?')
+            ? driver.avatarUrl
+            : '${driver.avatarUrl}?v=$timestamp')
+        : null;
+
     // تحديث البيانات المحلية محلياً فور النجاح
     await sessionRepository.saveUserSession(
       token: sessionRepository.getToken() ?? '',
@@ -27,7 +34,7 @@ class DriverProfileRepository {
       fullName: driver.fullName,
       phoneNumber: driver.phoneNumber,
       isActive: sessionRepository.getIsActive() ?? true,
-      avatarUrl: driver.avatarUrl,
+      avatarUrl: versionedAvatar ?? driver.avatarUrl,
     );
 
     return driver;
@@ -52,6 +59,13 @@ class DriverProfileRepository {
     );
 
     final driver = result.profile;
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final versionedAvatar = (driver.avatarUrl != null && driver.avatarUrl!.isNotEmpty)
+        ? (driver.avatarUrl!.contains('?')
+            ? driver.avatarUrl
+            : '${driver.avatarUrl}?v=$timestamp')
+        : null;
+
     // تحديث البيانات المحلية فقط عند نجاح الـ API بالكامل
     await sessionRepository.saveUserSession(
       token: sessionRepository.getToken() ?? '',
@@ -68,7 +82,7 @@ class DriverProfileRepository {
           ? driver.phoneNumber
           : (sessionRepository.getPhoneNumber() ?? ''),
       isActive: driver.isActive,
-      avatarUrl: driver.avatarUrl,
+      avatarUrl: versionedAvatar ?? driver.avatarUrl,
     );
 
     return result;

@@ -11,21 +11,66 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/widgets/app_drawer_item.dart';
 import 'package:kids_transport/core/widgets/app_user_avatar.dart';
-import 'package:kids_transport/features/driver/home/logic/driver_home_cubit/driver_home_cubit.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/features/driver/shared/di/driver_injection.dart';
+import 'package:kids_transport/features/driver/profile/data/repositories/driver_profile_repository.dart';
 import 'package:kids_transport/features/terms/presentation/screens/terms_and_conditions_screen.dart';
 
 // ==========================================
 // السايد بار (الدروار) الخاص بالسائق
 // ==========================================
 
-class DriverDrawer extends StatelessWidget {
+class DriverDrawer extends StatefulWidget {
   final DriverModel driver;
 
   const DriverDrawer({super.key, required this.driver});
 
   @override
+  State<DriverDrawer> createState() => _DriverDrawerState();
+}
+
+class _DriverDrawerState extends State<DriverDrawer> {
+  DriverModel? _liveDriver;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        try {
+          driverSl<DriverProfileRepository>().getDriverProfile().then((fresh) {
+            if (mounted) {
+              setState(() {
+                _liveDriver = fresh;
+              });
+            }
+          }).catchError((_) {});
+        } catch (_) {}
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
+
+    // قراءة البيانات من الكاش المحلي الفوري لضمان التحديث اللحظي بعد الحفظ
+    final cachedName = StorageService.getFullName();
+    final cachedPhone = StorageService.getPhoneNumber();
+    final cachedAvatar = StorageService.getAvatarUrl();
+
+    final base = _liveDriver ?? widget.driver;
+    final effectiveDriver = base.copyWith(
+      fullName: (cachedName != null && cachedName.trim().isNotEmpty)
+          ? cachedName
+          : base.fullName,
+      phoneNumber: (cachedPhone != null && cachedPhone.trim().isNotEmpty)
+          ? cachedPhone
+          : base.phoneNumber,
+      avatarUrl: (cachedAvatar != null && cachedAvatar.trim().isNotEmpty)
+          ? cachedAvatar
+          : base.avatarUrl,
+    );
 
     return BlocListener<AuthCubit, AuthState>(
       listenWhen: (_, state) =>
@@ -77,7 +122,7 @@ class DriverDrawer extends StatelessWidget {
         child: Column(
           children: [
             // ─── هيدر الدروار ───────────────────────────────────────
-            _DriverDrawerHeader(driver: driver, isDark: isDark),
+            _DriverDrawerHeader(driver: effectiveDriver, isDark: isDark),
 
             // ─── قائمة العناصر ──────────────────────────────────────
             Expanded(
@@ -88,14 +133,9 @@ class DriverDrawer extends StatelessWidget {
                     icon: Icons.person_outline_rounded,
                     iconColor: context.primaryColor,
                     label: 'الملف الشخصي',
-                    onTap: () async {
+                    onTap: () {
                       Navigator.pop(context);
-                      await Navigator.pushNamed(context, AppRoutes.driverProfile);
-                      if (context.mounted) {
-                        try {
-                          context.read<DriverHomeCubit>().loadDriverHomeData();
-                        } catch (_) {}
-                      }
+                      Navigator.pushNamed(context, AppRoutes.driverProfile);
                     },
                   ),
 

@@ -12,10 +12,26 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/widgets/app_drawer_item.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/terms/presentation/screens/terms_and_conditions_screen.dart';
 
-class ParentDrawer extends StatelessWidget {
+class ParentDrawer extends StatefulWidget {
   const ParentDrawer({super.key});
+
+  @override
+  State<ParentDrawer> createState() => _ParentDrawerState();
+}
+
+class _ParentDrawerState extends State<ParentDrawer> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<ParentProfileCubit>().fetchProfile();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,11 +93,23 @@ class ParentDrawer extends StatelessWidget {
             fullName = profileState.currentParent.fullName;
             phoneNumber = profileState.currentParent.phoneNumber;
             avatarUrl = profileState.currentParent.avatarUrl;
-          } else {
-            // Fallback: الكاش المحلي
-            final cubit = context.read<ParentProfileCubit>();
-            fullName = cubit.getCachedFullName();
-            phoneNumber = cubit.getCachedPhoneNumber();
+          }
+
+          // Fallback الكاش المحلي الفوري لضمان ظهور البيانات حتى قبل انتهاء طلب الشبكة
+          final cachedName = StorageService.getFullName();
+          final cachedPhone = StorageService.getPhoneNumber();
+          final cachedAvatar = StorageService.getAvatarUrl();
+
+          if (fullName.trim().isEmpty && cachedName != null && cachedName.trim().isNotEmpty) {
+            fullName = cachedName;
+          }
+          if (phoneNumber.trim().isEmpty && cachedPhone != null && cachedPhone.trim().isNotEmpty) {
+            phoneNumber = cachedPhone;
+          }
+          if ((avatarUrl == null || avatarUrl.trim().isEmpty) &&
+              cachedAvatar != null &&
+              cachedAvatar.trim().isNotEmpty) {
+            avatarUrl = cachedAvatar;
           }
 
           if (fullName.isEmpty) fullName = 'ولي أمر';
@@ -107,15 +135,9 @@ class ParentDrawer extends StatelessWidget {
                         icon: Icons.person_outline_rounded,
                         iconColor: context.primaryColor,
                         label: 'الملف الشخصي',
-                        onTap: () async {
+                        onTap: () {
                           Navigator.pop(context);
-                          await Navigator.pushNamed(
-                              context, AppRoutes.parentProfile);
-                          if (context.mounted) {
-                            try {
-                              context.read<ParentProfileCubit>().fetchProfile();
-                            } catch (_) {}
-                          }
+                          Navigator.pushNamed(context, AppRoutes.parentProfile);
                         },
                       ),
                       AppDrawerItem(
