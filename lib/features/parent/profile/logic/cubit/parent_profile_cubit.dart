@@ -33,6 +33,7 @@ class ParentProfileCubit extends Cubit<ParentProfileState> {
     String? email,
     String? alternativePhone,
     dynamic avatarFile,
+    bool removeAvatar = false,
   }) async {
     if (_currentParent != null) {
       emit(ParentProfileUpdateLoading(_currentParent!));
@@ -44,6 +45,7 @@ class ParentProfileCubit extends Cubit<ParentProfileState> {
         email: email,
         alternativePhone: alternativePhone,
         avatarFile: avatarFile,
+        removeAvatar: removeAvatar,
       );
 
       // إعادة جلب أحدث البيانات من الباك إند فوراً بعد عملية التعديل (Refresh)
@@ -82,7 +84,9 @@ class ParentProfileCubit extends Cubit<ParentProfileState> {
   Future<String> checkEmailChangeStatus() async {
     try {
       final status = await repository.getEmailChangeStatus();
-      debugPrint('📥 [ParentProfileCubit] checkEmailChangeStatus status => $status');
+      debugPrint(
+        '📥 [ParentProfileCubit] checkEmailChangeStatus status => $status',
+      );
       if (status == 'verified' || status == 'rejected' || status == 'expired') {
         await fetchProfile();
       }
@@ -96,5 +100,4 @@ class ParentProfileCubit extends Cubit<ParentProfileState> {
 
   String getCachedFullName() => repository.getCachedFullName();
   String getCachedPhoneNumber() => repository.getCachedPhoneNumber();
-  String? getCachedAvatarUrl() => repository.getCachedAvatarUrl();
 }

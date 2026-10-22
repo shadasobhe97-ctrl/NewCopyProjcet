@@ -12,26 +12,10 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/widgets/app_drawer_item.dart';
-import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/terms/presentation/screens/terms_and_conditions_screen.dart';
 
-class ParentDrawer extends StatefulWidget {
+class ParentDrawer extends StatelessWidget {
   const ParentDrawer({super.key});
-
-  @override
-  State<ParentDrawer> createState() => _ParentDrawerState();
-}
-
-class _ParentDrawerState extends State<ParentDrawer> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<ParentProfileCubit>().fetchProfile();
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,23 +77,11 @@ class _ParentDrawerState extends State<ParentDrawer> {
             fullName = profileState.currentParent.fullName;
             phoneNumber = profileState.currentParent.phoneNumber;
             avatarUrl = profileState.currentParent.avatarUrl;
-          }
-
-          // Fallback الكاش المحلي الفوري لضمان ظهور البيانات حتى قبل انتهاء طلب الشبكة
-          final cachedName = StorageService.getFullName();
-          final cachedPhone = StorageService.getPhoneNumber();
-          final cachedAvatar = StorageService.getAvatarUrl();
-
-          if (fullName.trim().isEmpty && cachedName != null && cachedName.trim().isNotEmpty) {
-            fullName = cachedName;
-          }
-          if (phoneNumber.trim().isEmpty && cachedPhone != null && cachedPhone.trim().isNotEmpty) {
-            phoneNumber = cachedPhone;
-          }
-          if ((avatarUrl == null || avatarUrl.trim().isEmpty) &&
-              cachedAvatar != null &&
-              cachedAvatar.trim().isNotEmpty) {
-            avatarUrl = cachedAvatar;
+          } else {
+            // Fallback: الكاش المحلي
+            final cubit = context.read<ParentProfileCubit>();
+            fullName = cubit.getCachedFullName();
+            phoneNumber = cubit.getCachedPhoneNumber();
           }
 
           if (fullName.isEmpty) fullName = 'ولي أمر';
@@ -118,7 +90,8 @@ class _ParentDrawerState extends State<ParentDrawer> {
             width: MediaQuery.of(context).size.width * 0.82,
             shape: AppTheme.roundedRectangleBorder(
               borderRadius: AppTheme.horizontalRadius(
-                  left: AppTheme.cornerRadius(24)),
+                left: AppTheme.cornerRadius(24),
+              ),
             ),
             child: Column(
               children: [
@@ -135,9 +108,17 @@ class _ParentDrawerState extends State<ParentDrawer> {
                         icon: Icons.person_outline_rounded,
                         iconColor: context.primaryColor,
                         label: 'الملف الشخصي',
-                        onTap: () {
+                        onTap: () async {
                           Navigator.pop(context);
-                          Navigator.pushNamed(context, AppRoutes.parentProfile);
+                          await Navigator.pushNamed(
+                            context,
+                            AppRoutes.parentProfile,
+                          );
+                          if (context.mounted) {
+                            try {
+                              context.read<ParentProfileCubit>().fetchProfile();
+                            } catch (_) {}
+                          }
                         },
                       ),
                       AppDrawerItem(
@@ -159,8 +140,7 @@ class _ParentDrawerState extends State<ParentDrawer> {
                         label: 'إدارة الغياب',
                         onTap: () {
                           Navigator.pop(context);
-                          Navigator.pushNamed(
-                              context, AppRoutes.parentAbsence);
+                          Navigator.pushNamed(context, AppRoutes.parentAbsence);
                         },
                       ),
                       AppDrawerItem(
@@ -170,10 +150,12 @@ class _ParentDrawerState extends State<ParentDrawer> {
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.pushNamed(
-                              context, AppRoutes.savedAddresses);
+                            context,
+                            AppRoutes.savedAddresses,
+                          );
                         },
                       ),
-                       AppDrawerItem(
+                      AppDrawerItem(
                         icon: Icons.description_outlined,
                         iconColor: context.pendingColor,
                         label: 'عقودي واشتراكاتي',
@@ -185,7 +167,10 @@ class _ParentDrawerState extends State<ParentDrawer> {
                         label: 'جدول رحلات أطفالي',
                         onTap: () {
                           Navigator.pop(context);
-                          Navigator.pushNamed(context, AppRoutes.parentTripsHome);
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.parentTripsHome,
+                          );
                         },
                       ),
                       AppDrawerItem(
@@ -194,7 +179,10 @@ class _ParentDrawerState extends State<ParentDrawer> {
                         label: 'التتبع المباشر للرحلات 🟢',
                         onTap: () {
                           Navigator.pop(context);
-                          Navigator.pushNamed(context, AppRoutes.parentTripTracking);
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.parentTripTracking,
+                          );
                         },
                       ),
                       AppDrawerItem(
@@ -212,7 +200,10 @@ class _ParentDrawerState extends State<ParentDrawer> {
                         label: 'سجل الشكاوى والمتابعة',
                         onTap: () {
                           Navigator.pop(context);
-                          Navigator.pushNamed(context, AppRoutes.parentComplaints);
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.parentComplaints,
+                          );
                         },
                       ),
                       const Divider(height: 24, indent: 16, endIndent: 16),
@@ -348,15 +339,16 @@ class _DrawerHeader extends StatelessWidget {
                       borderRadius: AppTheme.radius(12),
                     ),
                     child: IconButton(
-                      tooltip: context.isDarkMode ? 'الوضع الفاتح' : 'الوضع الداكن',
+                      tooltip: context.isDarkMode
+                          ? 'الوضع الفاتح'
+                          : 'الوضع الداكن',
                       icon: Icon(
                         context.isDarkMode
                             ? Icons.wb_sunny_rounded
                             : Icons.brightness_3_rounded,
                         color: AppColors.white,
                       ),
-                      onPressed: () =>
-                          context.read<ThemeCubit>().toggleTheme(),
+                      onPressed: () => context.read<ThemeCubit>().toggleTheme(),
                     ),
                   ),
                 ],
@@ -375,8 +367,11 @@ class _DrawerHeader extends StatelessWidget {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  const Icon(Icons.phone_rounded,
-                      color: AppColors.white60, size: 14),
+                  const Icon(
+                    Icons.phone_rounded,
+                    color: AppColors.white60,
+                    size: 14,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -394,7 +389,9 @@ class _DrawerHeader extends StatelessWidget {
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: AppTheme.boxDecoration(
                       color: AppColors.white.withValues(alpha: 0.2),
                       borderRadius: AppTheme.radius(20),

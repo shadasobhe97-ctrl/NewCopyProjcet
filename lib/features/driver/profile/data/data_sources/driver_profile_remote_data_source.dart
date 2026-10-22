@@ -45,6 +45,7 @@ class DriverProfileRemoteDataSource {
     String? email,
     String? gender,
     dynamic avatarFile,
+    bool removeAvatar = false,
   }) async {
     try {
       final Map<String, dynamic> dataMap = {};
@@ -70,6 +71,10 @@ class DriverProfileRemoteDataSource {
           defaultFilename: 'avatar.jpg',
         );
         if (multipart != null) dataMap['avatar'] = multipart;
+      } else if (removeAvatar) {
+        dataMap['avatar'] = null;
+        dataMap['delete_avatar'] = 1;
+        dataMap['remove_avatar'] = 1;
       }
 
       final formData = FormData.fromMap(dataMap);
@@ -96,7 +101,10 @@ class DriverProfileRemoteDataSource {
           );
         }
 
-        final driver = DriverModel.fromJson(response.data['data']);
+        var driver = DriverModel.fromJson(response.data['data']);
+        if (removeAvatar) {
+          driver = driver.copyWith(clearAvatarUrl: true);
+        }
         final message =
             (response.data is Map && response.data['message'] != null)
             ? response.data['message'].toString()

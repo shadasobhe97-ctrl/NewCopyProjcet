@@ -1,4 +1,5 @@
 import 'package:kids_transport/core/models/email_verification_info.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import '../data_sources/driver_profile_remote_data_source.dart';
 import '../models/driver_model.dart';
@@ -17,13 +18,6 @@ class DriverProfileRepository {
   Future<DriverModel> getDriverProfile() async {
     final driver = await remoteDataSource.getDriverProfile();
 
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final versionedAvatar = (driver.avatarUrl != null && driver.avatarUrl!.isNotEmpty)
-        ? (driver.avatarUrl!.contains('?')
-            ? driver.avatarUrl
-            : '${driver.avatarUrl}?v=$timestamp')
-        : null;
-
     // تحديث البيانات المحلية محلياً فور النجاح
     await sessionRepository.saveUserSession(
       token: sessionRepository.getToken() ?? '',
@@ -34,7 +28,7 @@ class DriverProfileRepository {
       fullName: driver.fullName,
       phoneNumber: driver.phoneNumber,
       isActive: sessionRepository.getIsActive() ?? true,
-      avatarUrl: versionedAvatar ?? driver.avatarUrl,
+      avatarUrl: driver.avatarUrl,
     );
 
     return driver;
@@ -48,6 +42,7 @@ class DriverProfileRepository {
     String? email,
     String? gender,
     dynamic avatarFile,
+    bool removeAvatar = false,
   }) async {
     final result = await remoteDataSource.updateDriverProfile(
       fullName: fullName,
@@ -56,15 +51,20 @@ class DriverProfileRepository {
       email: email,
       gender: gender,
       avatarFile: avatarFile,
+      removeAvatar: removeAvatar,
     );
 
-    final driver = result.profile;
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final versionedAvatar = (driver.avatarUrl != null && driver.avatarUrl!.isNotEmpty)
-        ? (driver.avatarUrl!.contains('?')
-            ? driver.avatarUrl
-            : '${driver.avatarUrl}?v=$timestamp')
-        : null;
+    var driver = result.profile;
+    if (removeAvatar) {
+      driver = driver.copyWith(clearAvatarUrl: true);
+      await sessionRepository.saveAvatarUrl(null);
+      await StorageService.saveAvatarUrl(null);
+    }
+
+    final versionedAvatar =
+        (driver.avatarUrl != null && driver.avatarUrl!.isNotEmpty)
+            ? '${driver.avatarUrl}?v=${DateTime.now().millisecondsSinceEpoch}'
+            : null;
 
     // تحديث البيانات المحلية فقط عند نجاح الـ API بالكامل
     await sessionRepository.saveUserSession(
@@ -82,10 +82,18 @@ class DriverProfileRepository {
           ? driver.phoneNumber
           : (sessionRepository.getPhoneNumber() ?? ''),
       isActive: driver.isActive,
-      avatarUrl: versionedAvatar ?? driver.avatarUrl,
+      avatarUrl: versionedAvatar,
     );
+    if (versionedAvatar != null) {
+      await sessionRepository.saveAvatarUrl(versionedAvatar);
+      await StorageService.saveAvatarUrl(versionedAvatar);
+    }
 
-    return result;
+    return ProfileUpdateResult<DriverModel>(
+      profile: driver,
+      emailVerification: result.emailVerification,
+      message: result.message,
+    );
   }
 
   Future<void> cancelEmailChange() async {

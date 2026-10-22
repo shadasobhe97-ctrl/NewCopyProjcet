@@ -30,6 +30,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   late TextEditingController _emailController;
 
   dynamic _avatarImage;
+  bool _removeAvatar = false;
   final ImagePicker _picker = ImagePicker();
 
   String _originalEmail = '';
@@ -90,10 +91,10 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     }
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         maxWidth: 1280,
         maxHeight: 1280,
         imageQuality: 60,
@@ -103,6 +104,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
 
       setState(() {
         _avatarImage = image;
+        _removeAvatar = false;
       });
     } catch (e) {
       if (!mounted) return;
@@ -110,6 +112,89 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('فشل في اختيار الصورة: $e')));
     }
+  }
+
+  void _removeAvatarImage() {
+    setState(() {
+      _avatarImage = null;
+      _avatarUrl = null;
+      _removeAvatar = true;
+    });
+  }
+
+  void _showImageSourceBottomSheet() {
+    final hasAvatar =
+        _avatarImage != null ||
+        (_avatarUrl != null && _avatarUrl!.trim().isNotEmpty);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: context.cardSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'الصورة الشخصية',
+                  style: AppTextStyles.style(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ListTile(
+                  leading: Icon(
+                    Icons.camera_alt_rounded,
+                    color: context.primaryColor,
+                  ),
+                  title: const Text('التقاط صورة بالكاميرا'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickImage(ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(
+                    Icons.photo_library_rounded,
+                    color: context.primaryColor,
+                  ),
+                  title: const Text('اختيار من المعرض'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickImage(ImageSource.gallery);
+                  },
+                ),
+                if (hasAvatar)
+                  ListTile(
+                    leading: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: AppColors.error,
+                    ),
+                    title: Text(
+                      'إزالة الصورة الحالية',
+                      style: AppTextStyles.style(
+                        color: AppColors.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _removeAvatarImage();
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _fillFieldsFrom(ParentModel parent) {
@@ -120,6 +205,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     _originalEmail = parent.email;
     _isEmailVerified = parent.emailChangePending != true;
     _isEmailEdited = false;
+    _removeAvatar = false;
   }
 
   void _saveProfile() {
@@ -127,15 +213,25 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
       final newEmail = _emailController.text.trim();
       final emailChanged = newEmail.isNotEmpty && newEmail != _originalEmail;
 
-      context.read<ParentProfileCubit>().updateProfile(
-        fullName: _nameController.text.trim(),
-        phoneNumber: _phoneController.text.trim(),
-        alternativePhone: _backupPhoneController.text.trim().isNotEmpty
-            ? _backupPhoneController.text.trim()
-            : null,
-        email: emailChanged ? newEmail : null,
-        avatarFile: _avatarImage,
-      );
+      try {
+        context.read<ParentProfileCubit>().updateProfile(
+          fullName: _nameController.text.trim(),
+          phoneNumber: _phoneController.text.trim(),
+          alternativePhone: _backupPhoneController.text.trim().isNotEmpty
+              ? _backupPhoneController.text.trim()
+              : null,
+          email: emailChanged ? newEmail : null,
+          avatarFile: _avatarImage,
+          removeAvatar: _removeAvatar,
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('حدث خطأ أثناء حفظ التغييرات: $e'),
+            backgroundColor: context.errorColor,
+          ),
+        );
+      }
     }
   }
 
@@ -174,11 +270,16 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
               },
               onCheckStatus: () async {
                 final cubit = context.read<ParentProfileCubit>();
+                final messenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(context);
+                final successColor = context.successColor;
+                final errorColor = context.errorColor;
+
                 final status = await cubit.checkEmailChangeStatus();
                 if (!mounted) return;
 
                 if (status == 'pending') {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     const SnackBar(
                       content: Text(
                         'لم يتم تأكيد البريد الإلكتروني بعد، يرجى فتح الرابط الموجود في البريد.',
@@ -186,31 +287,31 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                     ),
                   );
                 } else if (status == 'verified') {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  navigator.pop();
+                  messenger.showSnackBar(
                     SnackBar(
                       content: const Text('تم تأكيد البريد الإلكتروني بنجاح.'),
-                      backgroundColor: context.successColor,
+                      backgroundColor: successColor,
                     ),
                   );
                 } else if (status == 'rejected') {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  navigator.pop();
+                  messenger.showSnackBar(
                     SnackBar(
                       content: const Text(
                         'تم رفض طلب تغيير البريد الإلكتروني.',
                       ),
-                      backgroundColor: context.errorColor,
+                      backgroundColor: errorColor,
                     ),
                   );
                 } else if (status == 'expired') {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  navigator.pop();
+                  messenger.showSnackBar(
                     SnackBar(
                       content: const Text(
                         'انتهت صلاحية رابط تأكيد البريد الإلكتروني.',
                       ),
-                      backgroundColor: context.errorColor,
+                      backgroundColor: errorColor,
                     ),
                   );
                 }
@@ -379,16 +480,21 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   }
 
   Widget _buildAvatarSection() {
+    final hasAvatar =
+        _avatarImage != null ||
+        (_avatarUrl != null && _avatarUrl!.trim().isNotEmpty);
+
     return Column(
       children: [
         ProfileAvatarEditor(
           avatarImage: _avatarImage,
           avatarUrl: _avatarUrl,
-          onTap: _pickImage,
+          onTap: _showImageSourceBottomSheet,
+          onRemove: hasAvatar ? _removeAvatarImage : null,
         ),
         SizedBox(height: MediaQuery.sizeOf(context).height * 0.012),
         Text(
-          'اضغط على الصورة لتغيير الصورة الشخصية',
+          'اضغط على الصورة لتغييرها أو زر الحذف لإزالتها',
           style: AppTextStyles.style(
             fontSize: 12,
             color: context.textMuted.withValues(alpha: 0.8),
