@@ -56,22 +56,56 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     cubit.fetchLegalData();
   }
 
-  // 🌟 بعض تواريخ الانتهاء (الدمغ، الفحص الفني، التأمين) الباك يرجعها فقط
-  // جوا الوثيقة نفسها بـ uploaded_files، ومش دايماً على مستوى الجدول الرئيسي
-  // للسائق. فنطابق هذا مع نفس منطق الأولوية المستخدم بكارت الوثيقة.
+  // 🌟 استخراج تاريخ انتهاء الوثيقة مع دعم الأنواع القياسية والمختصرة
   String? _findDocExpiry(DriverLegalDataModel model, String type) {
+    final norm = DriverUploadedFileModel.normalizeType(type);
     for (final file in model.uploadedFiles) {
-      if (file.type.toUpperCase() != type) continue;
-      switch (type) {
+      if (DriverUploadedFileModel.normalizeType(file.type) != norm) continue;
+      switch (norm) {
         case 'LICENSE':
-          return file.licenseExpiryDate;
+          if (file.licenseExpiryDate != null &&
+              file.licenseExpiryDate!.trim().isNotEmpty) {
+            return file.licenseExpiryDate;
+          }
+          break;
         case 'INSURANCE':
-          return file.insuranceExpiryDate;
+          if (file.insuranceExpiryDate != null &&
+              file.insuranceExpiryDate!.trim().isNotEmpty) {
+            return file.insuranceExpiryDate;
+          }
+          break;
         case 'STAMP':
-          return file.stampExpiryDate;
+          if (file.stampExpiryDate != null &&
+              file.stampExpiryDate!.trim().isNotEmpty) {
+            return file.stampExpiryDate;
+          }
+          break;
         case 'TECHNICAL_INSPECTION':
-          return file.technicalInspectionExpiryDate;
+          if (file.technicalInspectionExpiryDate != null &&
+              file.technicalInspectionExpiryDate!.trim().isNotEmpty) {
+            return file.technicalInspectionExpiryDate;
+          }
+          break;
       }
+    }
+    // احتياطاً من الحقول الرئيسية في الموديل
+    switch (norm) {
+      case 'LICENSE':
+        return model.licenseExpiry.trim().isNotEmpty
+            ? model.licenseExpiry
+            : null;
+      case 'INSURANCE':
+        return model.insuranceExpiry?.trim().isNotEmpty == true
+            ? model.insuranceExpiry
+            : null;
+      case 'STAMP':
+        return model.stampExpiry?.trim().isNotEmpty == true
+            ? model.stampExpiry
+            : null;
+      case 'TECHNICAL_INSPECTION':
+        return model.technicalInspectionExpiry?.trim().isNotEmpty == true
+            ? model.technicalInspectionExpiry
+            : null;
     }
     return null;
   }
@@ -318,29 +352,10 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
   }
 
   bool _hasNewFileFor(String typeKey) {
-    final target = typeKey.toUpperCase();
+    final targetNorm = DriverUploadedFileModel.normalizeType(typeKey);
     return _newFilesMap.entries.any((entry) {
       if (entry.value == null) return false;
-      final k = entry.key.toUpperCase();
-      if (k == target) {
-        return true;
-      }
-      if (target == 'LICENSE' && (k == 'DOC_LICENSE' || k == 'LICENSE')) {
-        return true;
-      }
-      if (target == 'INSURANCE' && (k == 'DOC_INSURANCE' || k == 'INSURANCE')) {
-        return true;
-      }
-      if (target == 'STAMP' && (k == 'DOC_STAMP' || k == 'STAMP')) {
-        return true;
-      }
-      if (target == 'TECHNICAL_INSPECTION' &&
-          (k == 'DOC_TECHNICAL_INSPECTION' ||
-              k == 'TECHNICAL_INSPECTION' ||
-              k == 'INSPECTION')) {
-        return true;
-      }
-      return false;
+      return DriverUploadedFileModel.normalizeType(entry.key) == targetNorm;
     });
   }
 
@@ -926,26 +941,39 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     required bool isEditing,
     required bool isDark,
   }) {
-    final newFile = _newFilesMap[fileModel.type];
+    // استخدام normalizeType لضمان التعامل مع أي صيغة للنوع
+    final normType = DriverUploadedFileModel.normalizeType(fileModel.type);
+    // البحث عن الملف الجديد بأي مفتاح مطابق
+    dynamic newFile;
+    for (final entry in _newFilesMap.entries) {
+      if (DriverUploadedFileModel.normalizeType(entry.key) == normType &&
+          entry.value != null) {
+        newFile = entry.value;
+        break;
+      }
+    }
     final primaryColor = Theme.of(context).primaryColor;
 
     String? docExpiry;
-    final typeUpper = fileModel.type.toUpperCase();
     bool isDateChangedForThisDoc = false;
     bool hasExpiryField = false;
 
-    if (typeUpper == 'LICENSE') {
+    if (normType == 'LICENSE') {
       hasExpiryField = true;
-      docExpiry = fileModel.licenseExpiryDate ?? legalData.licenseExpiry;
+      docExpiry = fileModel.licenseExpiryDate?.isNotEmpty == true
+          ? fileModel.licenseExpiryDate
+          : legalData.licenseExpiry;
       final currentExpiry = _formatCleanDate(
         _findDocExpiry(legalData, 'LICENSE') ?? legalData.licenseExpiry,
       );
       final editedExpiry = _licenseExpiryController.text.trim();
       isDateChangedForThisDoc =
           editedExpiry.isNotEmpty && editedExpiry != currentExpiry;
-    } else if (typeUpper == 'INSURANCE') {
+    } else if (normType == 'INSURANCE') {
       hasExpiryField = true;
-      docExpiry = fileModel.insuranceExpiryDate ?? legalData.insuranceExpiry;
+      docExpiry = fileModel.insuranceExpiryDate?.isNotEmpty == true
+          ? fileModel.insuranceExpiryDate
+          : legalData.insuranceExpiry;
       final currentExpiry = _formatCleanDate(
         _findDocExpiry(legalData, 'INSURANCE') ??
             legalData.insuranceExpiry ??
@@ -954,19 +982,22 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
       final editedExpiry = _insuranceExpiryController.text.trim();
       isDateChangedForThisDoc =
           editedExpiry.isNotEmpty && editedExpiry != currentExpiry;
-    } else if (typeUpper == 'STAMP') {
+    } else if (normType == 'STAMP') {
       hasExpiryField = true;
-      docExpiry = fileModel.stampExpiryDate ?? legalData.stampExpiry;
+      docExpiry = fileModel.stampExpiryDate?.isNotEmpty == true
+          ? fileModel.stampExpiryDate
+          : legalData.stampExpiry;
       final currentExpiry = _formatCleanDate(
         _findDocExpiry(legalData, 'STAMP') ?? legalData.stampExpiry ?? '',
       );
       final editedExpiry = _stampExpiryController.text.trim();
       isDateChangedForThisDoc =
           editedExpiry.isNotEmpty && editedExpiry != currentExpiry;
-    } else if (typeUpper == 'TECHNICAL_INSPECTION') {
+    } else if (normType == 'TECHNICAL_INSPECTION') {
       hasExpiryField = true;
-      docExpiry = fileModel.technicalInspectionExpiryDate ??
-          legalData.technicalInspectionExpiry;
+      docExpiry = fileModel.technicalInspectionExpiryDate?.isNotEmpty == true
+          ? fileModel.technicalInspectionExpiryDate
+          : legalData.technicalInspectionExpiry;
       final currentExpiry = _formatCleanDate(
         _findDocExpiry(legalData, 'TECHNICAL_INSPECTION') ??
             legalData.technicalInspectionExpiry ??
@@ -1014,47 +1045,47 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
 
-            // تاريخ الرفع وتاريخ الانتهاء الخفيف (مغلفة بـ Wrap لمنع أي تجاوز شاشة)
-            Wrap(
-              spacing: 12,
-              runSpacing: 6,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                if (fileModel.uploadedAt.isNotEmpty)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.access_time, size: 14, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text(
-                        'تاريخ الرفع: ${fileModel.uploadedAt}',
-                        style: AppTextStyles.style(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
+            // تاريخ الانتهاء مباشرة تحت الاسم
+            if (docExpiry != null && docExpiry.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.event_available_rounded,
+                        size: 15, color: Colors.green),
+                    const SizedBox(width: 5),
+                    Text(
+                      'ينتهي في: ${_formatCleanDate(docExpiry)}',
+                      style: AppTextStyles.style(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.green[300] : Colors.green[700],
                       ),
-                    ],
-                  ),
-                if (docExpiry != null && docExpiry.isNotEmpty)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.event_available, size: 14, color: Colors.green),
-                      const SizedBox(width: 4),
-                      Text(
-                        'تاريخ الانتهاء: ${_formatCleanDate(docExpiry)}',
-                        style: AppTextStyles.style(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.green[300] : Colors.green[700],
-                        ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // تاريخ الرفع
+            if (fileModel.uploadedAt.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.access_time, size: 13, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Text(
+                      'تاريخ الرفع: ${_formatCleanDate(fileModel.uploadedAt)}',
+                      style: AppTextStyles.style(
+                        fontSize: 11,
+                        color: Colors.grey,
                       ),
-                    ],
-                  ),
-              ],
-            ),
+                    ),
+                  ],
+                ),
+              ),
 
             // صندوق التغذية الراجعة / سبب الرفض (Feedback Warning Box)
             if (fileModel.feedback != null &&
