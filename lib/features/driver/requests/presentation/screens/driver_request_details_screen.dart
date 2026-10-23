@@ -21,7 +21,8 @@ class DriverRequestDetailsScreen extends StatefulWidget {
       _DriverRequestDetailsScreenState();
 }
 
-class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen> {
+class _DriverRequestDetailsScreenState
+    extends State<DriverRequestDetailsScreen> {
   @override
   void initState() {
     super.initState();
@@ -29,10 +30,7 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
   }
 
   Future<void> _makeCall(String phoneNumber) async {
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: phoneNumber,
-    );
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
     if (await canLaunchUrl(launchUri)) {
       await launchUrl(launchUri);
     } else {
@@ -47,8 +45,9 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
   Future<void> _openMap(double lat, double lng) async {
     final googleMapsUrl = Uri.parse("google.navigation:q=$lat,$lng&mode=d");
     final appleMapsUrl = Uri.parse("https://maps.apple.com/?q=$lat,$lng");
-    final webUrl =
-        Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng");
+    final webUrl = Uri.parse(
+      "https://www.google.com/maps/search/?api=1&query=$lat,$lng",
+    );
 
     try {
       if (await canLaunchUrl(googleMapsUrl)) {
@@ -98,8 +97,11 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline_rounded,
-                          size: 50.sp, color: AppColors.error),
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: 50.sp,
+                        color: AppColors.error,
+                      ),
                       SizedBox(height: 16.h),
                       Text(
                         state.message,
@@ -204,9 +206,11 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
                                     request.homeAddress!.lat!,
                                     request.homeAddress!.lng!,
                                   ),
-                                  icon: Icon(Icons.navigation_rounded,
-                                      size: 16.sp,
-                                      color: context.primaryColor),
+                                  icon: Icon(
+                                    Icons.navigation_rounded,
+                                    size: 16.sp,
+                                    color: context.primaryColor,
+                                  ),
                                   label: Text(
                                     'عرض موقع الانطلاق على الخريطة',
                                     style: AppTextStyles.style(
@@ -314,8 +318,7 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
                           SizedBox(width: 14.w),
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: () =>
-                                  _acceptRequest(context, request),
+                              onPressed: () => _acceptRequest(context, request),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.success,
                                 foregroundColor: AppColors.white,
@@ -355,15 +358,23 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
       builder: (dCtx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-          title: Text('قبول الطلب',
-              style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold, fontSize: 16.sp)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          title: Text(
+            'قبول الطلب',
+            style: AppTextStyles.style(
+              fontWeight: FontWeight.bold,
+              fontSize: 16.sp,
+            ),
+          ),
           content: Text(
             'هل أنت متأكد من قبول هذا الطلب؟ سيتم إدراج أطفال الاشتراك تلقائياً في رحلاتك القادمة.',
             style: AppTextStyles.style(
-                fontSize: 13.sp, color: AppColors.textMuted, height: 1.4),
+              fontSize: 13.sp,
+              color: AppColors.textMuted,
+              height: 1.4,
+            ),
           ),
           actions: [
             TextButton(
@@ -385,9 +396,11 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
                     SnackBar(
                       content: Directionality(
                         textDirection: TextDirection.rtl,
-                        child: Text(result.message.isNotEmpty
-                            ? result.message
-                            : 'تم قبول الطلب وتفعيل الاشتراك بنجاح.'),
+                        child: Text(
+                          result.message.isNotEmpty
+                              ? result.message
+                              : 'تم قبول الطلب وتفعيل الاشتراك بنجاح.',
+                        ),
                       ),
                       backgroundColor: AppColors.success,
                     ),
@@ -399,15 +412,18 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
                     const SnackBar(
                       content: Directionality(
                         textDirection: TextDirection.rtl,
-                        child: Text('تعذر قبول الطلب. الرجاء المحاولة مرة أخرى.'),
+                        child: Text(
+                          'تعذر قبول الطلب. الرجاء المحاولة مرة أخرى.',
+                        ),
                       ),
                       backgroundColor: AppColors.error,
                     ),
                   );
                 }
               },
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.success,
+              ),
               child: const Text('قبول وتفعيل'),
             ),
           ],
@@ -423,17 +439,24 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
       builder: (dCtx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-          title: Text('رفض طلب الاشتراك',
-              style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold, fontSize: 16.sp)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          title: Text(
+            'رفض طلب الاشتراك',
+            style: AppTextStyles.style(
+              fontWeight: FontWeight.bold,
+              fontSize: 16.sp,
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('الرجاء إدخال سبب الرفض لإشعار ولي الأمر:',
-                  style: AppTextStyles.style(fontSize: 13.sp)),
+              Text(
+                'الرجاء إدخال سبب الرفض لإشعار ولي الأمر:',
+                style: AppTextStyles.style(fontSize: 13.sp),
+              ),
               SizedBox(height: 10.h),
               TextField(
                 controller: controller,
@@ -493,8 +516,11 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_rounded,
-                      color: AppColors.white, size: 20),
+                  icon: const Icon(
+                    Icons.arrow_back_ios_rounded,
+                    color: AppColors.white,
+                    size: 20,
+                  ),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 const SizedBox(width: 4),
@@ -602,7 +628,6 @@ class _StatusBanner extends StatelessWidget {
               ],
             ),
           ),
-
         ],
       ),
     );
@@ -683,10 +708,7 @@ class _ParentInfoWidget extends StatelessWidget {
   final DriverParentModel parent;
   final Function(String) onCallPhone;
 
-  const _ParentInfoWidget({
-    required this.parent,
-    required this.onCallPhone,
-  });
+  const _ParentInfoWidget({required this.parent, required this.onCallPhone});
 
   @override
   Widget build(BuildContext context) {
@@ -715,7 +737,9 @@ class _ParentInfoWidget extends StatelessWidget {
                     Text(
                       parent.gender == 'male'
                           ? 'ذكر'
-                          : (parent.gender == 'female' ? 'أنثى' : parent.gender!),
+                          : (parent.gender == 'female'
+                                ? 'أنثى'
+                                : parent.gender!),
                       style: AppTextStyles.style(
                         fontSize: 11.sp,
                         color: AppColors.textMuted,
@@ -737,8 +761,11 @@ class _ParentInfoWidget extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 10.h),
             child: Row(
               children: [
-                Icon(Icons.phone_outlined,
-                    size: 16.sp, color: AppColors.textMuted),
+                Icon(
+                  Icons.phone_outlined,
+                  size: 16.sp,
+                  color: AppColors.textMuted,
+                ),
                 SizedBox(width: 8.w),
                 Text(
                   'الهاتف: ',
@@ -762,8 +789,11 @@ class _ParentInfoWidget extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.phone_in_talk_rounded,
-                      size: 18.sp, color: AppColors.success),
+                  icon: Icon(
+                    Icons.phone_in_talk_rounded,
+                    size: 18.sp,
+                    color: AppColors.success,
+                  ),
                   onPressed: () => onCallPhone(parent.phone!),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -777,8 +807,11 @@ class _ParentInfoWidget extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 10.h),
             child: Row(
               children: [
-                Icon(Icons.phone_android_rounded,
-                    size: 16.sp, color: AppColors.textMuted),
+                Icon(
+                  Icons.phone_android_rounded,
+                  size: 16.sp,
+                  color: AppColors.textMuted,
+                ),
                 SizedBox(width: 8.w),
                 Text(
                   'هاتف بديل: ',
@@ -814,10 +847,7 @@ class _ChildrenListWidget extends StatelessWidget {
   final List<DriverChildModel> children;
   final Function(double, double) onOpenMap;
 
-  const _ChildrenListWidget({
-    required this.children,
-    required this.onOpenMap,
-  });
+  const _ChildrenListWidget({required this.children, required this.onOpenMap});
 
   @override
   Widget build(BuildContext context) {
@@ -930,8 +960,10 @@ class _ChildCard extends StatelessWidget {
               ),
               if (child.pricing?.priceAfterDiscount != null)
                 Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 5.h,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12.r),
@@ -957,23 +989,11 @@ class _ChildCard extends StatelessWidget {
             runSpacing: 6.h,
             children: [
               if (child.gender != null)
-                _buildBadge(
-                  child.genderDisplay,
-                  Icons.wc_rounded,
-                  isDark,
-                ),
+                _buildBadge(child.genderDisplay, Icons.wc_rounded, isDark),
               if (child.age != null)
-                _buildBadge(
-                  '${child.age} سنوات',
-                  Icons.cake_outlined,
-                  isDark,
-                ),
+                _buildBadge('${child.age} سنوات', Icons.cake_outlined, isDark),
               if (child.displayGrade.isNotEmpty)
-                _buildBadge(
-                  child.displayGrade,
-                  Icons.school_outlined,
-                  isDark,
-                ),
+                _buildBadge(child.displayGrade, Icons.school_outlined, isDark),
               if (child.distanceKm != null)
                 _buildBadge(
                   '${child.distanceKm} كم',
@@ -1003,8 +1023,10 @@ class _ChildCard extends StatelessWidget {
                     onPressed: () =>
                         onOpenMap(child.school!.lat!, child.school!.lng!),
                     icon: Icon(Icons.map_rounded, size: 14.sp),
-                    label: Text('خريطة',
-                        style: AppTextStyles.style(fontSize: 11.sp)),
+                    label: Text(
+                      'خريطة',
+                      style: AppTextStyles.style(fontSize: 11.sp),
+                    ),
                     style: TextButton.styleFrom(padding: EdgeInsets.zero),
                   ),
               ],
@@ -1085,8 +1107,11 @@ class _ChildCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.check_circle_outline_rounded,
-                          size: 13.sp, color: AppColors.primaryLight),
+                      Icon(
+                        Icons.check_circle_outline_rounded,
+                        size: 13.sp,
+                        color: AppColors.primaryLight,
+                      ),
                       SizedBox(width: 4.w),
                       Text(
                         'اشتراك الطفل المفعل: ${child.activeSubscription!.displayStatus}',

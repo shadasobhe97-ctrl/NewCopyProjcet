@@ -119,6 +119,62 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     return dateStr;
   }
 
+  Future<void> _pickExpiryDateForType(String typeKey) async {
+    TextEditingController? targetController;
+    String docTitle = '';
+    switch (typeKey.toUpperCase()) {
+      case 'LICENSE':
+      case 'DOC_LICENSE':
+        targetController = _licenseExpiryController;
+        docTitle = 'رخصة القيادة';
+        break;
+      case 'INSURANCE':
+      case 'DOC_INSURANCE':
+        targetController = _insuranceExpiryController;
+        docTitle = 'وثيقة التأمين';
+        break;
+      case 'STAMP':
+      case 'DOC_STAMP':
+        targetController = _stampExpiryController;
+        docTitle = 'صورة الدمغة';
+        break;
+      case 'TECHNICAL_INSPECTION':
+      case 'DOC_TECHNICAL_INSPECTION':
+      case 'INSPECTION':
+        targetController = _inspectionExpiryController;
+        docTitle = 'الفحص الفني';
+        break;
+    }
+    if (targetController == null || !mounted) return;
+
+    DateTime initial = DateTime.now().add(const Duration(days: 365));
+    if (targetController.text.trim().isNotEmpty) {
+      final parsed = DateTime.tryParse(targetController.text.trim());
+      if (parsed != null) initial = parsed;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('تم إرفاق صورة ($docTitle). يرجى الآن تحديد تاريخ الانتهاء الجديد.'),
+        backgroundColor: Colors.blue.shade700,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        targetController!.text =
+            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      });
+    }
+  }
+
   Future<void> _pickImageForDoc(String typeKey, ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -131,6 +187,14 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
         setState(() {
           _newFilesMap[typeKey] = image;
         });
+        // فتح التاريخ تلقائياً للوثائق ذات تاريخ الانتهاء
+        final upper = typeKey.toUpperCase();
+        if (upper == 'LICENSE' ||
+            upper == 'INSURANCE' ||
+            upper == 'STAMP' ||
+            upper == 'TECHNICAL_INSPECTION') {
+          await _pickExpiryDateForType(typeKey);
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -280,7 +344,7 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     });
   }
 
-  String? _validateRequiredImagesForChangedDates(
+  String? _validateRequiredImagesAndDates(
       DriverLegalDataModel currentData) {
     final expiry = _licenseExpiryController.text.trim();
     final insExpiry = _insuranceExpiryController.text.trim();
@@ -304,42 +368,84 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
           '',
     );
 
-    final List<String> missingDocs = [];
+    final List<String> missingImages = [];
+    final List<String> missingDates = [];
 
-    if (expiry.isNotEmpty &&
-        expiry != originalExpiry &&
-        !_hasNewFileFor('LICENSE')) {
-      missingDocs.add('رخصة القيادة');
+    // 1. رخصة القيادة (LICENSE)
+    final bool isLicDateChanged =
+        expiry.isNotEmpty && expiry != originalExpiry;
+    final bool isLicImageChanged = _hasNewFileFor('LICENSE');
+    if (isLicDateChanged && !isLicImageChanged) {
+      missingImages.add('رخصة القيادة');
     }
-    if (insExpiry.isNotEmpty &&
-        insExpiry != originalInsExpiry &&
-        !_hasNewFileFor('INSURANCE')) {
-      missingDocs.add('وثيقة التأمين');
-    }
-    if (stpExpiry.isNotEmpty &&
-        stpExpiry != originalStpExpiry &&
-        !_hasNewFileFor('STAMP')) {
-      missingDocs.add('صورة الدمغة');
-    }
-    if (inspExpiry.isNotEmpty &&
-        inspExpiry != originalInspExpiry &&
-        !_hasNewFileFor('TECHNICAL_INSPECTION')) {
-      missingDocs.add('الفحص الفني');
+    if (isLicImageChanged && !isLicDateChanged) {
+      missingDates.add('رخصة القيادة');
     }
 
-    if (missingDocs.isNotEmpty) {
-      if (missingDocs.length == 1) {
-        return 'لقد قمت بتعديل تاريخ انتهاء (${missingDocs.first})، يرجى إرفاق صورة الوثيقة المجددة لإثبات التعديل.';
+    // 2. وثيقة التأمين (INSURANCE)
+    final bool isInsDateChanged =
+        insExpiry.isNotEmpty && insExpiry != originalInsExpiry;
+    final bool isInsImageChanged = _hasNewFileFor('INSURANCE');
+    if (isInsDateChanged && !isInsImageChanged) {
+      missingImages.add('وثيقة التأمين');
+    }
+    if (isInsImageChanged && !isInsDateChanged) {
+      missingDates.add('وثيقة التأمين');
+    }
+
+    // 3. صورة الدمغة (STAMP)
+    final bool isStpDateChanged =
+        stpExpiry.isNotEmpty && stpExpiry != originalStpExpiry;
+    final bool isStpImageChanged = _hasNewFileFor('STAMP');
+    if (isStpDateChanged && !isStpImageChanged) {
+      missingImages.add('صورة الدمغة');
+    }
+    if (isStpImageChanged && !isStpDateChanged) {
+      missingDates.add('صورة الدمغة');
+    }
+
+    // 4. الفحص الفني (TECHNICAL_INSPECTION)
+    final bool isInspDateChanged =
+        inspExpiry.isNotEmpty && inspExpiry != originalInspExpiry;
+    final bool isInspImageChanged = _hasNewFileFor('TECHNICAL_INSPECTION');
+    if (isInspDateChanged && !isInspImageChanged) {
+      missingImages.add('الفحص الفني');
+    }
+    if (isInspImageChanged && !isInspDateChanged) {
+      missingDates.add('الفحص الفني');
+    }
+
+    final List<String> errorMessages = [];
+
+    if (missingImages.isNotEmpty) {
+      if (missingImages.length == 1) {
+        errorMessages.add(
+            'لقد قمت بتعديل تاريخ انتهاء (${missingImages.first})، يرجى إرفاق صورة الوثيقة المجددة لإثبات التعديل.');
       } else {
-        return 'يرجى إرفاق صور الوثائق المجددة التالية لإثبات تعديل تواريخها:\n• ${missingDocs.join("\n• ")}';
+        errorMessages.add(
+            'يرجى إرفاق صور الوثائق المجددة التالية لإثبات تعديل تواريخها:\n• ${missingImages.join("\n• ")}');
       }
+    }
+
+    if (missingDates.isNotEmpty) {
+      if (missingDates.length == 1) {
+        errorMessages.add(
+            'لقد قمت بإرفاق صورة جديدة لـ (${missingDates.first})، يرجى إدخال تاريخ الانتهاء الجديد للوثيقة المجددة.');
+      } else {
+        errorMessages.add(
+            'يرجى إدخال تواريخ الانتهاء الجديدة للوثائق التالية بعد إرفاق صورها:\n• ${missingDates.join("\n• ")}');
+      }
+    }
+
+    if (errorMessages.isNotEmpty) {
+      return errorMessages.join('\n\n');
     }
 
     return null;
   }
 
   void _submitUpdates(DriverLegalDataModel currentData) {
-    final validationError = _validateRequiredImagesForChangedDates(currentData);
+    final validationError = _validateRequiredImagesAndDates(currentData);
     if (validationError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -766,7 +872,7 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                           : () {
                               if (_formKey.currentState!.validate()) {
                                 final validationError =
-                                    _validateRequiredImagesForChangedDates(
+                                    _validateRequiredImagesAndDates(
                                         legalData);
                                 if (validationError != null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -826,7 +932,10 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     String? docExpiry;
     final typeUpper = fileModel.type.toUpperCase();
     bool isDateChangedForThisDoc = false;
+    bool hasExpiryField = false;
+
     if (typeUpper == 'LICENSE') {
+      hasExpiryField = true;
       docExpiry = fileModel.licenseExpiryDate ?? legalData.licenseExpiry;
       final currentExpiry = _formatCleanDate(
         _findDocExpiry(legalData, 'LICENSE') ?? legalData.licenseExpiry,
@@ -835,6 +944,7 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
       isDateChangedForThisDoc =
           editedExpiry.isNotEmpty && editedExpiry != currentExpiry;
     } else if (typeUpper == 'INSURANCE') {
+      hasExpiryField = true;
       docExpiry = fileModel.insuranceExpiryDate ?? legalData.insuranceExpiry;
       final currentExpiry = _formatCleanDate(
         _findDocExpiry(legalData, 'INSURANCE') ??
@@ -845,6 +955,7 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
       isDateChangedForThisDoc =
           editedExpiry.isNotEmpty && editedExpiry != currentExpiry;
     } else if (typeUpper == 'STAMP') {
+      hasExpiryField = true;
       docExpiry = fileModel.stampExpiryDate ?? legalData.stampExpiry;
       final currentExpiry = _formatCleanDate(
         _findDocExpiry(legalData, 'STAMP') ?? legalData.stampExpiry ?? '',
@@ -853,6 +964,7 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
       isDateChangedForThisDoc =
           editedExpiry.isNotEmpty && editedExpiry != currentExpiry;
     } else if (typeUpper == 'TECHNICAL_INSPECTION') {
+      hasExpiryField = true;
       docExpiry = fileModel.technicalInspectionExpiryDate ??
           legalData.technicalInspectionExpiry;
       final currentExpiry = _formatCleanDate(
@@ -866,7 +978,9 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     }
 
     final bool isMissingRequiredImage =
-        isEditing && isDateChangedForThisDoc && newFile == null;
+        isEditing && hasExpiryField && isDateChangedForThisDoc && newFile == null;
+    final bool isMissingRequiredDate =
+        isEditing && hasExpiryField && newFile != null && !isDateChangedForThisDoc;
 
     return Card(
       key: key,
@@ -1083,6 +1197,49 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                           color: Colors.amber.shade900,
                         ),
                       ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            // تنبيه مطلوبية التاريخ إذا تم إرفاق صورة جديدة
+            if (isMissingRequiredDate) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.shade700),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_month_rounded,
+                      size: 18,
+                      color: Colors.orange.shade900,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'تم إرفاق صورة جديدة. يلزم إدخال تاريخ الانتهاء الجديد.',
+                        style: AppTextStyles.style(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange.shade900,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _pickExpiryDateForType(fileModel.type),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      child: const Text('تحديد التاريخ'),
                     ),
                   ],
                 ),

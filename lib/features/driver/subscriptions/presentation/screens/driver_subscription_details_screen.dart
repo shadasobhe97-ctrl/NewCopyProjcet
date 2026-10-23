@@ -334,10 +334,8 @@ class _DriverSubscriptionDetailsScreenState
                                 SizedBox(
                                   width: double.infinity,
                                   child: OutlinedButton.icon(
-                                    onPressed: () => _openMap(
-                                      home.lat!,
-                                      home.lng!,
-                                    ),
+                                    onPressed: () =>
+                                        _openMap(home.lat!, home.lng!),
                                     icon: Icon(
                                       Icons.navigation_rounded,
                                       size: 16.sp,
@@ -691,7 +689,9 @@ class _ParentInfoWidget extends StatelessWidget {
                     Text(
                       parent.gender == 'male'
                           ? 'ذكر'
-                          : (parent.gender == 'female' ? 'أنثى' : parent.gender!),
+                          : (parent.gender == 'female'
+                                ? 'أنثى'
+                                : parent.gender!),
                       style: AppTextStyles.style(
                         fontSize: 11.sp,
                         color: AppColors.textMuted,

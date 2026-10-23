@@ -545,9 +545,6 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
                     _detailRow('الفترة', child.timingDisplayLabel, isDark),
                     _detailRow('وقت الاستلام', _formatTime(child.pickupTime), isDark),
                     _detailRow('وقت التسليم', _formatTime(child.dropoffTime), isDark),
-                    if (child.distanceKm != null)
-                      _detailRow('المسافة',
-                          '${child.distanceKm!.toStringAsFixed(1)} كم', isDark),
                     if (child.hasMedicalNotes.isNotEmpty)
                       _detailRow('ملاحظات طبية', child.hasMedicalNotes, isDark,
                           valueColor: AppColors.warning),
