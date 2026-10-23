@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import '../../data/models/subscription_location_model.dart';
@@ -53,6 +54,19 @@ class _SubscriptionMapScreenState extends State<SubscriptionMapScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          if (hasAnyLocation)
+            IconButton(
+              icon: const Icon(Icons.directions_rounded),
+              tooltip: 'فتح في تطبيق الخرائط',
+              onPressed: () {
+                final target = widget.pickupLocation ?? widget.dropoffLocation;
+                if (target != null && target.hasValidCoordinates) {
+                  _launchExternalMap(target.latitude!, target.longitude!);
+                }
+              },
+            ),
+        ],
       ),
       body: !hasAnyLocation
           ? Center(
@@ -248,5 +262,22 @@ class _SubscriptionMapScreenState extends State<SubscriptionMapScreen> {
       );
     }
     return const LatLng(32.8872, 13.1913); // fallback Tripoli center
+  }
+
+  Future<void> _launchExternalMap(double lat, double lng) async {
+    final googleMapsUrl = Uri.parse("google.navigation:q=$lat,$lng&mode=d");
+    final appleMapsUrl = Uri.parse("https://maps.apple.com/?q=$lat,$lng");
+    final webUrl =
+        Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng");
+
+    try {
+      if (await canLaunchUrl(googleMapsUrl)) {
+        await launchUrl(googleMapsUrl);
+      } else if (await canLaunchUrl(appleMapsUrl)) {
+        await launchUrl(appleMapsUrl);
+      } else if (await canLaunchUrl(webUrl)) {
+        await launchUrl(webUrl);
+      }
+    } catch (_) {}
   }
 }

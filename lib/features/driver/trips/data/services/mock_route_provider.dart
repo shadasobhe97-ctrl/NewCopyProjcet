@@ -5,6 +5,8 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:kids_transport/core/services/osrm_routing_service.dart';
 import 'package:kids_transport/features/driver/trips/data/models/driver_trip_stop_model.dart';
 import 'package:kids_transport/features/driver/trips/data/models/live_trip_child_item.dart';
 
@@ -182,14 +184,23 @@ class MockRouteProvider {
   Position? _smartPosition;
   Position? get currentSmartPosition => _smartPosition;
 
-  MockRouteProvider({this.tickInterval = const Duration(seconds: 2)});
+  MockRouteProvider({this.tickInterval = const Duration(milliseconds: 1500)});
 
   Stream<Position> get positions => _controller.stream;
+  List<MockRoutePoint> get points => _points;
 
   bool get isLoaded => _points.isNotEmpty || _smartPosition != null;
 
-  Position? get currentPosition =>
-      _smartPosition ?? (isLoaded && _points.isNotEmpty ? _points[_index].toPosition() : null);
+  Position? get currentPosition {
+    // إذا كان مسار النقاط التدريجي قيد الحركة أو تقدم فيه السائق، فالموقع هو نقطة المسار الحالية
+    if (_points.isNotEmpty && _index < _points.length) {
+      if (_timer != null || _index > 0 || _smartPosition == null) {
+        return _points[_index].toPosition();
+      }
+    }
+    // في حال عدم وجود مسار نقاط تدريجي أو قبل انطلاقه، يُستخدم الموقع الذكي إن وُجد
+    return _smartPosition ?? (isLoaded && _points.isNotEmpty ? _points[_index].toPosition() : null);
+  }
 
   /// تحديث وتثبيت إحداثيات المحاكي بناءً على مرحلة الرحلة الذكية
   void updateSmartPhase(SmartTripPhase phase) {
@@ -231,19 +242,23 @@ class MockRouteProvider {
     );
 
     _smartPosition = pos;
-    if (!_controller.isClosed) {
-      _controller.add(pos);
-    }
 
-    status.value = MockRouteStatus(
-      step: phase.index + 1,
-      total: 3,
-      isRunning: true,
-      isWaitingAtStop: false,
-      isFinished: false,
-      currentLeg: label,
-      stopName: label,
-    );
+    // إذا لم تكن هناك نقاط مسار تدريجي جارية، نبث الموقع الذكي ونحدث الحالة
+    if (_points.isEmpty || _timer == null) {
+      if (!_controller.isClosed) {
+        _controller.add(pos);
+      }
+
+      status.value = MockRouteStatus(
+        step: phase.index + 1,
+        total: 3,
+        isRunning: _timer != null,
+        isWaitingAtStop: false,
+        isFinished: false,
+        currentLeg: label,
+        stopName: label,
+      );
+    }
   }
 
   Future<void> load() async {
@@ -256,45 +271,225 @@ class MockRouteProvider {
     _updateStatus();
   }
 
-  /// توليد مسار محاكاة ديناميكي مبني مباشرة على محطات الرحلة الحقيقية [stops].
-  /// إذا كانت هناك محطة طوارئ/حافلة معطلة، تأتي أولاً حتماً لاستلام الطلاب العالقين،
-  /// ثم منازل الطلاب المتبقين، ثم المدارس.
-  void loadFromStops(List<DriverTripStopModel> stops, {Position? startPosition}) {
+  /// استخراج المحطات الفعلية مرتبة: محطة الطوارئ أولاً (إن وجدت)، ثم منازل الطلاب، ثم المدارس
+  static List<DriverTripStopModel> extractOrderedStops(List<DriverTripStopModel> stops) {
     final validStops = stops.where((s) => s.latitude != 0.0 && s.longitude != 0.0).toList();
-    if (validStops.isEmpty) return;
+    if (validStops.isEmpty) return const [];
 
-    // 1. محطة الطوارئ غير المنتهية (إن وُجدت) تأتي كأول وجهة إجبارياً
     final activeBreakdown = validStops.where((s) => s.isBreakdownTransfer && !s.isResolved).firstOrNull;
 
-    // 2. محطات المنازل غير المكتملة
     final homeStops = validStops
         .where((s) => !s.isBreakdownTransfer && s.isHome && !s.isResolved)
         .toList();
     homeStops.sort((a, b) => a.sequenceOrder.compareTo(b.sequenceOrder));
 
-    // 3. محطات المدارس غير المكتملة
     final schoolStops = validStops
         .where((s) => !s.isBreakdownTransfer && s.isSchool && !s.isResolved)
         .toList();
     schoolStops.sort((a, b) => a.sequenceOrder.compareTo(b.sequenceOrder));
 
-    final orderedStops = <DriverTripStopModel>[
+    final ordered = <DriverTripStopModel>[
       ?activeBreakdown,
       ...homeStops,
       ...schoolStops,
     ];
 
-    // في حال كانت كل المحطات مكتملة، نبقي المحطات بترتيبها المعتاد
-    if (orderedStops.isEmpty) {
-      orderedStops.addAll(validStops);
-      orderedStops.sort((a, b) => a.sequenceOrder.compareTo(b.sequenceOrder));
+    if (ordered.isEmpty) {
+      ordered.addAll(validStops);
+      ordered.sort((a, b) => a.sequenceOrder.compareTo(b.sequenceOrder));
     }
+    return ordered;
+  }
+
+  /// إعادة تقطيع مسار الشوارع الفعلي إلى نقاط منتظمة المسافة (مثلاً كل 18 متراً)
+  /// لضمان سرعة واقعية وحركة انسيابية على الشوارع والمنعطفات دون قفزات مفاجئة.
+  static List<LatLng> resampleRoadPoints(List<LatLng> rawPoints, double stepMeters) {
+    if (rawPoints.length < 2) return rawPoints;
+    const distanceCalc = Distance();
+    final resampled = <LatLng>[rawPoints.first];
+    double accumulatedDistance = 0.0;
+
+    for (int i = 0; i < rawPoints.length - 1; i++) {
+      final p1 = rawPoints[i];
+      final p2 = rawPoints[i + 1];
+      final segmentDist = distanceCalc.distance(p1, p2);
+
+      if (segmentDist <= 0.0) continue;
+
+      double progressInSegment = 0.0;
+      while (progressInSegment + (stepMeters - accumulatedDistance) <= segmentDist) {
+        final needed = stepMeters - accumulatedDistance;
+        progressInSegment += needed;
+        final t = (progressInSegment / segmentDist).clamp(0.0, 1.0);
+        final lat = p1.latitude + (p2.latitude - p1.latitude) * t;
+        final lng = p1.longitude + (p2.longitude - p1.longitude) * t;
+        resampled.add(LatLng(lat, lng));
+        accumulatedDistance = 0.0;
+      }
+      accumulatedDistance += (segmentDist - progressInSegment);
+    }
+
+    if (resampled.length < 2) {
+      resampled.add(rawPoints.last);
+    } else if (distanceCalc.distance(resampled.last, rawPoints.last) > 5.0) {
+      resampled.add(rawPoints.last);
+    }
+    return resampled;
+  }
+
+  /// توليد مسار المحاكاة بناءً على نقاط مسار الشوارع الفعلي [roadPoints]
+  /// المستخدم في رسم المسار على الخريطة ومحطات الرحلة [stops].
+  void loadFromRoadPoints({
+    required List<LatLng> roadPoints,
+    required List<DriverTripStopModel> stops,
+    Position? startPosition,
+  }) {
+    if (roadPoints.length < 2) return;
+    final orderedStops = extractOrderedStops(stops);
+    const distanceCalc = Distance();
+
+    // استيفاء مسار الشوارع بنقاط منتظمة كل 18.75 متراً مع فاصل 1.5 ثانية (12.5 م/ث = 45 كم/ساعة بدقة)
+    final resampled = resampleRoadPoints(roadPoints, 18.75);
+
+    // تحديد أقرب نقطة على الشارع لكل محطة
+    final stopIndices = <int, DriverTripStopModel>{};
+    for (final stop in orderedStops) {
+      final stopCoord = LatLng(stop.latitude, stop.longitude);
+      int bestIdx = -1;
+      double minD = double.infinity;
+      for (int i = 0; i < resampled.length; i++) {
+        final d = distanceCalc.distance(resampled[i], stopCoord);
+        if (d < minD) {
+          minD = d;
+          bestIdx = i;
+        }
+      }
+      if (bestIdx != -1) {
+        stopIndices[bestIdx] = stop;
+      }
+    }
+
+    final generated = <MockRoutePoint>[];
+    String currentLegName = orderedStops.isNotEmpty
+        ? (orderedStops.first.label.isNotEmpty
+            ? orderedStops.first.label
+            : (orderedStops.first.childName ?? orderedStops.first.schoolName ?? 'أول محطة'))
+        : 'المحطة الأولى';
+
+    for (int i = 0; i < resampled.length; i++) {
+      final p = resampled[i];
+      final nextP = i < resampled.length - 1 ? resampled[i + 1] : p;
+      final heading = (i < resampled.length - 1)
+          ? _calculateHeading(p.latitude, p.longitude, nextP.latitude, nextP.longitude)
+          : (generated.isNotEmpty ? generated.last.heading : 0.0);
+
+      final stop = stopIndices[i];
+      final isStop = stop != null;
+      if (isStop) {
+        currentLegName = stop.label.isNotEmpty
+            ? stop.label
+            : (stop.childName ?? stop.schoolName ?? 'محطة #${stop.sequenceOrder}');
+      }
+
+      generated.add(
+        MockRoutePoint(
+          latitude: p.latitude,
+          longitude: p.longitude,
+          speedKmh: isStop ? 0.0 : 45.0,
+          heading: heading,
+          isStop: isStop,
+          currentLeg: isStop ? 'وصل إلى: $currentLegName' : 'في الطريق إلى: $currentLegName',
+          stopName: isStop ? currentLegName : null,
+        ),
+      );
+    }
+
+    _points = generated;
+    _index = 0;
+    _waitingAtStop = false;
+    _updateStatus();
+  }
+
+  /// جلب مسار الشوارع الفعلي عبر [OsrmRoutingService] وتغذيته للمحاكاة
+  Future<void> loadFromStopsWithOsrm(
+    List<DriverTripStopModel> stops, {
+    Position? startPosition,
+    List<LatLng>? roadPoints,
+  }) async {
+    final orderedStops = extractOrderedStops(stops);
+    if (orderedStops.isEmpty) return;
+
+    // 1. إذا توفرت نقاط الشوارع مسبقاً من متتبع المسار
+    if (roadPoints != null && roadPoints.length >= 2) {
+      loadFromRoadPoints(
+        roadPoints: roadPoints,
+        stops: orderedStops,
+        startPosition: startPosition,
+      );
+      return;
+    }
+
+    // 2. طلب مسار الشوارع من OSRM
+    final double startLat;
+    final double startLng;
+    if (startPosition != null &&
+        startPosition.latitude != 0.0 &&
+        !startPosition.latitude.isNaN) {
+      startLat = startPosition.latitude;
+      startLng = startPosition.longitude;
+    } else {
+      startLat = orderedStops.first.latitude;
+      startLng = orderedStops.first.longitude;
+    }
+
+    final waypoints = <LatLng>[
+      LatLng(startLat, startLng),
+      ...orderedStops.map((s) => LatLng(s.latitude, s.longitude)),
+    ];
+
+    try {
+      final routeResult = await OsrmRoutingService.fetchRoute(waypoints);
+      if (routeResult.isRoad && routeResult.points.length >= 2) {
+        loadFromRoadPoints(
+          roadPoints: routeResult.points,
+          stops: orderedStops,
+          startPosition: startPosition,
+        );
+        return;
+      }
+    } catch (e) {
+      debugPrint('⚠️ [MockRouteProvider] تعذر جلب مسار الشوارع من OSRM: $e');
+    }
+
+    // Fallback: في حال عدم توفر اتصال بالإنترنت
+    loadFromStops(stops, startPosition: startPosition);
+  }
+
+  /// توليد مسار محاكاة ديناميكي مبني مباشرة على محطات الرحلة الحقيقية [stops].
+  void loadFromStops(
+    List<DriverTripStopModel> stops, {
+    Position? startPosition,
+    List<LatLng>? roadPoints,
+  }) {
+    if (roadPoints != null && roadPoints.length >= 2) {
+      loadFromRoadPoints(
+        roadPoints: roadPoints,
+        stops: stops,
+        startPosition: startPosition,
+      );
+      return;
+    }
+
+    final orderedStops = extractOrderedStops(stops);
+    if (orderedStops.isEmpty) return;
 
     final double startLat;
     final double startLng;
     final String startName;
 
-    if (startPosition != null && startPosition.latitude != 0.0) {
+    if (startPosition != null &&
+        startPosition.latitude != 0.0 &&
+        !startPosition.latitude.isNaN) {
       startLat = startPosition.latitude;
       startLng = startPosition.longitude;
       startName = 'موقع السائق الحالي';
@@ -329,7 +524,7 @@ class MockRouteProvider {
           MockRoutePoint(
             latitude: lat,
             longitude: lng,
-            speedKmh: isStop ? 0.0 : 40.0,
+            speedKmh: isStop ? 0.0 : 45.0,
             heading: heading,
             isStop: isStop,
             currentLeg: 'من [$prevName] إلى [$stopLabel]',
@@ -404,6 +599,12 @@ class MockRouteProvider {
     if (_points[_index].isStop) {
       _waitingAtStop = true;
       pause();
+      // استئناف الحركة تلقائياً بعد 4 ثوانٍ مع بقاء إمكانية الضغط على زر التكملة
+      Timer(const Duration(seconds: 4), () {
+        if (_waitingAtStop && !_isAtEnd) {
+          continueFromStop();
+        }
+      });
       return;
     }
     _updateStatus();

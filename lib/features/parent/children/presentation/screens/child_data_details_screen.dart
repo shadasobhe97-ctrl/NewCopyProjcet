@@ -47,11 +47,32 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
             errorMessage = error;
             isLoading = false;
           });
-        } else {
-          setState(() {
-            childDetails = result;
-            isLoading = false;
-          });
+        } else if (result != null) {
+          var updated = result.copyWith(
+            logistics: result.logistics ?? widget.child.logistics,
+            pickupTime: result.pickupTime ?? widget.child.pickupTime ?? widget.child.logistics?.pickupTime,
+            dropoffTime: result.dropoffTime ?? widget.child.dropoffTime ?? widget.child.logistics?.dropoffTime,
+          );
+
+          if (updated.effectivePickupTime == null || updated.effectiveDropoffTime == null) {
+            final (subLogistics, _) = await cubit.getChildSubscription(
+              widget.child.id.toString(),
+            );
+            if (subLogistics != null && mounted) {
+              updated = updated.copyWith(
+                logistics: updated.logistics ?? subLogistics,
+                pickupTime: updated.pickupTime ?? subLogistics.pickupTime,
+                dropoffTime: updated.dropoffTime ?? subLogistics.dropoffTime,
+              );
+            }
+          }
+
+          if (mounted) {
+            setState(() {
+              childDetails = updated;
+              isLoading = false;
+            });
+          }
         }
       }
     } catch (_) {
@@ -79,6 +100,36 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
     final slot = child.logistics?.preferredTimeSlot;
     if (slot == 'evening') return 'مسائي';
     return 'صباحي';
+  }
+
+  String _formatTime(String? raw) {
+    if (raw == null || raw.trim().isEmpty || raw.trim() == 'null') {
+      return 'غير محدد';
+    }
+    final clean = raw.trim();
+    if (clean.contains('صباح') || clean.contains('مساء')) {
+      return clean;
+    }
+    final parts = clean.split(':');
+    if (parts.length >= 2) {
+      final h = int.tryParse(parts[0]);
+      final secondPart = parts[1].split(' ').first;
+      final m = int.tryParse(secondPart);
+      if (h != null && m != null) {
+        var hour = h;
+        final isPm = clean.toUpperCase().contains('PM');
+        final isAm = clean.toUpperCase().contains('AM');
+        if (isPm && hour < 12) hour += 12;
+        if (isAm && hour == 12) hour = 0;
+
+        final period = hour >= 12 ? 'مساءً' : 'صباحًا';
+        final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+        final hourStr = displayHour.toString().padLeft(2, '0');
+        final minStr = m.toString().padLeft(2, '0');
+        return '$hourStr:$minStr $period';
+      }
+    }
+    return clean;
   }
 
   @override
@@ -342,6 +393,16 @@ class _ChildDataDetailsScreenState extends State<ChildDataDetailsScreen> {
                         _buildField(
                           label: 'فترة التوصيل المفضلة',
                           value: _getPreferredSlotText(activeChild),
+                        ),
+                        SizedBox(height: 10.h),
+                        _buildField(
+                          label: 'موعد الاستلام',
+                          value: _formatTime(activeChild.effectivePickupTime),
+                        ),
+                        SizedBox(height: 10.h),
+                        _buildField(
+                          label: 'موعد التسليم',
+                          value: _formatTime(activeChild.effectiveDropoffTime),
                         ),
                         if (activeChild.medicalNotes != null &&
                             activeChild.medicalNotes!.isNotEmpty) ...[

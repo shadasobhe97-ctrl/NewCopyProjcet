@@ -294,11 +294,12 @@ class AppRoutes {
       case parentHomeLegacy:
         return _route(settings, const ParentHomeScreen());
       case parentProfile:
+        final startInEdit = settings.arguments is bool ? settings.arguments as bool : false;
         return _route(
           settings,
           BlocProvider.value(
             value: getIt<ParentProfileCubit>(),
-            child: const ParentProfileScreen(),
+            child: ParentProfileScreen(startInEditMode: startInEdit),
           ),
         );
       case savedAddresses:

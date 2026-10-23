@@ -9,6 +9,8 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import 'package:kids_transport/features/driver/requests/logic/driver_requests_cubit.dart';
 import 'package:kids_transport/features/driver/requests/data/models/driver_request_model.dart';
+import 'package:kids_transport/features/parent/subscriptions/data/models/subscription_location_model.dart';
+import 'package:kids_transport/features/parent/subscriptions/presentation/screens/subscription_map_screen.dart';
 
 /// شاشة تفاصيل طلب الاشتراك الموحد للسائق
 class DriverRequestDetailsScreen extends StatefulWidget {
@@ -44,29 +46,21 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
     }
   }
 
-  Future<void> _openMap(double lat, double lng) async {
-    final googleMapsUrl = Uri.parse("google.navigation:q=$lat,$lng&mode=d");
-    final appleMapsUrl = Uri.parse("https://maps.apple.com/?q=$lat,$lng");
-    final webUrl =
-        Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng");
-
-    try {
-      if (await canLaunchUrl(googleMapsUrl)) {
-        await launchUrl(googleMapsUrl);
-      } else if (await canLaunchUrl(appleMapsUrl)) {
-        await launchUrl(appleMapsUrl);
-      } else if (await canLaunchUrl(webUrl)) {
-        await launchUrl(webUrl);
-      } else {
-        throw 'No map app';
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر فتح تطبيق الخرائط.')),
-        );
-      }
-    }
+  Future<void> _openMap(double lat, double lng, {String? title, String? address}) async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SubscriptionMapScreen(
+          title: title ?? 'عرض الموقع على الخريطة',
+          pickupLocation: SubscriptionLocationModel(
+            name: address ?? 'الموقع المحدد',
+            address: address,
+            latitude: lat,
+            longitude: lng,
+          ),
+        ),
+      ),
+    );
   }
 
   String _formatDate(String? raw) {
@@ -181,12 +175,12 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
                     ),
                     SizedBox(height: 12.h),
 
-                    // 4. عنوان الانطلاق
+                    // 4. عنوان المنزل
                     if (request.homeAddress != null) ...[
                       _SectionCard(
                         icon: Icons.home_rounded,
                         iconColor: AppColors.warning,
-                        title: 'عنوان الانطلاق',
+                        title: 'عنوان المنزل',
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -203,12 +197,14 @@ class _DriverRequestDetailsScreenState extends State<DriverRequestDetailsScreen>
                                   onPressed: () => _openMap(
                                     request.homeAddress!.lat!,
                                     request.homeAddress!.lng!,
+                                    title: 'موقع المنزل على الخريطة',
+                                    address: request.homeAddress!.displayName,
                                   ),
                                   icon: Icon(Icons.navigation_rounded,
                                       size: 16.sp,
                                       color: context.primaryColor),
                                   label: Text(
-                                    'عرض موقع الانطلاق على الخريطة',
+                                    'عرض على الخريطة',
                                     style: AppTextStyles.style(
                                       fontSize: 12.sp,
                                       fontWeight: FontWeight.bold,

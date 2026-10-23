@@ -281,21 +281,31 @@ class _DrawerHeader extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // ── أفاتار ولي الأمر مع صورة من API ──
-                  Container(
-                    decoration: AppTheme.boxDecoration(
-                      shape: BoxShape.circle,
-                      border: AppTheme.border(
-                        color: AppColors.white.withValues(alpha: 0.4),
-                        width: 3,
+                  GestureDetector(
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await Navigator.pushNamed(context, AppRoutes.parentProfile);
+                      if (context.mounted) {
+                        try {
+                          context.read<ParentProfileCubit>().fetchProfile();
+                        } catch (_) {}
+                      }
+                    },
+                    child: Container(
+                      decoration: AppTheme.boxDecoration(
+                        shape: BoxShape.circle,
+                        border: AppTheme.border(
+                          color: AppColors.white.withValues(alpha: 0.4),
+                          width: 3,
+                        ),
                       ),
-                    ),
-                    child: AppUserAvatar(
-                      image: avatarUrl,
-                      radius: 38,
-                      backgroundColor: AppColors.white24,
-iconColor: AppColors.white,
-                      iconSize: 38,
-
+                      child: AppUserAvatar(
+                        image: avatarUrl,
+                        radius: 38,
+                        backgroundColor: AppColors.white24,
+                        iconColor: AppColors.white,
+                        iconSize: 38,
+                      ),
                     ),
                   ),
                   Container(
@@ -319,14 +329,25 @@ iconColor: AppColors.white,
                 ],
               ),
               const SizedBox(height: 14),
-              Text(
-                fullName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.style(
-                  color: AppColors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: () async {
+                  Navigator.pop(context);
+                  await Navigator.pushNamed(context, AppRoutes.parentProfile);
+                  if (context.mounted) {
+                    try {
+                      context.read<ParentProfileCubit>().fetchProfile();
+                    } catch (_) {}
+                  }
+                },
+                child: Text(
+                  fullName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.style(
+                    color: AppColors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const SizedBox(height: 4),

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:kids_transport/features/driver/trips/data/services/mock_route_provider.dart';
 
 import 'package:kids_transport/features/driver/trips/data/models/driver_trip_stop_model.dart';
@@ -23,17 +24,22 @@ class DriverLocationSource {
 
   bool get isMock => kDebugMode && mockEnabled.value;
 
-  /// يفعّل/يلغي المحاكاة. لو تم تمرير [stops] يتم توليد المسار بناءً على المحطات الفعلية،
-  /// مع إعطاء الأولوية القصوى لمحطة الحافلة المتعطلة (إن وُجدت).
+  /// يفعّل/يلغي المحاكاة. لو تم تمرير [stops] يتم توليد مسار الشوارع الفعلي عبر OSRM
+  /// بناءً على المحطات الفعلية ونقاط مسار الطريق [roadPoints].
   Future<void> setMockEnabled(
     bool enabled, {
     List<DriverTripStopModel>? stops,
     Position? currentPosition,
+    List<LatLng>? roadPoints,
   }) async {
     if (!kDebugMode) return;
     if (enabled) {
       if (stops != null && stops.isNotEmpty) {
-        mockRoute.loadFromStops(stops, startPosition: currentPosition);
+        await mockRoute.loadFromStopsWithOsrm(
+          stops,
+          startPosition: currentPosition,
+          roadPoints: roadPoints,
+        );
       } else {
         await mockRoute.load();
       }

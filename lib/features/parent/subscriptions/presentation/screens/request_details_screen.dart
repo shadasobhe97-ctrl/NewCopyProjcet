@@ -7,6 +7,8 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import '../../logic/requests_cubit/requests_cubit.dart';
 import '../../data/models/request_model.dart';
+import '../../data/models/subscription_location_model.dart';
+import 'subscription_map_screen.dart';
 
 class RequestDetailsScreen extends StatefulWidget {
   final RequestModel request;
@@ -478,6 +480,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
   // ── المنزل ──
   Widget _buildHomeCard(RequestModel req, ThemeData theme, bool isDark) {
     final home = req.homeAddress!;
+    final hasCoords = home.lat != null && home.lng != null;
     return _cardWithTitle(
       theme: theme,
       isDark: isDark,
@@ -486,12 +489,61 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
       child: Column(
         children: [
           if (home.label != null) _row('العنوان', home.label!, isDark),
-          if (home.lat != null && home.lng != null)
-            _row(
-              'الإحداثيات',
-              '${home.lat!.toStringAsFixed(4)}, ${home.lng!.toStringAsFixed(4)}',
-              isDark,
+          if (hasCoords) ...[
+            SizedBox(height: 10.h),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SubscriptionMapScreen(
+                        title: 'موقع المنزل على الخريطة',
+                        pickupLocation: SubscriptionLocationModel(
+                          name: 'المنزل',
+                          address: home.label ?? 'عنوان المنزل',
+                          latitude: home.lat,
+                          longitude: home.lng,
+                        ),
+                        dropoffLocation: (req.children.isNotEmpty &&
+                                req.children.first.school.lat != null &&
+                                req.children.first.school.lng != null)
+                            ? SubscriptionLocationModel(
+                                name: req.children.first.school.name,
+                                latitude: req.children.first.school.lat,
+                                longitude: req.children.first.school.lng,
+                              )
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+                icon: Icon(
+                  Icons.map_rounded,
+                  size: 18.sp,
+                  color: theme.colorScheme.primary,
+                ),
+                label: Text(
+                  'عرض على الخريطة',
+                  style: AppTextStyles.style(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 10.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+              ),
             ),
+          ],
         ],
       ),
     );

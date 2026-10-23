@@ -91,11 +91,12 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
   /// عند التبديل بين GPS الحقيقي والمحاكاة نعيد الاشتراك بالمصدر الجديد
   void _onLocationModeChanged() {
     if (!mounted) return;
-    // الخريطة تُعاد بناؤها، فنوقف تتبع الكاميرا لين onMapReady من جديد
-    setState(() {
-      _isLocating = true;
-      _mapReady = false;
-    });
+    // لا نلغي جاهزية الخريطة (_mapReady) إذا كانت الخريطة منشأة بالفعل لتفادي توقف الكاميرا
+    if (_driverPosition == null) {
+      setState(() {
+        _isLocating = true;
+      });
+    }
     _listenToPosition();
   }
 
@@ -104,10 +105,12 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
     try {
       final state = context.read<LiveTripCubit>().state;
       final stops = state is LiveTripLoaded ? state.stops : null;
+      final roadPoints = _routeTracker.remaining?.points;
       await _locationSource.setMockEnabled(
         enable,
         stops: stops,
         currentPosition: _driverPosition,
+        roadPoints: (roadPoints != null && roadPoints.length >= 2) ? roadPoints : null,
       );
       if (enable && state is LiveTripLoaded) {
         final phase = evaluateSmartTripPhase(
@@ -142,14 +145,25 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
       final initialPosition = await _locationSource.getCurrentPosition();
       if (generation != _listenGeneration) return;
       debugPrint(
-        '📍 [LiveTripScreen] أول إحداثي GPS: lat=${initialPosition.latitude}, lng=${initialPosition.longitude}',
+        '📍 [LiveTripScreen] أول إحداثي: lat=${initialPosition.latitude}, lng=${initialPosition.longitude}',
       );
       if (mounted) {
-        _busMotion.moveTo(LatLng(initialPosition.latitude, initialPosition.longitude));
-        setState(() {
-          _driverPosition = initialPosition;
-          _isLocating = false;
-        });
+        final initLat = initialPosition.latitude;
+        final initLng = initialPosition.longitude;
+        if (!initLat.isNaN &&
+            !initLat.isInfinite &&
+            !initLng.isNaN &&
+            !initLng.isInfinite &&
+            initLat.abs() <= 90 &&
+            initLng.abs() <= 180) {
+          _busMotion.moveTo(LatLng(initLat, initLng));
+          setState(() {
+            _driverPosition = initialPosition;
+            _isLocating = false;
+          });
+        } else {
+          setState(() => _isLocating = false);
+        }
       }
 
       if (!mounted) return;
@@ -157,11 +171,23 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
         (position) {
           // فحص احترازي: نتأكد إن الـ Stream ينبض ولا يتوقف بسبب توفير الطاقة بالنظام
           debugPrint(
-            '📍 [LiveTripScreen] تحديث GPS: lat=${position.latitude}, lng=${position.longitude}, '
+            '📍 [LiveTripScreen] تحديث الموقع: lat=${position.latitude}, lng=${position.longitude}, '
             'heading=${position.heading}°, speed=${position.speed} م/ث',
           );
           if (!mounted) return;
-          final isMoving = _busMotion.moveTo(LatLng(position.latitude, position.longitude));
+          // تجاهل تحديثات الموقع التي تحتوي على قيم غير صالحة (NaN أو Infinity أو خارج نطاق الأرض)
+          final lat = position.latitude;
+          final lng = position.longitude;
+          if (lat.isNaN ||
+              lat.isInfinite ||
+              lng.isNaN ||
+              lng.isInfinite ||
+              lat.abs() > 90 ||
+              lng.abs() > 180) {
+            debugPrint('⚠️ [LiveTripScreen] تجاهل إحداثي غير صالح: lat=$lat, lng=$lng');
+            return;
+          }
+          final isMoving = _busMotion.moveTo(LatLng(lat, lng));
           setState(() => _driverPosition = position);
           _followDriver(position, isMoving: isMoving);
         },
@@ -179,8 +205,19 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
   /// حتى تقعد الحافلة في نص الشاشة بدل ما تسبقها الكاميرا
   void _followDriver(Position position, {bool isMoving = false}) {
     if (!_mapReady) return;
+    final lat = position.latitude;
+    final lng = position.longitude;
+    // لا نحرّك الكاميرا إلى إحداثيات غير صالحة
+    if (lat.isNaN ||
+        lat.isInfinite ||
+        lng.isNaN ||
+        lng.isInfinite ||
+        lat.abs() > 90 ||
+        lng.abs() > 180) {
+      return;
+    }
     _animatedMapController.animateTo(
-      dest: LatLng(position.latitude, position.longitude),
+      dest: LatLng(lat, lng),
       zoom: _animatedMapController.mapController.camera.zoom,
       duration: isMoving ? _busMotion.currentDuration : null,
       curve: isMoving ? Curves.linear : null,
@@ -1388,7 +1425,11 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
     final Widget? busIcon = _driverPosition == null
         ? null
         : Transform.rotate(
-            angle: _driverPosition!.heading * math.pi / 180,
+            angle: (() {
+              final h = _driverPosition!.heading;
+              // بعض أجهزة Android تُعطي heading=NaN — نستعيض عنه بصفر (اتجاه شمالي)
+              return (h.isNaN || h.isInfinite) ? 0.0 : (h * math.pi / 180);
+            })(),
             child: Container(
               decoration: BoxDecoration(
                 color: AppColors.primaryLight,
