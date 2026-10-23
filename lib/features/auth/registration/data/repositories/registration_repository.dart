@@ -94,6 +94,22 @@ class RegistrationRepository {
     }
   }
 
+  Future<Map<String, dynamic>> addDriverAddress({
+    required String token,
+    required String label,
+    required double lat,
+    required double lng,
+    int? zoneId,
+  }) async {
+    return await _driverDataSource.addAddress(
+      token: token,
+      label: label,
+      lat: lat,
+      lng: lng,
+      zoneId: zoneId,
+    );
+  }
+
   // ==================== Parent ====================
 
   Future<Map<String, dynamic>> sendParentOtp(String email) async {

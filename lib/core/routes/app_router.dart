@@ -41,6 +41,8 @@ import 'package:kids_transport/features/driver/driver_preferences/logic/driver_p
 import 'package:kids_transport/features/driver/driver_preferences/presentation/screens/driver_preferences_screen.dart';
 import 'package:kids_transport/features/driver/subscriptions/presentation/screens/driver_subscription_details_screen.dart';
 import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
+import 'package:kids_transport/features/driver/address/presentation/screens/driver_address_details_screen.dart';
+import 'package:kids_transport/features/driver/address/logic/driver_address_cubit.dart';
 
 // Driver Trips Feature
 import 'package:kids_transport/features/driver/trips/presentation/screens/trip_details_screen.dart'
@@ -201,6 +203,7 @@ class AppRoutes {
   static const String driverVehicleStage = '/driverVehicleStage';
   static const String driverDocsStage = '/driverDocsStage';
   static const String driverLocation = '/driverLocation';
+  static const String driverAddress = '/driverAddress';
   static const String driverWaiting = '/driverWaiting';
   static const String driverSubscriptionDetails = '/driverSubscriptionDetails';
 
@@ -496,11 +499,17 @@ class AppRoutes {
       /*case driverBackupVehicle:
         return _route(settings, const DriverBackupVehicleScreen());*/
       case driverPrimaryVehicle:
+        final initialIndex = settings.arguments is int
+            ? settings.arguments as int
+            : (settings.arguments is Map &&
+                    (settings.arguments as Map)['initial_index'] is int
+                ? (settings.arguments as Map)['initial_index'] as int
+                : 0);
         return _route(
           settings,
           BlocProvider(
             create: (_) => driverSl<VehicleCubit>(),
-            child: const DriverPrimaryVehicleScreen(),
+            child: DriverPrimaryVehicleScreen(initialIndex: initialIndex),
           ),
         );
       case driverProfile:
@@ -526,6 +535,14 @@ class AppRoutes {
         return _route(settings, DriverDocsStageScreen(finalData: args));
       case driverLocation:
         return _route(settings, const DriverLocationScreen());
+      case driverAddress:
+        return _route(
+          settings,
+          BlocProvider(
+            create: (_) => driverSl<DriverAddressCubit>()..fetchAddress(),
+            child: const DriverAddressDetailsScreen(),
+          ),
+        );
       case driverWaiting:
         return _route(settings, const DriverWaitingScreen());
       case driverPreferences:

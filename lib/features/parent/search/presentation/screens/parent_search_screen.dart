@@ -41,6 +41,7 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
   String _driverGender = 'both'; // للفلتر بعد النتائج
   bool _hasAcOnly = false; // للفلتر بعد النتائج
   bool _isSubscriptionSearch = false; // تمييز نتائج البحث المبني على بيانات الاشتراك
+  bool _showSearchHint = true; // إظهار بطاقة التلميح مع إمكانية إغلاقها
   final List<int> _selectedKidsIds = [];
   String _subscriptionType = 'multi_day';
   String _tripDirection = 'go';
@@ -616,7 +617,7 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                   border: InputBorder.none,
                                   enabledBorder: InputBorder.none,
                                   focusedBorder: InputBorder.none,
-                                  hintText: 'ادخل اسم أو رقم السائق',
+                                  hintText: 'ادخل اسم أو رقم سائق تعرفه',
                                   hintStyle: AppTextStyles.style(
                                     fontSize: 13.sp,
                                     color: isDark
@@ -743,7 +744,7 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      'بحث عن سائق مناسب',
+                                      'سائق يناسب احتياجاتك',
                                       style: AppTextStyles.style(
                                         fontSize: 14.5.sp,
                                         fontWeight: FontWeight.bold,
@@ -754,6 +755,97 @@ class _ParentSearchScreenState extends State<ParentSearchScreen> {
                                 ),
                               ),
                             ),
+
+                            // 💡 تلميح توضيحي قابل للإغلاق تحت خيار "سائق يناسب احتياجاتك"
+                            if (_showSearchHint) ...[
+                              SizedBox(height: 12.h),
+                              Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 14.w,
+                                  vertical: 12.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? const Color(0xFF1E293B)
+                                      : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(16.r),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? AppColors.grey700
+                                        : const Color(0xFFCBD5E1),
+                                    width: 1.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(6.r),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary
+                                            .withValues(alpha: 0.12),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.lightbulb_outline_rounded,
+                                        color: AppColors.primary,
+                                        size: 18,
+                                      ),
+                                    ),
+                                    SizedBox(width: 10.w),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'مش عارف أي سائق تختار؟',
+                                            style: AppTextStyles.style(
+                                              fontSize: 13.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: isDark
+                                                  ? AppColors.white
+                                                  : AppColors.textDark,
+                                            ),
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          Text(
+                                            'اختار أطفالك والفترة الدراسية ، ونساعدوك تلقى السائق الأنسب لاحتياجاتك.',
+                                            style: AppTextStyles.style(
+                                              fontSize: 11.5.sp,
+                                              color: isDark
+                                                  ? AppColors.grey400
+                                                  : AppColors.grey700,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(width: 6.w),
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _showSearchHint = false;
+                                        });
+                                      },
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      child: Padding(
+                                        padding: EdgeInsets.all(4.r),
+                                        child: Icon(
+                                          Icons.close_rounded,
+                                          size: 18.r,
+                                          color: isDark
+                                              ? AppColors.grey400
+                                              : AppColors.grey500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
 
                             SizedBox(height: 20.h),
 

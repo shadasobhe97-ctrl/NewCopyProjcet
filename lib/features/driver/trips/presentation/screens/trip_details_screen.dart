@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -295,34 +294,13 @@ class _ChildTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              if (child.photo != null && child.photo!.isNotEmpty) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(13),
-                  child: CachedNetworkImage(
-                    imageUrl: AppUserAvatar.resolveUrl(child.photo) ?? '',
-                    httpHeaders: AppUserAvatar.imageHeaders,
-                    width: 26,
-                    height: 26,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => SizedBox(
-                      width: 26,
-                      height: 26,
-                      child: Center(
-                        child: SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.5,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => const SizedBox.shrink(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
+AppUserAvatar(
+                image: child.photo,
+                radius: 14,
+                defaultIcon: Icons.child_care_rounded,
+                iconSize: 16,
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   child.name,

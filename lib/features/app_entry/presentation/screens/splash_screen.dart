@@ -9,6 +9,7 @@ import 'package:kids_transport/core/utils/app_image_helper.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_cubit.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_state.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
+import 'package:kids_transport/features/terms/presentation/screens/terms_and_conditions_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -189,6 +190,18 @@ class _SplashScreenState extends State<SplashScreen> {
             context,
             AppRoutes.driverPreferences,
             arguments: true, // isMandatory = true
+          );
+        } else if (state is NavigateToDriverLocationRequired) {
+          Navigator.pushReplacementNamed(context, AppRoutes.driverLocation);
+        } else if (state is NavigateToDriverTermsRequired) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const TermsAndConditionsScreen(
+                audience: 'driver',
+                isRegistrationFlow: true,
+              ),
+            ),
           );
         } else if (state is NavigateToResumeDriverRegistration) {
           _showResumeRegistrationDialog(context, state);

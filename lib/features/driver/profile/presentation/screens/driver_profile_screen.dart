@@ -29,6 +29,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   final _formKey = GlobalKey<FormState>();
 
   dynamic _avatarImage;
+  bool _removeAvatar = false;
   final ImagePicker _picker = ImagePicker();
   String? _avatarUrl;
 
@@ -104,9 +105,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
       _backupPhoneController.text = _backupPhone;
     }
     if (_emailController.text != _email) _emailController.text = _email;
+    _removeAvatar = false;
   }
-
-
 
   Future<void> _pickImage(ImageSource source) async {
     Navigator.pop(context);
@@ -120,6 +120,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
       if (image != null) {
         setState(() {
           _avatarImage = image;
+          _removeAvatar = false;
         });
       }
     } catch (e) {
@@ -130,7 +131,20 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     }
   }
 
+  void _removePhoto() {
+    Navigator.pop(context);
+    setState(() {
+      _avatarImage = null;
+      _avatarUrl = null;
+      _removeAvatar = true;
+    });
+  }
+
   void _showImageSourceBottomSheet() {
+    final hasAvatar =
+        _avatarImage != null ||
+        (_avatarUrl != null && _avatarUrl!.trim().isNotEmpty);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: context.cardSurface,
@@ -169,6 +183,21 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   title: const Text('اختيار من المعرض'),
                   onTap: () => _pickImage(ImageSource.gallery),
                 ),
+                if (hasAvatar)
+                  ListTile(
+                    leading: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: AppColors.error,
+                    ),
+                    title: Text(
+                      'إزالة الصورة الحالية',
+                      style: AppTextStyles.style(
+                        color: AppColors.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: _removePhoto,
+                  ),
               ],
             ),
           ),
@@ -204,6 +233,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
               : null,
           gender: _gender,
           avatarFile: _avatarImage,
+          removeAvatar: _removeAvatar,
         );
       } catch (_) {}
     }
@@ -415,6 +445,36 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                                         size: 18,
                                       ),
                                       onPressed: _showImageSourceBottomSheet,
+                                      tooltip: 'تغيير الصورة',
+                                    ),
+                                  ),
+                                ),
+                              if (_isEditing &&
+                                  (_avatarImage != null ||
+                                      (_avatarUrl != null &&
+                                          _avatarUrl!.trim().isNotEmpty)))
+                                Positioned(
+                                  bottom: 0,
+                                  left: 0,
+                                  child: Container(
+                                    decoration: AppTheme.boxDecoration(
+                                      color: AppColors.error,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: IconButton(
+                                      icon: const Icon(
+                                        Icons.delete_outline_rounded,
+                                        color: AppColors.white,
+                                        size: 18,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _avatarImage = null;
+                                          _avatarUrl = null;
+                                          _removeAvatar = true;
+                                        });
+                                      },
+                                      tooltip: 'إزالة الصورة',
                                     ),
                                   ),
                                 ),

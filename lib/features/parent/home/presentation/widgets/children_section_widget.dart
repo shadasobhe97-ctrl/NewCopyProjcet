@@ -5,6 +5,7 @@ import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
+import 'package:kids_transport/core/widgets/app_section_header.dart';
 import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
@@ -53,51 +54,28 @@ class ChildrenSectionWidget extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── هيدر القسم: أطفالي + عدد الأطفال + عرض الكل ──
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      'أطفالي',
-                      style: AppTextStyles.style(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? AppColors.white : AppColors.textDark,
-                      ),
-                    ),
-                    if (countText.isNotEmpty) ...[
-                      SizedBox(width: 6.w),
-                      Text(
-                        countText,
-                        style: AppTextStyles.style(
-                          fontSize: 11.sp,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                InkWell(
-                  onTap: onViewAll ??
-                      () => Navigator.pushNamed(context, AppRoutes.myChildren),
-                  borderRadius: BorderRadius.circular(8.r),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-                    child: Text(
-                      'عرض الكل',
-                      style: AppTextStyles.style(
-                        fontSize: 11.5.sp,
-                        fontWeight: FontWeight.bold,
-                        color: primaryColor,
-                      ),
+            // ── هيدر القسم مع خط رصاصي أنيق وعنوان بلون رمادي داكن ──
+            AppSectionHeader(
+              title: countText.isNotEmpty ? 'أطفالي $countText' : 'أطفالي',
+              icon: Icons.family_restroom_rounded,
+              actionWidget: InkWell(
+                onTap: onViewAll ??
+                    () => Navigator.pushNamed(context, AppRoutes.myChildren),
+                borderRadius: BorderRadius.circular(8.r),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                  child: Text(
+                    'عرض الكل',
+                    style: AppTextStyles.style(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 6.h),
 
             // ── قائمة أفقية بأسلوب الماسنجر (الأفاتار + الاسم فقط) ──
             SizedBox(

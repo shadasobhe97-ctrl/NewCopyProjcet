@@ -1,5 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:kids_transport/core/utils/app_image_helper.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
@@ -91,7 +90,8 @@ class ParentDrawer extends StatelessWidget {
             width: MediaQuery.of(context).size.width * 0.82,
             shape: AppTheme.roundedRectangleBorder(
               borderRadius: AppTheme.horizontalRadius(
-                  left: AppTheme.cornerRadius(24)),
+                left: AppTheme.cornerRadius(24),
+              ),
             ),
             child: Column(
               children: [
@@ -108,10 +108,17 @@ class ParentDrawer extends StatelessWidget {
                         icon: Icons.person_outline_rounded,
                         iconColor: context.primaryColor,
                         label: 'الملف الشخصي',
-                        onTap: () {
+                        onTap: () async {
                           Navigator.pop(context);
-                          Navigator.pushNamed(
-                              context, AppRoutes.parentProfile);
+                          await Navigator.pushNamed(
+                            context,
+                            AppRoutes.parentProfile,
+                          );
+                          if (context.mounted) {
+                            try {
+                              context.read<ParentProfileCubit>().fetchProfile();
+                            } catch (_) {}
+                          }
                         },
                       ),
                       AppDrawerItem(
@@ -128,22 +135,16 @@ class ParentDrawer extends StatelessWidget {
                         },
                       ),
                       AppDrawerItem(
-                        icon: Icons.location_on_outlined,
-                        iconColor: context.successColor,
-                        label: 'عنواني',
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.pushNamed(
-                              context, AppRoutes.savedAddresses);
-                        },
-                      ),
-                      AppDrawerItem(
+AppDrawerItem(
                         icon: Icons.directions_bus_rounded,
                         iconColor: context.primaryColor,
                         label: 'جدول رحلات أطفالي',
                         onTap: () {
                           Navigator.pop(context);
-                          Navigator.pushNamed(context, AppRoutes.parentTripsHome);
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.parentTripsHome,
+                          );
                         },
                       ),
                       AppDrawerItem(
@@ -152,7 +153,10 @@ class ParentDrawer extends StatelessWidget {
                         label: 'التتبع المباشر للرحلات 🟢',
                         onTap: () {
                           Navigator.pop(context);
-                          Navigator.pushNamed(context, AppRoutes.parentTripTracking);
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.parentTripTracking,
+                          );
                         },
                       ),
                       AppDrawerItem(
@@ -170,7 +174,10 @@ class ParentDrawer extends StatelessWidget {
                         label: 'سجل الشكاوى والمتابعة',
                         onTap: () {
                           Navigator.pop(context);
-                          Navigator.pushNamed(context, AppRoutes.parentComplaints);
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.parentComplaints,
+                          );
                         },
                       ),
                       const Divider(height: 24, indent: 16, endIndent: 16),
@@ -283,34 +290,13 @@ class _DrawerHeader extends StatelessWidget {
                         width: 3,
                       ),
                     ),
-                    child: CircleAvatar(
+                    child: AppUserAvatar(
+                      image: avatarUrl,
                       radius: 38,
                       backgroundColor: AppColors.white24,
-                      child: avatarUrl != null && avatarUrl!.isNotEmpty
-                          ? ClipOval(
-                              child: CachedNetworkImage(
-                                imageUrl: AppImageHelper.resolveUrl(avatarUrl) ?? '',
-                                httpHeaders: AppImageHelper.safeHttpHeaders,
-                                width: 76,
-                                height: 76,
-                                fit: BoxFit.cover,
-                                placeholder: (_, _) => const Icon(
-                                  Icons.person_rounded,
-                                  color: AppColors.white,
-                                  size: 36,
-                                ),
-                                errorWidget: (_, _, _) => const Icon(
-                                  Icons.person_rounded,
-                                  color: AppColors.white,
-                                  size: 36,
-                                ),
-                              ),
-                            )
-                          : const Icon(
-                              Icons.person_rounded,
-                              color: AppColors.white,
-                              size: 36,
-                            ),
+iconColor: AppColors.white,
+                      iconSize: 38,
+
                     ),
                   ),
                   Container(
@@ -319,15 +305,16 @@ class _DrawerHeader extends StatelessWidget {
                       borderRadius: AppTheme.radius(12),
                     ),
                     child: IconButton(
-                      tooltip: context.isDarkMode ? 'الوضع الفاتح' : 'الوضع الداكن',
+                      tooltip: context.isDarkMode
+                          ? 'الوضع الفاتح'
+                          : 'الوضع الداكن',
                       icon: Icon(
                         context.isDarkMode
                             ? Icons.wb_sunny_rounded
                             : Icons.brightness_3_rounded,
                         color: AppColors.white,
                       ),
-                      onPressed: () =>
-                          context.read<ThemeCubit>().toggleTheme(),
+                      onPressed: () => context.read<ThemeCubit>().toggleTheme(),
                     ),
                   ),
                 ],
@@ -346,8 +333,11 @@ class _DrawerHeader extends StatelessWidget {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  const Icon(Icons.phone_rounded,
-                      color: AppColors.white60, size: 14),
+                  const Icon(
+                    Icons.phone_rounded,
+                    color: AppColors.white60,
+                    size: 14,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -365,7 +355,9 @@ class _DrawerHeader extends StatelessWidget {
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: AppTheme.boxDecoration(
                       color: AppColors.white.withValues(alpha: 0.2),
                       borderRadius: AppTheme.radius(20),

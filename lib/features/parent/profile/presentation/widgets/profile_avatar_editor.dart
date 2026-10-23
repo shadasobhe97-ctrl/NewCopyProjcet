@@ -9,6 +9,7 @@ class ProfileAvatarEditor extends StatelessWidget {
   final dynamic webImageBytes; // 👈 المتغير المستلم لاستقبال بايتس أو XFile أو File
   final String? avatarUrl;
   final VoidCallback onTap;
+  final VoidCallback? onRemove;
 
   const ProfileAvatarEditor({
     super.key,
@@ -16,7 +17,13 @@ class ProfileAvatarEditor extends StatelessWidget {
     this.webImageBytes,
     this.avatarUrl,
     required this.onTap,
+    this.onRemove,
   });
+
+  bool get _hasAvatar =>
+      avatarImage != null ||
+      webImageBytes != null ||
+      (avatarUrl != null && avatarUrl!.trim().isNotEmpty);
 
   @override
   Widget build(BuildContext context) {
@@ -25,33 +32,37 @@ class ProfileAvatarEditor extends StatelessWidget {
     return Center(
       child: Stack(
         alignment: Alignment.center,
+        clipBehavior: Clip.none,
         children: [
-          Container(
-            width: 110,
-            height: 110,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primaryLight, width: 3),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryLight.withValues(alpha: 0.2),
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: ClipOval(
-              child: AppImageWidget(
-                image: avatarImage ?? webImageBytes ?? avatarUrl,
-                width: 110,
-                height: 110,
-                fit: BoxFit.cover,
-                errorWidget: Container(
-                  color: isDark ? AppColors.grey800 : AppColors.grey200,
-                  child: Icon(
-                    Icons.person_rounded,
-                    size: 52,
-                    color: isDark ? AppColors.grey400 : AppColors.grey600,
+          GestureDetector(
+            onTap: onTap,
+            child: Container(
+              width: 110,
+              height: 110,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primaryLight, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryLight.withValues(alpha: 0.2),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: AppImageWidget(
+                  image: avatarImage ?? webImageBytes ?? avatarUrl,
+                  width: 110,
+                  height: 110,
+                  fit: BoxFit.cover,
+                  errorWidget: Container(
+                    color: isDark ? AppColors.grey800 : AppColors.grey200,
+                    child: Icon(
+                      Icons.person_rounded,
+                      size: 52,
+                      color: isDark ? AppColors.grey400 : AppColors.grey600,
+                    ),
                   ),
                 ),
               ),
@@ -59,7 +70,7 @@ class ProfileAvatarEditor extends StatelessWidget {
           ),
           Positioned(
             bottom: 0,
-            left: 4,
+            left: 2,
             child: CircleAvatar(
               radius: 18,
               backgroundColor: AppColors.primaryLight,
@@ -70,9 +81,28 @@ class ProfileAvatarEditor extends StatelessWidget {
                   color: AppColors.white,
                 ),
                 onPressed: onTap,
+                tooltip: 'تغيير الصورة',
               ),
             ),
           ),
+          if (_hasAvatar && onRemove != null)
+            Positioned(
+              bottom: 0,
+              right: 2,
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.error,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    size: 16,
+                    color: AppColors.white,
+                  ),
+                  onPressed: onRemove,
+                  tooltip: 'إزالة الصورة',
+                ),
+              ),
+            ),
         ],
       ),
     );

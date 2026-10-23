@@ -28,6 +28,7 @@ class DriverProfileCubit extends Cubit<DriverProfileState> {
     String? email,
     String? gender,
     dynamic avatarFile,
+    bool removeAvatar = false,
   }) async {
     bool isNameChanged = false;
     if (state is DriverProfileLoaded) {
@@ -50,6 +51,7 @@ class DriverProfileCubit extends Cubit<DriverProfileState> {
         email: email,
         gender: gender,
         avatarFile: avatarFile,
+        removeAvatar: removeAvatar,
       );
 
       final freshDriver = await repository.getDriverProfile();

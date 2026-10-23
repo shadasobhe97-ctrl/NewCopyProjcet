@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
-import 'package:kids_transport/core/network/api_endpoints.dart';
-import 'package:kids_transport/core/utils/app_image_helper.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
 import 'package:kids_transport/features/driver/subscriptions/data/models/driver_subscription_model.dart';
 
@@ -670,6 +668,41 @@ class _ParentInfoWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Row(
+          children: [
+            AppUserAvatar(
+              image: parent.photoUrl,
+              radius: 22.r,
+              defaultIcon: Icons.person_rounded,
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    parent.name.isNotEmpty ? parent.name : 'غير محدد',
+                    style: AppTextStyles.style(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (parent.gender != null && parent.gender!.isNotEmpty)
+                    Text(
+                      parent.gender == 'male'
+                          ? 'ذكر'
+                          : (parent.gender == 'female' ? 'أنثى' : parent.gender!),
+                      style: AppTextStyles.style(
+                        fontSize: 11.sp,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 12.h),
         _InfoRow(
           icon: Icons.person_outline_rounded,
           label: 'الاسم',
@@ -847,26 +880,10 @@ class _ChildCard extends StatelessWidget {
           // ── رأس البطاقة: الصورة والاسم ──
           Row(
             children: [
-              CircleAvatar(
+              AppUserAvatar(
+                image: child.photoUrl,
                 radius: 22.r,
-                backgroundColor: primaryColor.withValues(alpha: 0.12),
-                backgroundImage:
-                    (child.photoUrl != null && child.photoUrl!.isNotEmpty)
-                    ? CachedNetworkImageProvider(
-                        AppImageHelper.resolveUrl(child.photoUrl) ?? child.photoUrl!,
-                        headers: AppImageHelper.safeHttpHeaders,
-                      )
-                    : null,
-                child: (child.photoUrl == null || child.photoUrl!.isEmpty)
-                    ? Text(
-                        child.avatarInitials,
-                        style: AppTextStyles.style(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                          color: primaryColor,
-                        ),
-                      )
-                    : null,
+defaultIcon: Icons.child_care_rounded,
               ),
               SizedBox(width: 10.w),
               Expanded(

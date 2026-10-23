@@ -32,6 +32,7 @@ class AuthRepository {
         fullName: response.user.fullName,
         phoneNumber: response.user.phoneNumber,
         isActive: response.user.isActive,
+        avatarUrl: response.user.avatarUrl,
       );
 
       // حفظ driver_id للسائق واستعادة ظهور رسالة الترحيب بعد تسجيل الدخول

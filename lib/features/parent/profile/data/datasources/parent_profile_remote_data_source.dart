@@ -57,10 +57,11 @@ class ParentProfileRemoteDataSource {
     String? email,
     String? alternativePhone,
     dynamic avatarFile,
+    bool removeAvatar = false,
   }) async {
     debugPrint(
       '📤 [ProfileAPI] تحديث الملف: name=$fullName phone=$phoneNumber '
-      'email=$email avatar=$avatarFile',
+      'email=$email avatar=$avatarFile removeAvatar=$removeAvatar',
     );
 
     // الحقول الاختيارية نرسلها فقط إذا رغب المستخدم في تعديلها
@@ -70,6 +71,11 @@ class ParentProfileRemoteDataSource {
       'email': ?email,
       'alternative_phone':
           alternativePhone, // ترسل null لحذفه كما طلبت الباك إند
+      if (removeAvatar) ...{
+        'avatar': null,
+        'delete_avatar': 1,
+        'remove_avatar': 1,
+      },
     };
 
     final dynamic requestBody;
@@ -115,6 +121,10 @@ class ParentProfileRemoteDataSource {
         'رح أجيب البيانات الطازجة من GET /profile بدل ما أفشل.',
       );
       parent = await getParentProfile();
+    }
+
+    if (removeAvatar) {
+      parent = parent.copyWith(clearAvatarUrl: true);
     }
 
     final serverMessage = (data is Map && data['message'] != null)

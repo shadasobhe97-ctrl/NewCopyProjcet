@@ -47,25 +47,44 @@ class DriverModel {
   String get accountStatus => driverStatus;
 
   factory DriverModel.fromJson(Map<String, dynamic> json) {
-    final metaSync = json['meta_sync'] is Map ? Map<String, dynamic>.from(json['meta_sync'] as Map) : null;
-    final pendingData = metaSync?['pending_data'] is Map ? Map<String, dynamic>.from(metaSync!['pending_data'] as Map) : null;
+    final metaSync = json['meta_sync'] is Map
+        ? Map<String, dynamic>.from(json['meta_sync'] as Map)
+        : null;
+    final pendingData = metaSync?['pending_data'] is Map
+        ? Map<String, dynamic>.from(metaSync!['pending_data'] as Map)
+        : null;
 
     return DriverModel(
-      driverId: json['driver_id'] is int ? json['driver_id'] : (int.tryParse(json['driver_id']?.toString() ?? '') ?? 0),
-      userId: json['user_id'] is int ? json['user_id'] : (int.tryParse(json['user_id']?.toString() ?? '') ?? 0),
-      roleId: json['role_id'] is int ? json['role_id'] : (int.tryParse(json['role_id']?.toString() ?? '') ?? 8),
+      driverId: json['driver_id'] is int
+          ? json['driver_id']
+          : (int.tryParse(json['driver_id']?.toString() ?? '') ?? 0),
+      userId: json['user_id'] is int
+          ? json['user_id']
+          : (int.tryParse(json['user_id']?.toString() ?? '') ?? 0),
+      roleId: json['role_id'] is int
+          ? json['role_id']
+          : (int.tryParse(json['role_id']?.toString() ?? '') ?? 8),
       fullName: json['full_name']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       phoneNumber: json['phone_number']?.toString() ?? '',
       alternativePhone: json['alternative_phone']?.toString(),
       newEmailTemporary: json['new_email_temporary']?.toString(),
       emailChangePending: json['email_change_pending'] ?? false,
-      avatarUrl: json['avatar_url']?.toString(),
+      avatarUrl:
+          (json['avatar_url'] ??
+                  json['avatar'] ??
+                  json['photo_url'] ??
+                  json['photo'] ??
+                  json['profile_image'])
+              ?.toString(),
       gender: json['gender']?.toString() ?? '',
       isActive: json['is_active'] ?? true,
       nationalId: json['national_id']?.toString() ?? '',
       licenseNumber: json['license_number']?.toString() ?? '',
-      driverStatus: json['driver_status']?.toString() ?? json['account_status']?.toString() ?? 'Approved',
+      driverStatus:
+          json['driver_status']?.toString() ??
+          json['account_status']?.toString() ??
+          'Approved',
       hasPendingChanges: metaSync?['has_pending_changes'] ?? false,
       pendingFullName: pendingData?['full_name']?.toString(),
       pendingPhoneNumber: pendingData?['phone_number']?.toString(),
@@ -96,6 +115,53 @@ class DriverModel {
       'pending_phone_number': pendingPhoneNumber,
       'pending_email': pendingEmail,
     };
+  }
+
+  DriverModel copyWith({
+    int? driverId,
+    int? userId,
+    int? roleId,
+    String? fullName,
+    String? email,
+    String? phoneNumber,
+    String? alternativePhone,
+    String? newEmailTemporary,
+    bool? emailChangePending,
+    String? avatarUrl,
+    bool clearAvatarUrl = false,
+    String? gender,
+    bool? isActive,
+    String? nationalId,
+    String? licenseNumber,
+    String? driverStatus,
+    String? accountStatus,
+    bool? hasPendingChanges,
+    String? pendingFullName,
+    String? pendingPhoneNumber,
+    String? pendingEmail,
+  }) {
+    return DriverModel(
+      driverId: driverId ?? this.driverId,
+      userId: userId ?? this.userId,
+      roleId: roleId ?? this.roleId,
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      alternativePhone: alternativePhone ?? this.alternativePhone,
+      newEmailTemporary: newEmailTemporary ?? this.newEmailTemporary,
+      emailChangePending: emailChangePending ?? this.emailChangePending,
+      avatarUrl: clearAvatarUrl ? null : (avatarUrl ?? this.avatarUrl),
+      gender: gender ?? this.gender,
+      isActive: isActive ?? this.isActive,
+      nationalId: nationalId ?? this.nationalId,
+      licenseNumber: licenseNumber ?? this.licenseNumber,
+      driverStatus: driverStatus ?? this.driverStatus,
+      accountStatus: accountStatus ?? this.accountStatus,
+      hasPendingChanges: hasPendingChanges ?? this.hasPendingChanges,
+      pendingFullName: pendingFullName ?? this.pendingFullName,
+      pendingPhoneNumber: pendingPhoneNumber ?? this.pendingPhoneNumber,
+      pendingEmail: pendingEmail ?? this.pendingEmail,
+    );
   }
 }
 

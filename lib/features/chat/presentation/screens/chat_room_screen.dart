@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import 'package:http/http.dart' as http;
@@ -446,43 +446,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               borderRadius: BorderRadius.circular(12.r),
               child: Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(18.r),
-                    child: Container(
-                      width: 36.w,
-                      height: 36.w,
-                      color: isDark ? AppColors.grey800 : AppColors.grey100,
-                      child: widget.otherUserPhoto != null &&
-                              widget.otherUserPhoto!.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: AppImageHelper.resolveUrl(widget.otherUserPhoto) ?? '',
-                              httpHeaders: AppImageHelper.safeHttpHeaders,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Center(
-                                child: SizedBox(
-                                  width: 16.r,
-                                  height: 16.r,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 1.5,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Icon(
-                                Icons.person_rounded,
-                                color: isDark
-                                    ? AppColors.grey400
-                                    : AppColors.grey600,
-                                size: 20.r,
-                              ),
-                            )
-                          : Icon(
-                              Icons.person_rounded,
-                              color:
-                                  isDark ? AppColors.grey400 : AppColors.grey600,
-                              size: 20.r,
-                            ),
-                    ),
+AppUserAvatar(
+                    image: widget.otherUserPhoto,
+                    radius: 18.r,
+                    backgroundColor: isDark ? AppColors.grey800 : AppColors.grey100,
+                    iconColor: isDark ? AppColors.grey400 : AppColors.grey600,
+                    iconSize: 20.r,
                   ),
                   SizedBox(width: 10.w),
                   Expanded(

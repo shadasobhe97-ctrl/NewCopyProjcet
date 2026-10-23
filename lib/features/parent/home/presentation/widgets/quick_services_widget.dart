@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/widgets/app_section_header.dart';
 import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
 
 class QuickServicesWidget extends StatelessWidget {
@@ -80,15 +81,11 @@ class QuickServicesWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'الخدمات السريعة',
-          style: AppTextStyles.style(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.bold,
-            color: isDark ? AppColors.white : AppColors.textDark,
-          ),
+        const AppSectionHeader(
+          title: 'الخدمات السريعة',
+          icon: Icons.grid_view_rounded,
         ),
-        SizedBox(height: 10.h),
+        SizedBox(height: 6.h),
         SizedBox(
           height: 118.h,
           child: ListView.builder(

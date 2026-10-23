@@ -80,45 +80,56 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).primaryColor;
 
-    return RefreshIndicator(
-      key: const ValueKey('home_sections'),
-      onRefresh: widget.onRefresh ??
-          () async {
-            await Future.wait([
-              context.read<ChildrenCubit>().fetchChildren(),
-              context.read<ActiveTripCubit>().loadActiveTrips(),
-            ]);
-          },
-      color: primaryColor,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        children: [
-          // 👋 1️⃣ قسم الترحيب البسيط + كرت تتبع الرحلة المدمج الذكي
-          const WelcomeHeaderWidget(),
-          SizedBox(height: 8.h),
-          const TopCardWidget(),
-          SizedBox(height: 18.h),
+    return Stack(
+      children: [
+        RefreshIndicator(
+          key: const ValueKey('home_sections'),
+          onRefresh: widget.onRefresh ??
+              () async {
+                await Future.wait([
+                  context.read<ChildrenCubit>().fetchChildren(),
+                  context.read<ActiveTripCubit>().loadActiveTrips(),
+                ]);
+              },
+          color: primaryColor,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            children: [
+              // 🔍 1️⃣ أول عنصر فوق في قمة الشاشة: شريط البحث المباشر
+              HomeSearchSectionWidget(
+                showOnlySearchField: true,
+                onTapSearch: () => _openSearchScreen(),
+                onTapSmartSearch: () => _openSearchScreen(),
+                onSubmitQuery: (query) => _openSearchScreen(query: query),
+              ),
+              SizedBox(height: 20.h),
 
-          // 🔍 2️⃣ قسم البحث المباشر (حقل دائري + فاصل أو + زر بحث دائري بالأزرق الداكن)
-          HomeSearchSectionWidget(
-            onTapSearch: () => _openSearchScreen(),
-            onTapSmartSearch: () => _openSearchScreen(),
-            onSubmitQuery: (query) => _openSearchScreen(query: query),
+              // 🚍 2️⃣ كارت الرحلات (سماوي هادئ غير متدرج بحدود وبوتون كحلي وتصميم موحد)
+              const TopCardWidget(),
+              SizedBox(height: 28.h),
+
+              // 👶 3️⃣ قسم أطفالي (مع هيدر وخط فاصل باللون الرصاصي الأنيق)
+              const ChildrenSectionWidget(),
+              SizedBox(height: 28.h),
+
+              // ⚡ 4️⃣ قسم الخدمات السريعة (مع هيدر وخط فاصل باللون الرصاصي الأنيق)
+              const QuickServicesWidget(),
+              SizedBox(height: 36.h),
+            ],
           ),
-          SizedBox(height: 20.h),
+        ),
 
-          // 👶 3️⃣ قسم أطفالي (كروت بيضاوية كبسولية أنيقة ومودرن)
-          const ChildrenSectionWidget(),
-          SizedBox(height: 20.h),
-
-          // ⚡ 4️⃣ قسم الخدمات السريعة (محفوظ بكامله دون حذف)
-          const QuickServicesWidget(),
-          SizedBox(height: 24.h),
-        ],
-      ),
+        // 👋 رسالة الترحيب العائمة تنبثق بنعومة من الأعلى بمؤقت دقيقة كاملة مع زر إغلاق X
+        Positioned(
+          top: 8.h,
+          left: 16.w,
+          right: 16.w,
+          child: const WelcomeHeaderWidget(),
+        ),
+      ],
     );
   }
 }

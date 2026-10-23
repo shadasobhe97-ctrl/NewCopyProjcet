@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:kids_transport/core/models/email_verification_info.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import '../datasources/parent_profile_remote_data_source.dart';
 import '../models/parent_model.dart';
@@ -26,7 +26,8 @@ class ParentProfileRepository {
     required String phoneNumber,
     String? email,
     String? alternativePhone,
-    File? avatarFile,
+    dynamic avatarFile,
+    bool removeAvatar = false,
   }) async {
     final result = await remoteDataSource.updateParentProfile(
       fullName: fullName,
@@ -34,7 +35,13 @@ class ParentProfileRepository {
       email: email,
       alternativePhone: alternativePhone,
       avatarFile: avatarFile,
+      removeAvatar: removeAvatar,
     );
+
+    if (removeAvatar) {
+      await sessionRepository.saveAvatarUrl(null);
+      await StorageService.saveAvatarUrl(null);
+    }
     await _cacheParentProfile(result.profile);
     return result;
   }
@@ -48,6 +55,11 @@ class ParentProfileRepository {
   }
 
   Future<void> _cacheParentProfile(ParentModel parent) async {
+    final versionedAvatar =
+        (parent.avatarUrl != null && parent.avatarUrl!.isNotEmpty)
+            ? '${parent.avatarUrl}?v=${DateTime.now().millisecondsSinceEpoch}'
+            : null;
+
     await sessionRepository.saveUserSession(
       token: sessionRepository.getToken() ?? '',
       tokenType: 'Bearer',
@@ -57,9 +69,14 @@ class ParentProfileRepository {
       fullName: parent.fullName,
       phoneNumber: parent.phoneNumber,
       isActive: sessionRepository.getIsActive() ?? true,
+      avatarUrl: versionedAvatar,
     );
+    await sessionRepository.saveAvatarUrl(versionedAvatar);
+    await StorageService.saveAvatarUrl(versionedAvatar);
   }
 
   String getCachedFullName() => sessionRepository.getFullName() ?? '';
   String getCachedPhoneNumber() => sessionRepository.getPhoneNumber() ?? '';
+  String? getCachedAvatarUrl() => sessionRepository.getAvatarUrl();
 }
+

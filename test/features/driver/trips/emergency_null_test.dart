@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/features/driver/trips/data/models/emergency_dispatch_model.dart';
 import 'package:kids_transport/features/driver/trips/data/repositories/driver_emergency_repository.dart';
 import 'package:kids_transport/features/driver/trips/logic/driver_emergency_cubit/driver_emergency_cubit.dart';
 import 'package:kids_transport/features/driver/trips/presentation/screens/driver_emergency_dispatches_screen.dart';
-import 'package:kids_transport/features/driver/trips/presentation/screens/emergency_dispatch_details_screen.dart';
 
 class MockRepo extends Fake implements DriverEmergencyRepository {
   final List<EmergencyDispatchModel> dispatches;

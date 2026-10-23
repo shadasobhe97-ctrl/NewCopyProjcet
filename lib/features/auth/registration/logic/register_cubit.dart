@@ -523,6 +523,45 @@ class RegisterCubit extends Cubit<RegisterState> {
     }
   }
 
+  // ==================== [Endpoint موقع الانطلاق - السائق] ====================
+  Future<void> saveDriverLocation({
+    required String label,
+    required double lat,
+    required double lng,
+    int? zoneId,
+  }) async {
+    emit(LocationSaveLoading());
+    try {
+      final token =
+          (driverAccessToken != null && driverAccessToken!.isNotEmpty)
+              ? driverAccessToken!
+              : (StorageService.getToken() ?? '');
+
+      if (token.isEmpty) {
+        emit(
+          LocationSaveError('لا يوجد توكن صالح، يرجى تسجيل الدخول مرة أخرى.'),
+        );
+        return;
+      }
+
+      final response = await _repository.addDriverAddress(
+        token: token,
+        label: label,
+        lat: lat,
+        lng: lng,
+        zoneId: zoneId,
+      );
+
+      final msg =
+          response['message']?.toString() ?? 'تم حفظ موقع الانطلاق بنجاح.';
+      emit(LocationSaveSuccess(msg));
+    } on ApiException catch (e) {
+      emit(LocationSaveError(e.message));
+    } catch (_) {
+      emit(LocationSaveError('فشل حفظ موقع الانطلاق، يرجى المحاولة مرة أخرى.'));
+    }
+  }
+
   bool _readBool(dynamic value) {
     if (value is bool) return value;
     if (value is num) return value != 0;

@@ -59,4 +59,26 @@ class ParentModel {
       'email_change_pending': emailChangePending,
     };
   }
+
+  ParentModel copyWith({
+    int? userId,
+    String? fullName,
+    String? email,
+    String? phoneNumber,
+    String? alternativePhone,
+    String? avatarUrl,
+    bool clearAvatarUrl = false,
+    bool? emailChangePending,
+  }) {
+    return ParentModel(
+      userId: userId ?? this.userId,
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      alternativePhone: alternativePhone ?? this.alternativePhone,
+      avatarUrl: clearAvatarUrl ? null : (avatarUrl ?? this.avatarUrl),
+      emailChangePending: emailChangePending ?? this.emailChangePending,
+    );
+  }
 }
+

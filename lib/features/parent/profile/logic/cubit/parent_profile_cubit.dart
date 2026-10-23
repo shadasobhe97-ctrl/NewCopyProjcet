@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models/parent_model.dart';
@@ -33,7 +32,8 @@ class ParentProfileCubit extends Cubit<ParentProfileState> {
     required String phoneNumber,
     String? email,
     String? alternativePhone,
-    File? avatarFile,
+    dynamic avatarFile,
+    bool removeAvatar = false,
   }) async {
     if (_currentParent != null) {
       emit(ParentProfileUpdateLoading(_currentParent!));
@@ -45,6 +45,7 @@ class ParentProfileCubit extends Cubit<ParentProfileState> {
         email: email,
         alternativePhone: alternativePhone,
         avatarFile: avatarFile,
+        removeAvatar: removeAvatar,
       );
 
       // إعادة جلب أحدث البيانات من الباك إند فوراً بعد عملية التعديل (Refresh)
@@ -83,7 +84,9 @@ class ParentProfileCubit extends Cubit<ParentProfileState> {
   Future<String> checkEmailChangeStatus() async {
     try {
       final status = await repository.getEmailChangeStatus();
-      debugPrint('📥 [ParentProfileCubit] checkEmailChangeStatus status => $status');
+      debugPrint(
+        '📥 [ParentProfileCubit] checkEmailChangeStatus status => $status',
+      );
       if (status == 'verified' || status == 'rejected' || status == 'expired') {
         await fetchProfile();
       }

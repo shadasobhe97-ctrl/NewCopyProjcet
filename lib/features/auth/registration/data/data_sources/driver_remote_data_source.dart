@@ -16,10 +16,13 @@ class DriverRemoteDataSource {
   Future<Map<String, dynamic>> register(DriverRegisterRequest request) async {
     final Map<String, dynamic> dataMap = request.toJson();
     if (request.avatarFile != null) {
-      dataMap['avatar_url'] = await MultipartFile.fromFile(
-        request.avatarFile!.path,
-        filename: request.avatarFile!.path.split('/').last,
+      final multipart = await AppImageHelper.createMultipartFile(
+        request.avatarFile,
+        defaultFilename: 'avatar.jpg',
       );
+      if (multipart != null) {
+        dataMap['avatar_url'] = multipart;
+      }
     }
 
     final response = await _apiClient.post(
@@ -230,6 +233,35 @@ class DriverRemoteDataSource {
     } catch (_) {
       return {'status': false, 'message': 'تم إلغاء التسجيل محلياً.'};
     }
+  }
+
+  /// POST /api/driver/addresses
+  Future<Map<String, dynamic>> addAddress({
+    required String token,
+    required String label,
+    required double lat,
+    required double lng,
+    int? zoneId,
+  }) async {
+    final authHeader = token.startsWith('Bearer ') ? token : 'Bearer $token';
+    final Map<String, dynamic> body = {
+      'label': label,
+      'lat': lat,
+      'lng': lng,
+    };
+    if (zoneId != null) {
+      body['zone_id'] = zoneId;
+    }
+
+    final response = await _apiClient.post(
+      ApiEndpoints.driverAddresses,
+      data: body,
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': authHeader,
+      },
+    );
+    return _mapResponse(response.data);
   }
 
   Map<String, dynamic> _mapResponse(dynamic data) {

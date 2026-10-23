@@ -7,11 +7,8 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/transport_details_screen.dart';
-import 'package:kids_transport/features/parent/children/presentation/screens/add_child_step1_screen.dart';
 import 'package:kids_transport/features/parent/search/data/models/subscription_request.dart';
 import 'subscription_confirmation_screen.dart';
-import '../widgets/child_selection_card_widget.dart';
 import '../widgets/smart_search_bottom_sheet_widget.dart';
 import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
 import 'package:kids_transport/features/parent/search/logic/search_state.dart';
@@ -618,44 +615,8 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     );
   }
 
-  void _openEditPersonalData(BuildContext context, ChildModel kid) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => AddChildStep1Screen(child: kid)),
-    ).then((_) {
-      if (context.mounted) {
-        context.read<ChildrenCubit>().fetchChildren();
-      }
-    });
-  }
-
-  void _openEditTransportData(BuildContext context, ChildModel kid) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => TransportDetailsScreen(child: kid),
-      ),
-    ).then((_) {
-      if (context.mounted) {
-        context.read<ChildrenCubit>().fetchChildren();
-      }
-    });
-  }
-
-  /// في حالة showPricing==false (سيناريو البحث بالاسم/رقم):
-  ///   يفتح SmartSearchBottomSheetWidget لجمع الأطفال + بيانات الاشتراك
-  ///   ثم يعيد البحث مع كل البيانات لجلب السعر والانتقال للتأكيد
-  ///
-  /// في حالة showPricing==true (سيناريو البحث الذكي):
-  ///   يفتح المتحدد القديم (اختيار أطفال فقط)
   void _showChildrenPicker() {
-    if (!widget.showPricing) {
-      // سيناريو 1: بحث بالاسم/رقم → يفتح SmartSearch لجمع كل البيانات
-      _openSmartSearchForPricing();
-      return;
-    }
-    // سيناريو 2: بحث ذكي (الأطفال مختارون مسبقاً) → اختيار أطفال فقط
-    _showChildrenPickerOld();
+    _openSmartSearchForPricing();
   }
 
   /// فتح SmartSearchBottomSheetWidget لجمع الأطفال + بيانات الاشتراك ثم جلب السعر
@@ -734,229 +695,7 @@ class _DriverProfileViewState extends State<DriverProfileView> {
     );
   }
 
-  /// المتحدد القديم: في سيناريو 2 (بحث ذكي) — يختار أطفال فقط (search_context مخزّن مسبقاً)
-  void _showChildrenPickerOld() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    List<int> temp = List<int>.from(_selectedKidsIds);
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheet) => BlocBuilder<ChildrenCubit, ChildrenState>(
-          builder: (blocCtx, state) {
-            final availableKids = state is ChildrenLoaded
-                ? state.children
-                : widget.availableKids;
-
-            return Directionality(
-              textDirection: TextDirection.rtl,
-              child: Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.85,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.surfaceDark : AppColors.white,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(28),
-                  ),
-                ),
-                padding: EdgeInsets.fromLTRB(
-                  20,
-                  20,
-                  20,
-                  MediaQuery.of(ctx).viewInsets.bottom + 24,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 36,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.grey700 : AppColors.grey300,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'اختر الأطفال لهذا الاشتراك',
-                      style: AppTextStyles.style(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: isDark ? AppColors.white : AppColors.textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    if (availableKids.isEmpty) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 28,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.grey900 : AppColors.grey50,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.grey800
-                                : AppColors.grey200,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.child_care_rounded,
-                              size: 36,
-                              color: isDark
-                                  ? AppColors.grey500
-                                  : AppColors.grey400,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'لا يوجد أطفال',
-                              style: AppTextStyles.style(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: isDark
-                                    ? AppColors.grey300
-                                    : AppColors.textDark,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'قم بإضافة بيانات أطفالك أولاً من قسم أطفالي ثم عد للبحث عن سائق.',
-                              style: AppTextStyles.style(
-                                fontSize: 12,
-                                color: isDark
-                                    ? AppColors.grey400
-                                    : AppColors.textMuted,
-                                height: 1.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ] else
-                      Flexible(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: availableKids.length,
-                          itemBuilder: (lCtx, index) {
-                            final kid = availableKids[index];
-                            final isSel =
-                                kid.id != null && temp.contains(kid.id);
-
-                            return ChildSelectionCardWidget(
-                              kid: kid,
-                              isSelected: isSel,
-                              onKidToggle: (id, val) => setSheet(() {
-                                if (val) {
-                                  if (!temp.contains(id)) temp.add(id);
-                                } else {
-                                  temp.remove(id);
-                                }
-                              }),
-                              onEditPersonalData: (k) =>
-                                  _openEditPersonalData(context, k),
-                              onEditTransportData: (k) =>
-                                  _openEditTransportData(context, k),
-                            );
-                          },
-                        ),
-                      ),
-
-                    if (temp.length > 1) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.orange.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.orange.withValues(alpha: 0.25),
-                          ),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(
-                              Icons.info_outline_rounded,
-                              color: AppColors.orange,
-                              size: 15,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'إذا تم اختيار أكثر من طفل، سيتم إرسال طلب واحد وسيقوم السائق إما بقبول أو رفض جميع الأطفال معاً.',
-                                style: AppTextStyles.style(
-                                  fontSize: 11,
-                                  color: isDark
-                                      ? AppColors.grey300
-                                      : AppColors.grey700,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (temp.isEmpty) {
-                            _showSnack(
-                              'يرجى اختيار طفل واحد على الأقل.',
-                              AppColors.error,
-                            );
-                            return;
-                          }
-                          Navigator.pop(ctx);
-                          setState(() {
-                            _selectedKidsIds = temp;
-                            _pricedDriver = null;
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          'متابعة',
-                          style: AppTextStyles.style(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: theme.colorScheme.onPrimary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
 
   // ─── Build ──────────────────────────────────────────────────────────────────
   @override
@@ -2207,39 +1946,44 @@ class _DriverProfileViewState extends State<DriverProfileView> {
   }
 
   Widget _directSendBar(ThemeData theme, bool isDark) {
+    final kidsCount = _selectedKids.length;
+    final kidsNames = _selectedKids.map((k) => k.name).join('، ');
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'الأطفال المحددون: ${_selectedKids.length}',
-              style: AppTextStyles.style(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.grey300 : AppColors.grey800,
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.groups_rounded,
+                size: 16,
+                color: theme.colorScheme.primary,
               ),
             ),
-            TextButton(
-              onPressed: _showChildrenPicker,
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(0, 0),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
+            const SizedBox(width: 8),
+            Expanded(
               child: Text(
-                'تغيير الاختيار',
+                kidsNames.isNotEmpty
+                    ? 'الأطفال المشمولون ($kidsCount): $kidsNames'
+                    : 'عدد الأطفال المشمولين: $kidsCount',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.style(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.grey300 : AppColors.grey800,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         SizedBox(
           width: double.infinity,
           height: 52,

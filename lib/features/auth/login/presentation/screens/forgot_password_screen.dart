@@ -70,7 +70,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             }
           },
           builder: (context, state) {
-            return Padding(
+            // قابل للتمرير حتى لا يحدث overflow عند ظهور الكيبورد بالشاشات الصغيرة
+            return SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: 24.w),
               child: Form(
                 key: _formKey,
@@ -92,7 +93,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       style: AppTextStyles.inputTextStyle(
                         color: isDark ? AppColors.white : AppColors.black87,
                       ),
-                      decoration: AppTheme.inputDecoration(context, 
+                      decoration: AppTheme.inputDecoration(
+                        context,
                         hintText: 'example@gmail.com',
                         prefixIcon: Icon(Icons.email_outlined),
                       ),
