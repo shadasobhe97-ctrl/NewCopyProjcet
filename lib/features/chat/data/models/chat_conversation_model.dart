@@ -48,22 +48,51 @@ class ChatConversationModel {
         json['chatRoomId']?.toString() ??
         '';
 
-    // 2. otherUserId (Intelligently maps driver_id or parent_id)
+    final Map<String, dynamic>? driverMap = json['driver'] is Map
+        ? Map<String, dynamic>.from(json['driver'] as Map)
+        : null;
+    final Map<String, dynamic>? parentMap = json['parent'] is Map
+        ? Map<String, dynamic>.from(json['parent'] as Map)
+        : null;
+    final Map<String, dynamic>? otherUserMap = json['other_user'] is Map
+        ? Map<String, dynamic>.from(json['other_user'] as Map)
+        : (json['otherUser'] is Map
+            ? Map<String, dynamic>.from(json['otherUser'] as Map)
+            : null);
+    final Map<String, dynamic>? userMap = json['user'] is Map
+        ? Map<String, dynamic>.from(json['user'] as Map)
+        : null;
+
+    int? tryParseInt(dynamic val) {
+      if (val == null) return null;
+      if (val is int) return val;
+      return int.tryParse(val.toString());
+    }
+
+    // 2. otherUserId (Intelligently maps driver_id or parent_id or nested)
     final int otherId =
-        json['driver_id'] as int? ??
-        json['parent_id'] as int? ??
-        json['other_user_id'] as int? ??
-        json['otherUserId'] as int? ??
+        tryParseInt(json['driver_id']) ??
+        tryParseInt(json['parent_id']) ??
+        tryParseInt(json['other_user_id']) ??
+        tryParseInt(json['otherUserId']) ??
+        tryParseInt(driverMap?['id']) ??
+        tryParseInt(parentMap?['id']) ??
+        tryParseInt(otherUserMap?['id']) ??
+        tryParseInt(userMap?['id']) ??
         0;
 
     // 3. otherUserAuthId (Intelligently maps driver_user_id or parent_user_id)
     final int otherAuthId =
-        json['driver_user_id'] as int? ??
-        json['parent_user_id'] as int? ??
-        json['driver_auth_id'] as int? ??
-        json['parent_auth_id'] as int? ??
-        json['other_user_auth_id'] as int? ??
-        json['otherUserAuthId'] as int? ??
+        tryParseInt(json['driver_user_id']) ??
+        tryParseInt(json['parent_user_id']) ??
+        tryParseInt(json['driver_auth_id']) ??
+        tryParseInt(json['parent_auth_id']) ??
+        tryParseInt(json['other_user_auth_id']) ??
+        tryParseInt(json['otherUserAuthId']) ??
+        tryParseInt(driverMap?['user_id']) ??
+        tryParseInt(parentMap?['user_id']) ??
+        tryParseInt(otherUserMap?['user_id']) ??
+        tryParseInt(userMap?['id']) ??
         0;
 
     // 4. otherUserName (Intelligently maps driver_name or parent_name)
@@ -72,6 +101,13 @@ class ChatConversationModel {
         json['parent_name']?.toString() ??
         json['other_user_name']?.toString() ??
         json['otherUserName']?.toString() ??
+        json['name']?.toString() ??
+        driverMap?['name']?.toString() ??
+        driverMap?['full_name']?.toString() ??
+        parentMap?['name']?.toString() ??
+        parentMap?['full_name']?.toString() ??
+        otherUserMap?['name']?.toString() ??
+        userMap?['name']?.toString() ??
         '';
 
     // 5. otherUserPhone
@@ -79,10 +115,19 @@ class ChatConversationModel {
         json['driver_phone']?.toString() ??
         json['parent_phone']?.toString() ??
         json['other_user_phone']?.toString() ??
-        json['otherUserPhone']?.toString();
+        json['otherUserPhone']?.toString() ??
+        json['phone']?.toString() ??
+        driverMap?['phone']?.toString() ??
+        parentMap?['phone']?.toString() ??
+        otherUserMap?['phone']?.toString() ??
+        userMap?['phone']?.toString();
 
-    // 6. otherUserPhoto
+    // 6. otherUserPhoto (Supports all avatar keys and nested user/driver/parent objects)
     final String? photo =
+        json['avatar_url']?.toString() ??
+        json['avatar']?.toString() ??
+        json['driver_avatar_url']?.toString() ??
+        json['parent_avatar_url']?.toString() ??
         json['driver_photo']?.toString() ??
         json['driver_photo_url']?.toString() ??
         json['driver_avatar']?.toString() ??
@@ -91,7 +136,33 @@ class ChatConversationModel {
         json['parent_avatar']?.toString() ??
         json['other_user_photo']?.toString() ??
         json['otherUserPhoto']?.toString() ??
-        json['other_user_photo_url']?.toString();
+        json['other_user_photo_url']?.toString() ??
+        json['other_user_avatar']?.toString() ??
+        json['photo_url']?.toString() ??
+        json['photo']?.toString() ??
+        json['image_url']?.toString() ??
+        json['image']?.toString() ??
+        json['profile_image']?.toString() ??
+        driverMap?['avatar_url']?.toString() ??
+        driverMap?['avatar']?.toString() ??
+        driverMap?['photo_url']?.toString() ??
+        driverMap?['photo']?.toString() ??
+        driverMap?['image_url']?.toString() ??
+        parentMap?['avatar_url']?.toString() ??
+        parentMap?['avatar']?.toString() ??
+        parentMap?['photo_url']?.toString() ??
+        parentMap?['photo']?.toString() ??
+        parentMap?['image_url']?.toString() ??
+        otherUserMap?['avatar_url']?.toString() ??
+        otherUserMap?['avatar']?.toString() ??
+        otherUserMap?['photo_url']?.toString() ??
+        otherUserMap?['photo']?.toString() ??
+        otherUserMap?['image_url']?.toString() ??
+        userMap?['avatar_url']?.toString() ??
+        userMap?['avatar']?.toString() ??
+        userMap?['photo_url']?.toString() ??
+        userMap?['photo']?.toString() ??
+        userMap?['image_url']?.toString();
 
     // 7. canChat
     final bool canChatVal =
