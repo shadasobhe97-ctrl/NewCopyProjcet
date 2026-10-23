@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/core/utils/app_image_helper.dart';
 import '../../data/models/chat_message_model.dart';
 import 'voice_note_bubble.dart';
 
@@ -36,7 +35,6 @@ class ChatMessageBubble extends StatelessWidget {
   }
 
   void _showFullScreenImage(BuildContext context, String imageUrl) {
-    final resolvedUrl = AppImageHelper.resolveUrl(imageUrl) ?? imageUrl;
     showDialog(
       context: context,
       builder: (ctx) => Dialog(

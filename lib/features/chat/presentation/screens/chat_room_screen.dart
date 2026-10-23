@@ -11,7 +11,6 @@ import 'package:http/http.dart' as http;
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
-import 'package:kids_transport/core/utils/app_image_helper.dart';
 import '../cubit/chat_room_cubit.dart';
 import '../cubit/chat_room_state.dart';
 import '../widgets/chat_message_bubble.dart';
