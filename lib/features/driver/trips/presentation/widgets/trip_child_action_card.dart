@@ -104,11 +104,25 @@ class TripChildActionCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(15),
                   child: CachedNetworkImage(
-                    imageUrl: AppUserAvatar.resolveUrl(item.photo)!,
+                    imageUrl: AppUserAvatar.resolveUrl(item.photo) ?? '',
                     httpHeaders: AppUserAvatar.imageHeaders,
                     width: 30,
                     height: 30,
                     fit: BoxFit.cover,
+                    placeholder: (context, url) => SizedBox(
+                      width: 30,
+                      height: 30,
+                      child: Center(
+                        child: SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                      ),
+                    ),
                     errorWidget: (context, url, error) => Icon(
                       item.isDropoffPhase ? Icons.school_rounded : Icons.home_rounded,
                       size: 18,

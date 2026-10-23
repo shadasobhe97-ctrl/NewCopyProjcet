@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 
 import 'api_endpoints.dart';
 import 'api_exception.dart';
@@ -21,7 +22,18 @@ class ApiClient {
             'bypass-tunnel-reminder': 'true',
           },
         ),
-      );
+      ) {
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onResponse: (response, handler) {
+          if (response.data != null) {
+            response.data = AppImageHelper.normalizeJson(response.data);
+          }
+          handler.next(response);
+        },
+      ),
+    );
+  }
 
   Future<Response<dynamic>> post(
     String path, {

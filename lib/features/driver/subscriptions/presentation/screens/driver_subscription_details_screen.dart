@@ -8,6 +8,7 @@ import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/network/api_endpoints.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import 'package:kids_transport/features/driver/subscriptions/logic/driver_subscriptions_cubit.dart';
 import 'package:kids_transport/features/driver/subscriptions/data/models/driver_subscription_model.dart';
 
@@ -852,9 +853,8 @@ class _ChildCard extends StatelessWidget {
                 backgroundImage:
                     (child.photoUrl != null && child.photoUrl!.isNotEmpty)
                     ? CachedNetworkImageProvider(
-                        child.photoUrl!.startsWith('http')
-                            ? child.photoUrl!
-                            : '${ApiEndpoints.baseUrl.replaceAll('/api/', '')}/storage/${child.photoUrl!}',
+                        AppImageHelper.resolveUrl(child.photoUrl) ?? child.photoUrl!,
+                        headers: AppImageHelper.safeHttpHeaders,
                       )
                     : null,
                 child: (child.photoUrl == null || child.photoUrl!.isEmpty)

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import '../../data/models/complaint_model.dart';
 import 'complaint_status_badge.dart';
 
@@ -72,15 +73,9 @@ class ComplaintCard extends StatelessWidget {
                     Expanded(
                       child: Row(
                         children: [
-                          CircleAvatar(
+                          AppUserAvatar(
+                            imageUrl: complaint.driverAvatar,
                             radius: 14.r,
-                            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                            backgroundImage: (complaint.driverAvatar != null && complaint.driverAvatar!.isNotEmpty)
-                                ? NetworkImage(complaint.driverAvatar!)
-                                : null,
-                            child: (complaint.driverAvatar == null || complaint.driverAvatar!.isEmpty)
-                                ? Icon(Icons.person_rounded, size: 14.r, color: theme.colorScheme.primary)
-                                : null,
                           ),
                           SizedBox(width: 8.w),
                           Expanded(

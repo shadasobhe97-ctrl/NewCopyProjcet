@@ -6,6 +6,7 @@ import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/enums/user_role.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import 'package:kids_transport/features/chat/data/repositories/chat_repository.dart';
 import '../cubit/chat_list_cubit.dart';
@@ -314,7 +315,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                                         .isNotEmpty
                                                 ? CachedNetworkImage(
                                                     imageUrl:
-                                                        item.otherUserPhoto!,
+                                                        AppImageHelper.resolveUrl(item.otherUserPhoto) ?? item.otherUserPhoto!,
+                                                    httpHeaders: AppImageHelper.safeHttpHeaders,
                                                     fit: BoxFit.cover,
                                                     placeholder:
                                                         (

@@ -95,68 +95,6 @@ class HasKidsWidget extends StatelessWidget {
             ),
           ),
         ),
-        // ─── كرت إدارة الغياب المستقل ────────────────────────────
-        Container(
-          margin: const EdgeInsets.only(bottom: 20),
-          decoration: AppTheme.boxDecoration(
-            color: isDark ? AppColors.darkCard : AppColors.white,
-            borderRadius: AppTheme.radius(16),
-            border: AppTheme.border(
-              color: context.primaryColor.withValues(alpha: 0.15),
-            ),
-            boxShadow: [
-              AppTheme.boxShadow(
-                color: AppColors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Material(
-            color: AppColors.transparent,
-            borderRadius: AppTheme.radius(16),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 6,
-              ),
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: AppTheme.boxDecoration(
-                  color: context.primaryColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.event_busy_rounded,
-                  color: context.primaryColor,
-                  size: 22,
-                ),
-              ),
-              title: Text(
-                'إدارة الغياب',
-                style: AppTextStyles.style(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-              subtitle: Text(
-                'تسجيل غياب أو إلغائه لأبنائك في أي وقت',
-                style: AppTextStyles.style(
-                  fontSize: 12,
-                  color: context.textMuted,
-                ),
-              ),
-              trailing: Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16,
-                color: context.textMuted,
-              ),
-              onTap: () {
-                Navigator.pushNamed(context, AppRoutes.parentAbsence);
-              },
-            ),
-          ),
-        ),
 
         // عنوان قسم الأطفال المسجلين
         Text(

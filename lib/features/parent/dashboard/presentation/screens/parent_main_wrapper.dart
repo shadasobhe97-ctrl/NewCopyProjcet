@@ -91,7 +91,7 @@ class _ParentMainWrapperState extends State<ParentMainWrapper> {
     };
     _screens = [
       const ParentHomeScreen(),
-      WalletScreen(cubit: _walletCubit),
+      WalletScreen(cubit: _walletCubit, showAppBar: false),
       const SubscriptionsScreen(),
       const TripsHomeScreen(),
     ];

@@ -11,6 +11,7 @@ import 'package:http/http.dart' as http;
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import '../cubit/chat_room_cubit.dart';
 import '../cubit/chat_room_state.dart';
 import '../widgets/chat_message_bubble.dart';
@@ -454,8 +455,19 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       child: widget.otherUserPhoto != null &&
                               widget.otherUserPhoto!.isNotEmpty
                           ? CachedNetworkImage(
-                              imageUrl: widget.otherUserPhoto!,
+                              imageUrl: AppImageHelper.resolveUrl(widget.otherUserPhoto) ?? '',
+                              httpHeaders: AppImageHelper.safeHttpHeaders,
                               fit: BoxFit.cover,
+                              placeholder: (context, url) => Center(
+                                child: SizedBox(
+                                  width: 16.r,
+                                  height: 16.r,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1.5,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                ),
+                              ),
                               errorWidget: (context, url, error) => Icon(
                                 Icons.person_rounded,
                                 color: isDark

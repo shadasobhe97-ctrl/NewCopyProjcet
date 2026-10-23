@@ -89,7 +89,10 @@ class _TripHistoryDetailsScreenState extends State<TripHistoryDetailsScreen> {
                                   style: AppTextStyles.style(fontSize: 16, fontWeight: FontWeight.bold),
                                 ),
                               ),
-                              TripStatusBadge(status: details.status),
+                              TripStatusBadge(
+                                status: details.status,
+                                customLabel: details.statusLabel.isNotEmpty ? details.statusLabel : null,
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
@@ -97,6 +100,50 @@ class _TripHistoryDetailsScreenState extends State<TripHistoryDetailsScreen> {
                             '${details.tripDate} • ${details.duration} دقيقة${details.distance > 0 ? ' • ${details.distance.toStringAsFixed(1)} كم' : ''}',
                             style: AppTextStyles.style(fontSize: 13, color: context.textMuted),
                           ),
+                          if (details.isBreakdown &&
+                              details.suspensionReason != null &&
+                              details.suspensionReason!.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: AppColors.error.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.error.withValues(alpha: 0.25)),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.report_problem_rounded, color: AppColors.error, size: 18),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'سبب العطل المسجل:',
+                                          style: AppTextStyles.style(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.error,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          details.suspensionReason!,
+                                          style: AppTextStyles.style(
+                                            fontSize: 13,
+                                            color: isDark ? AppColors.white : AppColors.textDark,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                           if (details.summary.totalStudents > 0) ...[
                             const SizedBox(height: 12),
                             const Divider(height: 1),
@@ -125,6 +172,81 @@ class _TripHistoryDetailsScreenState extends State<TripHistoryDetailsScreen> {
                         ],
                       ),
                     ),
+                    if (details.substituteDriver != null) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: AppTheme.boxDecoration(
+                          color: isDark ? AppColors.surfaceDark : AppColors.white,
+                          borderRadius: AppTheme.radius(16),
+                          border: AppTheme.border(
+                            color: AppColors.info.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.info.withValues(alpha: 0.12),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.person_pin_rounded, color: AppColors.info, size: 20),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'السائق البديل (مهمة الاستبدال الطارئة)',
+                                        style: AppTextStyles.style(
+                                          fontSize: 11,
+                                          color: context.textMuted,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        details.substituteDriver!.name.isNotEmpty
+                                            ? details.substituteDriver!.name
+                                            : 'سائق بديل',
+                                        style: AppTextStyles.style(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (details.substituteDriver!.phone.isNotEmpty) ...[
+                              const SizedBox(height: 10),
+                              const Divider(height: 1),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(Icons.phone_rounded, size: 15, color: AppColors.info),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    details.substituteDriver!.phone,
+                                    style: AppTextStyles.style(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    textDirection: TextDirection.ltr,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     Text(
                       'الأطفال (${details.children.length})',
@@ -200,19 +322,9 @@ class _ChildHistoryTile extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      child.childName,
-                      style: AppTextStyles.style(fontSize: 13, fontWeight: FontWeight.bold),
-                    ),
-                    if (child.school.isNotEmpty || child.schoolName.isNotEmpty)
-                      Text(
-                        child.school.isNotEmpty ? child.school : child.schoolName,
-                        style: AppTextStyles.style(fontSize: 12, color: context.textMuted),
-                      ),
-                  ],
+                child: Text(
+                  child.childName,
+                  style: AppTextStyles.style(fontSize: 13, fontWeight: FontWeight.bold),
                 ),
               ),
               if (child.status.isNotEmpty) TripChildStatusBadge(status: child.status, compact: true),

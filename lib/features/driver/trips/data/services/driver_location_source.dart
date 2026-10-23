@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:kids_transport/features/driver/trips/data/services/mock_route_provider.dart';
 
+import 'package:kids_transport/features/driver/trips/data/models/driver_trip_stop_model.dart';
+
 /// المصدر الوحيد لموقع السائق بالرحلة الحية.
 ///
 /// الوضع الافتراضي: GPS الحقيقي عبر Geolocator بنفس الإعدادات السابقة تماماً.
@@ -21,11 +23,20 @@ class DriverLocationSource {
 
   bool get isMock => kDebugMode && mockEnabled.value;
 
-  /// يفعّل/يلغي المحاكاة. الإلغاء يرجّع المسار لأوله.
-  Future<void> setMockEnabled(bool enabled) async {
+  /// يفعّل/يلغي المحاكاة. لو تم تمرير [stops] يتم توليد المسار بناءً على المحطات الفعلية،
+  /// مع إعطاء الأولوية القصوى لمحطة الحافلة المتعطلة (إن وُجدت).
+  Future<void> setMockEnabled(
+    bool enabled, {
+    List<DriverTripStopModel>? stops,
+    Position? currentPosition,
+  }) async {
     if (!kDebugMode) return;
     if (enabled) {
-      await mockRoute.load();
+      if (stops != null && stops.isNotEmpty) {
+        mockRoute.loadFromStops(stops, startPosition: currentPosition);
+      } else {
+        await mockRoute.load();
+      }
       mockRoute.reset();
       mockEnabled.value = true;
       mockRoute.start();

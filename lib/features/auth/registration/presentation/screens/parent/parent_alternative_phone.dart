@@ -109,8 +109,7 @@ class _ParentAlternativePhoneScreenState
                 TextFormField(
                   controller: _altPhoneController,
                   keyboardType: TextInputType.phone,
-                  textDirection: TextDirection.ltr,
-                  textAlign: TextAlign.left,
+                  textAlign: TextAlign.right,
                   style: AppTextStyles.inputTextStyle(
                     color: isDark ? AppColors.white : AppColors.textPrimary,
                   ),

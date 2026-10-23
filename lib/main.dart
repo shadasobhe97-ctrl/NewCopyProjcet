@@ -129,7 +129,7 @@ class TransportApp extends StatelessWidget {
             builder: (context, child) {
               return MaterialApp(
                 navigatorKey: navigatorKey,
-                title: 'تطبيق دربي المدارس',
+                title: 'دربي',
                 debugShowCheckedModeBanner: false,
                 locale: const Locale('ar', 'LY'),
                 supportedLocales: const [Locale('ar', 'LY')],

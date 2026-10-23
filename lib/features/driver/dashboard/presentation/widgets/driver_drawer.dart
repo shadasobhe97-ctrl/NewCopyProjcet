@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
@@ -135,11 +136,11 @@ class DriverDrawer extends StatelessWidget {
                     },
                   ),
 
-                  // ── تفضيلات العمل ──
+                  // ── إعدادات النقل ──
                   AppDrawerItem(
                     icon: Icons.settings_suggest_rounded,
                     iconColor: context.primaryColor,
-                    label: 'تفضيلات العمل',
+                    label: 'إعدادات النقل',
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.pushNamed(
@@ -208,6 +209,7 @@ class DriverDrawer extends StatelessWidget {
                     label: 'التواصل مع الدعم',
                     onTap: () {
                       Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRoutes.contactSupport);
                     },
                   ),
 
@@ -299,7 +301,8 @@ class _DriverDrawerHeader extends StatelessWidget {
                               driver.avatarUrl!.isNotEmpty
                           ? ClipOval(
                               child: CachedNetworkImage(
-                                imageUrl: driver.avatarUrl!,
+                                imageUrl: AppImageHelper.resolveUrl(driver.avatarUrl) ?? '',
+                                httpHeaders: AppImageHelper.safeHttpHeaders,
                                 width: 76,
                                 height: 76,
                                 fit: BoxFit.cover,

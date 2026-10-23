@@ -102,10 +102,11 @@ class RegisterCubit extends Cubit<RegisterState> {
       if (success) {
         emit(ParentOtpSentSuccess(message));
       } else {
-        emit(ParentOtpSentError(message));
+        final fieldErrors = ApiException.extractFieldErrors(responseData);
+        emit(ParentOtpSentError(message, fieldErrors: fieldErrors));
       }
     } on ApiException catch (e) {
-      emit(ParentOtpSentError(e.message));
+      emit(ParentOtpSentError(e.message, fieldErrors: e.fieldErrors));
     } catch (e) {
       emit(ParentOtpSentError('خطأ: ${e.toString()}'));
     }
@@ -194,7 +195,7 @@ class RegisterCubit extends Cubit<RegisterState> {
         ),
       );
     } on ApiException catch (e) {
-      emit(ParentRegisterError(e.message));
+      emit(ParentRegisterError(e.message, fieldErrors: e.fieldErrors));
     } catch (_) {
       emit(ParentRegisterError('فشل إنشاء الحساب، يرجى المحاولة مرة أخرى.'));
     }
@@ -228,6 +229,7 @@ class RegisterCubit extends Cubit<RegisterState> {
             response.message.isNotEmpty
                 ? response.message
                 : 'فشل إنشاء الحساب.',
+            fieldErrors: response.fieldErrors,
           ),
         );
         return;
@@ -236,7 +238,7 @@ class RegisterCubit extends Cubit<RegisterState> {
       registeredUserId = response.userId;
       emit(DriverRegisterFirstStageSuccess(response.message, response.userId));
     } on ApiException catch (e) {
-      emit(DriverRegisterFirstStageError(e.message));
+      emit(DriverRegisterFirstStageError(e.message, fieldErrors: e.fieldErrors));
     } catch (_) {
       emit(
         DriverRegisterFirstStageError(

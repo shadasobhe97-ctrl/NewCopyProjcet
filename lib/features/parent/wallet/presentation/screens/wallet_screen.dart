@@ -6,37 +6,65 @@ import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/primary_button.dart';
+import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
 import 'package:kids_transport/features/parent/shared/di/parent_injection.dart';
 import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_cubit.dart';
 import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_state.dart';
 
 class WalletScreen extends StatelessWidget {
   final WalletCubit? cubit;
+  final bool? showAppBar;
 
-  const WalletScreen({super.key, this.cubit});
+  const WalletScreen({super.key, this.cubit, this.showAppBar});
 
   @override
   Widget build(BuildContext context) {
+    final effectiveShowAppBar = showAppBar ?? (cubit == null);
     if (cubit != null) {
       return BlocProvider.value(
         value: cubit!,
-        child: const _WalletScreenContent(),
+        child: _WalletScreenContent(showAppBar: effectiveShowAppBar),
       );
     }
     return BlocProvider(
       create: (context) => getIt<WalletCubit>()..loadWalletData(),
-      child: const _WalletScreenContent(),
+      child: _WalletScreenContent(showAppBar: effectiveShowAppBar),
     );
   }
 }
 
 class _WalletScreenContent extends StatelessWidget {
-  const _WalletScreenContent();
+  final bool showAppBar;
+  const _WalletScreenContent({this.showAppBar = false});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.surfaceColor,
+      appBar: showAppBar
+          ? AppBar(
+              title: Text(
+                'المحفظة',
+                style: AppTextStyles.style(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              backgroundColor: context.surfaceColor,
+              elevation: 0,
+              centerTitle: true,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () {
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  } else {
+                    ParentMainWrapper.changeTab(0);
+                  }
+                },
+              ),
+            )
+          : null,
       body: BlocBuilder<WalletCubit, WalletState>(
         builder: (context, state) {
           if (state is WalletLoading) {

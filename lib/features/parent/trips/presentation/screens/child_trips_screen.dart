@@ -94,7 +94,9 @@ class _ChildTripsScreenState extends State<ChildTripsScreen> {
                 CircleAvatar(
                   radius: 30.r,
                   backgroundColor: AppColors.white.withValues(alpha: 0.2),
-                  backgroundImage: model.childPhoto != null && model.childPhoto!.isNotEmpty
+                  backgroundImage: (model.childPhoto != null &&
+                          model.childPhoto!.isNotEmpty &&
+                          AppUserAvatar.resolveUrl(model.childPhoto) != null)
                       ? CachedNetworkImageProvider(
                           AppUserAvatar.resolveUrl(model.childPhoto)!,
                           headers: AppUserAvatar.imageHeaders,

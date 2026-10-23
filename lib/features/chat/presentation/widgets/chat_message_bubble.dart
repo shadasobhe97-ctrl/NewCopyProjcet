@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import '../../data/models/chat_message_model.dart';
 import 'voice_note_bubble.dart';
 
@@ -35,6 +36,7 @@ class ChatMessageBubble extends StatelessWidget {
   }
 
   void _showFullScreenImage(BuildContext context, String imageUrl) {
+    final resolvedUrl = AppImageHelper.resolveUrl(imageUrl) ?? imageUrl;
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
@@ -45,7 +47,8 @@ class ChatMessageBubble extends StatelessWidget {
             Center(
               child: InteractiveViewer(
                 child: CachedNetworkImage(
-                  imageUrl: imageUrl,
+                  imageUrl: resolvedUrl,
+                  httpHeaders: AppImageHelper.safeHttpHeaders,
                   fit: BoxFit.contain,
                   placeholder: (context, url) => const CircularProgressIndicator(
                     color: Colors.white,
@@ -309,7 +312,10 @@ class ChatMessageBubble extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(12.r),
               child: CachedNetworkImage(
-                imageUrl: message.mediaUrl!,
+                imageUrl:
+                    AppImageHelper.resolveUrl(message.mediaUrl) ??
+                    message.mediaUrl!,
+                httpHeaders: AppImageHelper.safeHttpHeaders,
                 width: 200.w,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(

@@ -6,13 +6,11 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/features/parent/dashboard/presentation/screens/parent_main_wrapper.dart';
 
 class QuickServicesWidget extends StatelessWidget {
-  final VoidCallback? onAbsence;
   final VoidCallback? onWallet;
   final VoidCallback? onSubscriptions;
 
   const QuickServicesWidget({
     super.key,
-    this.onAbsence,
     this.onWallet,
     this.onSubscriptions,
   });
@@ -46,14 +44,6 @@ class QuickServicesWidget extends StatelessWidget {
         'color': AppColors.secondaryDark,
         'action': () =>
             Navigator.pushNamed(context, AppRoutes.parentLocationChangeHistory),
-      },
-      {
-        'title': 'الغياب',
-        'subtitle': 'إدارة الغياب',
-        'icon': Icons.calendar_month_outlined,
-        'color': AppColors.pending,
-        'action': onAbsence ??
-            () => Navigator.pushNamed(context, AppRoutes.parentAbsence),
       },
       {
         'title': 'المحفظة',

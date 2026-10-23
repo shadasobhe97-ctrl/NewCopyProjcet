@@ -30,6 +30,8 @@ class SessionRepository {
   Future<bool> saveDriverRegDraft(Map<String, dynamic> data) =>
       StorageService.saveDriverRegDraft(data);
   Future<void> clearDriverRegDraft() => StorageService.clearDriverRegDraft();
+  Future<void> resetAllDriverWelcomeShown() =>
+      StorageService.resetAllDriverWelcomeShown();
 
   Future<void> saveUserSession({
     required String token,

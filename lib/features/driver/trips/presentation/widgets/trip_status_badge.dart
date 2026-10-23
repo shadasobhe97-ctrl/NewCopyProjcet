@@ -5,10 +5,14 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 /// شارة حالة الرحلة (pending / in_progress / completed / suspended_breakdown)
 class TripStatusBadge extends StatelessWidget {
   final String status;
+  final String? customLabel;
 
-  const TripStatusBadge({super.key, required this.status});
+  const TripStatusBadge({super.key, required this.status, this.customLabel});
 
   String get _label {
+    if (customLabel != null && customLabel!.trim().isNotEmpty) {
+      return customLabel!.trim();
+    }
     switch (status) {
       case 'pending':
         return 'لم تبدأ';
@@ -17,7 +21,7 @@ class TripStatusBadge extends StatelessWidget {
       case 'completed':
         return 'مكتملة';
       case 'suspended_breakdown':
-        return 'متوقفة (عطل)';
+        return 'معطلة';
       default:
         return status;
     }

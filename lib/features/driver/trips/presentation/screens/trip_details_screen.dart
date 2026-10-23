@@ -299,11 +299,25 @@ class _ChildTile extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(13),
                   child: CachedNetworkImage(
-                    imageUrl: AppUserAvatar.resolveUrl(child.photo)!,
+                    imageUrl: AppUserAvatar.resolveUrl(child.photo) ?? '',
                     httpHeaders: AppUserAvatar.imageHeaders,
                     width: 26,
                     height: 26,
                     fit: BoxFit.cover,
+                    placeholder: (context, url) => SizedBox(
+                      width: 26,
+                      height: 26,
+                      child: Center(
+                        child: SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                      ),
+                    ),
                     errorWidget: (context, url, error) => const SizedBox.shrink(),
                   ),
                 ),

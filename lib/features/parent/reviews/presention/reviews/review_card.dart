@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 import 'package:kids_transport/features/parent/reviews/data/models/review_model.dart';
 import 'rating_stars.dart';
@@ -95,15 +96,9 @@ class ReviewCard extends StatelessWidget {
           Row(
             children: [
               // Avatar
-              CircleAvatar(
+              AppUserAvatar(
+                imageUrl: review.parent?.avatarUrl,
                 radius: 18.r,
-                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                backgroundImage: (review.parent?.avatarUrl != null && review.parent!.avatarUrl!.isNotEmpty)
-                    ? NetworkImage(review.parent!.avatarUrl!)
-                    : null,
-                child: (review.parent?.avatarUrl == null || review.parent!.avatarUrl!.isEmpty)
-                    ? Icon(Icons.person_rounded, color: theme.colorScheme.primary, size: 18.r)
-                    : null,
               ),
               SizedBox(width: 10.w),
               // Name and Date

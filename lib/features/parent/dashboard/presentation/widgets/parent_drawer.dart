@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/core/routes/app_router.dart';
@@ -127,16 +128,6 @@ class ParentDrawer extends StatelessWidget {
                         },
                       ),
                       AppDrawerItem(
-                        icon: Icons.event_busy_rounded,
-                        iconColor: context.warningColor,
-                        label: 'إدارة الغياب',
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.pushNamed(
-                              context, AppRoutes.parentAbsence);
-                        },
-                      ),
-                      AppDrawerItem(
                         icon: Icons.location_on_outlined,
                         iconColor: context.successColor,
                         label: 'عنواني',
@@ -145,12 +136,6 @@ class ParentDrawer extends StatelessWidget {
                           Navigator.pushNamed(
                               context, AppRoutes.savedAddresses);
                         },
-                      ),
-                       AppDrawerItem(
-                        icon: Icons.description_outlined,
-                        iconColor: context.pendingColor,
-                        label: 'عقودي واشتراكاتي',
-                        onTap: () => Navigator.pop(context),
                       ),
                       AppDrawerItem(
                         icon: Icons.directions_bus_rounded,
@@ -190,18 +175,6 @@ class ParentDrawer extends StatelessWidget {
                       ),
                       const Divider(height: 24, indent: 16, endIndent: 16),
                       AppDrawerItem(
-                        icon: Icons.settings_outlined,
-                        iconColor: context.textMuted,
-                        label: 'الإعدادات',
-                        onTap: () => Navigator.pop(context),
-                      ),
-                      AppDrawerItem(
-                        icon: Icons.help_outline_rounded,
-                        iconColor: context.textMuted,
-                        label: 'ميزات دربي',
-                        onTap: () => Navigator.pop(context),
-                      ),
-                      AppDrawerItem(
                         icon: Icons.policy_outlined,
                         iconColor: context.textMuted,
                         label: 'الشروط والسياسات',
@@ -222,7 +195,10 @@ class ParentDrawer extends StatelessWidget {
                         icon: Icons.support_agent_rounded,
                         iconColor: context.textMuted,
                         label: 'التواصل مع الدعم',
-                        onTap: () => Navigator.pop(context),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, AppRoutes.contactSupport);
+                        },
                       ),
                       const Divider(height: 24, indent: 16, endIndent: 16),
                       BlocBuilder<AuthCubit, AuthState>(
@@ -313,7 +289,8 @@ class _DrawerHeader extends StatelessWidget {
                       child: avatarUrl != null && avatarUrl!.isNotEmpty
                           ? ClipOval(
                               child: CachedNetworkImage(
-                                imageUrl: avatarUrl!,
+                                imageUrl: AppImageHelper.resolveUrl(avatarUrl) ?? '',
+                                httpHeaders: AppImageHelper.safeHttpHeaders,
                                 width: 76,
                                 height: 76,
                                 fit: BoxFit.cover,

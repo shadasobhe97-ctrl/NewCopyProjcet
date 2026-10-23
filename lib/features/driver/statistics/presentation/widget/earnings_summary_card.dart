@@ -6,10 +6,12 @@ import '../../data/models/driver_statistics_model.dart';
 
 class EarningsSummaryCard extends StatelessWidget {
   final FinancialStatsModel financialStats;
+  final bool isFiltered;
 
   const EarningsSummaryCard({
     super.key,
     required this.financialStats,
+    this.isFiltered = false,
   });
 
   @override
@@ -19,17 +21,8 @@ class EarningsSummaryCard extends StatelessWidget {
     final net = financialStats.netEarnings;
     final pending = financialStats.pendingAndDue;
     final currency = pending.currency;
-
-    final isUp = net.growthTrend.toLowerCase() == 'up';
-    final isDown = net.growthTrend.toLowerCase() == 'down';
-
-    final trendColor = isUp
-        ? AppColors.success
-        : (isDown ? AppColors.error : AppColors.grey500);
-
-    final trendIcon = isUp
-        ? Icons.trending_up_rounded
-        : (isDown ? Icons.trending_down_rounded : Icons.trending_flat_rounded);
+    final displayAmount = isFiltered ? net.currentMonth : net.total;
+    final displayTitle = isFiltered ? 'أرباح الشهر المحدد' : 'الإجمالي التراكمي';
 
     return Container(
       width: double.infinity,
@@ -73,7 +66,7 @@ class EarningsSummaryCard extends StatelessWidget {
                   ),
                   SizedBox(width: 10.w),
                   Text(
-                    'صافي الأرباح',
+                    displayTitle,
                     style: AppTextStyles.style(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,
@@ -82,152 +75,71 @@ class EarningsSummaryCard extends StatelessWidget {
                   ),
                 ],
               ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-                decoration: BoxDecoration(
-                  color: trendColor.withValues(alpha: 0.22),
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(
-                    color: trendColor.withValues(alpha: 0.5),
-                    width: 1,
+              if (isFiltered)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    'التراكمي: ${_formatMoney(net.total)} $currency',
+                    style: AppTextStyles.style(
+                      fontSize: 10.sp,
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(trendIcon, color: AppColors.white, size: 15.r),
-                    SizedBox(width: 4.w),
-                    Text(
-                      '${net.growthPercentage.toStringAsFixed(1)}%',
-                      style: AppTextStyles.style(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 14.h),
           Text(
-            '${_formatMoney(net.currentMonth)} $currency',
+            '${_formatMoney(displayAmount)} $currency',
             style: AppTextStyles.style(
-              fontSize: 28.sp,
+              fontSize: 30.sp,
               fontWeight: FontWeight.w800,
               color: AppColors.white,
               letterSpacing: 0.5,
             ),
           ),
-          SizedBox(height: 4.h),
-          Text(
-            'أرباح الشهر الحالي',
-            style: AppTextStyles.style(
-              fontSize: 12.sp,
-              color: AppColors.white.withValues(alpha: 0.8),
-            ),
-          ),
-          SizedBox(height: 20.h),
+          SizedBox(height: 16.h),
           Container(
-            padding: EdgeInsets.all(14.w),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(16.r),
             ),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: _subEarningsItem(
-                    'الإجمالي التراكمي',
-                    '${_formatMoney(net.total)} $currency',
-                  ),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.account_balance_outlined,
+                      color: AppColors.white.withValues(alpha: 0.85),
+                      size: 18.r,
+                    ),
+                    SizedBox(width: 8.w),
+                    Text(
+                      'رصيد المحفظة',
+                      style: AppTextStyles.style(
+                        fontSize: 12.sp,
+                        color: AppColors.white.withValues(alpha: 0.85),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-                Container(
-                  height: 32.h,
-                  width: 1.w,
-                  color: Colors.white.withValues(alpha: 0.25),
-                ),
-                Expanded(
-                  child: _subEarningsItem(
-                    'الشهر السابق',
-                    '${_formatMoney(net.previousMonth)} $currency',
+                Text(
+                  '${_formatMoney(pending.walletBalance)} $currency',
+                  style: AppTextStyles.style(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.white,
                   ),
                 ),
               ],
-            ),
-          ),
-          SizedBox(height: 14.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _infoPill(
-                Icons.hourglass_top_rounded,
-                'الأرباح المتوقعة:',
-                '${_formatMoney(financialStats.expectedActiveEarnings)} $currency',
-              ),
-              _infoPill(
-                Icons.account_balance_outlined,
-                'رصيد المحفظة:',
-                '${_formatMoney(pending.walletBalance)} $currency',
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _subEarningsItem(String title, String amount) {
-    return Column(
-      children: [
-        Text(
-          title,
-          style: AppTextStyles.style(
-            fontSize: 11.sp,
-            color: AppColors.white.withValues(alpha: 0.75),
-          ),
-        ),
-        SizedBox(height: 4.h),
-        Text(
-          amount,
-          style: AppTextStyles.style(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.bold,
-            color: AppColors.white,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
-    );
-  }
-
-  Widget _infoPill(IconData icon, String label, String value) {
-    return Flexible(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: AppColors.white.withValues(alpha: 0.85), size: 14.r),
-          SizedBox(width: 4.w),
-          Text(
-            label,
-            style: AppTextStyles.style(
-              fontSize: 11.sp,
-              color: AppColors.white.withValues(alpha: 0.75),
-            ),
-          ),
-          SizedBox(width: 4.w),
-          Flexible(
-            child: Text(
-              value,
-              style: AppTextStyles.style(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.bold,
-                color: AppColors.white,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -236,6 +148,6 @@ class EarningsSummaryCard extends StatelessWidget {
   }
 
   String _formatMoney(double v) {
-    return v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(2);
+    return v.toStringAsFixed(2);
   }
 }

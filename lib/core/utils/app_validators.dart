@@ -8,7 +8,7 @@ class AppValidators {
       r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
     );
     if (!emailRegExp.hasMatch(value.trim())) {
-      return 'صيغة البريد الإلكتروني غير صحيحة';
+      return 'أدخل بريدًا إلكترونيًا صحيحًا';
     }
     return null;
   }
@@ -17,7 +17,6 @@ class AppValidators {
   /// 1. 6 خانات على الأقل
   /// 2. تحتوي على حرف إنجليزي واحد على الأقل (A-Z أو a-z)
   /// 3. تحتوي على رقم واحد على الأقل (0-9)
-  /// يظهر خطأ كامل فوري يشمل كافة الشروط معاً عند المخالفة.
   static String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'الرجاء إدخال كلمة المرور';
@@ -27,8 +26,17 @@ class AppValidators {
     final hasDigit = RegExp(r'[0-9]').hasMatch(value);
 
     if (!hasMinLength || !hasEnglishLetter || !hasDigit) {
-      return 'كلمة المرور يجب أن تتكون من 6 خانات على الأقل،\n'
-          'وتحتوي على حرف إنجليزي ورقم على الأقل';
+      return 'كلمة المرور يجب أن تتكون من 6 خانات وتحتوي على حرف ورقم';
+    }
+    return null;
+  }
+
+  /// التحقق من تطابق كلمة المرور وتأكيدها
+  static String? validateConfirmPassword(String? value, String? password) {
+    final error = validatePassword(value);
+    if (error != null) return error;
+    if (value != password) {
+      return 'كلمة المرور غير متطابقة';
     }
     return null;
   }
@@ -42,97 +50,81 @@ class AppValidators {
     // التحقق من الحروف العربية فقط (مع السماح بالمسافات)
     final isArabic = RegExp(r'^[\u0600-\u06FF\s]+$').hasMatch(trimmed);
     if (!isArabic) {
-      return 'يجب كتابة الاسم باللغة العربية فقط (أحرف عربية)';
+      return 'يجب كتابة الاسم باللغة العربية فقط';
     }
-    // التجزئة بالمسافات للتحقق من أنه اسم ثلاثي على الأقل
     final nameParts = trimmed
         .split(RegExp(r'\s+'))
         .where((p) => p.isNotEmpty)
         .toList();
     if (nameParts.length < 3) {
-      return 'يرجى إدخال الاسم ثلاثياً على الأقل (مثال: أحمد محمد علي)';
+      return 'يرجى إدخال الاسم ثلاثياً على الأقل';
     }
     for (final part in nameParts) {
       if (part.length < 2) {
-        return 'يرجى كتابة أجزاء الاسم الثلاثي بشكل صحيح (كل اسم حرفين على الأقل)';
+        return 'يرجى كتابة أجزاء الاسم بشكل صحيح';
       }
     }
     return null;
   }
 
-  /// التحقق من رقم الهاتف الليبي (سواء كان أساسي أم اختياري):
+  /// التحقق من رقم الهاتف الليبي (سواء كان أساسي أم احتياطي):
   /// 1. 10 أرقام بالضبط
   /// 2. أرقام فقط
   /// 3. يبدأ بإحدى البادئات المعتمدة حصراً (091, 092, 093, 094, 095)
-  /// 4. عدم تطابق الهاتف الاختياري مع الهاتف الأساسي
+  /// 4. عدم تطابق الهاتف الاحتياطي مع الهاتف الأساسي
+  /// يرفض أي رقم لا يبدأ بـ 09 (مثل 922222222) ولا يقوم بتحويله تلقائياً
   static String? validateLibyanPhone(
     String? value, {
     bool isRequired = true,
     String? primaryPhone,
+    bool isAlternative = false,
   }) {
+    final isAlt = isAlternative || primaryPhone != null;
+    final emptyMsg = isAlt
+        ? 'الرجاء إدخال رقم الهاتف الاحتياطي'
+        : 'الرجاء إدخال رقم الهاتف الأساسي';
+    final invalidMsg = isAlt
+        ? 'رقم الهاتف الاحتياطي غير صحيح'
+        : 'رقم الهاتف الأساسي غير صحيح';
+
     if (value == null || value.trim().isEmpty) {
       if (isRequired) {
-        return 'الرجاء إدخال رقم الهاتف';
+        return emptyMsg;
       }
       return null;
     }
-    var trimmed = value.trim();
 
-    // معالجة البادئات الدولية والتسهيل على المستخدم (مثل +218 أو 00218 أو 218)
-    if (trimmed.startsWith('+218')) {
-      trimmed = '0${trimmed.substring(4)}';
-    } else if (trimmed.startsWith('00218')) {
-      trimmed = '0${trimmed.substring(5)}';
-    } else if (trimmed.startsWith('218') && trimmed.length == 12) {
-      trimmed = '0${trimmed.substring(3)}';
-    } else if (trimmed.length == 9 &&
-        (trimmed.startsWith('91') ||
-            trimmed.startsWith('92') ||
-            trimmed.startsWith('94') ||
-            trimmed.startsWith('93') ||
-            trimmed.startsWith('95'))) {
-      trimmed = '0$trimmed';
-    }
+    final trimmed = value.trim().replaceAll(' ', '').replaceAll('-', '');
 
+    // 1. أرقام فقط
     final isDigitsOnly = RegExp(r'^[0-9]+$').hasMatch(trimmed);
     if (!isDigitsOnly) {
-      return 'رقم الهاتف يجب أن يحتوي على أرقام فقط';
-    }
-    if (trimmed.length != 10) {
-      return 'رقم الهاتف يجب أن يتكون من 10 أرقام بالضبط (مثال: 0912345678)';
+      return invalidMsg;
     }
 
-    // 🌟 فحص البادئات الليبية المسموحة حصراً: (091, 092, 093, 094, 095)
-    // مرفوض تماماً أي رقم يبدأ بـ 090, 096, 097, 098, 099 الخ.
+    // 2. الطول 10 أرقام بالضبط
+    if (trimmed.length != 10) {
+      return invalidMsg;
+    }
+
+    // 3. فحص البادئات الليبية المسموحة حصراً: (091, 092, 093, 094, 095)
+    // أي رقم يبدأ بـ 92 أو 090 أو غيرها يعتبر غير صحيح
     final allowedPrefixes = ['091', '092', '093', '094', '095'];
     final hasValidPrefix = allowedPrefixes.any(
       (prefix) => trimmed.startsWith(prefix),
     );
     if (!hasValidPrefix) {
-      return 'رقم الهاتف يجب أن يبدأ بـ 091 أو 092 أو 093 أو 094 أو 095';
+      return invalidMsg;
     }
 
+    // 4. التحقق من عدم تطابق الرقم الاحتياطي مع الرقم الأساسي
     if (primaryPhone != null && primaryPhone.trim().isNotEmpty) {
-      var cleanPrimary = primaryPhone.trim();
-      if (cleanPrimary.startsWith('+218')) {
-        cleanPrimary = '0${cleanPrimary.substring(4)}';
-      } else if (cleanPrimary.startsWith('00218')) {
-        cleanPrimary = '0${cleanPrimary.substring(5)}';
-      } else if (cleanPrimary.startsWith('218') && cleanPrimary.length == 12) {
-        cleanPrimary = '0${cleanPrimary.substring(3)}';
-      } else if (cleanPrimary.length == 9 &&
-          (cleanPrimary.startsWith('91') ||
-              cleanPrimary.startsWith('92') ||
-              cleanPrimary.startsWith('94') ||
-              cleanPrimary.startsWith('93') ||
-              cleanPrimary.startsWith('95'))) {
-        cleanPrimary = '0$cleanPrimary';
-      }
-
+      final cleanPrimary = primaryPhone.trim().replaceAll(' ', '').replaceAll('-', '');
       if (trimmed == cleanPrimary) {
         return 'لا يمكن أن يكون رقم الهاتف الاحتياطي نفس رقم الهاتف الأساسي';
       }
     }
+
     return null;
   }
 

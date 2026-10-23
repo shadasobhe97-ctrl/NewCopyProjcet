@@ -137,6 +137,14 @@ class TopCardWidget extends StatelessWidget {
                       child: Image.asset(
                         'assets/images/hastrips.png',
                         fit: BoxFit.contain,
+                        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                          if (wasSynchronouslyLoaded || frame != null) return child;
+                          return Icon(
+                            Icons.directions_bus_rounded,
+                            size: 30.r,
+                            color: AppColors.white.withValues(alpha: 0.8),
+                          );
+                        },
                         errorBuilder: (context, error, stackTrace) {
                           return Icon(
                             Icons.directions_bus_rounded,

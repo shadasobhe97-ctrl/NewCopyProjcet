@@ -104,6 +104,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           : 'assets/images/ligth_logo.png',
                       width: 230.r,
                       height: 230.r,
+                      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                        if (wasSynchronouslyLoaded || frame != null) return child;
+                        return SizedBox(
+                          width: 230.r,
+                          height: 230.r,
+                          child: Center(
+                            child: Icon(
+                              Icons.directions_bus_rounded,
+                              size: 100.r,
+                              color: context.primaryColor,
+                            ),
+                          ),
+                        );
+                      },
                       errorBuilder: (context, error, stackTrace) => Icon(
                         Icons.directions_bus_rounded,
                         size: 100.r,

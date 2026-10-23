@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:kids_transport/core/network/api_endpoints.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 
 /// 🌟 ويدجت آمن موحد لعرض صور المستخدمين (الأطفال/السائقين)
 /// يحمي التطبيق تماماً من استثناء EncodingError أو الصور المكسورة
@@ -20,35 +20,11 @@ class AppUserAvatar extends StatelessWidget {
     this.iconSize,
   });
 
-  /// هيدر مطلوب لتجاوز صفحة تحذير localtunnel (loca.lt) عند تحميل الصور
-  static const Map<String, String> imageHeaders = {
-    'bypass-tunnel-reminder': 'true',
-  };
+  /// هيدر مطلوب لتجاوز صفحة تحذير localtunnel عند تحميل الصور على الأجهزة الحقيقية
+  static Map<String, String>? get imageHeaders => AppImageHelper.safeHttpHeaders;
 
   /// يحوّل الروابط النسبية وروابط localhost إلى رابط كامل على السيرفر
-  static String? resolveUrl(String? raw) {
-    if (raw == null) return null;
-    final url = raw.trim();
-    if (url.isEmpty) return null;
-
-    final serverHost = ApiEndpoints.baseUrl.replaceAll(RegExp(r'/?api/?$'), '');
-    String resolved = url;
-
-    if (url.startsWith('http://localhost') || url.startsWith('http://127.0.0.1')) {
-      final uri = Uri.parse(url);
-      resolved = '$serverHost${uri.path}';
-    } else if (url.startsWith('//')) {
-      resolved = 'https:$url';
-    } else if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      final cleanPath = url.startsWith('/') ? url : '/$url';
-      resolved = '$serverHost$cleanPath';
-    }
-
-    if (ApiEndpoints.baseUrl.startsWith('https://') && resolved.startsWith('http://')) {
-      resolved = 'https://${resolved.substring(7)}';
-    }
-    return resolved;
-  }
+  static String? resolveUrl(String? raw) => AppImageHelper.resolveUrl(raw);
 
   @override
   Widget build(BuildContext context) {
@@ -67,8 +43,16 @@ class AppUserAvatar extends StatelessWidget {
     );
 
     final resolvedUrl = resolveUrl(imageUrl);
-    if (resolvedUrl == null) {
+    if (resolvedUrl == null || !AppImageHelper.isValidImageUrl(resolvedUrl)) {
       return fallbackWidget;
+    }
+
+    if (resolvedUrl.startsWith('assets/')) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: effectiveBg,
+        backgroundImage: AssetImage(resolvedUrl),
+      );
     }
 
     return CachedNetworkImage(

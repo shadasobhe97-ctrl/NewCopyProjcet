@@ -1,5 +1,4 @@
-import 'package:flutter/foundation.dart';
-import 'package:kids_transport/core/network/api_endpoints.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import 'school_model.dart';
 import '../../../addresses/data/models/address_model.dart';
 import 'logistics_model.dart';
@@ -61,13 +60,7 @@ class ChildModel {
     return yrs < 0 ? 0 : yrs;
   }
 
-  bool get hasRealPhoto {
-    if (photoUrl == null || photoUrl!.isEmpty) return false;
-    final url = photoUrl!.toLowerCase();
-    return !url.contains('default-child') &&
-           !url.contains('/assets/images/default') &&
-           !url.endsWith('default-child.png');
-  }
+  bool get hasRealPhoto => AppImageHelper.isValidImageUrl(photoUrl);
   int get gradeLevel {
     final parsed = int.tryParse(grade);
     if (parsed != null && parsed >= 0 && parsed <= 12) return parsed;
@@ -151,22 +144,9 @@ class ChildModel {
   }
 
   factory ChildModel.fromJson(Map<String, dynamic> json) {
-    String? resolvedPhotoUrl;
     final rawPhoto =
         json['photo_url']?.toString() ?? json['image']?.toString();
-    debugPrint('📸 [ChildModel] raw photo_url: $rawPhoto');
-    if (rawPhoto != null && rawPhoto.isNotEmpty) {
-      final serverRoot = ApiEndpoints.baseUrl.replaceAll(RegExp(r'/?api/?$'), '');
-      if (rawPhoto.startsWith('http://') || rawPhoto.startsWith('https://')) {
-        resolvedPhotoUrl = rawPhoto;
-      } else if (rawPhoto.startsWith('//')) {
-        resolvedPhotoUrl = 'https:$rawPhoto';
-      } else {
-        final path = rawPhoto.startsWith('/') ? rawPhoto : '/$rawPhoto';
-        resolvedPhotoUrl = '$serverRoot$path';
-      }
-    }
-    debugPrint('📸 [ChildModel] resolved photoUrl: $resolvedPhotoUrl');
+    final resolvedPhotoUrl = AppImageHelper.resolveUrl(rawPhoto);
 
     final rawUserId = json['user_id'];
     final parsedUserId = rawUserId is int

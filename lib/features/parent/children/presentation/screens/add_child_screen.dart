@@ -4,8 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kids_transport/core/network/api_client.dart';
 import 'package:kids_transport/core/network/api_exception.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
@@ -1126,12 +1128,17 @@ class _AddChildScreenState extends State<AddChildScreen> {
                           backgroundImage: _imageBytes != null
                               ? MemoryImage(_imageBytes!)
                               : (_existingPhotoUrl != null &&
-                                      _existingPhotoUrl!.isNotEmpty
-                                  ? NetworkImage(_existingPhotoUrl!) as ImageProvider
+                                      _existingPhotoUrl!.isNotEmpty &&
+                                      AppImageHelper.isValidImageUrl(_existingPhotoUrl)
+                                  ? CachedNetworkImageProvider(
+                                      AppImageHelper.resolveUrl(_existingPhotoUrl)!,
+                                      headers: AppImageHelper.safeHttpHeaders,
+                                    )
                                   : null),
                           child: (_imageBytes == null &&
                                   (_existingPhotoUrl == null ||
-                                      _existingPhotoUrl!.isEmpty))
+                                      _existingPhotoUrl!.isEmpty ||
+                                      !AppImageHelper.isValidImageUrl(_existingPhotoUrl)))
                               ? Icon(
                                   Icons.child_care_rounded,
                                   size: 45,

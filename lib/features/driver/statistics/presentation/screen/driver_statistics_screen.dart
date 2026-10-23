@@ -135,6 +135,7 @@ class _DriverStatisticsScreenState extends State<DriverStatisticsScreen> {
             if (state is DriverStatisticsSuccess) {
               final stats = state.statistics;
               final quickWidgets = stats.quickWidgets;
+              final bool isFiltered = state.selectedMonth != null && state.selectedYear != null;
 
               return RefreshIndicator(
                 onRefresh: () =>
@@ -144,7 +145,7 @@ class _DriverStatisticsScreenState extends State<DriverStatisticsScreen> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
                     // فلتر تاريخ اختياري عند تحديده
-                    if (state.selectedMonth != null && state.selectedYear != null) ...[
+                    if (isFiltered) ...[
                       _selectedDateBanner(
                         context,
                         state.selectedMonth!,
@@ -155,15 +156,18 @@ class _DriverStatisticsScreenState extends State<DriverStatisticsScreen> {
                     ],
 
                     // 1. الأرباح المالية
-                    EarningsSummaryCard(financialStats: stats.financialStats),
+                    EarningsSummaryCard(
+                      financialStats: stats.financialStats,
+                      isFiltered: isFiltered,
+                    ),
                     SizedBox(height: 14.h),
 
                     // 2. ملخص النشاط السريع
                     ActivitySummaryCard(
                       activeStudentsCount: stats
                           .subscriptionAndPassengerStats.activeStudentsCount,
-                      completedTripsCount:
-                          stats.tripOperationsStats.completedTrips.total,
+                      completedTripsCount: stats.tripOperationsStats
+                          .getCompletedTripsCount(isFiltered: isFiltered),
                       punctualityRate: stats.tripOperationsStats.punctualityRate,
                     ),
                     SizedBox(height: 14.h),
@@ -184,6 +188,7 @@ class _DriverStatisticsScreenState extends State<DriverStatisticsScreen> {
                     // 5. عمليات الرحلات
                     TripOperationsCard(
                       tripStats: stats.tripOperationsStats,
+                      isFiltered: isFiltered,
                     ),
                     SizedBox(height: 14.h),
 
@@ -259,7 +264,7 @@ class _DriverStatisticsScreenState extends State<DriverStatisticsScreen> {
             child: Row(
               children: [
                 Text(
-                  'الشهر الحالي',
+                  'عرض التراكمي',
                   style: AppTextStyles.style(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w600,
@@ -277,9 +282,10 @@ class _DriverStatisticsScreenState extends State<DriverStatisticsScreen> {
   }
 
   void _showMonthYearPicker(BuildContext context) {
+    final cubit = context.read<DriverStatisticsCubit>();
     final now = DateTime.now();
-    int selectedM = now.month;
-    int selectedY = now.year;
+    int selectedM = cubit.currentMonth ?? now.month;
+    int selectedY = cubit.currentYear ?? now.year;
 
     showModalBottomSheet(
       context: context,
@@ -291,7 +297,10 @@ class _DriverStatisticsScreenState extends State<DriverStatisticsScreen> {
       ),
       builder: (ctx) {
         return StatefulBuilder(
-          builder: (context, setModalState) {
+          builder: (modalContext, setModalState) {
+            final isFutureDate = selectedY > now.year ||
+                (selectedY == now.year && selectedM > now.month);
+
             return Padding(
               padding: EdgeInsets.all(20.w),
               child: Column(
@@ -365,33 +374,115 @@ class _DriverStatisticsScreenState extends State<DriverStatisticsScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 20.h),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 46.h,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        context.read<DriverStatisticsCubit>().filterByDate(
-                              month: selectedM,
-                              year: selectedY,
-                            );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
+                  SizedBox(height: 14.h),
+
+                  // رسالة تنبيه عند اختيار تاريخ مستقبلي
+                  if (isFutureDate) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                       ),
-                      child: Text(
-                        'عرض الإحصائيات',
-                        style: AppTextStyles.style(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.white,
-                        ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20.r),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              'صيغة التاريخ غير صحيحة: لا يمكن اختيار تاريخ مستقبلي (${_arabicMonths[selectedM - 1]} $selectedY). يرجى اختيار شهر حالي أو سابق.',
+                              style: AppTextStyles.style(
+                                fontSize: 12.sp,
+                                color: AppColors.error,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    SizedBox(height: 10.h),
+                  ],
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 46.h,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (isFutureDate) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'صيغة التاريخ غير صحيحة: لا يمكن اختيار تاريخ مستقبلي (${_arabicMonths[selectedM - 1]} $selectedY).',
+                                      style: AppTextStyles.style(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    backgroundColor: AppColors.error,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                                return;
+                              }
+
+                              cubit.filterByDate(
+                                month: selectedM,
+                                year: selectedY,
+                              );
+                              Navigator.pop(ctx);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isFutureDate
+                                  ? AppColors.grey400
+                                  : Theme.of(context).colorScheme.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                            ),
+                            child: Text(
+                              'عرض الإحصائيات',
+                              style: AppTextStyles.style(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (cubit.currentMonth != null && cubit.currentYear != null) ...[
+                        SizedBox(width: 10.w),
+                        SizedBox(
+                          height: 46.h,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              cubit.resetFilter();
+                              Navigator.pop(ctx);
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.error,
+                              side: const BorderSide(color: AppColors.error),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                            ),
+                            child: Text(
+                              'عرض التراكمي',
+                              style: AppTextStyles.style(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
