@@ -692,9 +692,6 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
                 _row('فترة الطفل', child.timingDisplayLabel, isDark),
                 _row('وقت الاستلام', _formatTime(child.pickupTime), isDark),
                 _row('وقت التسليم', _formatTime(child.dropoffTime), isDark),
-                if (child.distanceKm != null)
-                  _row('المسافة',
-                      '${child.distanceKm!.toStringAsFixed(1)} كم', isDark),
                 if (child.medicalNotes != null &&
                     child.medicalNotes!.trim().isNotEmpty &&
                     child.medicalNotes != 'لا يوجد')

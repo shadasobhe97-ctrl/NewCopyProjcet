@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kids_transport/core/utils/app_image_helper.dart';
+import 'package:kids_transport/core/widgets/app_image_widget.dart';
 
 /// 🌟 ويدجت موحد وشامل لعرض صور المستخدمين (السائقين، أولياء الأمور، الأطفال)
 /// يدعم جميع المنصات (Web و Mobile)، وجميع أنواع المدخلات (String URL, XFile, File, Uint8List)
@@ -155,6 +156,35 @@ class AppUserAvatar extends StatelessWidget {
           radius: radius,
           backgroundColor: effectiveBg,
           backgroundImage: AssetImage(resolvedUrl),
+        );
+      }
+
+      // على الويب: نستخدم AppImageWidget لضمان تحميل الصورة عبر Dio وتجاوز قيود CORS و localtunnel
+      if (kIsWeb) {
+        return ClipOval(
+          child: SizedBox(
+            width: radius * 2,
+            height: radius * 2,
+            child: AppImageWidget(
+              image: resolvedUrl,
+              width: radius * 2,
+              height: radius * 2,
+              fit: BoxFit.cover,
+              placeholder: CircleAvatar(
+                radius: radius,
+                backgroundColor: effectiveBg,
+                child: SizedBox(
+                  width: radius * 0.7,
+                  height: radius * 0.7,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.0,
+                    color: effectiveIconColor,
+                  ),
+                ),
+              ),
+              errorWidget: fallbackWidget,
+            ),
+          ),
         );
       }
 
