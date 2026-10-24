@@ -129,6 +129,7 @@ class DriverUploadedFileModel {
   final String fileUrl;
   final String status;
   final String uploadedAt;
+  final String? expiryDate;
   final String? licenseExpiryDate;
   final String? insuranceExpiryDate;
   final String? stampExpiryDate;
@@ -141,6 +142,7 @@ class DriverUploadedFileModel {
     required this.fileUrl,
     required this.status,
     required this.uploadedAt,
+    this.expiryDate,
     this.licenseExpiryDate,
     this.insuranceExpiryDate,
     this.stampExpiryDate,
@@ -149,6 +151,10 @@ class DriverUploadedFileModel {
   });
 
   factory DriverUploadedFileModel.fromJson(Map<String, dynamic> json) {
+    final directExpiry = json['expiry_date']?.toString() ??
+        json['expiry']?.toString() ??
+        json['expires_at']?.toString();
+
     return DriverUploadedFileModel(
       id: json['id'] is int
           ? json['id']
@@ -169,11 +175,12 @@ class DriverUploadedFileModel {
           json['uploaded_at']?.toString() ??
           json['created_at']?.toString() ??
           '',
-      licenseExpiryDate: json['license_expiry_date']?.toString() ?? json['expiry_date']?.toString(),
-      insuranceExpiryDate: json['insurance_expiry_date']?.toString() ?? json['expiry_date']?.toString(),
-      stampExpiryDate: json['stamp_expiry_date']?.toString() ?? json['expiry_date']?.toString(),
+      expiryDate: directExpiry,
+      licenseExpiryDate: json['license_expiry_date']?.toString() ?? directExpiry,
+      insuranceExpiryDate: json['insurance_expiry_date']?.toString() ?? directExpiry,
+      stampExpiryDate: json['stamp_expiry_date']?.toString() ?? directExpiry,
       technicalInspectionExpiryDate:
-          json['technical_inspection_expiry_date']?.toString() ?? json['expiry_date']?.toString(),
+          json['technical_inspection_expiry_date']?.toString() ?? directExpiry,
       feedback:
           json['feedback']?.toString() ??
           json['rejection_reason']?.toString(),
@@ -187,6 +194,7 @@ class DriverUploadedFileModel {
       'file_url': fileUrl,
       'document_status': status,
       'uploaded_at': uploadedAt,
+      if (expiryDate != null) 'expiry_date': expiryDate,
       if (licenseExpiryDate != null) 'license_expiry_date': licenseExpiryDate,
       if (insuranceExpiryDate != null)
         'insurance_expiry_date': insuranceExpiryDate,
@@ -203,21 +211,32 @@ class DriverUploadedFileModel {
         upper == 'DOC_LICENSE' ||
         upper == 'LICENSE_DOC' ||
         upper == 'DRIVING_LICENSE' ||
-        upper == 'DRIVER_LICENSE') {
+        upper == 'DRIVER_LICENSE' ||
+        upper == 'LICENSE_PHOTO' ||
+        upper == 'LICENSE_IMAGE' ||
+        upper == 'LICENSE_CARD' ||
+        upper == 'DOC_DRIVING_LICENSE' ||
+        upper == 'DRIVER_LICENSE_FRONT') {
       return 'LICENSE';
     }
     if (upper == 'INSURANCE' ||
         upper == 'DOC_INSURANCE' ||
         upper == 'INSURANCE_DOC' ||
         upper == 'VEHICLE_INSURANCE' ||
-        upper == 'INSURANCE_POLICY') {
+        upper == 'INSURANCE_POLICY' ||
+        upper == 'CAR_INSURANCE' ||
+        upper == 'INSURANCE_CARD' ||
+        upper == 'THIRD_PARTY_INSURANCE' ||
+        upper == 'COMPREHENSIVE_INSURANCE') {
       return 'INSURANCE';
     }
     if (upper == 'STAMP' ||
         upper == 'DOC_STAMP' ||
         upper == 'STAMP_DOC' ||
         upper == 'TAX_STAMP' ||
-        upper == 'ANNUAL_STAMP') {
+        upper == 'ANNUAL_STAMP' ||
+        upper == 'RENEWAL_STAMP' ||
+        upper == 'STAMP_IMAGE') {
       return 'STAMP';
     }
     if (upper == 'TECHNICAL_INSPECTION' ||
@@ -225,7 +244,10 @@ class DriverUploadedFileModel {
         upper == 'DOC_INSPECTION' ||
         upper == 'INSPECTION_DOC' ||
         upper == 'INSPECTION' ||
-        upper == 'PERIODIC_INSPECTION') {
+        upper == 'PERIODIC_INSPECTION' ||
+        upper == 'MVPI' ||
+        upper == 'VEHICLE_INSPECTION' ||
+        upper == 'CAR_INSPECTION') {
       return 'TECHNICAL_INSPECTION';
     }
     if (upper == 'VEHICLE_LOGBOOK' ||
@@ -234,7 +256,10 @@ class DriverUploadedFileModel {
         upper == 'DOC_LOGBOOK_VEHICLE' ||
         upper == 'LOGBOOK_VEHICLE_DOC' ||
         upper == 'LOGBOOK' ||
-        upper == 'VEHICLE_BOOKLET') {
+        upper == 'VEHICLE_BOOKLET' ||
+        upper == 'CAR_LOGBOOK' ||
+        upper == 'CAR_REGISTRATION' ||
+        upper == 'VEHICLE_REGISTRATION') {
       return 'VEHICLE_LOGBOOK';
     }
     if (upper == 'BOOKLET_PERSONAL_PAGE' ||
@@ -242,47 +267,119 @@ class DriverUploadedFileModel {
         upper == 'DOC_LOGBOOK_OWNER' ||
         upper == 'LOGBOOK_OWNER_DOC' ||
         upper == 'BOOKLET_PAGE' ||
-        upper == 'BOOKLET') {
+        upper == 'BOOKLET' ||
+        upper == 'OWNER_LOGBOOK' ||
+        upper == 'LOGBOOK_OWNER') {
       return 'BOOKLET_PERSONAL_PAGE';
     }
     if (upper == 'CRIMINAL_RECORD' ||
         upper == 'DOC_CRIMINAL_RECORD' ||
-        upper == 'POLICE_RECORD') {
+        upper == 'POLICE_RECORD' ||
+        upper == 'POLICE_CLEARANCE' ||
+        upper == 'NON_CONVICTION' ||
+        upper == 'CRIMINAL_STATUS') {
       return 'CRIMINAL_RECORD';
     }
     if (upper == 'NATIONAL_ID' ||
         upper == 'DOC_NATIONAL_ID' ||
         upper == 'ID_CARD' ||
-        upper == 'IDENTITY_CARD') {
+        upper == 'IDENTITY_CARD' ||
+        upper == 'NATIONAL_IDENTITY' ||
+        upper == 'ID_FRONT' ||
+        upper == 'ID_BACK' ||
+        upper == 'NATIONAL_ID_FRONT' ||
+        upper == 'NATIONAL_ID_BACK') {
       return 'NATIONAL_ID';
     }
     if (upper == 'PERSONAL_PHOTO' ||
         upper == 'AVATAR' ||
         upper == 'PROFILE_IMAGE' ||
         upper == 'PROFILE_PICTURE' ||
-        upper == 'PHOTO') {
+        upper == 'PHOTO' ||
+        upper == 'DRIVER_PHOTO' ||
+        upper == 'DRIVER_IMAGE' ||
+        upper == 'USER_IMAGE') {
       return 'PERSONAL_PHOTO';
     }
     if (upper == 'VEHICLE_IMAGE' ||
         upper == 'BUS_IMAGE' ||
-        upper == 'VEHICLE_PICTURE') {
+        upper == 'VEHICLE_PICTURE' ||
+        upper == 'CAR_IMAGE' ||
+        upper == 'CAR_PHOTO' ||
+        upper == 'VEHICLE_PHOTO') {
       return 'VEHICLE_IMAGE';
+    }
+    if (upper == 'VEHICLE_FRONT' || upper == 'CAR_FRONT') {
+      return 'VEHICLE_FRONT';
+    }
+    if (upper == 'VEHICLE_BACK' || upper == 'CAR_BACK' || upper == 'CAR_REAR') {
+      return 'VEHICLE_BACK';
+    }
+    if (upper == 'VEHICLE_SIDE' || upper == 'CAR_SIDE') {
+      return 'VEHICLE_SIDE';
+    }
+    if (upper == 'VEHICLE_INTERIOR' || upper == 'CAR_INSIDE' || upper == 'INTERIOR') {
+      return 'VEHICLE_INTERIOR';
     }
     if (upper == 'OPERATION_CARD' ||
         upper == 'OPERATING_CARD' ||
-        upper == 'CARD') {
+        upper == 'CARD' ||
+        upper == 'TRANSPORT_CARD' ||
+        upper == 'OPERATIONAL_CARD') {
       return 'OPERATION_CARD';
     }
     if (upper == 'HEALTH_CERTIFICATE' ||
         upper == 'MEDICAL_REPORT' ||
-        upper == 'MEDICAL_CHECK') {
+        upper == 'MEDICAL_CHECK' ||
+        upper == 'HEALTH_REPORT' ||
+        upper == 'MEDICAL_FITNESS' ||
+        upper == 'DRUG_TEST') {
       return 'HEALTH_CERTIFICATE';
     }
-    if (upper == 'PASSPORT' || upper == 'DOC_PASSPORT') {
+    if (upper == 'PASSPORT' || upper == 'DOC_PASSPORT' || upper == 'PASSPORT_IMAGE') {
       return 'PASSPORT';
     }
-    if (upper == 'RESIDENCE' || upper == 'RESIDENCY') {
+    if (upper == 'RESIDENCE' ||
+        upper == 'RESIDENCY' ||
+        upper == 'RESIDENCE_PERMIT' ||
+        upper == 'IQAMA') {
       return 'RESIDENCE';
+    }
+    if (upper == 'DELEGATION' ||
+        upper == 'DELEGATION_LETTER' ||
+        upper == 'AUTHORIZATION' ||
+        upper == 'AUTHORIZATION_LETTER' ||
+        upper == 'POWER_OF_ATTORNEY') {
+      return 'DELEGATION';
+    }
+    if (upper == 'TAX_CARD' ||
+        upper == 'TAX_CERTIFICATE' ||
+        upper == 'TAX_RECORD') {
+      return 'TAX_CARD';
+    }
+    if (upper == 'COMMERCIAL_REGISTER' ||
+        upper == 'COMMERCIAL_REGISTRATION' ||
+        upper == 'CR') {
+      return 'COMMERCIAL_REGISTER';
+    }
+    if (upper == 'CONTRACT' ||
+        upper == 'EMPLOYMENT_CONTRACT' ||
+        upper == 'AGREEMENT' ||
+        upper == 'DRIVER_CONTRACT') {
+      return 'CONTRACT';
+    }
+    if (upper == 'IBAN' ||
+        upper == 'BANK_CERTIFICATE' ||
+        upper == 'BANK_ACCOUNT' ||
+        upper == 'BANK_CARD' ||
+        upper == 'BANK_STATEMENT') {
+      return 'IBAN';
+    }
+    if (upper == 'PLATE_NUMBER' ||
+        upper == 'PLATE_NUMBER_IMAGE' ||
+        upper == 'CAR_PLATE' ||
+        upper == 'LICENSE_PLATE') {
+      return 'PLATE_NUMBER';
     }
     return upper;
   }
@@ -299,49 +396,152 @@ class DriverUploadedFileModel {
       case 'TECHNICAL_INSPECTION':
         return 'الفحص الفني للمركبة';
       case 'VEHICLE_LOGBOOK':
-        return 'صفحة بيانات المركبة (الكتيب)';
+        return 'كتيب المركبة (صفحة بيانات المركبة)';
       case 'BOOKLET_PERSONAL_PAGE':
-        return 'صفحة البيانات الشخصية (الكتيب)';
+        return 'كتيب المركبة (صفحة المالك والبيانات الشخصية)';
       case 'CRIMINAL_RECORD':
         return 'شهادة الحالة الجنائية (السجل الجنائي)';
       case 'NATIONAL_ID':
         return 'بطاقة الهوية الوطنية';
       case 'PERSONAL_PHOTO':
-        return 'الصورة الشخصية';
+        return 'الصورة الشخصية للسائق';
       case 'VEHICLE_IMAGE':
         return 'صورة المركبة / الحافلة';
+      case 'VEHICLE_FRONT':
+        return 'صورة المركبة من الأمام';
+      case 'VEHICLE_BACK':
+        return 'صورة المركبة من الخلف';
+      case 'VEHICLE_SIDE':
+        return 'صورة المركبة من الجانب';
+      case 'VEHICLE_INTERIOR':
+        return 'صورة المركبة من الداخل (المقاعد)';
       case 'OPERATION_CARD':
-        return 'بطاقة التشغيل';
+        return 'بطاقة تشغيل المركبة';
       case 'HEALTH_CERTIFICATE':
         return 'الكشف الطبي / الشهادة الصحية';
       case 'PASSPORT':
         return 'جواز السفر';
       case 'RESIDENCE':
-        return 'شهادة الإقامة';
+        return 'شهادة الإقامة / تصريح الإقامة';
+      case 'DELEGATION':
+        return 'تفويض / توكيل قيادة المركبة';
+      case 'TAX_CARD':
+        return 'البطاقة الضريبية';
+      case 'COMMERCIAL_REGISTER':
+        return 'السجل التجاري';
+      case 'CONTRACT':
+        return 'عقد العمل والتشغيل';
+      case 'IBAN':
+        return 'إفادة الحساب المصرفي (IBAN)';
+      case 'PLATE_NUMBER':
+        return 'صورة لوحة المركبة';
       default:
-        var cleaned = type.trim();
-        if (cleaned.toUpperCase().startsWith('DOC_')) {
-          cleaned = cleaned.substring(4);
-        }
-        if (cleaned.isEmpty) return 'وثيقة رسمية';
-        return cleaned.replaceAll('_', ' ');
+        return _translateDocTypeFallback(type);
     }
   }
 
-  String get statusArabicText {
-    final lower = status.toLowerCase().trim();
-    if (lower == 'verified' || lower == 'approved' || lower == 'active') {
-      return 'تم التحقق';
-    } else if (lower == 'pending' || lower == 'under_review') {
-      return 'قيد المراجعة';
-    } else if (lower == 'rejected') {
-      return 'مرفوض';
-    } else if (lower == 'expired') {
-      return 'منتهي الصلاحية';
-    } else if (lower == 'missing' || lower == 'required') {
-      return 'مطلوب إرفاقه';
+  static String _translateDocTypeFallback(String rawType) {
+    var cleaned = rawType.trim().toLowerCase();
+    if (cleaned.startsWith('doc_')) {
+      cleaned = cleaned.substring(4);
     }
-    return status;
+    if (cleaned.isEmpty) return 'وثيقة رسمية';
+
+    final Map<String, String> wordMap = {
+      'license': 'رخصة',
+      'driving': 'قيادة',
+      'driver': 'سائق',
+      'insurance': 'تأمين',
+      'inspection': 'فحص',
+      'technical': 'فني',
+      'stamp': 'دمغة',
+      'logbook': 'كتيب',
+      'booklet': 'كتيب',
+      'vehicle': 'مركبة',
+      'car': 'سيارة',
+      'bus': 'حافلة',
+      'card': 'بطاقة',
+      'id': 'هوية',
+      'national': 'وطنية',
+      'photo': 'صورة',
+      'image': 'صورة',
+      'picture': 'صورة',
+      'front': 'أمامي',
+      'back': 'خلفي',
+      'rear': 'خلفي',
+      'side': 'جانبي',
+      'interior': 'داخلي',
+      'inside': 'داخلي',
+      'owner': 'مالك',
+      'page': 'صفحة',
+      'record': 'سجل',
+      'criminal': 'جنائي',
+      'police': 'شرطة',
+      'health': 'صحة',
+      'medical': 'طبي',
+      'certificate': 'شهادة',
+      'passport': 'جواز سفر',
+      'residence': 'إقامة',
+      'residency': 'إقامة',
+      'delegation': 'تفويض',
+      'authorization': 'تفويض',
+      'contract': 'عقد',
+      'tax': 'ضريبة',
+      'commercial': 'تجاري',
+      'bank': 'مصرفي',
+      'account': 'حساب',
+      'plate': 'لوحة',
+      'number': 'رقم',
+    };
+
+    final tokens = cleaned.split(RegExp(r'[_\-\s]+'));
+    final translatedTokens = tokens.map((token) {
+      return wordMap[token] ?? token;
+    }).toList();
+
+    // إذا كانت جميع الكلمات قد تُرجمت للعربية
+    final allArabic = translatedTokens.every(
+      (t) => RegExp(r'^[\u0600-\u06FF\s]+$').hasMatch(t),
+    );
+
+    if (allArabic) {
+      return translatedTokens.join(' ');
+    }
+
+    return 'وثيقة رسمية (${rawType.replaceAll('_', ' ')})';
+  }
+
+  static String translateStatusToArabic(String rawStatus) {
+    final lower = rawStatus.toLowerCase().trim();
+    if (lower == 'verified' || lower == 'approved' || lower == 'active' || lower == 'valid') {
+      return 'تم التحقق والاعتماد';
+    } else if (lower == 'pending' ||
+        lower == 'under_review' ||
+        lower == 'in_review' ||
+        lower == 'submitted') {
+      return 'قيد المراجعة والتدقيق';
+    } else if (lower == 'rejected' || lower == 'declined') {
+      return 'مرفوضة';
+    } else if (lower == 'expired') {
+      return 'منتهية الصلاحية';
+    } else if (lower == 'expiring_soon' || lower == 'warning') {
+      return 'شارفت على الانتهاء';
+    } else if (lower == 'missing' || lower == 'required' || lower == 'not_uploaded') {
+      return 'مطلوب إرفاقها';
+    } else if (lower == 'suspended') {
+      return 'موقوفة مؤقتاً';
+    } else if (lower == 'inactive') {
+      return 'غير نشطة';
+    } else if (lower == 'draft') {
+      return 'مسودة';
+    } else if (lower == 'action_required' || lower == 'needs_update') {
+      return 'تتطلب التحديث';
+    }
+    return rawStatus;
+  }
+
+  String get statusArabicText {
+    return translateStatusToArabic(status);
   }
 }
 
