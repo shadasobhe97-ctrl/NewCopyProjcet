@@ -152,11 +152,11 @@ class DriverDrawer extends StatelessWidget {
                     },
                   ),
 
-                  // ── تفضيلات العمل ──
+                  // ── إعدادات النقل ──
                   AppDrawerItem(
                     icon: Icons.settings_suggest_rounded,
                     iconColor: context.primaryColor,
-                    label: 'تفضيلات العمل',
+                    label: 'إعدادات النقل',
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.pushNamed(
@@ -222,6 +222,7 @@ class DriverDrawer extends StatelessWidget {
                     label: 'التواصل مع الدعم',
                     onTap: () {
                       Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRoutes.contactSupport);
                     },
                   ),
 
@@ -310,8 +311,9 @@ class _DriverDrawerHeader extends StatelessWidget {
                       image: driver.avatarUrl,
                       radius: 38,
                       backgroundColor: AppColors.white24,
-                      iconColor: AppColors.white,
+iconColor: AppColors.white,
                       iconSize: 38,
+
                     ),
                   ),
 

@@ -1,4 +1,5 @@
 import 'package:kids_transport/features/shared/notifications/presentation/screens/notifications_screen.dart';
+import 'package:kids_transport/features/shared/support/presentation/screens/contact_support_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -122,6 +123,7 @@ class AppRoutes {
   static const String selectRole = '/selectRole';
   static const String notifications = '/notifications';
   static const String changePassword = '/changePassword';
+  static const String contactSupport = '/contactSupport';
 
   static const String adminLogin = '/adminLogin';
   static const String adminDashboard = '/admin/dashboard';
@@ -270,6 +272,8 @@ class AppRoutes {
             child: ChangePasswordScreen(isDriver: isDriver),
           ),
         );
+      case contactSupport:
+        return _route(settings, const ContactSupportScreen());
       default:
         return null;
     }
@@ -290,11 +294,12 @@ class AppRoutes {
       case parentHomeLegacy:
         return _route(settings, const ParentHomeScreen());
       case parentProfile:
+        final startInEdit = settings.arguments is bool ? settings.arguments as bool : false;
         return _route(
           settings,
           BlocProvider.value(
             value: getIt<ParentProfileCubit>(),
-            child: const ParentProfileScreen(),
+            child: ParentProfileScreen(startInEditMode: startInEdit),
           ),
         );
       case savedAddresses:
@@ -342,7 +347,7 @@ class AppRoutes {
 
       // --- Wallet & Finance ---
       case parentWallet:
-        return _route(settings, const WalletScreen());
+        return _route(settings, const WalletScreen(showAppBar: true));
       case parentRecharge:
         final walletCubit = settings.arguments as WalletCubit;
         return _route(

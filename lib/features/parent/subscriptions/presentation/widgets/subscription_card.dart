@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import '../../data/models/active_subscription_model.dart';
@@ -249,11 +250,22 @@ class SubscriptionCard extends StatelessWidget {
               shape: BoxShape.circle,
               color: avatarColor.withValues(alpha: 0.12),
             ),
-            child: child.photoUrl != null
+            child: (child.photoUrl != null && child.photoUrl!.isNotEmpty)
                 ? ClipOval(
                     child: CachedNetworkImage(
-                      imageUrl: child.photoUrl!,
+                      imageUrl: AppImageHelper.resolveUrl(child.photoUrl) ?? '',
+                      httpHeaders: AppImageHelper.safeHttpHeaders,
                       fit: BoxFit.cover,
+                      placeholder: (_, _) => Center(
+                        child: SizedBox(
+                          width: 14.r,
+                          height: 14.r,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: avatarColor,
+                          ),
+                        ),
+                      ),
                       errorWidget: (_, _, _) => Center(
                         child: Text(child.avatarInitials,
                             style: AppTextStyles.style(

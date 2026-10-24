@@ -181,6 +181,7 @@ class StorageService {
       _prefs.remove(_parentRegStageKey),
       _prefs.remove(_latestEmergencyDispatchIdKey),
     ]);
+    await resetAllDriverWelcomeShown();
     await HiveHelper.clearAllCache();
   }
 
@@ -215,6 +216,21 @@ class StorageService {
   static Future<bool> markDriverWelcomeShown(int driverId) {
     if (driverId <= 0) return Future.value(false);
     return _prefs.setBool('$_driverWelcomeShownKeyPrefix$driverId', true);
+  }
+
+  static Future<bool> resetDriverWelcomeShown(int driverId) {
+    if (driverId <= 0) return Future.value(false);
+    return _prefs.remove('$_driverWelcomeShownKeyPrefix$driverId');
+  }
+
+  static Future<void> resetAllDriverWelcomeShown() async {
+    final keys = _prefs
+        .getKeys()
+        .where((k) => k.startsWith(_driverWelcomeShownKeyPrefix))
+        .toList();
+    for (final key in keys) {
+      await _prefs.remove(key);
+    }
   }
 
   // ==========================================

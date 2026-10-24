@@ -98,10 +98,10 @@ class DriverServicesWidget extends StatelessWidget {
                 },
               ),
 
-              // 2. كرت التفضيلات
+              // 2. كرت إعدادات النقل
               _buildStandardServiceCard(
                 context,
-                title: 'التفضيلات',
+                title: 'إعدادات النقل',
                 subtitle: 'تخصيص النطاق',
                 icon: Icons.tune_rounded,
                 color: context.primaryColor,
@@ -132,18 +132,6 @@ class DriverServicesWidget extends StatelessWidget {
                 isDark: isDark,
                 onTap: () =>
                     Navigator.pushNamed(context, AppRoutes.driverTripsHistory),
-              ),
-
-              // 5. كرت تسجيل الغياب
-              _buildStandardServiceCard(
-                context,
-                title: 'إدارة الغياب',
-                subtitle: 'الطلبات المسبقة',
-                icon: Icons.event_busy_rounded,
-                color: AppColors.pending,
-                isDark: isDark,
-                onTap: () =>
-                    Navigator.pushNamed(context, AppRoutes.driverAbsence),
               ),
             ],
           ),

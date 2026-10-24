@@ -112,6 +112,36 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
     return 'صباحي';
   }
 
+  String _formatTime(String? raw) {
+    if (raw == null || raw.trim().isEmpty || raw.trim() == 'null') {
+      return 'غير محدد';
+    }
+    final clean = raw.trim();
+    if (clean.contains('صباح') || clean.contains('مساء')) {
+      return clean;
+    }
+    final parts = clean.split(':');
+    if (parts.length >= 2) {
+      final h = int.tryParse(parts[0]);
+      final secondPart = parts[1].split(' ').first;
+      final m = int.tryParse(secondPart);
+      if (h != null && m != null) {
+        var hour = h;
+        final isPm = clean.toUpperCase().contains('PM');
+        final isAm = clean.toUpperCase().contains('AM');
+        if (isPm && hour < 12) hour += 12;
+        if (isAm && hour == 12) hour = 0;
+
+        final period = hour >= 12 ? 'مساءً' : 'صباحًا';
+        final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+        final hourStr = displayHour.toString().padLeft(2, '0');
+        final minStr = m.toString().padLeft(2, '0');
+        return '$hourStr:$minStr $period';
+      }
+    }
+    return clean;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -732,6 +762,16 @@ class _MyChildrenScreenState extends State<MyChildrenScreen> {
                     isDark,
                   ),
                   _buildInfoRow('فترة التوصيل المفضلة', _getPreferredSlotText(child), isDark),
+                  _buildInfoRow(
+                    'موعد الاستلام',
+                    _formatTime(child.effectivePickupTime),
+                    isDark,
+                  ),
+                  _buildInfoRow(
+                    'موعد التسليم',
+                    _formatTime(child.effectiveDropoffTime),
+                    isDark,
+                  ),
                   if (child.medicalNotes != null && child.medicalNotes!.isNotEmpty)
                     _buildInfoRow('الملاحظات الطبية', child.medicalNotes!, isDark),
                 ],

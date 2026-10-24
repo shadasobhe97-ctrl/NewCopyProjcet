@@ -1,5 +1,4 @@
-import 'package:flutter/foundation.dart';
-import 'package:kids_transport/core/network/api_endpoints.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import 'school_model.dart';
 import '../../../addresses/data/models/address_model.dart';
 import 'logistics_model.dart';
@@ -24,6 +23,8 @@ class ChildModel {
   final SchoolModel? school;
   final AddressModel? address;
   final LogisticsModel? logistics;
+  final String? pickupTime;
+  final String? dropoffTime;
 
   ChildModel({
     this.id,
@@ -44,6 +45,8 @@ class ChildModel {
     this.school,
     this.address,
     this.logistics,
+    this.pickupTime,
+    this.dropoffTime,
   });
 
   // UI Getters for compatibility
@@ -61,13 +64,7 @@ class ChildModel {
     return yrs < 0 ? 0 : yrs;
   }
 
-  bool get hasRealPhoto {
-    if (photoUrl == null || photoUrl!.isEmpty) return false;
-    final url = photoUrl!.toLowerCase();
-    return !url.contains('default-child') &&
-           !url.contains('/assets/images/default') &&
-           !url.endsWith('default-child.png');
-  }
+  bool get hasRealPhoto => AppImageHelper.isValidImageUrl(photoUrl);
   int get gradeLevel {
     final parsed = int.tryParse(grade);
     if (parsed != null && parsed >= 0 && parsed <= 12) return parsed;
@@ -89,6 +86,8 @@ class ChildModel {
   String get addressName => address?.label ?? '';
   String get qrToken => qrCodeToken ?? '';
   bool get hasActiveSubscription => logistics != null;
+  String? get effectivePickupTime => pickupTime ?? logistics?.pickupTime;
+  String? get effectiveDropoffTime => dropoffTime ?? logistics?.dropoffTime;
 
   String get fullStageAndGradeDisplay {
     final stageText = schoolStageLabel ?? '';
@@ -150,23 +149,56 @@ class ChildModel {
     );
   }
 
+  ChildModel copyWith({
+    int? id,
+    int? userId,
+    int? schoolId,
+    String? addressId,
+    String? fullName,
+    String? gender,
+    DateTime? birthDate,
+    int? age,
+    String? grade,
+    String? schoolStage,
+    String? schoolStageLabel,
+    String? photoUrl,
+    String? medicalNotes,
+    double? notificationRadius,
+    String? qrCodeToken,
+    SchoolModel? school,
+    AddressModel? address,
+    LogisticsModel? logistics,
+    String? pickupTime,
+    String? dropoffTime,
+  }) {
+    return ChildModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      schoolId: schoolId ?? this.schoolId,
+      addressId: addressId ?? this.addressId,
+      fullName: fullName ?? this.fullName,
+      gender: gender ?? this.gender,
+      birthDate: birthDate ?? this.birthDate,
+      age: age ?? this.age,
+      grade: grade ?? this.grade,
+      schoolStage: schoolStage ?? this.schoolStage,
+      schoolStageLabel: schoolStageLabel ?? this.schoolStageLabel,
+      photoUrl: photoUrl ?? this.photoUrl,
+      medicalNotes: medicalNotes ?? this.medicalNotes,
+      notificationRadius: notificationRadius ?? this.notificationRadius,
+      qrCodeToken: qrCodeToken ?? this.qrCodeToken,
+      school: school ?? this.school,
+      address: address ?? this.address,
+      logistics: logistics ?? this.logistics,
+      pickupTime: pickupTime ?? this.pickupTime,
+      dropoffTime: dropoffTime ?? this.dropoffTime,
+    );
+  }
+
   factory ChildModel.fromJson(Map<String, dynamic> json) {
-    String? resolvedPhotoUrl;
     final rawPhoto =
         json['photo_url']?.toString() ?? json['image']?.toString();
-    debugPrint('📸 [ChildModel] raw photo_url: $rawPhoto');
-    if (rawPhoto != null && rawPhoto.isNotEmpty) {
-      final serverRoot = ApiEndpoints.baseUrl.replaceAll(RegExp(r'/?api/?$'), '');
-      if (rawPhoto.startsWith('http://') || rawPhoto.startsWith('https://')) {
-        resolvedPhotoUrl = rawPhoto;
-      } else if (rawPhoto.startsWith('//')) {
-        resolvedPhotoUrl = 'https:$rawPhoto';
-      } else {
-        final path = rawPhoto.startsWith('/') ? rawPhoto : '/$rawPhoto';
-        resolvedPhotoUrl = '$serverRoot$path';
-      }
-    }
-    debugPrint('📸 [ChildModel] resolved photoUrl: $resolvedPhotoUrl');
+    final resolvedPhotoUrl = AppImageHelper.resolveUrl(rawPhoto);
 
     final rawUserId = json['user_id'];
     final parsedUserId = rawUserId is int
@@ -177,6 +209,32 @@ class ChildModel {
     final parsedSchoolId = rawSchoolId is int
         ? rawSchoolId
         : int.tryParse(rawSchoolId?.toString() ?? '') ?? 0;
+
+    final rawLogistics = json['logistics'] is Map
+        ? LogisticsModel.fromJson(Map<String, dynamic>.from(json['logistics'] as Map))
+        : (json['subscription'] is Map
+            ? LogisticsModel.fromJson(Map<String, dynamic>.from(json['subscription'] as Map))
+            : null);
+
+    final resolvedPickupTime = json['pickup_time']?.toString() ??
+        json['school_start_time']?.toString() ??
+        rawLogistics?.pickupTime;
+
+    final resolvedDropoffTime = json['dropoff_time']?.toString() ??
+        json['school_end_time']?.toString() ??
+        rawLogistics?.dropoffTime;
+
+    final effectiveLogistics = rawLogistics ??
+        ((resolvedPickupTime != null || resolvedDropoffTime != null)
+            ? LogisticsModel(
+                preferredTimeSlot: json['preferred_time_slot']?.toString() ?? 'morning',
+                tripDirection: json['trip_direction']?.toString() ?? 'both',
+                pickupTime: resolvedPickupTime,
+                dropoffTime: resolvedDropoffTime,
+                startDate: DateTime.tryParse(json['start_date']?.toString() ?? '') ?? DateTime.now(),
+                subscriptionType: json['subscription_type']?.toString() ?? 'monthly',
+              )
+            : null);
 
     return ChildModel(
       id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? ''),
@@ -203,9 +261,9 @@ class ChildModel {
       address: json['address'] is Map
           ? AddressModel.fromJson(Map<String, dynamic>.from(json['address'] as Map))
           : null,
-      logistics: json['logistics'] is Map
-          ? LogisticsModel.fromJson(Map<String, dynamic>.from(json['logistics'] as Map))
-          : null,
+      logistics: effectiveLogistics,
+      pickupTime: resolvedPickupTime,
+      dropoffTime: resolvedDropoffTime,
     );
   }
 
@@ -226,6 +284,8 @@ class ChildModel {
       if (school != null) 'school': school!.toJson(),
       if (address != null) 'address': address?.toJson(),
       if (logistics != null) 'logistics': logistics?.toJson(),
+      if (pickupTime != null) 'pickup_time': pickupTime,
+      if (dropoffTime != null) 'dropoff_time': dropoffTime,
     };
   }
 }

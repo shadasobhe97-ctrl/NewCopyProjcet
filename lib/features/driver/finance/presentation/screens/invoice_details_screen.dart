@@ -57,20 +57,8 @@ class _InvoiceDetailsScreenState extends State<InvoiceDetailsScreen> {
                           label: 'الحالة',
                           valueWidget: StatusChip(status: d.statusLabel),
                         ),
-                        if (d.dueDate != null && d.dueDate!.isNotEmpty)
-                          _InfoRow(label: 'تاريخ الاستحقاق', value: d.dueDate!),
                         if (d.paidAt != null && d.paidAt!.isNotEmpty)
                           _InfoRow(label: 'تاريخ الدفع', value: d.paidAt!),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _InfoCard(
-                      title: 'الرحلات',
-                      children: [
-                        _InfoRow(label: 'عدد الرحلات', value: '${d.totalTrips}'),
-                        _InfoRow(label: 'الرحلات المكتملة', value: '${d.completedTrips}'),
-                        _InfoRow(label: 'غياب السائق', value: '${d.driverAbsences}'),
-                        _InfoRow(label: 'غياب الطالب', value: '${d.studentAbsences}'),
                       ],
                     ),
                     if (d.contract != null) ...[

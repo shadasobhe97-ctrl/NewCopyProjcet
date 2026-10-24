@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import '../../data/models/request_model.dart';
@@ -350,11 +351,22 @@ class RequestCard extends StatelessWidget {
       decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: color.withValues(alpha: 0.12)),
-      child: driver.photoUrl != null
+      child: (driver.photoUrl != null && driver.photoUrl!.isNotEmpty)
           ? ClipOval(
               child: CachedNetworkImage(
-                imageUrl: driver.photoUrl!,
+                imageUrl: AppImageHelper.resolveUrl(driver.photoUrl) ?? '',
+                httpHeaders: AppImageHelper.safeHttpHeaders,
                 fit: BoxFit.cover,
+                placeholder: (_, _) => Center(
+                  child: SizedBox(
+                    width: 18.r,
+                    height: 18.r,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: color,
+                    ),
+                  ),
+                ),
                 errorWidget: (_, _, _) => Center(
                   child: Text(initials,
                       style: AppTextStyles.style(

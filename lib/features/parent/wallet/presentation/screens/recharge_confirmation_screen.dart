@@ -5,6 +5,7 @@ import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/app_image_widget.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import 'package:kids_transport/core/widgets/primary_button.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/recharge_mock_pay_response_model.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/recharge_response_model.dart';
@@ -49,7 +50,7 @@ class RechargeConfirmationScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'تم الدفع بنجاح',
+              'تم الشحن بنجاح',
               textAlign: TextAlign.center,
               style: AppTextStyles.style(
                 fontSize: 18,
@@ -60,7 +61,7 @@ class RechargeConfirmationScreen extends StatelessWidget {
             if (data.message.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                data.message,
+                data.message.replaceAll('الدفع', 'الشحن'),
                 textAlign: TextAlign.center,
                 style: AppTextStyles.style(
                   fontSize: 13,
@@ -91,7 +92,7 @@ class RechargeConfirmationScreen extends StatelessWidget {
             if (data.invoice?.paidAt != null &&
                 data.invoice!.paidAt!.isNotEmpty)
               _SuccessRow(
-                label: 'تاريخ الدفع',
+                label: 'تاريخ الشحن',
                 value: data.invoice!.paidAt!,
               ),
             const SizedBox(height: 20),
@@ -138,7 +139,7 @@ class RechargeConfirmationScreen extends StatelessWidget {
       backgroundColor: context.surfaceColor,
       appBar: AppBar(
         title: Text(
-          'تأكيد الدفع',
+          'تأكيد الشحن',
           style: AppTextStyles.style(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -191,7 +192,7 @@ class RechargeConfirmationScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'طريقة الدفع',
+                                  'طريقة الشحن',
                                   style: AppTextStyles.style(
                                     fontSize: 12,
                                     color: context.textMuted,
@@ -249,8 +250,8 @@ class RechargeConfirmationScreen extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'العملية جاهزة للتأكيد. بالضغط على "تأكيد الدفع" سيتم '
-                          'خصم المبلغ عبر بوابة الدفع وإيداعه في محفظتك.',
+                          'العملية جاهزة للتأكيد. بالضغط على "تأكيد الشحن" سيتم '
+                          'إيداع المبلغ في محفظتك عبر بوابة الشحن.',
                           style: AppTextStyles.style(
                             fontSize: 13,
                             color: context.textPrimary,
@@ -262,7 +263,7 @@ class RechargeConfirmationScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 PrimaryButton(
-                  label: isConfirming ? 'جارٍ التأكيد...' : 'تأكيد الدفع',
+                  label: isConfirming ? 'جارٍ التأكيد...' : 'تأكيد الشحن',
                   onPressed: isConfirming
                       ? null
                       : () {
@@ -299,17 +300,30 @@ class _ConfirmationIcon extends StatelessWidget {
           color: context.textMuted,
         );
 
-    if (iconUrl == null || iconUrl!.isEmpty) {
+    final resolved = AppImageHelper.resolveUrl(iconUrl);
+    if (resolved == null || !AppImageHelper.isValidImageUrl(resolved)) {
       return SizedBox(width: 48, height: 48, child: fallback());
+    }
+    if (resolved.startsWith('assets/')) {
+      return SizedBox(
+        width: 48,
+        height: 48,
+        child: Image.asset(
+          resolved,
+          fit: BoxFit.contain,
+          errorBuilder: (_, _, _) => fallback(),
+        ),
+      );
     }
     return SizedBox(
       width: 48,
       height: 48,
-      // AppImageWidget يخزن الصورة مؤقتاً بدل إعادة تحميلها مع كل بناء
+// AppImageWidget يخزن الصورة مؤقتاً بدل إعادة تحميلها مع كل بناء
       child: AppImageWidget(
         image: iconUrl,
         placeholder: fallback(),
         errorWidget: fallback(),
+
       ),
     );
   }

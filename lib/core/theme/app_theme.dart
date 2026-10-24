@@ -210,6 +210,8 @@ class AppTheme {
     bool? isDense,
     Icon? icon,
     String? counterText,
+    int? errorMaxLines,
+    TextStyle? errorStyle,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context).inputDecorationTheme;
@@ -221,6 +223,13 @@ class AppTheme {
       suffix: suffix,
       prefix: prefix,
       errorText: errorText,
+      errorMaxLines: errorMaxLines ?? 3,
+      errorStyle: errorStyle ??
+          GoogleFonts.cairo(
+            color: AppColors.error,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
       helperText: helperText,
       filled: filled ?? theme.filled,
       fillColor: fillColor ?? theme.fillColor,

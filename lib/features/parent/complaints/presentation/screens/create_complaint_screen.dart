@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import '../../data/models/driver_trip_model.dart';
 import '../../data/models/parent_driver_model.dart';
 import '../../logic/complaints_cubit.dart';
@@ -176,15 +177,9 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                           ),
                           child: Row(
                             children: [
-                              CircleAvatar(
+                              AppUserAvatar(
+                                imageUrl: widget.driverAvatar,
                                 radius: 22.r,
-                                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                                backgroundImage: (widget.driverAvatar != null && widget.driverAvatar!.isNotEmpty)
-                                    ? NetworkImage(widget.driverAvatar!)
-                                    : null,
-                                child: (widget.driverAvatar == null || widget.driverAvatar!.isEmpty)
-                                    ? Icon(Icons.person_rounded, size: 22.r, color: theme.colorScheme.primary)
-                                    : null,
                               ),
                               SizedBox(width: 12.w),
                               Expanded(

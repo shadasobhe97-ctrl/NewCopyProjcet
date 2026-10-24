@@ -75,6 +75,10 @@ class AppEntryCubit extends Cubit<AppEntryState> {
       }
 
       if (regStage == 'preferences') {
+        if (_sessionRepository.getIsPreferencesSet()) {
+          emit(NavigateToDriverHome());
+          return;
+        }
         emit(NavigateToDriverPreferencesRequired());
         return;
       }
@@ -100,8 +104,8 @@ class AppEntryCubit extends Cubit<AppEntryState> {
             emit(NavigateToDriverPreferencesRequired());
           }
         } catch (_) {
-          // إذا كان مفعل ولم يتم تأكيد حفظ التفضيلات محلياً، نوجّهه لإدخال التفضيلات
-          emit(NavigateToDriverPreferencesRequired());
+          // في حال حدوث خطأ شبكة مؤقت لسائق مفعّل، نوجّهه للرئيسية دون حبسه إجبارياً
+          emit(NavigateToDriverHome());
         }
       } else {
         emit(NavigateToDriverWaiting());

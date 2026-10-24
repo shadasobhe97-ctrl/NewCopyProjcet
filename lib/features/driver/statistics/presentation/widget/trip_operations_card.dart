@@ -6,18 +6,24 @@ import '../../data/models/driver_statistics_model.dart';
 
 class TripOperationsCard extends StatelessWidget {
   final TripOperationsStatsModel tripStats;
+  final bool isFiltered;
 
   const TripOperationsCard({
     super.key,
     required this.tripStats,
+    this.isFiltered = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final trips = tripStats.completedTrips;
-    final downtime = tripStats.absencesAndBreakdowns;
+
+    final completedTripsCount = tripStats.getCompletedTripsCount(isFiltered: isFiltered);
+    final todayCompleted = tripStats.completedTrips.todayCompleted;
+    final absentTripsCount = tripStats.getAbsentTripsCount(isFiltered: isFiltered);
+    final vehicleBreakdownsCount = tripStats.getVehicleBreakdownsCount(isFiltered: isFiltered);
+    final completedSubstituteTrips = tripStats.getCompletedSubstituteTripsCount();
 
     return Container(
       width: double.infinity,
@@ -40,6 +46,7 @@ class TripOperationsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // رأس البطاقة
           Row(
             children: [
               Icon(
@@ -56,13 +63,31 @@ class TripOperationsCard extends StatelessWidget {
                   color: isDark ? AppColors.white : AppColors.textDark,
                 ),
               ),
+              const Spacer(),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                decoration: BoxDecoration(
+                  color: isFiltered
+                      ? theme.colorScheme.primary.withValues(alpha: 0.12)
+                      : AppColors.info.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Text(
+                  isFiltered ? 'بيانات الفترة' : 'إجمالي تراكمي',
+                  style: AppTextStyles.style(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isFiltered ? theme.colorScheme.primary : AppColors.info,
+                  ),
+                ),
+              ),
             ],
           ),
           SizedBox(height: 14.h),
 
-          // تفكيك الرحلات المكتملة
+          // 1. الرحلات المكتملة
           Text(
-            'تفكيك الرحلات المكتملة:',
+            'الرحلات المكتملة:',
             style: AppTextStyles.style(
               fontSize: 12.sp,
               fontWeight: FontWeight.w600,
@@ -73,44 +98,36 @@ class TripOperationsCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _tripRowItem(
-                  Icons.wb_sunny_outlined,
-                  'الرحلات الصباحية',
-                  '${trips.morningTrips}',
-                  AppColors.warning,
-                  isDark,
+                child: _operationBox(
+                  icon: Icons.check_circle_outline_rounded,
+                  title: isFiltered ? 'المكتملة بالفترة' : 'إجمالي المكتملة',
+                  value: '$completedTripsCount',
+                  unit: 'رحلة',
+                  color: theme.colorScheme.primary,
+                  isDark: isDark,
                 ),
               ),
               SizedBox(width: 8.w),
               Expanded(
-                child: _tripRowItem(
-                  Icons.nights_stay_outlined,
-                  'الرحلات المسائية',
-                  '${trips.eveningTrips}',
-                  AppColors.info,
-                  isDark,
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: _tripRowItem(
-                  Icons.today_rounded,
-                  'المكتملة اليوم',
-                  '${trips.todayCompleted}',
-                  AppColors.success,
-                  isDark,
+                child: _operationBox(
+                  icon: Icons.today_rounded,
+                  title: 'المكتملة اليوم',
+                  value: '$todayCompleted',
+                  unit: 'رحلة',
+                  color: AppColors.success,
+                  isDark: isDark,
                 ),
               ),
             ],
           ),
 
-          SizedBox(height: 16.h),
+          SizedBox(height: 14.h),
           Divider(color: isDark ? AppColors.grey800 : AppColors.grey200, height: 1),
-          SizedBox(height: 14.h),
+          SizedBox(height: 12.h),
 
-          // الأعطال
+          // 2. الغياب والأعطال
           Text(
-            'الأعطال والتوقف:',
+            'الغياب والأعطال:',
             style: AppTextStyles.style(
               fontSize: 12.sp,
               fontWeight: FontWeight.w600,
@@ -121,93 +138,112 @@ class TripOperationsCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _downtimeItem(
-                  'أعطال المركبة',
-                  '${downtime.vehicleBreakdownsCount} مرة',
-                  isDark,
+                child: _operationBox(
+                  icon: Icons.person_off_outlined,
+                  title: 'رحلات الغياب',
+                  value: '$absentTripsCount',
+                  unit: 'رحلة متغيب عنها',
+                  color: AppColors.warning,
+                  isDark: isDark,
                 ),
               ),
               SizedBox(width: 8.w),
               Expanded(
-                child: _downtimeItem(
-                  'إجمالي التوقف',
-                  '${downtime.totalDowntimeDays} يوم',
-                  isDark,
-                  isAlert: downtime.totalDowntimeDays > 0,
+                child: _operationBox(
+                  icon: Icons.car_crash_outlined,
+                  title: 'أعطال المركبة',
+                  value: '$vehicleBreakdownsCount',
+                  unit: 'عطل مسجل',
+                  color: AppColors.error,
+                  isDark: isDark,
                 ),
               ),
             ],
+          ),
+
+          SizedBox(height: 14.h),
+          Divider(color: isDark ? AppColors.grey800 : AppColors.grey200, height: 1),
+          SizedBox(height: 12.h),
+
+          // 3. رحلات الطوارئ (كسائق بديل)
+          Text(
+            'رحلات الطوارئ (كسائق بديل):',
+            style: AppTextStyles.style(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.grey400 : AppColors.textMuted,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          _operationBox(
+            icon: Icons.task_alt_rounded,
+            title: 'المكتملة كبديل',
+            value: '$completedSubstituteTrips',
+            unit: 'مهمة منجزة',
+            color: AppColors.success,
+            isDark: isDark,
           ),
         ],
       ),
     );
   }
 
-  Widget _tripRowItem(
-    IconData icon,
-    String title,
-    String value,
-    Color color,
-    bool isDark,
-  ) {
+  Widget _operationBox({
+    required IconData icon,
+    required String title,
+    required String value,
+    required String unit,
+    required Color color,
+    required bool isDark,
+  }) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
       decoration: BoxDecoration(
         color: isDark ? AppColors.backgroundDark : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: isDark ? AppColors.grey800 : AppColors.grey200),
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 16.r),
-          SizedBox(height: 4.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 16.r),
+              SizedBox(width: 4.w),
+              Flexible(
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.style(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.grey400 : AppColors.textMuted,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 6.h),
           Text(
             value,
             style: AppTextStyles.style(
-              fontSize: 14.sp,
+              fontSize: 16.sp,
               fontWeight: FontWeight.bold,
               color: isDark ? AppColors.white : AppColors.textDark,
             ),
           ),
           SizedBox(height: 2.h),
           Text(
-            title,
-            textAlign: TextAlign.center,
+            unit,
             style: AppTextStyles.style(
-              fontSize: 10.sp,
-              color: isDark ? AppColors.grey400 : AppColors.textMuted,
+              fontSize: 9.sp,
+              color: isDark ? AppColors.grey500 : AppColors.textMuted,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
-    );
-  }
-
-  Widget _downtimeItem(String title, String value, bool isDark, {bool isAlert = false}) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: AppTextStyles.style(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.bold,
-            color: isAlert ? AppColors.error : (isDark ? AppColors.grey300 : AppColors.textDark),
-          ),
-        ),
-        SizedBox(height: 2.h),
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: AppTextStyles.style(
-            fontSize: 10.sp,
-            color: isDark ? AppColors.grey400 : AppColors.textMuted,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
     );
   }
 }

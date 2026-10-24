@@ -5,6 +5,7 @@ import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/app_bars.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import 'package:kids_transport/core/widgets/primary_button.dart';
 import 'package:kids_transport/features/parent/profile/presentation/widgets/profile_avatar_editor.dart';
 import 'package:kids_transport/features/parent/profile/presentation/widgets/profile_email_field.dart';
@@ -15,7 +16,9 @@ import '../../logic/cubit/parent_profile_cubit.dart';
 import '../../logic/cubit/parent_profile_state.dart';
 
 class ParentProfileScreen extends StatefulWidget {
-  const ParentProfileScreen({super.key});
+  final bool startInEditMode;
+
+  const ParentProfileScreen({super.key, this.startInEditMode = false});
 
   @override
   State<ParentProfileScreen> createState() => _ParentProfileScreenState();
@@ -23,6 +26,9 @@ class ParentProfileScreen extends StatefulWidget {
 
 class _ParentProfileScreenState extends State<ParentProfileScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  late bool _isEditing;
+  ParentModel? _parentModel;
 
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
@@ -46,6 +52,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _isEditing = widget.startInEditMode;
     final profileCubit = context.read<ParentProfileCubit>();
     _nameController = TextEditingController(
       text: profileCubit.getCachedFullName(),
@@ -198,6 +205,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   }
 
   void _fillFieldsFrom(ParentModel parent) {
+    _parentModel = parent;
     _nameController.text = parent.fullName;
     _phoneController.text = parent.phoneNumber;
     _backupPhoneController.text = parent.alternativePhone ?? '';
@@ -206,6 +214,18 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     _isEmailVerified = parent.emailChangePending != true;
     _isEmailEdited = false;
     _removeAvatar = false;
+    _avatarUrl = parent.avatarUrl;
+  }
+
+  void _cancelEdit() {
+    if (_parentModel != null) {
+      _fillFieldsFrom(_parentModel!);
+    }
+    setState(() {
+      _isEditing = false;
+      _avatarImage = null;
+      _removeAvatar = false;
+    });
   }
 
   void _saveProfile() {
@@ -242,7 +262,6 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
         if (state is ParentProfileLoaded) {
           setState(() {
             _fillFieldsFrom(state.parent);
-            _avatarUrl = state.parent.avatarUrl;
           });
         } else if (state is ParentProfileSuccess) {
           setState(() {
@@ -252,6 +271,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                 ? null
                 : '$url?v=${DateTime.now().millisecondsSinceEpoch}';
             _avatarImage = null;
+            _isEditing = false;
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -331,147 +351,72 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
         final isSaving = profileState is ParentProfileUpdateLoading;
         final isLoading = profileState is ParentProfileLoading;
 
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: Scaffold(
-            backgroundColor: context.scaffoldBackgroundColor,
-            appBar: const AppPrimaryAppBar(title: 'تعديل الملف الشخصي'),
-            body: Column(
-              children: [
-                if (isLoading) const LinearProgressIndicator(),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      await context.read<ParentProfileCubit>().fetchProfile();
-                    },
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.fromLTRB(
-                        MediaQuery.sizeOf(context).width * 0.05,
-                        MediaQuery.sizeOf(context).height * 0.025,
-                        MediaQuery.sizeOf(context).width * 0.05,
-                        MediaQuery.sizeOf(context).height * 0.04,
-                      ),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          children: [
-                            _buildAvatarSection(),
-                            SizedBox(
-                              height: MediaQuery.sizeOf(context).height * 0.035,
-                            ),
-                            _ProfileFieldCard(
-                              focusNode: _nameFocus,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildFieldLabel('الاسم بالكامل'),
-                                  TextFormField(
-                                    controller: _nameController,
-                                    focusNode: _nameFocus,
-                                    decoration: _buildInputDecoration(
-                                      hintText: 'أدخل اسمك الكامل',
-                                      icon: Icons.person_outline_rounded,
-                                    ),
-                                    validator: (val) =>
-                                        val == null || val.isEmpty
-                                        ? 'يرجى إدخال الاسم'
-                                        : null,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(
-                              height: MediaQuery.sizeOf(context).height * 0.02,
-                            ),
-                            _ProfileFieldCard(
-                              focusNode: _phoneFocus,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildFieldLabel('رقم الهاتف الأساسي'),
-                                  TextFormField(
-                                    controller: _phoneController,
-                                    focusNode: _phoneFocus,
-                                    keyboardType: TextInputType.phone,
-                                    decoration: _buildInputDecoration(
-                                      hintText: 'أدخل رقم الهاتف الأساسي',
-                                      icon: Icons.phone_rounded,
-                                    ),
-                                    validator: (val) =>
-                                        AppValidators.validateLibyanPhone(
-                                          val,
-                                          isRequired: true,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(
-                              height: MediaQuery.sizeOf(context).height * 0.02,
-                            ),
-                            _ProfileFieldCard(
-                              focusNode: _backupFocus,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildFieldLabel('رقم هاتف الاحتياط'),
-                                  TextFormField(
-                                    controller: _backupPhoneController,
-                                    focusNode: _backupFocus,
-                                    keyboardType: TextInputType.phone,
-                                    decoration: _buildInputDecoration(
-                                      hintText: 'أدخل رقم هاتف الاحتياط',
-                                      icon: Icons.phone_android_rounded,
-                                    ),
-                                    validator: (v) =>
-                                        AppValidators.validateLibyanPhone(
-                                          v,
-                                          isRequired: false,
-                                          primaryPhone: _phoneController.text,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(
-                              height: MediaQuery.sizeOf(context).height * 0.02,
-                            ),
-                            _ProfileFieldCard(
-                              focusNode: _emailFocus,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildFieldLabel('البريد الإلكتروني'),
-                                  ProfileEmailField(
-                                    controller: _emailController,
-                                    isVerified: _isEmailVerified,
-                                    isEdited: _isEmailEdited,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(
-                              height: MediaQuery.sizeOf(context).height * 0.04,
-                            ),
-                            PrimaryButton(
-                              label: isSaving
-                                  ? 'جاري الحفظ...'
-                                  : 'حفظ التغييرات',
-                              onPressed: isSaving ? null : _saveProfile,
-                              borderRadius: 30,
-                              width: MediaQuery.sizeOf(context).width * 0.9,
-                            ),
-                            SizedBox(
-                              height: MediaQuery.sizeOf(context).height * 0.02,
-                            ),
-                          ],
+        return PopScope(
+          canPop: !_isEditing,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop && _isEditing) {
+              _cancelEdit();
+            }
+          },
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Scaffold(
+              backgroundColor: context.scaffoldBackgroundColor,
+              appBar: AppPrimaryAppBar(
+                title: _isEditing ? 'تعديل الملف الشخصي' : 'الملف الشخصي',
+                actions: [
+                  if (!isLoading && !_isEditing)
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined),
+                      tooltip: 'تعديل الملف الشخصي',
+                      onPressed: () {
+                        setState(() {
+                          _isEditing = true;
+                        });
+                      },
+                    ),
+                  if (_isEditing)
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      tooltip: 'إلغاء التعديل',
+                      onPressed: isSaving ? null : _cancelEdit,
+                    ),
+                ],
+                onBackPressed: () {
+                  if (_isEditing) {
+                    _cancelEdit();
+                  } else {
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
+              body: Column(
+                children: [
+                  if (isLoading) const LinearProgressIndicator(),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        await context.read<ParentProfileCubit>().fetchProfile();
+                      },
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(
+                          MediaQuery.sizeOf(context).width * 0.05,
+                          MediaQuery.sizeOf(context).height * 0.025,
+                          MediaQuery.sizeOf(context).width * 0.05,
+                          MediaQuery.sizeOf(context).height * 0.04,
+                        ),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 250),
+                          child: _isEditing
+                              ? _buildEditMode(isSaving)
+                              : _buildViewMode(),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -479,18 +424,425 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     );
   }
 
-  Widget _buildAvatarSection() {
-    final hasAvatar =
-        _avatarImage != null ||
-        (_avatarUrl != null && _avatarUrl!.trim().isNotEmpty);
+  // ────────────────────────────
+  // ─── وضع العرض (View Mode) ───
+  // ────────────────────────────
 
+  Widget _buildViewMode() {
+    final emailText = _emailController.text.trim();
+    final backupText = _backupPhoneController.text.trim();
+    final isEmailPending =
+        _parentModel?.emailChangePending == true || !_isEmailVerified;
+
+    return Column(
+      key: const ValueKey('view_mode'),
+      children: [
+        _buildViewHeader(),
+        const SizedBox(height: 24),
+        if (isEmailPending) _buildPendingEmailBanner(),
+        _buildInfoCard(
+          icon: Icons.person_outline_rounded,
+          label: 'الاسم بالكامل',
+          value: _nameController.text.trim().isNotEmpty
+              ? _nameController.text.trim()
+              : 'غير محدد',
+        ),
+        _buildInfoCard(
+          icon: Icons.phone_outlined,
+          label: 'رقم الهاتف الأساسي',
+          value: _phoneController.text.trim().isNotEmpty
+              ? _phoneController.text.trim()
+              : 'غير محدد',
+        ),
+        _buildInfoCard(
+          icon: Icons.phone_android_outlined,
+          label: 'رقم هاتف الاحتياط',
+          value: backupText.isNotEmpty ? backupText : 'غير محدد',
+        ),
+        _buildInfoCard(
+          icon: Icons.email_outlined,
+          label: 'البريد الإلكتروني',
+          value: emailText.isNotEmpty ? emailText : 'غير محدد',
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: isEmailPending
+                  ? AppColors.pending.withValues(alpha: 0.15)
+                  : AppColors.success.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isEmailPending
+                      ? Icons.watch_later_outlined
+                      : Icons.verified_rounded,
+                  size: 14,
+                  color: isEmailPending ? AppColors.pending : AppColors.success,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  isEmailPending ? 'بانتظار التأكيد' : 'محقَّق',
+                  style: AppTextStyles.style(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isEmailPending
+                        ? AppColors.pending
+                        : AppColors.success,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        _buildInfoCard(
+          icon: Icons.badge_outlined,
+          label: 'نوع الحساب',
+          value: 'حساب ولي أمر',
+        ),
+        const SizedBox(height: 24),
+        PrimaryButton(
+          label: 'تعديل الملف الشخصي',
+          icon: Icons.edit_rounded,
+          borderRadius: 30,
+          width: MediaQuery.sizeOf(context).width * 0.9,
+          onPressed: () {
+            setState(() {
+              _isEditing = true;
+            });
+          },
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildViewHeader() {
+    final displayName = _nameController.text.trim().isNotEmpty
+        ? _nameController.text.trim()
+        : (_parentModel?.fullName ?? 'ولي أمر');
+
+    return Center(
+      child: Column(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: context.primaryColor.withValues(alpha: 0.35),
+                width: 3.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: context.primaryColor.withValues(alpha: 0.15),
+                  blurRadius: 18,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: ClipOval(
+              child: AppUserAvatar(
+                image: _avatarUrl,
+                radius: 52,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            displayName,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.style(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+            decoration: BoxDecoration(
+              color: context.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: context.primaryColor.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.verified_user_rounded,
+                  size: 14,
+                  color: context.primaryColor,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'حساب ولي أمر',
+                  style: AppTextStyles.style(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: context.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingEmailBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline_rounded, color: Colors.amber, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'تأكيد البريد الإلكتروني معلّق',
+                  style: AppTextStyles.style(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.amber.shade900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'تم إرسال رابط تأكيد إلى بريدك الإلكتروني، يرجى فتح الرابط لتأكيد التغيير.',
+                  style: AppTextStyles.style(
+                    fontSize: 11,
+                    color: context.textDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    Widget? trailing,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isPlaceholder = value.trim().isEmpty || value == 'غير محدد';
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? AppColors.grey800 : AppColors.grey200,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: context.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: context.primaryColor,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTextStyles.style(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: context.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: AppTextStyles.style(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: isPlaceholder
+                        ? context.textMuted.withValues(alpha: 0.6)
+                        : null,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ?trailing,
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────
+  // ─── وضع التعديل (Edit Mode) ──
+  // ─────────────────────────────
+
+  Widget _buildEditMode(bool isSaving) {
+    return Form(
+      key: const ValueKey('edit_mode'),
+      child: Column(
+        children: [
+          _buildAvatarSection(),
+          SizedBox(height: MediaQuery.sizeOf(context).height * 0.035),
+          _ProfileFieldCard(
+            focusNode: _nameFocus,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildFieldLabel('الاسم بالكامل'),
+                TextFormField(
+                  controller: _nameController,
+                  focusNode: _nameFocus,
+                  decoration: _buildInputDecoration(
+                    hintText: 'أدخل اسمك الكامل',
+                    icon: Icons.person_outline_rounded,
+                  ),
+                  validator: (val) =>
+                      val == null || val.isEmpty ? 'يرجى إدخال الاسم' : null,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: MediaQuery.sizeOf(context).height * 0.02),
+          _ProfileFieldCard(
+            focusNode: _phoneFocus,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildFieldLabel('رقم الهاتف الأساسي'),
+                TextFormField(
+                  controller: _phoneController,
+                  focusNode: _phoneFocus,
+                  keyboardType: TextInputType.phone,
+                  decoration: _buildInputDecoration(
+                    hintText: 'أدخل رقم الهاتف الأساسي',
+                    icon: Icons.phone_rounded,
+                  ),
+                  validator: (val) =>
+                      AppValidators.validateLibyanPhone(val, isRequired: true),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: MediaQuery.sizeOf(context).height * 0.02),
+          _ProfileFieldCard(
+            focusNode: _backupFocus,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildFieldLabel('رقم هاتف الاحتياط'),
+                TextFormField(
+                  controller: _backupPhoneController,
+                  focusNode: _backupFocus,
+                  keyboardType: TextInputType.phone,
+                  decoration: _buildInputDecoration(
+                    hintText: 'أدخل رقم هاتف الاحتياط',
+                    icon: Icons.phone_android_rounded,
+                  ),
+                  validator: (v) => AppValidators.validateLibyanPhone(
+                    v,
+                    isRequired: false,
+                    primaryPhone: _phoneController.text,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: MediaQuery.sizeOf(context).height * 0.02),
+          _ProfileFieldCard(
+            focusNode: _emailFocus,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildFieldLabel('البريد الإلكتروني'),
+                ProfileEmailField(
+                  controller: _emailController,
+                  isVerified: _isEmailVerified,
+                  isEdited: _isEmailEdited,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: MediaQuery.sizeOf(context).height * 0.04),
+          PrimaryButton(
+            label: isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات',
+            onPressed: isSaving ? null : _saveProfile,
+            borderRadius: 30,
+            width: MediaQuery.sizeOf(context).width * 0.9,
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: isSaving ? null : _cancelEdit,
+            style: OutlinedButton.styleFrom(
+              minimumSize: Size(MediaQuery.sizeOf(context).width * 0.9, 50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              side: BorderSide(
+                color: context.primaryColor.withValues(alpha: 0.5),
+              ),
+            ),
+            child: Text(
+              'إلغاء التعديل',
+              style: AppTextStyles.style(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: context.primaryColor,
+              ),
+            ),
+          ),
+          SizedBox(height: MediaQuery.sizeOf(context).height * 0.02),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatarSection() {
     return Column(
       children: [
         ProfileAvatarEditor(
           avatarImage: _avatarImage,
           avatarUrl: _avatarUrl,
           onTap: _showImageSourceBottomSheet,
-          onRemove: hasAvatar ? _removeAvatarImage : null,
+          onRemove: (_avatarImage != null ||
+                  (_avatarUrl != null && _avatarUrl!.trim().isNotEmpty))
+              ? _removeAvatarImage
+              : null,
         ),
         SizedBox(height: MediaQuery.sizeOf(context).height * 0.012),
         Text(

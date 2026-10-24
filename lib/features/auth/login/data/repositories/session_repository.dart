@@ -30,6 +30,8 @@ class SessionRepository {
   Future<bool> saveDriverRegDraft(Map<String, dynamic> data) =>
       StorageService.saveDriverRegDraft(data);
   Future<void> clearDriverRegDraft() => StorageService.clearDriverRegDraft();
+  Future<void> resetAllDriverWelcomeShown() =>
+      StorageService.resetAllDriverWelcomeShown();
 
   String? getAvatarUrl() => StorageService.getAvatarUrl();
   Future<bool> saveAvatarUrl(String? url) => StorageService.saveAvatarUrl(url);

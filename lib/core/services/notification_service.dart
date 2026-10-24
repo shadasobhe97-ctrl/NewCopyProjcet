@@ -13,6 +13,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:kids_transport/firebase_options.dart';
 import 'package:kids_transport/core/di/dependency_injection.dart';
 import 'package:kids_transport/core/services/storage_service.dart';
+import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/network/notification_repository.dart';
 import 'package:kids_transport/features/auth/login/data/repositories/session_repository.dart';
 
@@ -38,7 +39,7 @@ class NotificationService {
       AndroidNotificationChannel(
     'high_importance_channel', // id القناة
     'الإشعارات الهامة', // اسم القناة
-    description: 'قناة إشعارات تطبيق دربي المدارس عالية الأهمية',
+    description: 'قناة إشعارات تطبيق دربي عالية الأهمية',
     importance: Importance.max,
     playSound: true,
     enableVibration: true,
@@ -257,7 +258,7 @@ class NotificationService {
   /// تهيئة حزمة flutter_local_notifications وإنشاء Android Notification Channel
   static Future<void> _initLocalNotifications() async {
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@drawable/ic_notification');
 
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
@@ -316,7 +317,8 @@ class NotificationService {
           priority: Priority.high,
           playSound: true,
           enableVibration: true,
-          icon: '@mipmap/ic_launcher',
+          icon: '@drawable/ic_notification',
+          color: AppColors.primary,
         ),
         iOS: const DarwinNotificationDetails(
           presentAlert: true,

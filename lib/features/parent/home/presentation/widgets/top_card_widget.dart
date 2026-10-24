@@ -151,6 +151,7 @@ class TopCardWidget extends StatelessWidget {
                           ),
                         ],
                       ),
+
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

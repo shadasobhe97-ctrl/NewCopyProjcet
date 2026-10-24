@@ -96,29 +96,83 @@ class DriverTripHistoryResponseModel extends Equatable {
   List<Object?> get props => [status, data, pagination];
 }
 
+/// كائن السائق البديل في حالة الرحلة المتعطلة
+class SubstituteDriverModel extends Equatable {
+  final int id;
+  final String name;
+  final String phone;
+
+  const SubstituteDriverModel({
+    required this.id,
+    required this.name,
+    required this.phone,
+  });
+
+  factory SubstituteDriverModel.fromJson(Map<String, dynamic> json) {
+    int parseInt(dynamic val) {
+      if (val is int) return val;
+      if (val is num) return val.toInt();
+      if (val is String) return int.tryParse(val) ?? 0;
+      return 0;
+    }
+
+    return SubstituteDriverModel(
+      id: parseInt(json['id']),
+      name: json['name']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, name, phone];
+}
+
 /// عنصر في سجل الرحلات (GET /driver/trips/history)
 class DriverTripHistoryModel extends Equatable {
   final int tripId;
   final String tripDate;
   final String routeName;
   final String status;
+  final String statusText;
+  final String statusLabel;
+  final bool isBreakdown;
+  final String? suspensionReason;
   final int duration;
+  final SubstituteDriverModel? substituteDriver;
 
   const DriverTripHistoryModel({
     required this.tripId,
     required this.tripDate,
     required this.routeName,
     required this.status,
+    this.statusText = '',
+    this.statusLabel = '',
+    this.isBreakdown = false,
+    this.suspensionReason,
     required this.duration,
+    this.substituteDriver,
   });
 
   factory DriverTripHistoryModel.fromJson(Map<String, dynamic> json) {
+    final status = json['status']?.toString() ?? '';
+    final isBreakdown = json['is_breakdown'] == true || status == 'suspended_breakdown';
+    final subDriverMap = json['substitute_driver'] is Map
+        ? Map<String, dynamic>.from(json['substitute_driver'] as Map)
+        : null;
+
     return DriverTripHistoryModel(
       tripId: _parseInt(json['trip_id']),
       tripDate: json['trip_date']?.toString() ?? '',
       routeName: json['route_name']?.toString() ?? '',
-      status: json['status']?.toString() ?? '',
+      status: status,
+      statusText: json['status_text']?.toString() ??
+          (isBreakdown ? 'رحلة معطلة' : (status == 'completed' ? 'رحلة مكتملة' : status)),
+      statusLabel: json['status_label']?.toString() ??
+          (isBreakdown ? 'معطلة' : (status == 'completed' ? 'مكتملة' : status)),
+      isBreakdown: isBreakdown,
+      suspensionReason: json['suspension_reason']?.toString(),
       duration: _parseInt(json['duration']),
+      substituteDriver: subDriverMap != null ? SubstituteDriverModel.fromJson(subDriverMap) : null,
     );
   }
 
@@ -130,7 +184,18 @@ class DriverTripHistoryModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [tripId, tripDate, routeName, status, duration];
+  List<Object?> get props => [
+        tripId,
+        tripDate,
+        routeName,
+        status,
+        statusText,
+        statusLabel,
+        isBreakdown,
+        suspensionReason,
+        duration,
+        substituteDriver,
+      ];
 }
 
 /// ملخص إحصائيات الرحلة السابقة
@@ -260,10 +325,15 @@ class DriverTripHistoryDetailsModel extends Equatable {
   final String tripDate;
   final String routeName;
   final String status;
+  final String statusText;
+  final String statusLabel;
+  final bool isBreakdown;
+  final String? suspensionReason;
   final String? actualStartedAt;
   final String? actualCompletedAt;
   final int duration;
   final double distance;
+  final SubstituteDriverModel? substituteDriver;
   final TripHistorySummaryModel summary;
   final List<TripHistoryChildModel> children;
 
@@ -272,10 +342,15 @@ class DriverTripHistoryDetailsModel extends Equatable {
     required this.tripDate,
     required this.routeName,
     required this.status,
+    this.statusText = '',
+    this.statusLabel = '',
+    this.isBreakdown = false,
+    this.suspensionReason,
     this.actualStartedAt,
     this.actualCompletedAt,
     required this.duration,
     required this.distance,
+    this.substituteDriver,
     required this.summary,
     required this.children,
   });
@@ -288,15 +363,28 @@ class DriverTripHistoryDetailsModel extends Equatable {
       return 0.0;
     }
 
+    final status = json['status']?.toString() ?? '';
+    final isBreakdown = json['is_breakdown'] == true || status == 'suspended_breakdown';
+    final subDriverMap = json['substitute_driver'] is Map
+        ? Map<String, dynamic>.from(json['substitute_driver'] as Map)
+        : null;
+
     return DriverTripHistoryDetailsModel(
       tripId: DriverTripHistoryModel._parseInt(json['trip_id']),
       tripDate: json['trip_date']?.toString() ?? '',
       routeName: json['route_name']?.toString() ?? '',
-      status: json['status']?.toString() ?? '',
+      status: status,
+      statusText: json['status_text']?.toString() ??
+          (isBreakdown ? 'رحلة معطلة' : (status == 'completed' ? 'رحلة مكتملة' : status)),
+      statusLabel: json['status_label']?.toString() ??
+          (isBreakdown ? 'معطلة' : (status == 'completed' ? 'مكتملة' : status)),
+      isBreakdown: isBreakdown,
+      suspensionReason: json['suspension_reason']?.toString(),
       actualStartedAt: json['actual_started_at']?.toString(),
       actualCompletedAt: json['actual_completed_at']?.toString(),
       duration: DriverTripHistoryModel._parseInt(json['duration']),
       distance: parseDouble(json['distance']),
+      substituteDriver: subDriverMap != null ? SubstituteDriverModel.fromJson(subDriverMap) : null,
       summary: json['summary'] is Map
           ? TripHistorySummaryModel.fromJson(Map<String, dynamic>.from(json['summary'] as Map))
           : TripHistorySummaryModel.empty(),
@@ -315,10 +403,15 @@ class DriverTripHistoryDetailsModel extends Equatable {
         tripDate,
         routeName,
         status,
+        statusText,
+        statusLabel,
+        isBreakdown,
+        suspensionReason,
         actualStartedAt,
         actualCompletedAt,
         duration,
         distance,
+        substituteDriver,
         summary,
         children,
       ];

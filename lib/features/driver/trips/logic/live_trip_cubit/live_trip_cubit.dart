@@ -13,6 +13,7 @@ import 'package:kids_transport/features/driver/trips/data/models/trip_action_res
 import 'package:kids_transport/features/driver/trips/data/models/vehicle_breakdown_model.dart';
 import 'package:kids_transport/features/driver/trips/data/repositories/driver_trips_repository.dart';
 import 'package:kids_transport/features/driver/trips/data/services/driver_location_source.dart';
+import 'package:kids_transport/features/driver/trips/data/services/mock_route_provider.dart';
 
 part 'live_trip_state.dart';
 
@@ -44,6 +45,10 @@ class LiveTripCubit extends Cubit<LiveTripState> {
   void _onLocationModeChanged() {
     final tripId = _syncTripId;
     if (tripId == null || isClosed) return;
+    final current = state;
+    if (current is LiveTripLoaded) {
+      _syncSmartSimulationPhase(current);
+    }
     _startLocationTimer(tripId);
   }
 
@@ -66,16 +71,16 @@ class LiveTripCubit extends Cubit<LiveTripState> {
       final details = results[2] as DriverTripDetailsModel;
       final sortedStops = _sortedBySequenceOrder(stopsResponse.stops);
 
-      emit(
-        LiveTripLoaded(
-          tripStatus: stopsResponse.tripStatus,
-          stops: stopsResponse.stops,
-          childItems: _buildChildItems(details, sortedStops),
-          currentChild: live.currentChild,
-          progress: live.progress,
-          routeName: details.routeName,
-        ),
+      final loaded = LiveTripLoaded(
+        tripStatus: stopsResponse.tripStatus,
+        stops: stopsResponse.stops,
+        childItems: _buildChildItems(details, sortedStops),
+        currentChild: live.currentChild,
+        progress: live.progress,
+        routeName: details.routeName,
       );
+      emit(loaded);
+      _syncSmartSimulationPhase(loaded);
     } catch (e) {
       emit(LiveTripError('فشل تحميل بيانات الرحلة: ${e.toString()}'));
     }
@@ -126,9 +131,15 @@ class LiveTripCubit extends Cubit<LiveTripState> {
 
     final items = details.children.map((child) {
       DriverTripStopModel? targetStop;
-      if (child.status == 'pending') {
-        // الطفل العالق يُستلم من مكان الحافلة المعطلة، مش من بيته
-        targetStop = rescuePickupByChildId[child.childId] ?? homeStopByChildId[child.childId];
+      final rescueStop = rescuePickupByChildId[child.childId];
+      final isAwaitingRescueTransfer = rescueStop != null && !rescueStop.isResolved;
+
+      if (isAwaitingRescueTransfer) {
+        // الطفل في حافلة متعطلة ولم يُؤكَّد استلامه بعد من السائق البديل —
+        // محطته الحالية هي حتماً موقع الحافلة المتعطلة (استلام إنقاذ) وليس المدرسة!
+        targetStop = rescueStop;
+      } else if (child.status == 'pending') {
+        targetStop = rescueStop ?? homeStopByChildId[child.childId];
       } else if (child.status == 'boarded') {
         final schoolId = schoolNameToId[child.school];
         targetStop = schoolStopByChildId[child.childId] ??
@@ -137,9 +148,14 @@ class LiveTripCubit extends Cubit<LiveTripState> {
 
       double? targetLat = targetStop?.latitude;
       double? targetLng = targetStop?.longitude;
-      bool targetIsSchool = targetStop?.isSchool ?? (child.status == 'boarded');
+      bool targetIsSchool =
+          isAwaitingRescueTransfer ? false : (targetStop?.isSchool ?? (child.status == 'boarded'));
 
-      if (child.status == 'pending') {
+      if (isAwaitingRescueTransfer) {
+        targetLat = rescueStop.latitude;
+        targetLng = rescueStop.longitude;
+        targetIsSchool = false;
+      } else if (child.status == 'pending') {
         targetLat ??= child.homeLocation?.lat;
         targetLng ??= child.homeLocation?.lng;
         targetIsSchool = false;
@@ -210,19 +226,19 @@ class LiveTripCubit extends Cubit<LiveTripState> {
       final nextBecameCurrent =
           storedNextTripChildId != null && storedNextTripChildId == live.currentChild?.tripChildId;
 
-      emit(
-        latest.copyWith(
-          tripStatus: stopsResponse.tripStatus,
-          stops: stopsResponse.stops,
-          childItems: _buildChildItems(details, sortedStops),
-          currentChild: live.currentChild,
-          clearCurrentChild: live.currentChild == null,
-          progress: live.progress,
-          routeName: details.routeName,
-          clearNextStop: nextBecameCurrent,
-          clearNextChild: nextBecameCurrent,
-        ),
+      final updatedLoaded = latest.copyWith(
+        tripStatus: stopsResponse.tripStatus,
+        stops: stopsResponse.stops,
+        childItems: _buildChildItems(details, sortedStops),
+        currentChild: live.currentChild,
+        clearCurrentChild: live.currentChild == null,
+        progress: live.progress,
+        routeName: details.routeName,
+        clearNextStop: nextBecameCurrent,
+        clearNextChild: nextBecameCurrent,
       );
+      emit(updatedLoaded);
+      _syncSmartSimulationPhase(updatedLoaded);
     } catch (_) {
       // فشل صامت للتحديث الدوري، لا نكسر واجهة السائق أثناء القيادة
     }
@@ -287,6 +303,22 @@ class LiveTripCubit extends Cubit<LiveTripState> {
       debugPrint('❌ [LiveTrip] فشل إرسال الموقع للرحلة $tripId: $e');
     } finally {
       _pingInFlight = false;
+    }
+  }
+
+  /// مزامنة وتحديث مرحلة المحاكي الذكي وإرسال الموقع الجديد فوراً
+  void _syncSmartSimulationPhase(LiveTripLoaded loaded) {
+    if (!_locationSource.isMock) return;
+    final phase = evaluateSmartTripPhase(
+      stops: loaded.stops,
+      childItems: loaded.childItems,
+    );
+    if (phase != null) {
+      final changed = _locationSource.mockRoute.currentSmartPhase != phase;
+      _locationSource.mockRoute.updateSmartPhase(phase);
+      if (changed && _syncTripId != null && !isClosed) {
+        _sendLocationPing(_syncTripId!);
+      }
     }
   }
 

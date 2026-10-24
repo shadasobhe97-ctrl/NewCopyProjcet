@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../../core/di/dependency_injection.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/text_styles.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/utils/theme_context.dart';
 import '../../logic/cubit/location_change_cubit.dart';
 import '../widgets/address_selection_bottom_sheet.dart';
@@ -250,8 +252,12 @@ class _ParentLocationChangeScreenState
                                         ? AppColors.grey800
                                         : AppColors.grey200),
                                 backgroundImage: (child.photoUrl != null &&
-                                        child.photoUrl!.isNotEmpty)
-                                    ? NetworkImage(child.photoUrl!)
+                                        child.photoUrl!.isNotEmpty &&
+                                        AppUserAvatar.resolveUrl(child.photoUrl) != null)
+                                    ? CachedNetworkImageProvider(
+                                        AppUserAvatar.resolveUrl(child.photoUrl)!,
+                                        headers: AppUserAvatar.imageHeaders,
+                                      )
                                     : null,
                                 child: (child.photoUrl == null ||
                                         child.photoUrl!.isEmpty)

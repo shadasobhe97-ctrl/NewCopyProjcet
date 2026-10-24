@@ -19,6 +19,7 @@ class DriverWaitingScreen extends StatefulWidget {
 
 class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
   Timer? _pollingTimer;
+  bool _hasNavigated = false;
 
   @override
   void initState() {
@@ -30,7 +31,7 @@ class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
 
     // 🌟 فحص تلقائي صامت خلف الكواليس كل 15 ثانية دون إظهاره للسائق
     _pollingTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
-      if (mounted) {
+      if (mounted && !_hasNavigated) {
         _checkStatus();
       }
     });
@@ -38,17 +39,21 @@ class _DriverWaitingScreenState extends State<DriverWaitingScreen> {
 
   @override
   void dispose() {
+    _hasNavigated = true;
     _pollingTimer?.cancel();
     super.dispose();
   }
 
   void _checkStatus() {
+    if (_hasNavigated) return;
     context.read<RegisterCubit>().checkDriverStatus();
   }
 
   void _onStatusReceived(DriverStatusResponseModel statusData) async {
+    if (_hasNavigated) return;
     // ✅ حالة الموافقة (Approved): التوجيه الفوري لشاشة التفضيلات الإجبارية أولاً وحفظ ستيج الجلسة
     if (statusData.isApproved) {
+      _hasNavigated = true;
       _pollingTimer?.cancel();
       await StorageService.saveDriverRegStage('preferences');
 

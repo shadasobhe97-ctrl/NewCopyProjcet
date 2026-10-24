@@ -35,10 +35,10 @@ class SmoothMarkerMotion {
     final from = _from;
     if (from == null) return to;
     final t = controller.value;
-    return LatLng(
-      from.latitude + (to.latitude - from.latitude) * t,
-      from.longitude + (to.longitude - from.longitude) * t,
-    );
+    final lat = from.latitude + (to.latitude - from.latitude) * t;
+    final lng = from.longitude + (to.longitude - from.longitude) * t;
+    if (lat.isNaN || lat.isInfinite || lng.isNaN || lng.isInfinite) return to;
+    return LatLng(lat, lng);
   }
 
   /// مدة الحركة الحالية — تُستعمل لتحريك الكاميرا بنفس السرعة
@@ -46,6 +46,14 @@ class SmoothMarkerMotion {
 
   /// يرجّع true لو بدأت حركة جديدة نحو [target]
   bool moveTo(LatLng target) {
+    if (target.latitude.isNaN ||
+        target.latitude.isInfinite ||
+        target.longitude.isNaN ||
+        target.longitude.isInfinite ||
+        target.latitude.abs() > 90 ||
+        target.longitude.abs() > 180) {
+      return false;
+    }
     if (_to == target) return false;
     final now = DateTime.now();
     final current = position;

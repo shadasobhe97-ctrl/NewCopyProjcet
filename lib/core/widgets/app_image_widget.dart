@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:kids_transport/core/network/api_endpoints.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 
 class AppImageWidget extends StatelessWidget {
   final dynamic image;
@@ -52,10 +52,12 @@ class AppImageWidget extends StatelessWidget {
           url,
           options: Options(
             responseType: ResponseType.bytes,
-            headers: const {
-              'Accept': 'image/*, */*',
-              'bypass-tunnel-reminder': 'true',
-            },
+            headers: AppImageHelper.safeHttpHeaders != null
+                ? {
+                    'Accept': 'image/*, */*',
+                    ...?AppImageHelper.safeHttpHeaders,
+                  }
+                : const {'Accept': 'image/*, */*'},
           ),
         );
 
@@ -169,7 +171,51 @@ class AppImageWidget extends StatelessWidget {
       final str = (image as String).trim();
       if (str.isEmpty) return errorWidget ?? _defaultErrorWidget();
 
+      if (str.startsWith('assets/')) {
+        return Image.asset(
+          str,
+          width: width,
+          height: height,
+          fit: fit,
+          errorBuilder: (ctx, err, stack) =>
+              errorWidget ?? _defaultErrorWidget(),
+        );
+      }
+
       final resolvedUrl = _resolveImageUrl(str);
+      if (resolvedUrl == null || !AppImageHelper.isValidImageUrl(resolvedUrl)) {
+        return errorWidget ?? _defaultErrorWidget();
+      }
+
+      if (kIsWeb) {
+        return Image.network(
+          resolvedUrl,
+          width: width,
+          height: height,
+          fit: fit,
+          headers: AppImageHelper.safeHttpHeaders,
+          loadingBuilder: (ctx, child, progress) {
+            if (progress == null) return child;
+            return placeholder ??
+                Container(
+                  width: width,
+                  height: height,
+                  color: Colors.grey[200],
+                  child: const Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                );
+          },
+          errorBuilder: (ctx, err, stack) {
+            debugPrint('❌ [AppImageWidget] FAILED loading image: "$resolvedUrl" | Error: $err');
+            return errorWidget ?? _defaultErrorWidget();
+          },
+        );
+      }
 
       if (_networkImageCache.containsKey(resolvedUrl)) {
         return Image.memory(
@@ -220,7 +266,7 @@ class AppImageWidget extends StatelessWidget {
             width: width,
             height: height,
             fit: fit,
-            headers: kIsWeb ? null : const {'bypass-tunnel-reminder': 'true'},
+            headers: AppImageHelper.safeHttpHeaders,
             errorBuilder: (ctx, err, stack) {
               debugPrint('❌ [AppImageWidget] FAILED loading image: "$resolvedUrl" | Error: $err');
               return errorWidget ?? _defaultErrorWidget();
@@ -242,31 +288,5 @@ class AppImageWidget extends StatelessWidget {
     );
   }
 
-  String _resolveImageUrl(String raw) {
-    if (raw.startsWith('blob:')) return raw;
-
-    final serverHost =
-        ApiEndpoints.baseUrl.replaceAll(RegExp(r'/?api/?$'), '');
-    final isHttpsBase = ApiEndpoints.baseUrl.startsWith('https://');
-
-    String resolved = raw;
-
-    if (raw.startsWith('http://localhost') || raw.startsWith('http://127.0.0.1')) {
-      final uri = Uri.parse(raw);
-      resolved = '$serverHost${uri.path}';
-    } else if (raw.startsWith('https://api.example.com')) {
-      final uri = Uri.parse(raw);
-      resolved = '$serverHost${uri.path}';
-    } else if (!raw.startsWith('http://') && !raw.startsWith('https://')) {
-      final cleanPath = raw.startsWith('/') ? raw : '/$raw';
-      resolved = '$serverHost$cleanPath';
-    }
-
-    // إذا كان السيرفر يستعمل https، نحول رابط الصورة من http إلى https لتفادي منع المتصفح (Mixed Content Block)
-    if (isHttpsBase && resolved.startsWith('http://')) {
-      resolved = 'https://${resolved.substring(7)}';
-    }
-
-    return resolved;
-  }
+  String? _resolveImageUrl(String raw) => AppImageHelper.resolveUrl(raw);
 }

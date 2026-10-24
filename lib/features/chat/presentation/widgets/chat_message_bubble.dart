@@ -44,7 +44,7 @@ class ChatMessageBubble extends StatelessWidget {
           children: [
             Center(
               child: InteractiveViewer(
-                child: AppImageWidget(
+child: AppImageWidget(
                   image: imageUrl,
                   fit: BoxFit.contain,
                   placeholder: const Center(
@@ -308,7 +308,7 @@ class ChatMessageBubble extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12.r),
-              child: AppImageWidget(
+child: AppImageWidget(
                 image: message.mediaUrl,
                 width: 200.w,
                 fit: BoxFit.cover,

@@ -1,12 +1,16 @@
+import 'package:kids_transport/core/network/api_exception.dart';
+
 class DriverRegisterResponse {
   final bool status;
   final String message;
   final int userId;
+  final Map<String, String>? fieldErrors;
 
   DriverRegisterResponse({
     required this.status,
     required this.message,
     required this.userId,
+    this.fieldErrors,
   });
 
   factory DriverRegisterResponse.fromJson(Map<String, dynamic> json) {
@@ -14,6 +18,7 @@ class DriverRegisterResponse {
       status: _readBool(json['status']),
       message: json['message']?.toString() ?? '',
       userId: _readInt(json['user_id']), // 🌟 المعرّف المهم للمرحلة الثالثة
+      fieldErrors: ApiException.extractFieldErrors(json),
     );
   }
 }

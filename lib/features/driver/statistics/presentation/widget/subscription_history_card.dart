@@ -70,15 +70,6 @@ class SubscriptionHistoryCard extends StatelessWidget {
               SizedBox(width: 10.w),
               Expanded(
                 child: _historyBox(
-                  'الملغاة',
-                  '${history.cancelledSubscriptionsCount}',
-                  AppColors.error,
-                  isDark,
-                ),
-              ),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: _historyBox(
                   'إجمالي الاشتراكات',
                   '${history.totalHistoricalSubscriptions}',
                   theme.colorScheme.primary,

@@ -292,12 +292,52 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
     );
   }
 
+  void _handleSafeBack() {
+    if (widget.isMandatory) return;
+
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      _navigateToAppropriateScreen();
+    }
+  }
+
+  void _navigateToAppropriateScreen() {
+    if (!StorageService.hasValidSession()) {
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      return;
+    }
+
+    final regStage = StorageService.getDriverRegStage();
+    if (regStage == 'vehicle') {
+      Navigator.pushReplacementNamed(context, AppRoutes.driverVehicleStage);
+      return;
+    }
+    if (regStage == 'docs') {
+      Navigator.pushReplacementNamed(context, AppRoutes.driverDocsStage);
+      return;
+    }
+
+    final isActive = StorageService.getIsActive() ?? false;
+    if (isActive) {
+      Navigator.pushReplacementNamed(context, AppRoutes.driverMainWrapper);
+    } else {
+      Navigator.pushReplacementNamed(context, AppRoutes.driverWaiting);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
 
     return PopScope(
       canPop: !widget.isMandatory,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (!widget.isMandatory) {
+          _handleSafeBack();
+        }
+      },
       child: Scaffold(
         backgroundColor: context.backgroundSurface,
         appBar: AppBar(
@@ -319,7 +359,7 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
               ? null
               : IconButton(
                   icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: _handleSafeBack,
                 ),
         ),
         body: BlocConsumer<DriverPreferencesCubit, DriverPreferencesState>(
@@ -395,8 +435,10 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildHeaderBanner(),
-                          SizedBox(height: 20.h),
+                          if (_isEditing || widget.isMandatory) ...[
+                            _buildHeaderBanner(),
+                            SizedBox(height: 20.h),
+                          ],
 
                           _buildSectionTitle(
                             'فترات النقل',
@@ -477,6 +519,9 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
   }
 
   Widget _buildHeaderBanner() {
+    if (!_isEditing && !widget.isMandatory) {
+      return const SizedBox.shrink();
+    }
     final isDark = context.isDarkMode;
     final text = widget.isMandatory
         ? 'يرجى تحديد إعدادات النقل الخاصة بك للبدء في استقبال طلبات التوصيل المناسبة لك.'

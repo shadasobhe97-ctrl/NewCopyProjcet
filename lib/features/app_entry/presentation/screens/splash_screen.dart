@@ -5,6 +5,7 @@ import 'package:kids_transport/core/routes/app_router.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/cubit/theme_cubit.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_cubit.dart';
 import 'package:kids_transport/features/app_entry/logic/app_entry_state.dart';
 import 'package:kids_transport/features/auth/registration/logic/register_cubit.dart';
@@ -18,10 +19,22 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  bool _precached = false;
+  bool _hasNavigated = false;
+
   @override
   void initState() {
     super.initState();
     context.read<AppEntryCubit>().checkSession();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_precached) {
+      _precached = true;
+      AppImageHelper.precacheAppAssets(context);
+    }
   }
 
   void _showResumeRegistrationDialog(
@@ -147,23 +160,32 @@ class _SplashScreenState extends State<SplashScreen> {
 
     return BlocListener<AppEntryCubit, AppEntryState>(
       listener: (context, state) {
+        if (_hasNavigated) return;
         if (state is NavigateToOnboarding) {
+          _hasNavigated = true;
           Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
         } else if (state is NavigateToLogin) {
+          _hasNavigated = true;
           Navigator.pushReplacementNamed(context, AppRoutes.login);
         } else if (state is NavigateToDriverHome) {
+          _hasNavigated = true;
           Navigator.pushReplacementNamed(context, AppRoutes.driverMainWrapper);
           NotificationNavigationHandler.handlePendingNotification();
         } else if (state is NavigateToParentHome) {
+          _hasNavigated = true;
           Navigator.pushReplacementNamed(context, AppRoutes.parentMainWrapper);
           NotificationNavigationHandler.handlePendingNotification();
         } else if (state is NavigateToParentLocationRequired) {
+          _hasNavigated = true;
           Navigator.pushReplacementNamed(context, '/parentLocation');
         } else if (state is NavigateToParentChildRequired) {
+          _hasNavigated = true;
           Navigator.pushReplacementNamed(context, AppRoutes.parentAddFirstChild);
         } else if (state is NavigateToDriverWaiting) {
+          _hasNavigated = true;
           Navigator.pushReplacementNamed(context, '/driverWaiting');
         } else if (state is NavigateToDriverPreferencesRequired) {
+          _hasNavigated = true;
           Navigator.pushReplacementNamed(
             context,
             AppRoutes.driverPreferences,
@@ -197,6 +219,20 @@ class _SplashScreenState extends State<SplashScreen> {
                     : 'assets/images/ligth_logo.png',
                 width: 240,
                 height: 240,
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  if (wasSynchronouslyLoaded || frame != null) return child;
+                  return SizedBox(
+                    width: 240,
+                    height: 240,
+                    child: Center(
+                      child: Icon(
+                        Icons.directions_bus_rounded,
+                        size: 110,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                  );
+                },
                 errorBuilder: (context, error, stackTrace) => Icon(
                   Icons.directions_bus_rounded,
                   size: 110,

@@ -2,12 +2,14 @@ import 'package:kids_transport/core/utils/subscription_enums.dart';
 
 /// النموذج الرئيسي لإحصائيات لوحة تحكم السائق - GET /api/driver/statistics
 class DriverStatisticsModel {
+  final PeriodModel? period;
   final FinancialStatsModel financialStats;
   final SubscriptionPassengerStatsModel subscriptionAndPassengerStats;
   final TripOperationsStatsModel tripOperationsStats;
   final QuickWidgetsModel? quickWidgets;
 
   DriverStatisticsModel({
+    this.period,
     required this.financialStats,
     required this.subscriptionAndPassengerStats,
     required this.tripOperationsStats,
@@ -16,6 +18,9 @@ class DriverStatisticsModel {
 
   factory DriverStatisticsModel.fromJson(Map<String, dynamic> json) {
     return DriverStatisticsModel(
+      period: json['period'] != null
+          ? PeriodModel.fromJson(_toMap(json['period']))
+          : null,
       financialStats: FinancialStatsModel.fromJson(
         _toMap(json['financial_stats']),
       ),
@@ -28,6 +33,20 @@ class DriverStatisticsModel {
       quickWidgets: json['quick_widgets'] != null
           ? QuickWidgetsModel.fromJson(_toMap(json['quick_widgets']))
           : null,
+    );
+  }
+}
+
+class PeriodModel {
+  final int? month;
+  final int? year;
+
+  PeriodModel({this.month, this.year});
+
+  factory PeriodModel.fromJson(Map<String, dynamic> json) {
+    return PeriodModel(
+      month: _parseInt(json['month']),
+      year: _parseInt(json['year']),
     );
   }
 }
@@ -180,35 +199,118 @@ class SubscriptionHistoryModel {
 // 3. إحصائيات عمليات الرحلات (Trip Operations Stats)
 // =========================================================================
 class TripOperationsStatsModel {
+  final dynamic period;
+  final TripSummaryCardsModel? summaryCards;
   final CompletedTripsModel completedTrips;
   final double punctualityRate;
   final AbsencesAndBreakdownsModel absencesAndBreakdowns;
+  final SubstituteTripsModel? substituteTrips;
 
   TripOperationsStatsModel({
+    this.period,
+    this.summaryCards,
     required this.completedTrips,
     required this.punctualityRate,
     required this.absencesAndBreakdowns,
+    this.substituteTrips,
   });
 
   factory TripOperationsStatsModel.fromJson(Map<String, dynamic> json) {
     return TripOperationsStatsModel(
+      period: json['period'],
+      summaryCards: json['summary_cards'] != null
+          ? TripSummaryCardsModel.fromJson(_toMap(json['summary_cards']))
+          : null,
       completedTrips: CompletedTripsModel.fromJson(_toMap(json['completed_trips'])),
       punctualityRate: _toDouble(json['punctuality_rate']) ?? 100.0,
       absencesAndBreakdowns: AbsencesAndBreakdownsModel.fromJson(
         _toMap(json['absences_and_breakdowns']),
       ),
+      substituteTrips: json['substitute_trips'] != null
+          ? SubstituteTripsModel.fromJson(_toMap(json['substitute_trips']))
+          : null,
+    );
+  }
+
+  /// إجمالي الرحلات المكتملة (شهري إذا كانت الفلترة مفعلة، أو تراكمي إذا لم تكن مفعلة)
+  int getCompletedTripsCount({required bool isFiltered}) {
+    if (isFiltered) {
+      return summaryCards?.completedTripsCount ?? completedTrips.total;
+    }
+    return completedTrips.allTimeTotal ?? summaryCards?.completedTripsCount ?? completedTrips.total;
+  }
+
+  /// رحلات الغياب (التي تغيب عنها السائق)
+  int getAbsentTripsCount({required bool isFiltered}) {
+    if (isFiltered) {
+      return summaryCards?.absentTripsCount ?? absencesAndBreakdowns.absentTripsCount;
+    }
+    return absencesAndBreakdowns.allTime?.absentTripsCount ??
+        absencesAndBreakdowns.absentTripsCount;
+  }
+
+  /// أعطال مركبة السائق
+  int getVehicleBreakdownsCount({required bool isFiltered}) {
+    if (isFiltered) {
+      return summaryCards?.vehicleBreakdownsCount ?? absencesAndBreakdowns.vehicleBreakdownsCount;
+    }
+    return absencesAndBreakdowns.allTime?.vehicleBreakdownsCount ??
+        absencesAndBreakdowns.vehicleBreakdownsCount;
+  }
+
+  /// رحلات الطوارئ المقبولة كسائق بديل
+  int getAcceptedSubstituteTripsCount({required bool isFiltered}) {
+    if (isFiltered) {
+      return summaryCards?.substituteTripsCount ??
+          substituteTrips?.asSubstituteTripsCount ??
+          absencesAndBreakdowns.substituteTripsCount;
+    }
+    return substituteTrips?.allTimeSubstituteTripsCount ??
+        absencesAndBreakdowns.allTime?.substituteTripsCount ??
+        substituteTrips?.asSubstituteTripsCount ??
+        summaryCards?.substituteTripsCount ??
+        0;
+  }
+
+  /// رحلات الطوارئ المكتملة كسائق بديل
+  int getCompletedSubstituteTripsCount() {
+    return substituteTrips?.completedSubstituteTripsCount ?? 0;
+  }
+}
+
+class TripSummaryCardsModel {
+  final int completedTripsCount;
+  final int absentTripsCount;
+  final int vehicleBreakdownsCount;
+  final int substituteTripsCount;
+
+  TripSummaryCardsModel({
+    required this.completedTripsCount,
+    required this.absentTripsCount,
+    required this.vehicleBreakdownsCount,
+    required this.substituteTripsCount,
+  });
+
+  factory TripSummaryCardsModel.fromJson(Map<String, dynamic> json) {
+    return TripSummaryCardsModel(
+      completedTripsCount: _parseInt(json['completed_trips_count']) ?? 0,
+      absentTripsCount: _parseInt(json['absent_trips_count']) ?? 0,
+      vehicleBreakdownsCount: _parseInt(json['vehicle_breakdowns_count']) ?? 0,
+      substituteTripsCount: _parseInt(json['substitute_trips_count']) ?? 0,
     );
   }
 }
 
 class CompletedTripsModel {
   final int total;
+  final int? allTimeTotal;
   final int morningTrips;
   final int eveningTrips;
   final int todayCompleted;
 
   CompletedTripsModel({
     required this.total,
+    this.allTimeTotal,
     required this.morningTrips,
     required this.eveningTrips,
     required this.todayCompleted,
@@ -217,6 +319,7 @@ class CompletedTripsModel {
   factory CompletedTripsModel.fromJson(Map<String, dynamic> json) {
     return CompletedTripsModel(
       total: _parseInt(json['total']) ?? 0,
+      allTimeTotal: _parseInt(json['all_time_total']),
       morningTrips: _parseInt(json['morning_trips']) ?? 0,
       eveningTrips: _parseInt(json['evening_trips']) ?? 0,
       todayCompleted: _parseInt(json['today_completed']) ?? 0,
@@ -224,25 +327,80 @@ class CompletedTripsModel {
   }
 }
 
-class AbsencesAndBreakdownsModel {
+class AbsencesAndBreakdownsAllTimeModel {
+  final int absentTripsCount;
   final int absenceDaysCount;
   final int vehicleBreakdownsCount;
-  final int totalDowntimeDays;
+  final int substituteTripsCount;
 
-  AbsencesAndBreakdownsModel({
+  AbsencesAndBreakdownsAllTimeModel({
+    required this.absentTripsCount,
     required this.absenceDaysCount,
     required this.vehicleBreakdownsCount,
+    required this.substituteTripsCount,
+  });
+
+  factory AbsencesAndBreakdownsAllTimeModel.fromJson(Map<String, dynamic> json) {
+    return AbsencesAndBreakdownsAllTimeModel(
+      absentTripsCount: _parseInt(json['absent_trips_count']) ?? 0,
+      absenceDaysCount: _parseInt(json['absence_days_count']) ?? 0,
+      vehicleBreakdownsCount: _parseInt(json['vehicle_breakdowns_count']) ?? 0,
+      substituteTripsCount: _parseInt(json['substitute_trips_count']) ?? 0,
+    );
+  }
+}
+
+class AbsencesAndBreakdownsModel {
+  final int absentTripsCount;
+  final int absenceDaysCount;
+  final int vehicleBreakdownsCount;
+  final int substituteTripsCount;
+  final int totalDowntimeDays;
+  final AbsencesAndBreakdownsAllTimeModel? allTime;
+
+  AbsencesAndBreakdownsModel({
+    required this.absentTripsCount,
+    required this.absenceDaysCount,
+    required this.vehicleBreakdownsCount,
+    required this.substituteTripsCount,
     required this.totalDowntimeDays,
+    this.allTime,
   });
 
   factory AbsencesAndBreakdownsModel.fromJson(Map<String, dynamic> json) {
     return AbsencesAndBreakdownsModel(
+      absentTripsCount: _parseInt(json['absent_trips_count']) ?? 0,
       absenceDaysCount: _parseInt(json['absence_days_count']) ?? 0,
       vehicleBreakdownsCount: _parseInt(json['vehicle_breakdowns_count']) ?? 0,
+      substituteTripsCount: _parseInt(json['substitute_trips_count']) ?? 0,
       totalDowntimeDays: _parseInt(json['total_downtime_days']) ?? 0,
+      allTime: json['all_time'] != null
+          ? AbsencesAndBreakdownsAllTimeModel.fromJson(_toMap(json['all_time']))
+          : null,
     );
   }
 }
+
+class SubstituteTripsModel {
+  final int asSubstituteTripsCount;
+  final int completedSubstituteTripsCount;
+  final int allTimeSubstituteTripsCount;
+
+  SubstituteTripsModel({
+    required this.asSubstituteTripsCount,
+    required this.completedSubstituteTripsCount,
+    required this.allTimeSubstituteTripsCount,
+  });
+
+  factory SubstituteTripsModel.fromJson(Map<String, dynamic> json) {
+    return SubstituteTripsModel(
+      asSubstituteTripsCount: _parseInt(json['as_substitute_trips_count']) ?? 0,
+      completedSubstituteTripsCount: _parseInt(json['completed_substitute_trips_count']) ?? 0,
+      allTimeSubstituteTripsCount: _parseInt(json['all_time_substitute_trips_count']) ?? 0,
+    );
+  }
+}
+
 
 // =========================================================================
 // 4. الأدوات السريعة (Quick Widgets)

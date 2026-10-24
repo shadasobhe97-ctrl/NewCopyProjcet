@@ -445,7 +445,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               borderRadius: BorderRadius.circular(12.r),
               child: Row(
                 children: [
-                  AppUserAvatar(
+AppUserAvatar(
                     image: widget.otherUserPhoto,
                     radius: 18.r,
                     backgroundColor: isDark ? AppColors.grey800 : AppColors.grey100,

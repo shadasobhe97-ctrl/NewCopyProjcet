@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/theme/text_styles.dart';
@@ -81,7 +82,8 @@ class _ChildCardWidgetState extends State<ChildCardWidget> {
                     child: child.hasRealPhoto
                         ? ClipOval(
                             child: CachedNetworkImage(
-                              imageUrl: child.photoUrl!,
+                              imageUrl: AppImageHelper.resolveUrl(child.photoUrl) ?? '',
+                              httpHeaders: AppImageHelper.safeHttpHeaders,
                               fit: BoxFit.cover,
                               width: 48.w,
                               height: 48.h,

@@ -52,6 +52,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
+  bool _precached = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_precached) {
+      _precached = true;
+      for (final img in _images) {
+        precacheImage(AssetImage(img), context).catchError((_) {});
+      }
+    }
+  }
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -79,6 +92,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Image.asset(
                   _images[index],
                   fit: BoxFit.cover,
+                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                    if (wasSynchronouslyLoaded || frame != null) {
+                      return child;
+                    }
+                    return Container(
+                      color: primary.withValues(alpha: 0.2),
+                      child: Center(
+                        child: SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: CircularProgressIndicator(
+                            color: primary,
+                            strokeWidth: 2.5,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: primary.withValues(alpha: 0.15),
+                      child: Center(
+                        child: Icon(
+                          _icons[index],
+                          size: 80,
+                          color: primary,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
               Positioned(

@@ -11,9 +11,14 @@ class DriverStatisticsCubit extends Cubit<DriverStatisticsState> {
 
   DriverStatisticsCubit(this._repository) : super(const DriverStatisticsInitial());
 
-  Future<void> loadStatistics({int? month, int? year}) async {
-    if (month != null) currentMonth = month;
-    if (year != null) currentYear = year;
+  Future<void> loadStatistics({int? month, int? year, bool reset = false}) async {
+    if (reset) {
+      currentMonth = null;
+      currentYear = null;
+    } else {
+      if (month != null) currentMonth = month;
+      if (year != null) currentYear = year;
+    }
 
     emit(const DriverStatisticsLoading());
 
@@ -53,12 +58,17 @@ class DriverStatisticsCubit extends Cubit<DriverStatisticsState> {
   }
 
   void filterByDate({required int month, required int year}) {
+    final now = DateTime.now();
+    if (year > now.year || (year == now.year && month > now.month)) {
+      emit(const DriverStatisticsError(
+        'صيغة التاريخ غير صحيحة: لا يمكن عرض إحصائيات لتاريخ مستقبلي. يرجى اختيار تاريخ حالي أو سابق.',
+      ));
+      return;
+    }
     loadStatistics(month: month, year: year);
   }
 
   void resetFilter() {
-    currentMonth = null;
-    currentYear = null;
-    loadStatistics();
+    loadStatistics(reset: true);
   }
 }

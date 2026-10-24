@@ -20,6 +20,19 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   final _formKey = GlobalKey<FormState>();
+  final _nameKey = GlobalKey<FormFieldState>();
+  final _emailKey = GlobalKey<FormFieldState>();
+  final _phoneKey = GlobalKey<FormFieldState>();
+  final _altPhoneKey = GlobalKey<FormFieldState>();
+  final _passwordKey = GlobalKey<FormFieldState>();
+  final _confirmPasswordKey = GlobalKey<FormFieldState>();
+
+  final _nameFocusNode = FocusNode();
+  final _emailFocusNode = FocusNode();
+  final _phoneFocusNode = FocusNode();
+  final _altPhoneFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
+  final _confirmPasswordFocusNode = FocusNode();
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -33,8 +46,138 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
   Uint8List? _avatarBytes;
   final ImagePicker _picker = ImagePicker();
 
+  String? _emailServerError;
+  String? _phoneServerError;
+  String? _altPhoneServerError;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.addListener(() {
+      if (_emailServerError != null) {
+        setState(() => _emailServerError = null);
+      }
+      if (_emailKey.currentState?.hasError == true) {
+        if (AppValidators.validateEmail(_emailController.text) == null) {
+          _emailKey.currentState?.validate();
+        }
+      }
+    });
+
+    _phoneController.addListener(() {
+      if (_phoneServerError != null) {
+        setState(() => _phoneServerError = null);
+      }
+      if (_phoneKey.currentState?.hasError == true) {
+        if (AppValidators.validateLibyanPhone(_phoneController.text, isRequired: true, isAlternative: false) == null) {
+          _phoneKey.currentState?.validate();
+        }
+      }
+      if (_altPhoneKey.currentState?.hasError == true && _altPhoneController.text.trim().isNotEmpty) {
+        if (AppValidators.validateLibyanPhone(_altPhoneController.text, isRequired: false, primaryPhone: _phoneController.text, isAlternative: true) == null) {
+          _altPhoneKey.currentState?.validate();
+        }
+      }
+    });
+
+    _altPhoneController.addListener(() {
+      if (_altPhoneServerError != null) {
+        setState(() => _altPhoneServerError = null);
+      }
+      if (_altPhoneKey.currentState?.hasError == true) {
+        if (AppValidators.validateLibyanPhone(_altPhoneController.text, isRequired: false, primaryPhone: _phoneController.text, isAlternative: true) == null) {
+          _altPhoneKey.currentState?.validate();
+        }
+      }
+    });
+
+    _nameController.addListener(() {
+      if (_nameKey.currentState?.hasError == true) {
+        if (AppValidators.validateArabicTripleName(_nameController.text) == null) {
+          _nameKey.currentState?.validate();
+        }
+      }
+    });
+
+    _passwordController.addListener(() {
+      if (_passwordKey.currentState?.hasError == true) {
+        if (AppValidators.validatePassword(_passwordController.text) == null) {
+          _passwordKey.currentState?.validate();
+        }
+      }
+      if (_confirmPasswordKey.currentState?.hasError == true && _confirmPasswordController.text.isNotEmpty) {
+        if (AppValidators.validateConfirmPassword(_confirmPasswordController.text, _passwordController.text) == null) {
+          _confirmPasswordKey.currentState?.validate();
+        }
+      }
+    });
+
+    _confirmPasswordController.addListener(() {
+      if (_confirmPasswordKey.currentState?.hasError == true) {
+        if (AppValidators.validateConfirmPassword(_confirmPasswordController.text, _passwordController.text) == null) {
+          _confirmPasswordKey.currentState?.validate();
+        }
+      }
+    });
+
+    _nameFocusNode.addListener(() {
+      if (!_nameFocusNode.hasFocus) {
+        if (_nameController.text.trim().isNotEmpty || _nameKey.currentState?.hasError == true) {
+          _nameKey.currentState?.validate();
+        }
+      }
+    });
+
+    _emailFocusNode.addListener(() {
+      if (!_emailFocusNode.hasFocus) {
+        if (_emailController.text.trim().isNotEmpty || _emailKey.currentState?.hasError == true) {
+          _emailKey.currentState?.validate();
+        }
+      }
+    });
+
+    _phoneFocusNode.addListener(() {
+      if (!_phoneFocusNode.hasFocus) {
+        if (_phoneController.text.trim().isNotEmpty || _phoneKey.currentState?.hasError == true) {
+          _phoneKey.currentState?.validate();
+        }
+      }
+    });
+
+    _altPhoneFocusNode.addListener(() {
+      if (!_altPhoneFocusNode.hasFocus) {
+        if (_altPhoneController.text.trim().isNotEmpty || _altPhoneKey.currentState?.hasError == true) {
+          _altPhoneKey.currentState?.validate();
+        }
+      }
+    });
+
+    _passwordFocusNode.addListener(() {
+      if (!_passwordFocusNode.hasFocus) {
+        if (_passwordController.text.isNotEmpty || _passwordKey.currentState?.hasError == true) {
+          _passwordKey.currentState?.validate();
+        }
+      }
+    });
+
+    _confirmPasswordFocusNode.addListener(() {
+      if (!_confirmPasswordFocusNode.hasFocus) {
+        if (_confirmPasswordController.text.isNotEmpty || _confirmPasswordKey.currentState?.hasError == true) {
+          _confirmPasswordKey.currentState?.validate();
+        }
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _nameFocusNode.dispose();
+    _emailFocusNode.dispose();
+    _phoneFocusNode.dispose();
+    _altPhoneFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _confirmPasswordFocusNode.dispose();
+
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
@@ -180,12 +323,110 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
               );
               Navigator.pushNamed(context, '/driverOtp');
             } else if (state is DriverRegisterFirstStageError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.errorMessage),
-                  backgroundColor: AppColors.red,
-                ),
-              );
+              final fieldErrors = state.fieldErrors;
+              bool matched = false;
+              final unhandledErrors = <String>[];
+
+              // 1. فحص الأخطاء المفهرسة من الخادم وربط كل حقل بخطئه الخاص
+              if (fieldErrors != null && fieldErrors.isNotEmpty) {
+                for (final entry in fieldErrors.entries) {
+                  final k = entry.key;
+                  if (k == 'email') {
+                    _emailServerError = entry.value;
+                    matched = true;
+                  } else if (k == 'phone') {
+                    _phoneServerError = entry.value;
+                    matched = true;
+                  } else if (k == 'alternative_phone') {
+                    _altPhoneServerError = entry.value;
+                    matched = true;
+                  } else {
+                    unhandledErrors.add(entry.value);
+                  }
+                }
+              }
+
+              // 2. إذا لم تكن هناك أخطاء مفهرسة، تحقق إذا كانت الرسالة المفردة تخص حقلاً واحداً فقط
+              if (!matched && unhandledErrors.isEmpty) {
+                final err = state.errorMessage;
+                final lower = err.toLowerCase();
+
+                // رسائل تعذر أو فشل إرسال رمز التحقق هي رسائل نظام/خدمة يجب أن تظهر في SnackBar فقط
+                final isOtpDeliveryError = err.contains('تعذر') ||
+                    err.contains('فشل') ||
+                    err.contains('رمز التحقق') ||
+                    lower.contains('otp') ||
+                    lower.contains('send') ||
+                    (err.contains('إرسال') && (err.contains('تعذر') || err.contains('فشل')));
+
+                if (!isOtpDeliveryError) {
+                  final isAltPhone = err.contains('احتياطي') ||
+                      err.contains('بديل') ||
+                      err.contains('طوارئ') ||
+                      lower.contains('alternative') ||
+                      lower.contains('alt_phone') ||
+                      lower.contains('backup');
+
+                  final isEmail = (err.contains('بريد') ||
+                      err.contains('الإلكتروني') ||
+                      err.contains('الالكتروني') ||
+                      err.contains('ايميل') ||
+                      err.contains('إيميل') ||
+                      lower.contains('email') ||
+                      lower.contains('mail')) &&
+                      !err.contains('هاتف') &&
+                      !err.contains('phone');
+
+                  final isPhone = (err.contains('هاتف') ||
+                      err.contains('موبايل') ||
+                      err.contains('جوال') ||
+                      lower.contains('phone')) &&
+                      !isAltPhone &&
+                      !isEmail;
+
+                  if (isEmail) {
+                    _emailServerError = err;
+                    matched = true;
+                  } else if (isAltPhone) {
+                    _altPhoneServerError = err;
+                    matched = true;
+                  } else if (isPhone) {
+                    _phoneServerError = err;
+                    matched = true;
+                  }
+                }
+              }
+
+              setState(() {});
+
+              if (_emailServerError != null) {
+                _emailKey.currentState?.validate();
+              }
+              if (_phoneServerError != null) {
+                _phoneKey.currentState?.validate();
+              }
+              if (_altPhoneServerError != null) {
+                _altPhoneKey.currentState?.validate();
+              }
+
+              // 1. إذا وُجدت أخطاء خادم غير مرتبطة بحقول الشاشة الظاهرة، تُعرض في SnackBar دون إهمالها
+              if (unhandledErrors.isNotEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(unhandledErrors.join('\n')),
+                    backgroundColor: AppColors.red,
+                  ),
+                );
+              }
+              // 2. إذا لم يرتبط الخطأ بحقل محدد (خطأ عام بالخادم أو اتصال)، يُعرض في SnackBar
+              else if (!matched) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.errorMessage),
+                    backgroundColor: AppColors.red,
+                  ),
+                );
+              }
             }
           },
           builder: (context, state) {
@@ -265,6 +506,8 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
 
                     // 1. الاسم الكامل (الثلاثي)
                     TextFormField(
+                      key: _nameKey,
+                      focusNode: _nameFocusNode,
                       controller: _nameController,
                       textAlign: TextAlign.right,
                       style: AppTextStyles.inputTextStyle(
@@ -276,15 +519,23 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                         prefixIcon: const Icon(Icons.person_outline),
                       ),
                       validator: AppValidators.validateArabicTripleName,
+                      onChanged: (val) {
+                        if (_nameKey.currentState?.hasError == true) {
+                          if (AppValidators.validateArabicTripleName(val) == null) {
+                            _nameKey.currentState?.validate();
+                          }
+                        }
+                      },
                     ),
                     const SizedBox(height: 16),
 
                     // 2. البريد الإلكتروني
                     TextFormField(
+                      key: _emailKey,
+                      focusNode: _emailFocusNode,
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      textDirection: TextDirection.ltr,
-                      textAlign: TextAlign.left,
+                      textAlign: TextAlign.right,
                       style: AppTextStyles.inputTextStyle(
                         color: isDark ? AppColors.white : AppColors.textPrimary,
                       ),
@@ -293,17 +544,30 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                         labelText: "البريد الإلكتروني",
                         hintText: "example@email.com",
                         prefixIcon: const Icon(Icons.email_outlined),
+                        errorText: _emailServerError,
                       ),
-                      validator: AppValidators.validateEmail,
+                      validator: (value) =>
+                          AppValidators.validateEmail(value) ?? _emailServerError,
+                      onChanged: (val) {
+                        if (_emailServerError != null) {
+                          setState(() => _emailServerError = null);
+                        }
+                        if (_emailKey.currentState?.hasError == true) {
+                          if (AppValidators.validateEmail(val) == null) {
+                            _emailKey.currentState?.validate();
+                          }
+                        }
+                      },
                     ),
                     const SizedBox(height: 16),
 
                     // 3. رقم الهاتف الرئيسي (10 أرقام ويبدأ بـ 09 حتماً)
                     TextFormField(
+                      key: _phoneKey,
+                      focusNode: _phoneFocusNode,
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      textDirection: TextDirection.ltr,
-                      textAlign: TextAlign.left,
+                      textAlign: TextAlign.right,
                       style: AppTextStyles.inputTextStyle(
                         color: isDark ? AppColors.white : AppColors.textPrimary,
                       ),
@@ -312,18 +576,40 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                         labelText: "رقم الهاتف",
                         hintText: "09XXXXXXXX",
                         prefixIcon: const Icon(Icons.phone_android),
+                        errorText: _phoneServerError,
                       ),
                       validator: (v) =>
-                          AppValidators.validateLibyanPhone(v, isRequired: true),
+                          AppValidators.validateLibyanPhone(
+                            v,
+                            isRequired: true,
+                            isAlternative: false,
+                          ) ??
+                          _phoneServerError,
+                      onChanged: (val) {
+                        if (_phoneServerError != null) {
+                          setState(() => _phoneServerError = null);
+                        }
+                        if (_phoneKey.currentState?.hasError == true) {
+                          if (AppValidators.validateLibyanPhone(val, isRequired: true, isAlternative: false) == null) {
+                            _phoneKey.currentState?.validate();
+                          }
+                        }
+                        if (_altPhoneKey.currentState?.hasError == true && _altPhoneController.text.trim().isNotEmpty) {
+                          if (AppValidators.validateLibyanPhone(_altPhoneController.text, isRequired: false, primaryPhone: val, isAlternative: true) == null) {
+                            _altPhoneKey.currentState?.validate();
+                          }
+                        }
+                      },
                     ),
                     const SizedBox(height: 16),
 
                     // 4. رقم هاتف بديل / طوارئ (اختياري)
                     TextFormField(
+                      key: _altPhoneKey,
+                      focusNode: _altPhoneFocusNode,
                       controller: _altPhoneController,
                       keyboardType: TextInputType.phone,
-                      textDirection: TextDirection.ltr,
-                      textAlign: TextAlign.left,
+                      textAlign: TextAlign.right,
                       style: AppTextStyles.inputTextStyle(
                         color: isDark ? AppColors.white : AppColors.textPrimary,
                       ),
@@ -332,12 +618,26 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                         labelText: "رقم هاتف بديل/الطوارئ (اختياري)",
                         hintText: "09XXXXXXXX",
                         prefixIcon: const Icon(Icons.phone_outlined),
+                        errorText: _altPhoneServerError,
                       ),
-                      validator: (v) => AppValidators.validateLibyanPhone(
-                        v,
-                        isRequired: false,
-                        primaryPhone: _phoneController.text,
-                      ),
+                      validator: (v) =>
+                          AppValidators.validateLibyanPhone(
+                            v,
+                            isRequired: false,
+                            primaryPhone: _phoneController.text,
+                            isAlternative: true,
+                          ) ??
+                          _altPhoneServerError,
+                      onChanged: (val) {
+                        if (_altPhoneServerError != null) {
+                          setState(() => _altPhoneServerError = null);
+                        }
+                        if (_altPhoneKey.currentState?.hasError == true) {
+                          if (AppValidators.validateLibyanPhone(val, isRequired: false, primaryPhone: _phoneController.text, isAlternative: true) == null) {
+                            _altPhoneKey.currentState?.validate();
+                          }
+                        }
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -382,6 +682,8 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
 
                     // 6. كلمة المرور
                     TextFormField(
+                      key: _passwordKey,
+                      focusNode: _passwordFocusNode,
                       controller: _passwordController,
                       obscureText: !_isPasswordVisible,
                       textDirection: TextDirection.ltr,
@@ -405,11 +707,25 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                         ),
                       ),
                       validator: AppValidators.validatePassword,
+                      onChanged: (val) {
+                        if (_passwordKey.currentState?.hasError == true) {
+                          if (AppValidators.validatePassword(val) == null) {
+                            _passwordKey.currentState?.validate();
+                          }
+                        }
+                        if (_confirmPasswordKey.currentState?.hasError == true && _confirmPasswordController.text.isNotEmpty) {
+                          if (AppValidators.validateConfirmPassword(_confirmPasswordController.text, val) == null) {
+                            _confirmPasswordKey.currentState?.validate();
+                          }
+                        }
+                      },
                     ),
                     const SizedBox(height: 16),
 
                     // 7. تأكيد كلمة المرور
                     TextFormField(
+                      key: _confirmPasswordKey,
+                      focusNode: _confirmPasswordFocusNode,
                       controller: _confirmPasswordController,
                       obscureText: !_isConfirmPasswordVisible,
                       textDirection: TextDirection.ltr,
@@ -440,6 +756,13 @@ class _DriverBasicInfoScreenState extends State<DriverBasicInfoScreen> {
                           return "كلمة المرور غير متطابقة";
                         }
                         return null;
+                      },
+                      onChanged: (val) {
+                        if (_confirmPasswordKey.currentState?.hasError == true) {
+                          if (AppValidators.validateConfirmPassword(val, _passwordController.text) == null) {
+                            _confirmPasswordKey.currentState?.validate();
+                          }
+                        }
                       },
                     ),
                     const SizedBox(height: 32),

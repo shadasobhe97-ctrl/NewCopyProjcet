@@ -36,10 +36,16 @@ class TripHistoryCard extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: AppTheme.boxDecoration(
-                color: AppColors.primaryLight.withValues(alpha: 0.1),
+                color: trip.isBreakdown
+                    ? AppColors.error.withValues(alpha: 0.12)
+                    : AppColors.primaryLight.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.history_rounded, color: AppColors.primaryLight, size: 20),
+              child: Icon(
+                trip.isBreakdown ? Icons.warning_amber_rounded : Icons.history_rounded,
+                color: trip.isBreakdown ? AppColors.error : AppColors.primaryLight,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -57,10 +63,31 @@ class TripHistoryCard extends StatelessWidget {
                     '${trip.tripDate} • ${trip.duration} دقيقة',
                     style: AppTextStyles.style(fontSize: 12, color: context.textMuted),
                   ),
+                  if (trip.isBreakdown && trip.suspensionReason != null && trip.suspensionReason!.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      'السبب: ${trip.suspensionReason}',
+                      style: AppTextStyles.style(fontSize: 11, color: AppColors.error, fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  if (trip.substituteDriver != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'السائق البديل: ${trip.substituteDriver!.name}',
+                      style: AppTextStyles.style(fontSize: 11, color: AppColors.info, fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ],
               ),
             ),
-            TripStatusBadge(status: trip.status),
+            TripStatusBadge(
+              status: trip.status,
+              customLabel: trip.statusLabel.isNotEmpty ? trip.statusLabel : null,
+            ),
           ],
         ),
       ),

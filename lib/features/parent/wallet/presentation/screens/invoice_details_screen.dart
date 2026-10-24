@@ -179,26 +179,6 @@ class _InvoiceDetailsScreenContent extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        const Divider(color: Colors.white24),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'تاريخ الاستحقاق',
-                              style: AppTextStyles.style(
-                                  color: Colors.white70, fontSize: 13),
-                            ),
-                            Text(
-                              invoice.dueDate,
-                              style: AppTextStyles.style(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ),
@@ -235,25 +215,7 @@ class _InvoiceDetailsScreenContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // تفاصيل الرحلات والغياب
-                  _buildSectionCard(
-                    context: context,
-                    title: 'تفاصيل الرحلات',
-                    children: [
-                      _buildInfoRow(context, 'إجمالي الرحلات المحددة',
-                          invoice.totalTrips.toString()),
-                      const Divider(),
-                      _buildInfoRow(context, 'الرحلات المنجزة',
-                          invoice.completedTrips.toString()),
-                      const Divider(),
-                      _buildInfoRow(context, 'غياب السائق',
-                          invoice.driverAbsences.toString()),
-                      const Divider(),
-                      _buildInfoRow(context, 'غياب الطالب',
-                          invoice.studentAbsences.toString()),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+
 
                   // التواريخ
                   _buildSectionCard(

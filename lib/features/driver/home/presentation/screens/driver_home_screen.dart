@@ -105,14 +105,15 @@ class _HomeBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1) كرت الترحيب الأزرق في أعلى الصفحة الرئيسية بدلاً من كرت الاتصال
-          WelcomeGuideCard(
-            driverName: state.driver.fullName,
-            onDismiss: state.showFirstWelcome
-                ? () => context.read<DriverHomeCubit>().dismissFirstWelcome()
-                : null,
-          ),
-          const SizedBox(height: 20),
+          // 1) كرت الترحيب الأزرق في أعلى الصفحة الرئيسية
+          if (state.showFirstWelcome) ...[
+            WelcomeGuideCard(
+              driverName: state.driver.fullName,
+              onDismiss: () =>
+                  context.read<DriverHomeCubit>().dismissFirstWelcome(),
+            ),
+            const SizedBox(height: 20),
+          ],
 
           // 2) قسم الخدمات السريعة للسائق
           const DriverServicesWidget(),

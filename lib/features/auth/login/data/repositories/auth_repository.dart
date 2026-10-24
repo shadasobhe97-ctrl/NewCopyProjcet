@@ -35,9 +35,12 @@ class AuthRepository {
         avatarUrl: response.user.avatarUrl,
       );
 
-      // حفظ driver_id للسائق لاستخدامه في المهام الخاصة به
-      if (response.isDriver && response.user.driverId != null) {
-        await _sessionRepository.saveDriverId(response.user.driverId!);
+      // حفظ driver_id للسائق واستعادة ظهور رسالة الترحيب بعد تسجيل الدخول
+      if (response.isDriver) {
+        if (response.user.driverId != null) {
+          await _sessionRepository.saveDriverId(response.user.driverId!);
+        }
+        await _sessionRepository.resetAllDriverWelcomeShown();
       }
     }
 

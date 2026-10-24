@@ -8,7 +8,9 @@ import 'package:kids_transport/core/utils/theme_context.dart';
 import 'package:kids_transport/core/widgets/custom_text_field.dart';
 import 'package:kids_transport/core/widgets/app_image_widget.dart';
 import 'package:kids_transport/core/widgets/primary_button.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import 'package:kids_transport/features/parent/wallet/data/models/payment_method_model.dart';
+import 'package:kids_transport/features/parent/wallet/data/models/recharge_response_model.dart';
 import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_cubit.dart';
 import 'package:kids_transport/features/parent/wallet/logic/wallet_cubit/wallet_state.dart';
 
@@ -24,6 +26,15 @@ class _RechargeScreenState extends State<RechargeScreen> {
   final _formKey = GlobalKey<FormState>();
 
   int? _selectedMethodId;
+
+  @override
+  void initState() {
+    super.initState();
+    final cubit = context.read<WalletCubit>();
+    if (cubit.state is! WalletLoaded && cubit.cachedLoaded == null) {
+      cubit.loadWalletData();
+    }
+  }
 
   @override
   void dispose() {
@@ -63,12 +74,36 @@ class _RechargeScreenState extends State<RechargeScreen> {
               ),
             );
           } else if (state is WalletRechargeInitiated) {
+            PaymentMethodModel? chosenMethod;
+            try {
+              final loaded = _extractLoaded(state);
+              final methods = loaded?.paymentMethods;
+              if (methods != null && _selectedMethodId != null) {
+                chosenMethod =
+                    methods.firstWhere((m) => m.id == _selectedMethodId);
+              }
+            } catch (_) {}
+
+            final effectiveData = (state.data.paymentMethod?.nameAr != null &&
+                    state.data.paymentMethod!.nameAr!.isNotEmpty)
+                ? state.data
+                : (chosenMethod != null
+                    ? state.data.copyWith(
+                        paymentMethod: RechargeInitiatePaymentMethod(
+                          id: chosenMethod.id,
+                          nameAr: chosenMethod.nameAr,
+                          code: chosenMethod.code,
+                          iconUrl: chosenMethod.iconUrl,
+                        ),
+                      )
+                    : state.data);
+
             Navigator.pushNamed(
               context,
               AppRoutes.parentRechargeConfirmation,
               arguments: {
                 'cubit': context.read<WalletCubit>(),
-                'initData': state.data,
+                'initData': effectiveData,
               },
             );
           }
@@ -82,6 +117,33 @@ class _RechargeScreenState extends State<RechargeScreen> {
 
           final loaded = _extractLoaded(state);
           if (loaded == null) {
+            if (state is WalletError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline_rounded,
+                          color: context.errorColor, size: 48),
+                      const SizedBox(height: 12),
+                      Text(
+                        state.message,
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.style(color: context.errorColor),
+                      ),
+                      const SizedBox(height: 16),
+                      PrimaryButton(
+                        label: 'إعادة المحاولة',
+                        onPressed: () =>
+                            context.read<WalletCubit>().loadWalletData(),
+                        width: 180,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -89,21 +151,16 @@ class _RechargeScreenState extends State<RechargeScreen> {
           if (methods.isEmpty) {
             return Center(
               child: Text(
-                'لا توجد طرق دفع متاحة حالياً.',
+                'لا توجد طرق شحن متاحة حالياً.',
                 style: AppTextStyles.style(color: context.textMuted),
               ),
             );
           }
 
-          PaymentMethodModel selectedMethod;
-          if (_selectedMethodId != null &&
-              methods.any((m) => m.id == _selectedMethodId)) {
-            selectedMethod =
-                methods.firstWhere((m) => m.id == _selectedMethodId);
-          } else {
-            selectedMethod = methods.first;
-            _selectedMethodId = selectedMethod.id;
-          }
+          final selectedMethod = methods.firstWhere(
+            (m) => m.id == _selectedMethodId,
+            orElse: () => methods.first,
+          );
 
           return Form(
             key: _formKey,
@@ -158,7 +215,7 @@ class _RechargeScreenState extends State<RechargeScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'اختر طريقة الدفع',
+                    'اختر طريقة الشحن',
                     style: AppTextStyles.style(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -167,7 +224,7 @@ class _RechargeScreenState extends State<RechargeScreen> {
                   ),
                   const SizedBox(height: 12),
                   ...methods.map((method) {
-                    final isSelected = _selectedMethodId == method.id;
+                    final isSelected = selectedMethod.id == method.id;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
                       child: InkWell(
@@ -279,17 +336,30 @@ class _PaymentMethodIcon extends StatelessWidget {
           color: context.textMuted,
         );
 
-    if (iconUrl == null || iconUrl!.isEmpty) {
+    final resolved = AppImageHelper.resolveUrl(iconUrl);
+    if (resolved == null || !AppImageHelper.isValidImageUrl(resolved)) {
       return SizedBox(width: 32, height: 32, child: fallback());
+    }
+    if (resolved.startsWith('assets/')) {
+      return SizedBox(
+        width: 32,
+        height: 32,
+        child: Image.asset(
+          resolved,
+          fit: BoxFit.contain,
+          errorBuilder: (_, _, _) => fallback(),
+        ),
+      );
     }
     return SizedBox(
       width: 32,
       height: 32,
-      // AppImageWidget يخزن الصورة مؤقتاً بدل إعادة تحميلها مع كل بناء
+// AppImageWidget يخزن الصورة مؤقتاً بدل إعادة تحميلها مع كل بناء
       child: AppImageWidget(
         image: iconUrl,
         placeholder: fallback(),
         errorWidget: fallback(),
+
       ),
     );
   }

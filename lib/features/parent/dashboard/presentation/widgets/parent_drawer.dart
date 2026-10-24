@@ -135,33 +135,6 @@ class ParentDrawer extends StatelessWidget {
                         },
                       ),
                       AppDrawerItem(
-                        icon: Icons.event_busy_rounded,
-                        iconColor: context.warningColor,
-                        label: 'إدارة الغياب',
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.pushNamed(context, AppRoutes.parentAbsence);
-                        },
-                      ),
-                      AppDrawerItem(
-                        icon: Icons.location_on_outlined,
-                        iconColor: context.successColor,
-                        label: 'عنواني',
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.pushNamed(
-                            context,
-                            AppRoutes.savedAddresses,
-                          );
-                        },
-                      ),
-                      AppDrawerItem(
-                        icon: Icons.description_outlined,
-                        iconColor: context.pendingColor,
-                        label: 'عقودي واشتراكاتي',
-                        onTap: () => Navigator.pop(context),
-                      ),
-                      AppDrawerItem(
                         icon: Icons.directions_bus_rounded,
                         iconColor: context.primaryColor,
                         label: 'جدول رحلات أطفالي',
@@ -208,18 +181,6 @@ class ParentDrawer extends StatelessWidget {
                       ),
                       const Divider(height: 24, indent: 16, endIndent: 16),
                       AppDrawerItem(
-                        icon: Icons.settings_outlined,
-                        iconColor: context.textMuted,
-                        label: 'الإعدادات',
-                        onTap: () => Navigator.pop(context),
-                      ),
-                      AppDrawerItem(
-                        icon: Icons.help_outline_rounded,
-                        iconColor: context.textMuted,
-                        label: 'ميزات دربي',
-                        onTap: () => Navigator.pop(context),
-                      ),
-                      AppDrawerItem(
                         icon: Icons.policy_outlined,
                         iconColor: context.textMuted,
                         label: 'الشروط والسياسات',
@@ -240,7 +201,10 @@ class ParentDrawer extends StatelessWidget {
                         icon: Icons.support_agent_rounded,
                         iconColor: context.textMuted,
                         label: 'التواصل مع الدعم',
-                        onTap: () => Navigator.pop(context),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, AppRoutes.contactSupport);
+                        },
                       ),
                       const Divider(height: 24, indent: 16, endIndent: 16),
                       BlocBuilder<AuthCubit, AuthState>(
@@ -317,20 +281,31 @@ class _DrawerHeader extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // ── أفاتار ولي الأمر مع صورة من API ──
-                  Container(
-                    decoration: AppTheme.boxDecoration(
-                      shape: BoxShape.circle,
-                      border: AppTheme.border(
-                        color: AppColors.white.withValues(alpha: 0.4),
-                        width: 3,
+                  GestureDetector(
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await Navigator.pushNamed(context, AppRoutes.parentProfile);
+                      if (context.mounted) {
+                        try {
+                          context.read<ParentProfileCubit>().fetchProfile();
+                        } catch (_) {}
+                      }
+                    },
+                    child: Container(
+                      decoration: AppTheme.boxDecoration(
+                        shape: BoxShape.circle,
+                        border: AppTheme.border(
+                          color: AppColors.white.withValues(alpha: 0.4),
+                          width: 3,
+                        ),
                       ),
-                    ),
-                    child: AppUserAvatar(
-                      image: avatarUrl,
-                      radius: 38,
-                      backgroundColor: AppColors.white24,
-                      iconColor: AppColors.white,
-                      iconSize: 38,
+                      child: AppUserAvatar(
+                        image: avatarUrl,
+                        radius: 38,
+                        backgroundColor: AppColors.white24,
+                        iconColor: AppColors.white,
+                        iconSize: 38,
+                      ),
                     ),
                   ),
                   Container(
@@ -354,14 +329,25 @@ class _DrawerHeader extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 14),
-              Text(
-                fullName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.style(
-                  color: AppColors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: () async {
+                  Navigator.pop(context);
+                  await Navigator.pushNamed(context, AppRoutes.parentProfile);
+                  if (context.mounted) {
+                    try {
+                      context.read<ParentProfileCubit>().fetchProfile();
+                    } catch (_) {}
+                  }
+                },
+                child: Text(
+                  fullName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.style(
+                    color: AppColors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const SizedBox(height: 4),

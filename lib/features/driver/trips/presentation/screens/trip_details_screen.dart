@@ -294,7 +294,7 @@ class _ChildTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              AppUserAvatar(
+AppUserAvatar(
                 image: child.photo,
                 radius: 14,
                 defaultIcon: Icons.child_care_rounded,

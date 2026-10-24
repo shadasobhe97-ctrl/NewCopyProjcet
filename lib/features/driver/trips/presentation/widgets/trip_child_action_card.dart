@@ -99,7 +99,7 @@ class TripChildActionCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              AppUserAvatar(
+AppUserAvatar(
                 image: item.photo,
                 radius: 15,
                 defaultIcon: item.isDropoffPhase

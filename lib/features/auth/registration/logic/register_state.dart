@@ -14,7 +14,8 @@ class ParentOtpSentSuccess extends RegisterState {
 }
 class ParentOtpSentError extends RegisterState {
   final String errorMessage;
-  ParentOtpSentError(this.errorMessage);
+  final Map<String, String>? fieldErrors;
+  ParentOtpSentError(this.errorMessage, {this.fieldErrors});
 }
 
 /// التسجيل النهائي → POST /api/parent/register (يحتوي OTP في الـ body)
@@ -25,7 +26,8 @@ class ParentRegisterSuccess extends RegisterState {
 }
 class ParentRegisterError extends RegisterState {
   final String errorMessage;
-  ParentRegisterError(this.errorMessage);
+  final Map<String, String>? fieldErrors;
+  ParentRegisterError(this.errorMessage, {this.fieldErrors});
 }
 
 // ==================== [الحالات الخاصة بالسائق (Driver)] ====================
@@ -37,7 +39,8 @@ class DriverRegisterFirstStageSuccess extends RegisterState {
 }
 class DriverRegisterFirstStageError extends RegisterState {
   final String errorMessage;
-  DriverRegisterFirstStageError(this.errorMessage);
+  final Map<String, String>? fieldErrors;
+  DriverRegisterFirstStageError(this.errorMessage, {this.fieldErrors});
 }
 
 class DriverVerifyOtpLoading extends RegisterState {}

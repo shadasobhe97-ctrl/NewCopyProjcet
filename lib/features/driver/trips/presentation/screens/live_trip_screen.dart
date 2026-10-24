@@ -17,6 +17,7 @@ import 'package:kids_transport/core/widgets/primary_button.dart';
 import 'package:kids_transport/features/driver/trips/data/models/driver_trip_stop_model.dart';
 import 'package:kids_transport/features/driver/trips/data/models/live_trip_child_item.dart';
 import 'package:kids_transport/features/driver/trips/data/services/driver_location_source.dart';
+import 'package:kids_transport/features/driver/trips/data/services/mock_route_provider.dart';
 import 'package:kids_transport/features/driver/trips/logic/live_trip_cubit/live_trip_cubit.dart';
 import 'package:kids_transport/features/driver/trips/presentation/widgets/forgotten_children_dialog.dart';
 import 'package:kids_transport/features/driver/trips/presentation/widgets/mock_route_debug_panel.dart';
@@ -90,21 +91,39 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
   /// عند التبديل بين GPS الحقيقي والمحاكاة نعيد الاشتراك بالمصدر الجديد
   void _onLocationModeChanged() {
     if (!mounted) return;
-    // الخريطة تُعاد بناؤها، فنوقف تتبع الكاميرا لين onMapReady من جديد
-    setState(() {
-      _isLocating = true;
-      _mapReady = false;
-    });
+    // لا نلغي جاهزية الخريطة (_mapReady) إذا كانت الخريطة منشأة بالفعل لتفادي توقف الكاميرا
+    if (_driverPosition == null) {
+      setState(() {
+        _isLocating = true;
+      });
+    }
     _listenToPosition();
   }
 
   Future<void> _toggleMockMode() async {
     final enable = !_locationSource.isMock;
     try {
-      await _locationSource.setMockEnabled(enable);
+      final state = context.read<LiveTripCubit>().state;
+      final stops = state is LiveTripLoaded ? state.stops : null;
+      final roadPoints = _routeTracker.remaining?.points;
+      await _locationSource.setMockEnabled(
+        enable,
+        stops: stops,
+        currentPosition: _driverPosition,
+        roadPoints: (roadPoints != null && roadPoints.length >= 2) ? roadPoints : null,
+      );
+      if (enable && state is LiveTripLoaded) {
+        final phase = evaluateSmartTripPhase(
+          stops: state.stops,
+          childItems: state.childItems,
+        );
+        if (phase != null) {
+          _locationSource.mockRoute.updateSmartPhase(phase);
+        }
+      }
     } catch (e) {
       debugPrint('❌ [LiveTripScreen] تعذر تشغيل المحاكاة: $e');
-      if (mounted) _showSnack('تعذر تحميل ملف مسار المحاكاة', isError: true);
+      if (mounted) _showSnack('تعذر تشغيل المحاكاة', isError: true);
     }
   }
 
@@ -126,14 +145,25 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
       final initialPosition = await _locationSource.getCurrentPosition();
       if (generation != _listenGeneration) return;
       debugPrint(
-        '📍 [LiveTripScreen] أول إحداثي GPS: lat=${initialPosition.latitude}, lng=${initialPosition.longitude}',
+        '📍 [LiveTripScreen] أول إحداثي: lat=${initialPosition.latitude}, lng=${initialPosition.longitude}',
       );
       if (mounted) {
-        _busMotion.moveTo(LatLng(initialPosition.latitude, initialPosition.longitude));
-        setState(() {
-          _driverPosition = initialPosition;
-          _isLocating = false;
-        });
+        final initLat = initialPosition.latitude;
+        final initLng = initialPosition.longitude;
+        if (!initLat.isNaN &&
+            !initLat.isInfinite &&
+            !initLng.isNaN &&
+            !initLng.isInfinite &&
+            initLat.abs() <= 90 &&
+            initLng.abs() <= 180) {
+          _busMotion.moveTo(LatLng(initLat, initLng));
+          setState(() {
+            _driverPosition = initialPosition;
+            _isLocating = false;
+          });
+        } else {
+          setState(() => _isLocating = false);
+        }
       }
 
       if (!mounted) return;
@@ -141,11 +171,23 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
         (position) {
           // فحص احترازي: نتأكد إن الـ Stream ينبض ولا يتوقف بسبب توفير الطاقة بالنظام
           debugPrint(
-            '📍 [LiveTripScreen] تحديث GPS: lat=${position.latitude}, lng=${position.longitude}, '
+            '📍 [LiveTripScreen] تحديث الموقع: lat=${position.latitude}, lng=${position.longitude}, '
             'heading=${position.heading}°, speed=${position.speed} م/ث',
           );
           if (!mounted) return;
-          final isMoving = _busMotion.moveTo(LatLng(position.latitude, position.longitude));
+          // تجاهل تحديثات الموقع التي تحتوي على قيم غير صالحة (NaN أو Infinity أو خارج نطاق الأرض)
+          final lat = position.latitude;
+          final lng = position.longitude;
+          if (lat.isNaN ||
+              lat.isInfinite ||
+              lng.isNaN ||
+              lng.isInfinite ||
+              lat.abs() > 90 ||
+              lng.abs() > 180) {
+            debugPrint('⚠️ [LiveTripScreen] تجاهل إحداثي غير صالح: lat=$lat, lng=$lng');
+            return;
+          }
+          final isMoving = _busMotion.moveTo(LatLng(lat, lng));
           setState(() => _driverPosition = position);
           _followDriver(position, isMoving: isMoving);
         },
@@ -163,8 +205,19 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
   /// حتى تقعد الحافلة في نص الشاشة بدل ما تسبقها الكاميرا
   void _followDriver(Position position, {bool isMoving = false}) {
     if (!_mapReady) return;
+    final lat = position.latitude;
+    final lng = position.longitude;
+    // لا نحرّك الكاميرا إلى إحداثيات غير صالحة
+    if (lat.isNaN ||
+        lat.isInfinite ||
+        lng.isNaN ||
+        lng.isInfinite ||
+        lat.abs() > 90 ||
+        lng.abs() > 180) {
+      return;
+    }
     _animatedMapController.animateTo(
-      dest: LatLng(position.latitude, position.longitude),
+      dest: LatLng(lat, lng),
       zoom: _animatedMapController.mapController.camera.zoom,
       duration: isMoving ? _busMotion.currentDuration : null,
       curve: isMoving ? Curves.linear : null,
@@ -803,10 +856,12 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
   List<Widget> _buildTripItems(LiveTripLoaded loaded) {
     final widgets = <Widget>[];
 
-    // مجموعة معرّفات أطفال الإنقاذ لتفادي عرض كروت صعود فردية لهم قبل إتمام النقل الجماعي
+    // مجموعة معرّفات أطفال الإنقاذ لتفادي عرض كروت صعود/نزول فردية لهم قبل إتمام النقل الجماعي
     final transferredChildIds = <int>{};
+    bool hasUnresolvedBreakdown = false;
     for (final stop in loaded.stops) {
       if (stop.isBreakdownTransfer) {
+        if (!stop.isResolved) hasUnresolvedBreakdown = true;
         for (final tc in stop.transferredChildren) {
           transferredChildIds.add(tc.childId);
           if (tc.id != 0) transferredChildIds.add(tc.id);
@@ -816,8 +871,9 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
     }
 
     for (final item in loaded.childItems) {
-      // الأطفال المنقولون من الحافلة المعطلة يتم استلامهم أولاً عبر بطاقة الإنقاذ الجماعية
-      if (transferredChildIds.contains(item.childId) && item.isPickupPhase) {
+      // الأطفال المنقولون من الحافلة المعطلة يتم استلامهم أولاً عبر بطاقة الإنقاذ الجماعية،
+      // ولا تظهر كروت فردية لهم إلا بعد إتمام النقل الجماعي وتأكيد استلامهم
+      if (transferredChildIds.contains(item.childId) && hasUnresolvedBreakdown) {
         continue;
       }
       final isCurrent = loaded.currentChild?.tripChildId == item.tripChildId;
@@ -1157,6 +1213,74 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
   /// جديد)، لا نفترض مباشرة انتهاء الرحلة — نتحقق من trip_status وprogress
   /// أولاً، تماشياً مع الـ Backend Contract الفعلي.
   Widget _buildNextStationSection(LiveTripLoaded loaded) {
+    // 1. أولوية قصوى: لو فيه محطة حافلة متعطلة لم تؤكَّد بعد، هي المحطة التالية إجبارياً
+    DriverTripStopModel? activeBreakdownStop;
+    for (final s in loaded.stops) {
+      if (s.isBreakdownTransfer && !s.isResolved) {
+        activeBreakdownStop = s;
+        break;
+      }
+    }
+
+    if (activeBreakdownStop != null) {
+      final title = activeBreakdownStop.label.isNotEmpty
+          ? activeBreakdownStop.label
+          : 'محطة استلام الطلاب من الحافلة المتعطلة';
+      final subtitleParts = <String>[
+        'نقل واستلام الطلاب العالقين أولاً',
+        if (activeBreakdownStop.eta != null && activeBreakdownStop.eta!.isNotEmpty)
+          'الوصول التقديري: ${activeBreakdownStop.eta}',
+      ];
+
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.all(12),
+        decoration: AppTheme.boxDecoration(
+          color: AppColors.warning.withValues(alpha: 0.12),
+          borderRadius: AppTheme.radius(12),
+          border: AppTheme.border(color: AppColors.warning.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: AppColors.warning,
+              size: 22,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'المحطة التالية (حالة طوارئ)',
+                    style: AppTextStyles.style(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.warning,
+                    ),
+                  ),
+                  Text(
+                    title,
+                    style: AppTextStyles.style(fontSize: 13, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    subtitleParts.join(' • '),
+                    style: AppTextStyles.style(fontSize: 11, color: AppColors.textMuted),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final nextStop = loaded.nextStop;
     final nextChild = loaded.nextChild;
 
@@ -1276,7 +1400,20 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
       loadedState = currentState;
     }
 
-    final routeTargets = stops
+    // ترتيب نقاط المسار: محطة الحافلة المتعطلة (إن وُجدت وغير مكتملة) تأتي أولاً حتماً
+    final activeBreakdown = stops.where((s) => s.isBreakdownTransfer && !s.isResolved).firstOrNull;
+    final otherStops = stops
+        .where((s) => !s.isBreakdownTransfer && !s.isResolved && s.latitude != 0.0 && s.longitude != 0.0)
+        .toList();
+    otherStops.sort((a, b) => a.sequenceOrder.compareTo(b.sequenceOrder));
+
+    final orderedStops = <DriverTripStopModel>[
+      if (activeBreakdown != null && activeBreakdown.latitude != 0.0 && activeBreakdown.longitude != 0.0)
+        activeBreakdown,
+      ...otherStops,
+    ];
+
+    final routeTargets = (orderedStops.isNotEmpty ? orderedStops : stops)
         .where((s) => s.latitude != 0.0 && s.longitude != 0.0)
         .map((s) => LatLng(s.latitude, s.longitude))
         .toList();
@@ -1288,7 +1425,11 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
     final Widget? busIcon = _driverPosition == null
         ? null
         : Transform.rotate(
-            angle: _driverPosition!.heading * math.pi / 180,
+            angle: (() {
+              final h = _driverPosition!.heading;
+              // بعض أجهزة Android تُعطي heading=NaN — نستعيض عنه بصفر (اتجاه شمالي)
+              return (h.isNaN || h.isInfinite) ? 0.0 : (h * math.pi / 180);
+            })(),
             child: Container(
               decoration: BoxDecoration(
                 color: AppColors.primaryLight,
