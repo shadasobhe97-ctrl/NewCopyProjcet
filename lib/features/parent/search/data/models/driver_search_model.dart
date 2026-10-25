@@ -1,3 +1,5 @@
+import 'package:kids_transport/core/utils/app_image_helper.dart';
+
 class DriverSearchResponseModel {
   final bool status;
   final String? message;
@@ -157,6 +159,7 @@ class DriverSearchModel {
   String? get plateNumber => vehicle.plateNumber;
   int? get vehicleYear => vehicle.year;
   String? get vehicleColor => vehicle.color;
+  String? get vehicleImageUrl => vehicle.imageUrl;
   String? get status => driver.status;
 
   double get subtotalPrice =>
@@ -191,10 +194,19 @@ class DriverSearchModel {
     final rawScore = json['ai_score'];
     final double? parsedScore = rawScore != null ? _readDouble(rawScore) : null;
 
+    Map<String, dynamic> vehicleData = {};
+    if (json['vehicle'] is Map) {
+      vehicleData = Map<String, dynamic>.from(json['vehicle'] as Map);
+    } else if (json['vehicles'] is List && (json['vehicles'] as List).isNotEmpty) {
+      final firstVehicle = (json['vehicles'] as List).first;
+      if (firstVehicle is Map) {
+        vehicleData = Map<String, dynamic>.from(firstVehicle);
+      }
+    }
+
     return DriverSearchModel(
       driver: DriverModelInfo.fromJson(json),
-      vehicle: VehicleModelInfo.fromJson(
-          json['vehicle'] is Map ? Map<String, dynamic>.from(json['vehicle'] as Map) : {}),
+      vehicle: VehicleModelInfo.fromJson(vehicleData, json),
       workingZones: (json['working_zones'] as List<dynamic>?)
               ?.map((e) =>
                   WorkingZoneModelInfo.fromJson(e as Map<String, dynamic>))
@@ -242,23 +254,58 @@ class DriverModelInfo {
   });
 
   factory DriverModelInfo.fromJson(Map<String, dynamic> json) {
-    final rawShift = json['shift'];
+    final driverMap = json['driver'] is Map ? Map<String, dynamic>.from(json['driver'] as Map) : null;
+    final userMap = json['user'] is Map ? Map<String, dynamic>.from(json['user'] as Map) : null;
+
+    final rawShift = json['shift'] ?? driverMap?['shift'];
     final shiftStr = rawShift is int
         ? rawShift.toString()
         : rawShift?.toString() ?? '0';
 
+    final rawAvatar = json['avatar_url'] ??
+        json['photo_url'] ??
+        json['avatar'] ??
+        json['photo'] ??
+        json['profile_picture'] ??
+        json['profile_image'] ??
+        json['image_url'] ??
+        json['image'] ??
+        driverMap?['avatar_url'] ??
+        driverMap?['photo_url'] ??
+        driverMap?['avatar'] ??
+        driverMap?['photo'] ??
+        driverMap?['profile_picture'] ??
+        driverMap?['image_url'] ??
+        driverMap?['image'] ??
+        userMap?['avatar_url'] ??
+        userMap?['photo_url'] ??
+        userMap?['avatar'] ??
+        userMap?['photo'] ??
+        userMap?['profile_picture'] ??
+        userMap?['image_url'] ??
+        userMap?['image'];
+
     return DriverModelInfo(
-      id: _readInt(json['id']),
-      fullName: json['full_name']?.toString() ?? '',
-      phoneNumber: json['phone_number']?.toString(),
-      alternativePhone: json['alternative_phone']?.toString(),
-      avatarUrl: json['avatar_url']?.toString(),
-      gender: json['gender']?.toString() ?? 'MALE',
-      acceptedGender: json['accepted_gender']?.toString(),
+      id: _readInt(json['id'] ?? json['driver_id'] ?? driverMap?['id']),
+      fullName: json['full_name']?.toString() ??
+          json['name']?.toString() ??
+          driverMap?['full_name']?.toString() ??
+          driverMap?['name']?.toString() ??
+          userMap?['name']?.toString() ??
+          '',
+      phoneNumber: json['phone_number']?.toString() ??
+          json['phone']?.toString() ??
+          driverMap?['phone_number']?.toString() ??
+          userMap?['phone']?.toString(),
+      alternativePhone: json['alternative_phone']?.toString() ??
+          driverMap?['alternative_phone']?.toString(),
+      avatarUrl: AppImageHelper.resolveUrl(rawAvatar),
+      gender: json['gender']?.toString() ?? driverMap?['gender']?.toString() ?? 'MALE',
+      acceptedGender: json['accepted_gender']?.toString() ?? driverMap?['accepted_gender']?.toString(),
       shift: shiftStr,
-      rating: _readDouble(json['rating']),
-      completedTrips: _readInt(json['completed_trips']),
-      status: json['status']?.toString() ?? 'inactive',
+      rating: _readDouble(json['rating'] ?? driverMap?['rating']),
+      completedTrips: _readInt(json['completed_trips'] ?? driverMap?['completed_trips']),
+      status: json['status']?.toString() ?? driverMap?['status']?.toString() ?? 'inactive',
     );
   }
 }
@@ -272,6 +319,7 @@ class VehicleModelInfo {
   final bool hasAc;
   final int capacityManual;
   final String plateNumber;
+  final String? imageUrl;
 
   VehicleModelInfo({
     required this.brand,
@@ -282,21 +330,41 @@ class VehicleModelInfo {
     required this.hasAc,
     required this.capacityManual,
     required this.plateNumber,
+    this.imageUrl,
   });
 
   int get capacity => capacityManual;
 
-  factory VehicleModelInfo.fromJson(Map<String, dynamic> json) {
+  factory VehicleModelInfo.fromJson(Map<String, dynamic> json, [Map<String, dynamic>? parentJson]) {
     final rawCapacity = json['capacity'] ?? json['capacity_manual'];
+
+    final rawImage = json['vehicle_image_url'] ??
+        json['vehicle_image_path'] ??
+        json['vehicle_image'] ??
+        json['vehicle_photo_url'] ??
+        json['vehicle_photo'] ??
+        json['image_url'] ??
+        json['image_path'] ??
+        json['image'] ??
+        json['photo_url'] ??
+        json['photo_path'] ??
+        json['photo'] ??
+        parentJson?['vehicle_image_url'] ??
+        parentJson?['vehicle_image_path'] ??
+        parentJson?['vehicle_image'] ??
+        parentJson?['vehicle_photo_url'] ??
+        parentJson?['vehicle_photo'];
+
     return VehicleModelInfo(
-      brand: json['brand']?.toString() ?? '',
+      brand: json['brand']?.toString() ?? json['make']?.toString() ?? '',
       model: json['model']?.toString() ?? '',
       year: _readInt(json['year']),
       color: json['color']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
       hasAc: _readBool(json['has_ac']),
       capacityManual: _readInt(rawCapacity),
-      plateNumber: json['plate_number']?.toString() ?? '',
+      plateNumber: json['plate_number']?.toString() ?? json['plate']?.toString() ?? '',
+      imageUrl: AppImageHelper.resolveUrl(rawImage),
     );
   }
 }

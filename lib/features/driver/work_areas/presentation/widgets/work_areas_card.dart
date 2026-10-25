@@ -39,9 +39,10 @@ class _WorkAreasCardContent extends StatelessWidget {
           }
         }
       } else {
-        final name = cov.subMunicipalityName.trim().isNotEmpty
+        final rawName = cov.subMunicipalityName.trim().isNotEmpty
             ? cov.subMunicipalityName.trim()
             : cov.municipalityName.trim();
+        final name = rawName.replaceAll('محلة', 'فرع بلدي').trim();
         if (name.isNotEmpty && !areaNames.contains(name)) {
           areaNames.add(name);
         }

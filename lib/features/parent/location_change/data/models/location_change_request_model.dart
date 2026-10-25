@@ -17,7 +17,9 @@ class LocationChangeRequestModel {
   final bool isSettled;
   final String status;
   final String? rejectionReason;
+  final LocationPointModel? originalLocation;
   final LocationPointModel? newLocation;
+  final double? driverNetFee;
   final List<ChildOptionModel> children;
   final String? driverName;
   final String? parentName;
@@ -40,7 +42,9 @@ class LocationChangeRequestModel {
     required this.isSettled,
     required this.status,
     this.rejectionReason,
+    this.originalLocation,
     this.newLocation,
+    this.driverNetFee,
     required this.children,
     this.driverName,
     this.parentName,
@@ -70,6 +74,19 @@ class LocationChangeRequestModel {
       childrenList.add(ChildOptionModel.fromJson(Map<String, dynamic>.from(json['child'])));
     }
 
+    final feeAmountVal = double.tryParse(json['fee_amount']?.toString() ?? '') ?? 0.0;
+    final parsedNet = breakdownObj != null && breakdownObj['driver_net_fee'] != null
+        ? double.tryParse(breakdownObj['driver_net_fee'].toString())
+        : (double.tryParse(json['driver_net_fee']?.toString() ?? '') ?? (feeAmountVal > 0 ? (feeAmountVal * 0.92) : 0.0));
+
+    final origLocObj = json['original_location'] is Map
+        ? LocationPointModel.fromJson(Map<String, dynamic>.from(json['original_location']))
+        : (json['current_location'] is Map
+            ? LocationPointModel.fromJson(Map<String, dynamic>.from(json['current_location']))
+            : (json['old_location'] is Map
+                ? LocationPointModel.fromJson(Map<String, dynamic>.from(json['old_location']))
+                : null));
+
     return LocationChangeRequestModel(
       id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
       activeSubscriptionId: json['active_subscription_id'] != null
@@ -82,15 +99,17 @@ class LocationChangeRequestModel {
       distanceKm: double.tryParse(json['distance_km']?.toString() ?? json['extra_distance_km']?.toString() ?? '') ?? 0.0,
       feeTier: json['fee_tier']?.toString() ?? '',
       feeTierLabel: json['fee_tier_label']?.toString() ?? '',
-      feeAmount: double.tryParse(json['fee_amount']?.toString() ?? '') ?? 0.0,
+      feeAmount: feeAmountVal,
       currency: json['currency']?.toString() ?? 'د.ل',
       feeBreakdown: breakdownObj != null ? FeeBreakdownModel.fromJson(breakdownObj) : null,
       isSettled: json['is_settled'] == true,
       status: json['status']?.toString() ?? 'pending',
       rejectionReason: json['rejection_reason']?.toString(),
+      originalLocation: origLocObj,
       newLocation: json['new_location'] is Map
           ? LocationPointModel.fromJson(Map<String, dynamic>.from(json['new_location']))
           : null,
+      driverNetFee: parsedNet,
       children: childrenList,
       driverName: driverObj['name']?.toString() ?? json['driver_name']?.toString(),
       parentName: parentObj['name']?.toString(),

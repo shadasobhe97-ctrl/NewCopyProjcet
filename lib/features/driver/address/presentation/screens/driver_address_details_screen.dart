@@ -647,39 +647,6 @@ class _DriverAddressDetailsScreenState
             ),
           ],
         ),
-        const SizedBox(height: 16),
-
-        // إحداثيات الموقع
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.grey900 : AppColors.grey100,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "الإحداثيات الجغرافية:",
-                style: AppTextStyles.style(
-                  fontSize: 12,
-                  color: context.textMuted,
-                ),
-              ),
-              Directionality(
-                textDirection: TextDirection.ltr,
-                child: Text(
-                  "${address.lat.toStringAsFixed(5)}, ${address.lng.toStringAsFixed(5)}",
-                  style: AppTextStyles.style(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: context.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
         const SizedBox(height: 20),
 
         // زر الانتقال لوضع التعديل

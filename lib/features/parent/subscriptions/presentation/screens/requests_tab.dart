@@ -119,26 +119,56 @@ class _RequestsTabState extends State<RequestsTab>
                 color: isDark ? AppColors.grey300 : AppColors.textMuted,
                 height: 1.4),
           ),
+          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                'تراجع',
-                style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.grey400 : AppColors.textMuted),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                context.read<RequestsCubit>().cancelRequest(id);
-              },
-              child: Text(
-                'نعم، إلغاء',
-                style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold, color: AppColors.error),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: isDark ? AppColors.grey700 : AppColors.grey300,
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: Text(
+                      'تراجع',
+                      style: AppTextStyles.style(
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppColors.grey300 : AppColors.textMuted,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      context.read<RequestsCubit>().cancelRequest(id);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: AppColors.white,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: Text(
+                      'نعم، إلغاء',
+                      style: AppTextStyles.style(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

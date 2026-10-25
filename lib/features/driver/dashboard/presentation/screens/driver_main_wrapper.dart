@@ -104,7 +104,7 @@ class _DriverMainWrapperState extends State<DriverMainWrapper> {
               appBar: _buildAppBar(context, state),
 
               // الدروار من جهة اليمين (في RTL يفتح من اليمين باستخدام drawer وليس endDrawer)
-              drawer: driver != null ? DriverDrawer(driver: driver) : null,
+              drawer: DriverDrawer(driver: driver),
 
               body: IndexedStack(
                 index: _selectedIndex,

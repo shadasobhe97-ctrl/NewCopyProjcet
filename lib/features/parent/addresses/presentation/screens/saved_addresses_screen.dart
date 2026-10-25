@@ -306,35 +306,53 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
             height: 1.5,
           ),
         ),
+        actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'إلغاء',
-              style: AppTextStyles.style(
-                color: AppColors.grey600,
-                fontWeight: FontWeight.bold,
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.grey300),
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
+                  child: Text(
+                    'إلغاء',
+                    style: AppTextStyles.style(
+                      color: AppColors.grey600,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20.r),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    setState(() => _isEditMode = true);
+                  },
+                  child: Text(
+                    'نعم، استمرار',
+                    style: AppTextStyles.style(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              setState(() => _isEditMode = true);
-            },
-            child: Text(
-              'نعم، استمرار',
-              style: AppTextStyles.style(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            ],
           ),
         ],
       ),

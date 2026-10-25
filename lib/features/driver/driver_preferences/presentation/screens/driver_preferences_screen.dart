@@ -954,26 +954,28 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
   ) {
     final Map<int, Map<String, dynamic>> zoneMap = {};
     for (var coverage in geographyTree) {
+      final sub = coverage.subMunicipalityName.isNotEmpty
+          ? coverage.subMunicipalityName
+          : coverage.municipalityName;
       for (var zone in coverage.zones) {
         zoneMap[zone.id] = {
           'id': zone.id,
           'name': zone.name,
-          'subMunicipality': coverage.subMunicipalityName.isNotEmpty
-              ? coverage.subMunicipalityName
-              : coverage.municipalityName,
+          'subMunicipality': sub.replaceAll('محلة', 'فرع بلدي').trim(),
         };
       }
     }
     final prefs = context.read<DriverPreferencesCubit>().preferences;
     if (prefs != null) {
       for (var coverage in prefs.coverage) {
+        final sub = coverage.subMunicipalityName.isNotEmpty
+            ? coverage.subMunicipalityName
+            : coverage.municipalityName;
         for (var zone in coverage.zones) {
           zoneMap[zone.id] = {
             'id': zone.id,
             'name': zone.name,
-            'subMunicipality': coverage.subMunicipalityName.isNotEmpty
-                ? coverage.subMunicipalityName
-                : coverage.municipalityName,
+            'subMunicipality': sub.replaceAll('محلة', 'فرع بلدي').trim(),
           };
         }
       }
@@ -1262,17 +1264,20 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
 
             // تصفية المناطق بحسب البحث الفوري
             final query = searchQuery.trim().toLowerCase();
+            final normalizedQuery = query.replaceAll('محلة', 'فرع بلدي');
             final isSearching = query.isNotEmpty;
             final searchResults = <Map<String, dynamic>>[];
 
             if (isSearching) {
               for (final cov in geographyTree) {
-                final subName = cov.subMunicipalityName.isNotEmpty
+                final rawSub = cov.subMunicipalityName.isNotEmpty
                     ? cov.subMunicipalityName
                     : cov.municipalityName;
+                final subName = rawSub.replaceAll('محلة', 'فرع بلدي').trim();
                 for (final z in cov.zones) {
                   if (z.name.toLowerCase().contains(query) ||
                       subName.toLowerCase().contains(query) ||
+                      subName.toLowerCase().contains(normalizedQuery) ||
                       cov.municipalityName.toLowerCase().contains(query)) {
                     searchResults.add({
                       'zone': z,
@@ -1702,7 +1707,9 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
                         ),
                       ),
                       Text(
-                        'الفرع البلدي: $subName',
+                        subName.startsWith('فرع بلدي')
+                            ? subName
+                            : 'الفرع البلدي: $subName',
                         style: AppTextStyles.style(
                           fontSize: 11.sp,
                           color: AppColors.grey500,
@@ -1735,9 +1742,10 @@ class _DriverPreferencesScreenState extends State<DriverPreferencesScreen> {
         final key =
             '${coverage.municipalityName}_${coverage.subMunicipalityName}';
         final isExpanded = expandedKey == key;
-        final subName = coverage.subMunicipalityName.isNotEmpty
+        final rawSub = coverage.subMunicipalityName.isNotEmpty
             ? coverage.subMunicipalityName
             : coverage.municipalityName;
+        final subName = rawSub.replaceAll('محلة', 'فرع بلدي').trim();
         final muniName = coverage.municipalityName;
 
         final selectedInBranch = coverage.zones

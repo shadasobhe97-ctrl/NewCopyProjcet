@@ -97,36 +97,60 @@ class RechargeConfirmationScreen extends StatelessWidget {
               ),
             const SizedBox(height: 20),
             if (data.invoice != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    Navigator.of(context).popUntil(
-                      (route) =>
-                          route.settings.name == AppRoutes.parentWallet ||
-                          route.isFirst,
-                    );
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.parentInvoiceDetails,
-                      arguments: data.invoice!.id,
-                    );
-                  },
-                  child: const Text('عرض الفاتورة'),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        Navigator.of(context).popUntil(
+                          (route) =>
+                              route.settings.name == AppRoutes.parentWallet ||
+                              route.isFirst,
+                        );
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.parentInvoiceDetails,
+                          arguments: data.invoice!.id,
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text('عرض الفاتورة'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: PrimaryButton(
+                      label: 'حسناً',
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        Navigator.of(context).popUntil(
+                          (route) =>
+                              route.settings.name == AppRoutes.parentWallet ||
+                              route.isFirst,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              )
+            else
+              PrimaryButton(
+                label: 'حسناً',
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context).popUntil(
+                    (route) =>
+                        route.settings.name == AppRoutes.parentWallet ||
+                        route.isFirst,
+                  );
+                },
               ),
-            PrimaryButton(
-              label: 'حسناً',
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).popUntil(
-                  (route) =>
-                      route.settings.name == AppRoutes.parentWallet ||
-                      route.isFirst,
-                );
-              },
-            ),
           ],
         ),
       ),

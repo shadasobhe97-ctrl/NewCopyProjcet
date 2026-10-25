@@ -155,8 +155,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       itemBuilder: (context, index) {
                         final item = list[index];
                         final currentUserRole = session.getRoleName() ?? '';
-                        final isSubActive =
-                            item.subscriptionStatus.toLowerCase() == 'active';
 
                         Future<bool?> showDeleteDialog() async {
                           return await showDialog<bool>(
@@ -189,29 +187,55 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                         : AppColors.textDark,
                                   ),
                                 ),
+                                actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
                                 actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx, false),
-                                    child: Text(
-                                      'إلغاء',
-                                      style: AppTextStyles.style(
-                                        fontSize: 13.sp,
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: () => Navigator.pop(ctx, false),
+                                          style: OutlinedButton.styleFrom(
+                                            side: BorderSide(
+                                              color: isDark ? AppColors.grey700 : AppColors.grey300,
+                                            ),
+                                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12.r),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'إلغاء',
+                                            style: AppTextStyles.style(
+                                              fontSize: 13.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: isDark ? AppColors.grey300 : AppColors.textMuted,
+                                            ),
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.error,
-                                    ),
-                                    onPressed: () => Navigator.pop(ctx, true),
-                                    child: Text(
-                                      'حذف',
-                                      style: AppTextStyles.style(
-                                        fontSize: 13.sp,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
+                                      SizedBox(width: 10.w),
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppColors.error,
+                                            foregroundColor: Colors.white,
+                                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12.r),
+                                            ),
+                                          ),
+                                          onPressed: () => Navigator.pop(ctx, true),
+                                          child: Text(
+                                            'حذف',
+                                            style: AppTextStyles.style(
+                                              fontSize: 13.sp,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -392,46 +416,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                       ),
                                     ),
                                     SizedBox(width: 8.w),
-                                    // Subscription Status Badge
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 10.w,
-                                        vertical: 4.h,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isSubActive
-                                            ? AppColors.success.withValues(
-                                                alpha: 0.12,
-                                              )
-                                            : AppColors.error.withValues(
-                                                alpha: 0.12,
-                                              ),
-                                        borderRadius: BorderRadius.circular(
-                                          12.r,
-                                        ),
-                                        border: Border.all(
-                                          color: isSubActive
-                                              ? AppColors.success.withValues(
-                                                  alpha: 0.25,
-                                                )
-                                              : AppColors.error.withValues(
-                                                  alpha: 0.25,
-                                                ),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        isSubActive
-                                            ? 'اشتراك نشط'
-                                            : 'اشتراك منتهي',
-                                        style: AppTextStyles.style(
-                                          fontSize: 10.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: isSubActive
-                                              ? AppColors.success
-                                              : AppColors.error,
-                                        ),
-                                      ),
+                                    Icon(
+                                      Icons.chevron_left_rounded,
+                                      color: isDark
+                                          ? AppColors.grey600
+                                          : AppColors.grey400,
+                                      size: 22.r,
                                     ),
                                   ],
                                 ),

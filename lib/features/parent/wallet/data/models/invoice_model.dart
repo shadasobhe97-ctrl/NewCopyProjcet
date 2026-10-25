@@ -24,11 +24,28 @@ class InvoiceModel {
 
   factory InvoiceModel.fromJson(Map<String, dynamic> json) {
     String? dName;
-    if (json['driver'] != null && json['driver'] is Map) {
-      final user = json['driver']['user'];
+    if (json['driver_name'] != null && json['driver_name'].toString().trim().isNotEmpty) {
+      dName = json['driver_name'].toString().trim();
+    } else if (json['driver'] != null && json['driver'] is Map) {
+      final dMap = json['driver'] as Map;
+      final user = dMap['user'];
       if (user != null && user is Map) {
-        dName = user['full_name']?.toString();
+        dName = user['full_name']?.toString().trim() ?? user['name']?.toString().trim();
       }
+      dName ??= dMap['full_name']?.toString().trim() ?? dMap['name']?.toString().trim();
+    }
+
+    if ((dName == null || dName.isEmpty) && json['contract'] != null && json['contract'] is Map) {
+      final contract = json['contract'] as Map;
+      if (contract['driver'] != null && contract['driver'] is Map) {
+        final cDriver = contract['driver'] as Map;
+        final cUser = cDriver['user'];
+        if (cUser != null && cUser is Map) {
+          dName = cUser['full_name']?.toString().trim() ?? cUser['name']?.toString().trim();
+        }
+        dName ??= cDriver['full_name']?.toString().trim() ?? cDriver['name']?.toString().trim();
+      }
+      dName ??= contract['driver_name']?.toString().trim();
     }
 
     return InvoiceModel(

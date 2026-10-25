@@ -371,55 +371,75 @@ class _DriverRequestDetailsScreenState
               height: 1.4,
             ),
           ),
+          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dCtx).pop(),
-              child: const Text('إلغاء'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final cubit = context.read<DriverRequestsCubit>();
-                final messenger = ScaffoldMessenger.of(context);
-
-                Navigator.of(dCtx).pop();
-                final result = await cubit.acceptRequest(request.id);
-
-                if (!mounted) return;
-
-                if (result != null && result.success) {
-                  messenger.showSnackBar(
-                    SnackBar(
-                      content: Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: Text(
-                          result.message.isNotEmpty
-                              ? result.message
-                              : 'تم قبول الطلب وتفعيل الاشتراك بنجاح.',
-                        ),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(dCtx).pop(),
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
+                    ),
+                    child: const Text('إلغاء'),
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final cubit = context.read<DriverRequestsCubit>();
+                      final messenger = ScaffoldMessenger.of(context);
+
+                      Navigator.of(dCtx).pop();
+                      final result = await cubit.acceptRequest(request.id);
+
+                      if (!mounted) return;
+
+                      if (result != null && result.success) {
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Directionality(
+                              textDirection: TextDirection.rtl,
+                              child: Text(
+                                result.message.isNotEmpty
+                                    ? result.message
+                                    : 'تم قبول الطلب وتفعيل الاشتراك بنجاح.',
+                              ),
+                            ),
+                            backgroundColor: AppColors.success,
+                          ),
+                        );
+
+                        cubit.loadRequestDetails(request.id);
+                      } else {
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Directionality(
+                              textDirection: TextDirection.rtl,
+                              child: Text(
+                                'تعذر قبول الطلب. الرجاء المحاولة مرة أخرى.',
+                              ),
+                            ),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.success,
-                    ),
-                  );
-
-                  cubit.loadRequestDetails(request.id);
-                } else {
-                  messenger.showSnackBar(
-                    const SnackBar(
-                      content: Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: Text(
-                          'تعذر قبول الطلب. الرجاء المحاولة مرة أخرى.',
-                        ),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
-                      backgroundColor: AppColors.error,
                     ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
-              ),
-              child: const Text('قبول وتفعيل'),
+                    child: const Text('قبول وتفعيل'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -462,31 +482,53 @@ class _DriverRequestDetailsScreenState
               ),
             ],
           ),
+          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dCtx).pop(),
-              child: const Text('إلغاء'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (controller.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(dCtx).showSnackBar(
-                    const SnackBar(content: Text('الرجاء إدخال سبب الرفض')),
-                  );
-                  return;
-                }
-                final cubit = context.read<DriverRequestsCubit>();
-                Navigator.of(dCtx).pop();
-                await cubit.rejectRequest(
-                  request.id,
-                  reason: controller.text.trim(),
-                );
-                if (mounted) {
-                  cubit.loadRequestDetails(request.id);
-                }
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-              child: const Text('تأكيد الرفض'),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(dCtx).pop(),
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: const Text('إلغاء'),
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (controller.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(dCtx).showSnackBar(
+                          const SnackBar(content: Text('الرجاء إدخال سبب الرفض')),
+                        );
+                        return;
+                      }
+                      final cubit = context.read<DriverRequestsCubit>();
+                      Navigator.of(dCtx).pop();
+                      await cubit.rejectRequest(
+                        request.id,
+                        reason: controller.text.trim(),
+                      );
+                      if (mounted) {
+                        cubit.loadRequestDetails(request.id);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: const Text('تأكيد الرفض'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

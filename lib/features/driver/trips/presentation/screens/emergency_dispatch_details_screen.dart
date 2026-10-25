@@ -213,94 +213,149 @@ class _EmergencyDispatchDetailsScreenState
                     ),
                     SizedBox(height: 16.h),
 
-                    // Card 2: Remaining Stops & Stranded Children
-                    Text(
-                      'المحطات المتبقية والطلاب (${dispatch.strandedChildrenCount} طالب):',
-                      style: AppTextStyles.style(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: context.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 10.h),
-                    if (stops.isEmpty)
-                      Container(
-                        padding: EdgeInsets.all(16.r),
-                        decoration: BoxDecoration(
-                          color: context.cardSurface,
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        child: const Text('لا توجد تفاصيل محطات متبقية متاحة.'),
-                      )
-                    else
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: stops.length,
-                        separatorBuilder: (context, index) =>
-                            SizedBox(height: 8.h),
-                        itemBuilder: (context, index) {
-                          final stop = stops[index];
-                          final child = stop.child;
-                          final stopName = (child?.fullName.isNotEmpty == true)
-                              ? child!.fullName
-                              : (stop.label.isNotEmpty ? stop.label : 'محطة توقف');
+                    // Card 2: Stranded Children & School Info
+                    Builder(
+                      builder: (context) {
+                        // Extract fallback school name from any school stop if present
+                        final schoolStops = stops.where((s) =>
+                            s.stopType.toLowerCase() == 'school' || s.child == null).toList();
+                        final fallbackSchool = schoolStops.isNotEmpty && schoolStops.first.label.trim().isNotEmpty
+                            ? schoolStops.first.label.trim()
+                            : null;
 
-                          return Container(
-                            padding: EdgeInsets.all(12.r),
-                            decoration: BoxDecoration(
-                              color: context.cardSurface,
-                              borderRadius: BorderRadius.circular(12.r),
-                              border: Border.all(
-                                color: AppColors.grey200,
+                        // Filter only child/student stops (excluding separate school card)
+                        final childStops = stops.where((s) {
+                          if (s.stopType.toLowerCase() == 'school') return false;
+                          if (s.child == null) return false;
+                          return true;
+                        }).toList();
+
+                        final displayStops = childStops.isNotEmpty
+                            ? childStops
+                            : stops.where((s) => s.stopType.toLowerCase() != 'school').toList();
+
+                        final count = dispatch.strandedChildrenCount > 0
+                            ? dispatch.strandedChildrenCount
+                            : displayStops.length;
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'الطلاب العالقون ($count طالب):',
+                              style: AppTextStyles.style(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                                color: context.textPrimary,
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 16.r,
-                                  backgroundColor: context.primaryColor
-                                      .withValues(alpha: 0.1),
-                                  child: Text(
-                                    '${stop.sequenceOrder}',
-                                    style: AppTextStyles.style(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: context.primaryColor,
-                                    ),
-                                  ),
+                            SizedBox(height: 10.h),
+                            if (displayStops.isEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.all(16.r),
+                                decoration: BoxDecoration(
+                                  color: context.cardSurface,
+                                  borderRadius: BorderRadius.circular(12.r),
                                 ),
-                                SizedBox(width: 10.w),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        stopName,
-                                        style: AppTextStyles.style(
-                                          fontSize: 13.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: context.textPrimary,
-                                        ),
+                                child: const Text('لا توجد تفاصيل طلاب متبقية متاحة.'),
+                              )
+                            else
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: displayStops.length,
+                                separatorBuilder: (context, index) =>
+                                    SizedBox(height: 8.h),
+                                itemBuilder: (context, index) {
+                                  final stop = displayStops[index];
+                                  final child = stop.child;
+                                  final childName = (child?.fullName.isNotEmpty == true)
+                                      ? child!.fullName
+                                      : (stop.label.isNotEmpty ? stop.label : 'طالب');
+
+                                  final schoolName = (child?.schoolName != null &&
+                                          child!.schoolName!.trim().isNotEmpty)
+                                      ? child.schoolName!.trim()
+                                      : (fallbackSchool ?? '');
+
+                                  return Container(
+                                    padding: EdgeInsets.all(12.r),
+                                    decoration: BoxDecoration(
+                                      color: context.cardSurface,
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      border: Border.all(
+                                        color: AppColors.grey200,
                                       ),
-                                      if (child?.schoolName != null &&
-                                          child!.schoolName!.isNotEmpty)
-                                        Text(
-                                          'المدرسة: ${child.schoolName}',
-                                          style: AppTextStyles.style(
-                                            fontSize: 11.sp,
-                                            color: AppColors.textMuted,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 16.r,
+                                          backgroundColor: context.primaryColor
+                                              .withValues(alpha: 0.1),
+                                          child: Text(
+                                            '${index + 1}',
+                                            style: AppTextStyles.style(
+                                              fontSize: 12.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: context.primaryColor,
+                                            ),
                                           ),
                                         ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                                        SizedBox(width: 10.w),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                childName,
+                                                style: AppTextStyles.style(
+                                                  fontSize: 13.5.sp,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: context.textPrimary,
+                                                ),
+                                              ),
+                                              if (schoolName.isNotEmpty) ...[
+                                                SizedBox(height: 4.h),
+                                                Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.school_rounded,
+                                                      size: 14.r,
+                                                      color: context.primaryColor,
+                                                    ),
+                                                    SizedBox(width: 4.w),
+                                                    Expanded(
+                                                      child: Text(
+                                                        schoolName.startsWith('مدرسة')
+                                                            ? schoolName
+                                                            : 'المدرسة: $schoolName',
+                                                        style: AppTextStyles.style(
+                                                          fontSize: 11.5.sp,
+                                                          color: AppColors.textMuted,
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                          ],
+                        );
+                      },
+                    ),
                     SizedBox(height: 24.h),
 
                     // Action Buttons / Status Views

@@ -6,6 +6,7 @@ import 'package:kids_transport/features/parent/search/data/models/driver_search_
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import 'package:kids_transport/features/parent/search/logic/search_cubit.dart';
 import 'package:kids_transport/features/parent/search/logic/search_state.dart';
 import 'package:kids_transport/features/parent/search/data/models/subscription_request.dart';
@@ -197,45 +198,49 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
           ),
           actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
           actions: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: isDark ? AppColors.grey700 : AppColors.grey300),
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                ),
-                child: Text(
-                  'إلغاء',
-                  style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.grey300 : AppColors.textMuted,
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: isDark ? AppColors.grey700 : AppColors.grey300),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                    ),
+                    child: Text(
+                      'إلغاء',
+                      style: AppTextStyles.style(
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppColors.grey300 : AppColors.textMuted,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.parentRecharge,
-                    arguments: getIt<WalletCubit>(),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.parentRecharge,
+                        arguments: getIt<WalletCubit>(),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                    ),
+                    child: Text(
+                      'اشحن محفظتك',
+                      style: AppTextStyles.style(fontWeight: FontWeight.bold, color: AppColors.white),
+                    ),
+                  ),
                 ),
-                child: Text(
-                  'اشحن محفظتك',
-                  style: AppTextStyles.style(fontWeight: FontWeight.bold, color: AppColors.white),
-                ),
-              ),
+              ],
             ),
           ],
         ),
@@ -379,19 +384,13 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
       ),
       child: Row(
         children: [
-          Container(
-            width: 56.w,
-            height: 56.h,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: avatarColor.withValues(alpha: 0.12),
-              border: Border.all(color: avatarColor.withValues(alpha: 0.3), width: 1.5.w),
-            ),
-            child: Icon(
-              isFemale ? Icons.face_4_rounded : Icons.person_rounded,
-              size: 32.r,
-              color: avatarColor,
-            ),
+          AppUserAvatar(
+            imageUrl: widget.driver.photoUrl,
+            radius: 28.r,
+            defaultIcon: isFemale ? Icons.face_4_rounded : Icons.person_rounded,
+            iconColor: avatarColor,
+            iconSize: 32.r,
+            backgroundColor: avatarColor.withValues(alpha: 0.12),
           ),
           SizedBox(width: 14.w),
           Expanded(
@@ -834,20 +833,26 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
       child: Row(
         children: [
           Expanded(
+            flex: 1,
             child: SizedBox(
-              height: 48.h,
+              height: 50.h,
               child: OutlinedButton(
                 onPressed: isSubmitting ? null : () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: isDark ? AppColors.grey700 : AppColors.grey300),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                 ),
-                child: Text(
-                  'إلغاء',
-                  style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14.sp,
-                    color: isDark ? AppColors.grey300 : AppColors.textMuted,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'إلغاء',
+                    maxLines: 1,
+                    style: AppTextStyles.style(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.sp,
+                      color: isDark ? AppColors.grey300 : AppColors.textMuted,
+                    ),
                   ),
                 ),
               ),
@@ -855,8 +860,9 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
           ),
           SizedBox(width: 12.w),
           Expanded(
+            flex: 2,
             child: SizedBox(
-              height: 48.h,
+              height: 50.h,
               child: ElevatedButton(
                 onPressed: (isSubmitting || _isLoading || _hasError) ? null : _confirmAndSend,
                 style: ElevatedButton.styleFrom(
@@ -864,6 +870,7 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                   foregroundColor: theme.colorScheme.onPrimary,
                   disabledBackgroundColor: isDark ? AppColors.grey800 : AppColors.grey200,
                   elevation: 0,
+                  padding: EdgeInsets.symmetric(horizontal: 10.w),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                 ),
                 child: isSubmitting
@@ -875,12 +882,16 @@ class _SubscriptionConfirmationScreenState extends State<SubscriptionConfirmatio
                           color: AppColors.white,
                         ),
                       )
-                    : Text(
-                        'تأكيد وإرسال الطلب',
-                        style: AppTextStyles.style(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14.sp,
-                          color: theme.colorScheme.onPrimary,
+                    : FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'تأكيد وإرسال الطلب',
+                          maxLines: 1,
+                          style: AppTextStyles.style(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.sp,
+                            color: theme.colorScheme.onPrimary,
+                          ),
                         ),
                       ),
               ),

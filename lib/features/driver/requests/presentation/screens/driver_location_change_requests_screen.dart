@@ -223,7 +223,7 @@ class _DriverLocationChangeRequestsScreenState
       statusText = 'قيد الانتظار';
     }
 
-    final netFee = req.feeBreakdown?.driverNetFee ?? req.feeAmount;
+    final netFee = req.driverNetFee ?? req.feeBreakdown?.driverNetFee ?? (req.feeAmount > 0 ? req.feeAmount * 0.92 : 0.0);
 
     return Container(
       decoration: BoxDecoration(
@@ -231,7 +231,7 @@ class _DriverLocationChangeRequestsScreenState
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
           color: req.isPending
-              ? AppColors.error.withValues(alpha: 0.4)
+              ? Theme.of(context).primaryColor.withValues(alpha: 0.5)
               : (isDark ? AppColors.grey800 : AppColors.grey200),
           width: req.isPending ? 1.5 : 1.0,
         ),
@@ -305,6 +305,64 @@ class _DriverLocationChangeRequestsScreenState
           ),
           SizedBox(height: 12.h),
 
+          // ── Prominent Driver Net Fee Highlight ──
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.green.shade50.withValues(alpha: isDark ? 0.15 : 1.0),
+                  Colors.teal.shade50.withValues(alpha: isDark ? 0.08 : 0.7),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(
+                color: Colors.green.shade400.withValues(alpha: 0.5),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8.r),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade600,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.account_balance_wallet_rounded,
+                    color: Colors.white,
+                    size: 18.r,
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'صافي أرباحك عند الموافقة (بعد العمولة):',
+                        style: AppTextStyles.style(
+                          fontSize: 10.5.sp,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.green.shade200 : Colors.green.shade900,
+                        ),
+                      ),
+                      Text(
+                        '+${netFee.toStringAsFixed(2)} ${req.currency} صافي لمحفظتك 💰',
+                        style: AppTextStyles.style(
+                          fontSize: 14.5.sp,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.green.shade300 : Colors.green.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 12.h),
+
           const Divider(height: 1),
           SizedBox(height: 12.h),
 
@@ -320,7 +378,7 @@ class _DriverLocationChangeRequestsScreenState
             ),
             SizedBox(height: 8.h),
             SizedBox(
-              height: 48.h,
+              height: 44.h,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: req.children.length,
@@ -350,7 +408,7 @@ class _DriverLocationChangeRequestsScreenState
                         Text(
                           child.name,
                           style: AppTextStyles.style(
-                            fontSize: 11.sp,
+                            fontSize: 11.5.sp,
                             fontWeight: FontWeight.bold,
                             color: context.textPrimary,
                           ),
@@ -364,7 +422,109 @@ class _DriverLocationChangeRequestsScreenState
             SizedBox(height: 12.h),
           ],
 
-          // Details Grid (Date, Direction, New Location, Distance, Net Fee)
+          // ── Visual Route Comparison Card (Old Pin vs New Pin) ──
+          Container(
+            padding: EdgeInsets.all(12.r),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.grey900 : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(
+                color: isDark ? AppColors.grey800 : AppColors.grey200,
+              ),
+            ),
+            child: Column(
+              children: [
+                // Old Location Row (Grey Pin)
+                Row(
+                  children: [
+                    Icon(Icons.location_on_rounded, size: 18.r, color: Colors.grey.shade500),
+                    SizedBox(width: 8.w),
+                    Text(
+                      'الموقع الأصلي:',
+                      style: AppTextStyles.style(
+                        fontSize: 11.sp,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    SizedBox(width: 6.w),
+                    Expanded(
+                      child: Text(
+                        req.originalLocation?.label ?? 'نقطة الانطلاق الأصلية للاشتراك',
+                        style: AppTextStyles.style(
+                          fontSize: 11.5.sp,
+                          color: context.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Distance Offset Indicator
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 2.w,
+                        height: 18.h,
+                        color: Theme.of(context).primaryColor.withValues(alpha: 0.4),
+                      ),
+                      SizedBox(width: 12.w),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Text(
+                          'فرق المسافة: +${req.distanceKm.toStringAsFixed(1)} كم (${req.feeTierLabel.isNotEmpty ? req.feeTierLabel : "${req.feeAmount} د.ل"})',
+                          style: AppTextStyles.style(
+                            fontSize: 10.5.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // New Location Row (Colored/Red Pin)
+                Row(
+                  children: [
+                    Icon(Icons.pin_drop_rounded, size: 18.r, color: Colors.red.shade600),
+                    SizedBox(width: 8.w),
+                    Text(
+                      'الموقع الجديد المطلوب:',
+                      style: AppTextStyles.style(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red.shade700,
+                      ),
+                    ),
+                    SizedBox(width: 6.w),
+                    Expanded(
+                      child: Text(
+                        req.newLocation?.label ?? 'موقع مخصص على الخريطة',
+                        style: AppTextStyles.style(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 10.h),
+
+          // Details Grid (Date, Direction)
           Container(
             padding: EdgeInsets.all(12.r),
             decoration: BoxDecoration(
@@ -383,34 +543,8 @@ class _DriverLocationChangeRequestsScreenState
                 _buildInfoRow(
                   context,
                   icon: Icons.directions_bus_rounded,
-                  label: 'اتجاه الرحلة ونوع النقطة:',
-                  value: '${req.pointType == "dropoff" ? "توصيل للمنزل (نزول)" : "إحضار للمدرسة (ركوب)"} ${req.isSingleDay ? "(يوم واحد)" : ""}',
-                ),
-                if (req.newLocation?.label != null) ...[
-                  SizedBox(height: 6.h),
-                  _buildInfoRow(
-                    context,
-                    icon: Icons.pin_drop_rounded,
-                    label: 'الموقع الجديد:',
-                    value: req.newLocation!.label,
-                    valueColor: AppColors.error,
-                  ),
-                ],
-                SizedBox(height: 6.h),
-                _buildInfoRow(
-                  context,
-                  icon: Icons.straighten_rounded,
-                  label: 'المسافة الإضافية:',
-                  value: '${req.distanceKm.toStringAsFixed(1)} كم (${req.feeTierLabel})',
-                ),
-                SizedBox(height: 6.h),
-                _buildInfoRow(
-                  context,
-                  icon: Icons.account_balance_wallet_rounded,
-                  label: 'صافي مستحقات السائق:',
-                  value: '${netFee.toStringAsFixed(2)} ${req.currency}',
-                  valueColor: AppColors.success,
-                  isBold: true,
+                  label: 'نوع الرحلة:',
+                  value: '${req.pointType == "dropoff" ? "توصيل للمنزل (نزول)" : "إحضار للمدرسة (ركوب)"} ${req.isSingleDay ? "(ليوم واحد)" : ""}',
                 ),
               ],
             ),
@@ -455,16 +589,16 @@ class _DriverLocationChangeRequestsScreenState
                     icon: Icon(Icons.check_circle_outline_rounded,
                         size: 18.r, color: AppColors.white),
                     label: Text(
-                      'موافقة',
+                      'قبول (+${netFee.toStringAsFixed(2)} د.ل)',
                       style: AppTextStyles.style(
-                        fontSize: 13.sp,
+                        fontSize: 12.5.sp,
                         fontWeight: FontWeight.bold,
                         color: AppColors.white,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.success,
-                      padding: EdgeInsets.symmetric(vertical: 10.h),
+                      padding: EdgeInsets.symmetric(vertical: 11.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.r),
                       ),
@@ -478,9 +612,9 @@ class _DriverLocationChangeRequestsScreenState
                     icon: Icon(Icons.cancel_outlined,
                         size: 18.r, color: AppColors.error),
                     label: Text(
-                      'رفض',
+                      'رفض الطلب',
                       style: AppTextStyles.style(
-                        fontSize: 13.sp,
+                        fontSize: 12.5.sp,
                         fontWeight: FontWeight.bold,
                         color: AppColors.error,
                       ),
@@ -488,7 +622,7 @@ class _DriverLocationChangeRequestsScreenState
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.error,
                       side: const BorderSide(color: AppColors.error),
-                      padding: EdgeInsets.symmetric(vertical: 10.h),
+                      padding: EdgeInsets.symmetric(vertical: 11.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.r),
                       ),
@@ -542,28 +676,53 @@ class _DriverLocationChangeRequestsScreenState
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('تأكيد الموافقة'),
-        content: const Text(
-          'هل أنت مقتنع بمسار الموقع الجديد وتود قبول طلب تغيير الموقع؟ سيتم خصم عمولة المنصة إضافة صافي الرسوم لمحفظتك عند التنفيذ.',
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        title: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.green),
+            SizedBox(width: 8.w),
+            const Text('تأكيد قبول الطلب'),
+          ],
         ),
+        content: const Text(
+          'هل تود قبول طلب تعديل الموقع وتحديث محطة التوقف في ذلك التاريخ؟ سيتم تحويل صافي الرسوم لمحفظتك فوراً.',
+        ),
+        actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.read<DriverLocationChangeCubit>().respondToRequest(
-                    requestId,
-                    status: 'approved',
-                    currentFilter: _selectedFilter,
-                  );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
-            ),
-            child: const Text('موافقة وتحديث المسار'),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
+                  child: const Text('إلغاء'),
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    context.read<DriverLocationChangeCubit>().respondToRequest(
+                          requestId,
+                          status: 'approved',
+                          currentFilter: _selectedFilter,
+                        );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                  ),
+                  child: const Text('تأكيد القبول'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -574,59 +733,134 @@ class _DriverLocationChangeRequestsScreenState
     final reasonController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
+    final quickReasons = [
+      'خارج مساري وخط سيري تماماً',
+      'الوقت ضيق لا يسمح بالتأخير',
+      'ازدحام مروري خانق في هذا النطاق',
+      'سعة الحافلة لا تسمح بالانحراف',
+      'سبب آخر...',
+    ];
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('رفض طلب التعديل'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'يرجى كتابة سبب عدم إمكانية تغيير الموقع ليتم إشعار ولي الأمر به:',
-              ),
-              SizedBox(height: 12.h),
-              TextFormField(
-                controller: reasonController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  hintText: 'مثال: الموقع الجديد خارج نطاق خط سيري الصباحي...',
-                  border: OutlineInputBorder(),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+            title: Row(
+              children: [
+                const Icon(Icons.cancel_rounded, color: Colors.red),
+                SizedBox(width: 8.w),
+                const Text('رفض طلب التعديل'),
+              ],
+            ),
+            content: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'اختر سبباً سريعاً أو اكتب توضيحاً لولي الأمر:',
+                      style: AppTextStyles.style(
+                        fontSize: 12.sp,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+
+                    // Quick Chips
+                    Wrap(
+                      spacing: 6.w,
+                      runSpacing: 6.h,
+                      children: quickReasons.map((reason) {
+                        final isSelected = reasonController.text == reason;
+                        return ChoiceChip(
+                          label: Text(
+                            reason,
+                            style: AppTextStyles.style(
+                              fontSize: 11.sp,
+                              color: isSelected ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          selected: isSelected,
+                          selectedColor: AppColors.error,
+                          onSelected: (selected) {
+                            setDialogState(() {
+                              if (reason == 'سبب آخر...') {
+                                reasonController.clear();
+                              } else {
+                                reasonController.text = reason;
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    SizedBox(height: 12.h),
+
+                    TextFormField(
+                      controller: reasonController,
+                      maxLines: 2,
+                      decoration: const InputDecoration(
+                        hintText: 'سبب الرفض...',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return 'سبب الرفض إجباري';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
                 ),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return 'سبب الرفض إجباري';
-                  }
-                  return null;
-                },
+              ),
+            ),
+            actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+            actions: [
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      child: const Text('إلغاء'),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (formKey.currentState!.validate()) {
+                          Navigator.pop(ctx);
+                          context.read<DriverLocationChangeCubit>().respondToRequest(
+                                requestId,
+                                status: 'rejected',
+                                rejectionReason: reasonController.text.trim(),
+                                currentFilter: _selectedFilter,
+                              );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                      ),
+                      child: const Text('إرسال الرفض'),
+                    ),
+                  ),
+                ],
               ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(ctx);
-                context.read<DriverLocationChangeCubit>().respondToRequest(
-                      requestId,
-                      status: 'rejected',
-                      rejectionReason: reasonController.text.trim(),
-                      currentFilter: _selectedFilter,
-                    );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
-            child: const Text('إرسال الرفض'),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

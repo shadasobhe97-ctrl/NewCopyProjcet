@@ -107,6 +107,30 @@ class DriverLegalDataModel {
     );
   }
 
+  String get driverStatusArabicText {
+    final lower = driverStatus.toLowerCase().trim();
+    switch (lower) {
+      case 'active':
+        return 'نشط';
+      case 'verified':
+      case 'approved':
+        return 'تم التحقق';
+      case 'pending':
+      case 'pending_approval':
+      case 'under_review':
+        return 'قيد المراجعة';
+      case 'rejected':
+      case 'declined':
+        return 'مرفوض';
+      case 'suspended':
+        return 'معلق مؤقتاً';
+      case 'inactive':
+        return 'غير نشط';
+      default:
+        return driverStatus;
+    }
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'national_id': nationalId,
@@ -197,38 +221,157 @@ class DriverUploadedFileModel {
   }
 
   String get typeArabicTitle {
-    switch (type.toUpperCase()) {
+    final cleanType = type
+        .trim()
+        .toUpperCase()
+        .replaceAll('DOC_', '')
+        .replaceAll('_DOC', '');
+
+    switch (cleanType) {
       case 'LICENSE':
+      case 'DRIVER_LICENSE':
+      case 'DRIVING_LICENSE':
+      case 'LICENCE':
         return 'رخصة القيادة الشخصية';
+
       case 'INSURANCE':
+      case 'VEHICLE_INSURANCE':
+      case 'CAR_INSURANCE':
+      case 'MANDATORY_INSURANCE':
         return 'وثيقة التأمين الإجباري';
+
       case 'STAMP':
-        return 'الدمغ (ختم التجديد السنوي)';
+      case 'ANNUAL_STAMP':
+      case 'RENEWAL_STAMP':
+        return 'صورة الدمغ (ختم التجديد السنوي)';
+
       case 'TECHNICAL_INSPECTION':
+      case 'INSPECTION':
+      case 'VEHICLE_INSPECTION':
+      case 'PERIODIC_INSPECTION':
         return 'الفحص الفني للمركبة';
+
+      case 'LOGBOOK_OWNER':
+      case 'OWNER_LOGBOOK':
       case 'BOOKLET_PERSONAL_PAGE':
       case 'BOOKLET_PAGE':
-        return 'صفحة البيانات الشخصية في الكتيب';
+      case 'BOOKLET_PERSONAL':
+        return 'كتيب المركبة (صفحة المالك)';
+
+      case 'LOGBOOK_VEHICLE':
       case 'VEHICLE_LOGBOOK':
-        return 'دفتر المركبة (مواصفات الحافلة)';
+      case 'LOGBOOK':
+        return 'كتيب المركبة (صفحة الحافلة)';
+
       case 'CRIMINAL_RECORD':
-        return 'السجل الجنائي';
+      case 'CRIMINAL_STATUS':
+      case 'NON_CONVICTION':
+      case 'SECURITY_CLEARANCE':
+        return 'السجل الجنائي (شهادة الحالة الجنائية)';
+
+      case 'NATIONAL_ID':
+      case 'ID_CARD':
+      case 'NATIONAL_ID_CARD':
+      case 'IDENTITY_CARD':
+        return 'بطاقة الرقم الوطني / الهوية الشخصية';
+
+      case 'PROFILE_IMAGE':
+      case 'PERSONAL_PHOTO':
+      case 'DRIVER_PHOTO':
+      case 'AVATAR':
+      case 'PERSONAL_IMAGE':
+        return 'الصورة الشخصية للسائق';
+
+      case 'PASSPORT':
+        return 'جواز السفر';
+
+      case 'RESIDENCE':
+      case 'RESIDENCY':
+      case 'IQAMA':
+        return 'شهادة الإقامة';
+
+      case 'MEDICAL_CHECK':
+      case 'HEALTH_CERTIFICATE':
+      case 'MEDICAL_CERTIFICATE':
+      case 'DRUG_TEST':
+        return 'الشهادة الصحية / الفحص الطبي';
+
+      case 'CONTRACT':
+      case 'EMPLOYMENT_CONTRACT':
+      case 'WORK_CONTRACT':
+        return 'عقد العمل / اتفاقية السائق';
+
+      case 'VEHICLE_PHOTO':
+      case 'BUS_PHOTO':
+      case 'CAR_PHOTO':
+      case 'VEHICLE_FRONT':
+      case 'VEHICLE_BACK':
+        return 'صورة المركبة';
+
       default:
-        return type.isNotEmpty ? type : 'وثيقة رسمية';
+        // فحص الكلمات الفرعية إن وردت صيغة مختلفة
+        if (cleanType.contains('LICENSE') || cleanType.contains('LICENCE')) {
+          return 'رخصة القيادة الشخصية';
+        }
+        if (cleanType.contains('INSUR')) {
+          return 'وثيقة التأمين الإجباري';
+        }
+        if (cleanType.contains('STAMP')) {
+          return 'صورة الدمغ (ختم التجديد السنوي)';
+        }
+        if (cleanType.contains('INSPECT')) {
+          return 'الفحص الفني للمركبة';
+        }
+        if (cleanType.contains('OWNER')) {
+          return 'كتيب المركبة (صفحة المالك)';
+        }
+        if (cleanType.contains('LOGBOOK') || cleanType.contains('BOOKLET')) {
+          return 'كتيب المركبة الرسمي';
+        }
+        if (cleanType.contains('CRIMIN')) {
+          return 'السجل الجنائي';
+        }
+        if (cleanType.contains('NATIONAL') || cleanType.contains('ID')) {
+          return 'بطاقة الرقم الوطني / الهوية';
+        }
+        if (cleanType.contains('PHOTO') ||
+            cleanType.contains('IMAGE') ||
+            cleanType.contains('AVATAR')) {
+          return 'الصورة الشخصية';
+        }
+        if (cleanType.contains('HEALTH') || cleanType.contains('MEDIC')) {
+          return 'الشهادة الصحية';
+        }
+        return cleanType.isNotEmpty ? 'وثيقة ($cleanType)' : 'وثيقة رسمية';
     }
   }
 
   String get statusArabicText {
     final lower = status.toLowerCase().trim();
-    if (lower == 'verified' || lower == 'approved') {
-      return 'تم التحقق';
-    } else if (lower == 'pending') {
-      return 'قيد المراجعة';
-    } else if (lower == 'rejected') {
-      return 'مرفوض';
-    } else if (lower == 'expired') {
-      return 'منتهي';
+    switch (lower) {
+      case 'verified':
+      case 'approved':
+      case 'active':
+        return 'تم التحقق';
+      case 'pending':
+      case 'under_review':
+      case 'in_review':
+      case 'pending_approval':
+        return 'قيد المراجعة';
+      case 'rejected':
+      case 'declined':
+        return 'مرفوض';
+      case 'expired':
+        return 'منتهي';
+      case 'missing':
+      case 'not_uploaded':
+        return 'غير مرفق';
+      case 'suspended':
+        return 'معلق';
+      case 'inactive':
+        return 'غير نشط';
+      default:
+        return status;
     }
-    return status;
   }
 }

@@ -56,21 +56,42 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
     cubit.fetchLegalData();
   }
 
+  static bool _isLicenseType(String t) {
+    final u = t.toUpperCase().replaceAll('DOC_', '').replaceAll('_DOC', '');
+    return u == 'LICENSE' || u == 'DRIVER_LICENSE' || u == 'DRIVING_LICENSE' || u == 'LICENCE';
+  }
+
+  static bool _isInsuranceType(String t) {
+    final u = t.toUpperCase().replaceAll('DOC_', '').replaceAll('_DOC', '');
+    return u == 'INSURANCE' || u == 'VEHICLE_INSURANCE' || u == 'CAR_INSURANCE';
+  }
+
+  static bool _isStampType(String t) {
+    final u = t.toUpperCase().replaceAll('DOC_', '').replaceAll('_DOC', '');
+    return u == 'STAMP' || u == 'ANNUAL_STAMP' || u == 'RENEWAL_STAMP';
+  }
+
+  static bool _isInspectionType(String t) {
+    final u = t.toUpperCase().replaceAll('DOC_', '').replaceAll('_DOC', '');
+    return u == 'TECHNICAL_INSPECTION' || u == 'INSPECTION' || u == 'VEHICLE_INSPECTION';
+  }
+
   // 🌟 بعض تواريخ الانتهاء (الدمغ، الفحص الفني، التأمين) الباك يرجعها فقط
   // جوا الوثيقة نفسها بـ uploaded_files، ومش دايماً على مستوى الجدول الرئيسي
   // للسائق. فنطابق هذا مع نفس منطق الأولوية المستخدم بكارت الوثيقة.
   String? _findDocExpiry(DriverLegalDataModel model, String type) {
     for (final file in model.uploadedFiles) {
-      if (file.type.toUpperCase() != type) continue;
-      switch (type) {
-        case 'LICENSE':
-          return file.licenseExpiryDate;
-        case 'INSURANCE':
-          return file.insuranceExpiryDate;
-        case 'STAMP':
-          return file.stampExpiryDate;
-        case 'TECHNICAL_INSPECTION':
-          return file.technicalInspectionExpiryDate;
+      if ((type == 'LICENSE' || _isLicenseType(type)) && _isLicenseType(file.type)) {
+        return file.licenseExpiryDate;
+      }
+      if ((type == 'INSURANCE' || _isInsuranceType(type)) && _isInsuranceType(file.type)) {
+        return file.insuranceExpiryDate;
+      }
+      if ((type == 'STAMP' || _isStampType(type)) && _isStampType(file.type)) {
+        return file.stampExpiryDate;
+      }
+      if ((type == 'TECHNICAL_INSPECTION' || _isInspectionType(type)) && _isInspectionType(file.type)) {
+        return file.technicalInspectionExpiryDate;
       }
     }
     return null;
@@ -122,28 +143,18 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
   Future<void> _pickExpiryDateForType(String typeKey) async {
     TextEditingController? targetController;
     String docTitle = '';
-    switch (typeKey.toUpperCase()) {
-      case 'LICENSE':
-      case 'DOC_LICENSE':
-        targetController = _licenseExpiryController;
-        docTitle = 'رخصة القيادة';
-        break;
-      case 'INSURANCE':
-      case 'DOC_INSURANCE':
-        targetController = _insuranceExpiryController;
-        docTitle = 'وثيقة التأمين';
-        break;
-      case 'STAMP':
-      case 'DOC_STAMP':
-        targetController = _stampExpiryController;
-        docTitle = 'صورة الدمغة';
-        break;
-      case 'TECHNICAL_INSPECTION':
-      case 'DOC_TECHNICAL_INSPECTION':
-      case 'INSPECTION':
-        targetController = _inspectionExpiryController;
-        docTitle = 'الفحص الفني';
-        break;
+    if (_isLicenseType(typeKey)) {
+      targetController = _licenseExpiryController;
+      docTitle = 'رخصة القيادة';
+    } else if (_isInsuranceType(typeKey)) {
+      targetController = _insuranceExpiryController;
+      docTitle = 'وثيقة التأمين';
+    } else if (_isStampType(typeKey)) {
+      targetController = _stampExpiryController;
+      docTitle = 'صورة الدمغة';
+    } else if (_isInspectionType(typeKey)) {
+      targetController = _inspectionExpiryController;
+      docTitle = 'الفحص الفني';
     }
     if (targetController == null || !mounted) return;
 
@@ -318,28 +329,14 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
   }
 
   bool _hasNewFileFor(String typeKey) {
-    final target = typeKey.toUpperCase();
     return _newFilesMap.entries.any((entry) {
       if (entry.value == null) return false;
-      final k = entry.key.toUpperCase();
-      if (k == target) {
-        return true;
-      }
-      if (target == 'LICENSE' && (k == 'DOC_LICENSE' || k == 'LICENSE')) {
-        return true;
-      }
-      if (target == 'INSURANCE' && (k == 'DOC_INSURANCE' || k == 'INSURANCE')) {
-        return true;
-      }
-      if (target == 'STAMP' && (k == 'DOC_STAMP' || k == 'STAMP')) {
-        return true;
-      }
-      if (target == 'TECHNICAL_INSPECTION' &&
-          (k == 'DOC_TECHNICAL_INSPECTION' ||
-              k == 'TECHNICAL_INSPECTION' ||
-              k == 'INSPECTION')) {
-        return true;
-      }
+      final k = entry.key;
+      if (k.toUpperCase() == typeKey.toUpperCase()) return true;
+      if (_isLicenseType(typeKey) && _isLicenseType(k)) return true;
+      if (_isInsuranceType(typeKey) && _isInsuranceType(k)) return true;
+      if (_isStampType(typeKey) && _isStampType(k)) return true;
+      if (_isInspectionType(typeKey) && _isInspectionType(k)) return true;
       return false;
     });
   }
@@ -686,7 +683,10 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                                 ),
                               ),
                               const Spacer(),
-                              _buildStatusBadge(legalData.driverStatus),
+                              _buildStatusBadge(
+                                legalData.driverStatus,
+                                arabicText: legalData.driverStatusArabicText,
+                              ),
                             ],
                           ),
                           const Divider(height: 24),

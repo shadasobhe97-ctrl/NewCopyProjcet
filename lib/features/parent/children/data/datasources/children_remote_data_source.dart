@@ -302,6 +302,9 @@ class ChildrenRemoteDataSource {
       'gender': child.gender,
       'birth_date': child.birthDate.toIso8601String().split('T').first,
       'grade': int.tryParse(child.grade) ?? child.gradeLevel,
+      if (child.schoolId > 0) 'school_id': child.schoolId,
+      if (child.addressId.isNotEmpty)
+        'address_id': int.tryParse(child.addressId) ?? child.addressId,
       if (child.medicalNotes != null && child.medicalNotes!.isNotEmpty)
         'medical_notes': child.medicalNotes,
       if (child.photoUrl != null && !_isLocalImagePath(child.photoUrl))

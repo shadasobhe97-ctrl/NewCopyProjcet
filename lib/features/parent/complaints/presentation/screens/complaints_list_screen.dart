@@ -146,17 +146,56 @@ class _ComplaintsTabListState extends State<_ComplaintsTabList> {
               color: isDark ? AppColors.grey300 : AppColors.grey700,
             ),
           ),
+          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dCtx),
-              child: Text('إلغاء', style: AppTextStyles.style(color: AppColors.textMuted)),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(dCtx);
-                await cubit.deleteComplaint(id);
-              },
-              child: Text('نعم، حذف', style: AppTextStyles.style(color: AppColors.error, fontWeight: FontWeight.bold)),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(dCtx),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: isDark ? AppColors.grey700 : AppColors.grey300,
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: Text(
+                      'إلغاء',
+                      style: AppTextStyles.style(
+                        color: isDark ? AppColors.grey300 : AppColors.textMuted,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(dCtx);
+                      await cubit.deleteComplaint(id);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: AppColors.white,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: Text(
+                      'نعم، حذف',
+                      style: AppTextStyles.style(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

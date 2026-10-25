@@ -13,15 +13,16 @@ import 'package:kids_transport/core/widgets/app_drawer_item.dart';
 import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 import 'package:kids_transport/features/driver/home/logic/driver_home_cubit/driver_home_cubit.dart';
 import 'package:kids_transport/features/terms/presentation/screens/terms_and_conditions_screen.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 
 // ==========================================
 // السايد بار (الدروار) الخاص بالسائق
 // ==========================================
 
 class DriverDrawer extends StatelessWidget {
-  final DriverModel driver;
+  final DriverModel? driver;
 
-  const DriverDrawer({super.key, required this.driver});
+  const DriverDrawer({super.key, this.driver});
 
   @override
   Widget build(BuildContext context) {
@@ -89,14 +90,15 @@ class DriverDrawer extends StatelessWidget {
                     iconColor: context.primaryColor,
                     label: 'الملف الشخصي',
                     onTap: () async {
-                      Navigator.pop(context);
-                      await Navigator.pushNamed(
-                        context,
+                      final homeCubit = context.read<DriverHomeCubit>();
+                      final nav = Navigator.of(context);
+                      nav.pop();
+                      await nav.pushNamed(
                         AppRoutes.driverProfile,
                       );
-                      if (context.mounted) {
+                      if (!homeCubit.isClosed) {
                         try {
-                          context.read<DriverHomeCubit>().loadDriverHomeData();
+                          homeCubit.loadDriverHomeData();
                         } catch (_) {}
                       }
                     },
@@ -271,13 +273,45 @@ class DriverDrawer extends StatelessWidget {
 
 // ─── هيدر الدروار المنفصل ────────────────────────────────────────────────
 class _DriverDrawerHeader extends StatelessWidget {
-  final DriverModel driver;
+  final DriverModel? driver;
   final bool isDark;
 
-  const _DriverDrawerHeader({required this.driver, required this.isDark});
+  const _DriverDrawerHeader({this.driver, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
+    final sessionName = StorageService.getFullName()?.trim();
+    final String displayName;
+    if (driver != null &&
+        driver!.hasPendingChanges &&
+        driver!.pendingFullName != null &&
+        driver!.pendingFullName!.trim().isNotEmpty) {
+      displayName = driver!.pendingFullName!.trim();
+    } else if (sessionName != null && sessionName.isNotEmpty) {
+      displayName = sessionName;
+    } else if (driver != null && driver!.fullName.trim().isNotEmpty) {
+      displayName = driver!.fullName.trim();
+    } else {
+      displayName = 'سائق';
+    }
+
+    final sessionPhone = StorageService.getPhoneNumber()?.trim();
+    final String displayPhone;
+    if (driver != null &&
+        driver!.hasPendingChanges &&
+        driver!.pendingPhoneNumber != null &&
+        driver!.pendingPhoneNumber!.trim().isNotEmpty) {
+      displayPhone = driver!.pendingPhoneNumber!.trim();
+    } else if (sessionPhone != null && sessionPhone.isNotEmpty) {
+      displayPhone = sessionPhone;
+    } else if (driver != null && driver!.phoneNumber.trim().isNotEmpty) {
+      displayPhone = driver!.phoneNumber.trim();
+    } else {
+      displayPhone = '';
+    }
+
+    final displayAvatar = StorageService.getAvatarUrl() ?? driver?.avatarUrl;
+
     return Container(
       width: double.infinity,
       decoration: AppTheme.boxDecoration(
@@ -308,12 +342,11 @@ class _DriverDrawerHeader extends StatelessWidget {
                       ),
                     ),
                     child: AppUserAvatar(
-                      image: driver.avatarUrl,
+                      image: displayAvatar,
                       radius: 38,
                       backgroundColor: AppColors.white24,
-iconColor: AppColors.white,
+                      iconColor: AppColors.white,
                       iconSize: 38,
-
                     ),
                   ),
 
@@ -361,7 +394,7 @@ iconColor: AppColors.white,
 
               // ── اسم السائق ──
               Text(
-                driver.fullName,
+                displayName,
                 style: AppTextStyles.style(
                   color: AppColors.white,
                   fontSize: 20,
@@ -379,7 +412,7 @@ iconColor: AppColors.white,
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    driver.phoneNumber,
+                    displayPhone,
                     style: AppTextStyles.style(
                       color: AppColors.white70,
                       fontSize: 13,

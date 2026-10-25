@@ -52,6 +52,9 @@ class ChildOptionModel {
   final String? photoUrl;
   final String? schoolName;
   final SavedAddressModel? defaultHomeAddress;
+  final bool hasActiveSubscription;
+  final int? driverId;
+  final String? driverName;
 
   ChildOptionModel({
     required this.id,
@@ -59,6 +62,9 @@ class ChildOptionModel {
     this.photoUrl,
     this.schoolName,
     this.defaultHomeAddress,
+    this.hasActiveSubscription = true,
+    this.driverId,
+    this.driverName,
   });
 
   factory ChildOptionModel.fromJson(Map<String, dynamic> json) {
@@ -66,6 +72,14 @@ class ChildOptionModel {
     final defaultAddressObj = json['default_home_address'] is Map
         ? json['default_home_address'] as Map<String, dynamic>
         : null;
+
+    final driverObj = json['driver'] is Map ? json['driver'] as Map<String, dynamic> : null;
+    final driverIdVal = int.tryParse(json['driver_id']?.toString() ?? driverObj?['id']?.toString() ?? '');
+    final driverNameVal = json['driver_name']?.toString() ?? driverObj?['name']?.toString();
+
+    final hasSub = json['has_active_subscription'] == null
+        ? (json['active_subscription'] != null)
+        : (json['has_active_subscription'] == true || json['has_active_subscription'] == 1);
 
     return ChildOptionModel(
       id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
@@ -75,6 +89,9 @@ class ChildOptionModel {
       defaultHomeAddress: defaultAddressObj != null
           ? SavedAddressModel.fromJson(defaultAddressObj)
           : null,
+      hasActiveSubscription: hasSub,
+      driverId: driverIdVal,
+      driverName: driverNameVal,
     );
   }
 }

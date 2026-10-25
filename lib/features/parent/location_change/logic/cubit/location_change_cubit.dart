@@ -1,4 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/di/dependency_injection.dart';
+import 'package:kids_transport/features/parent/addresses/data/models/address_model.dart';
+import 'package:kids_transport/features/parent/addresses/data/repositories/address_repository.dart';
 import '../../data/models/location_change_available_trips_model.dart';
 import '../../data/models/location_change_options_model.dart';
 import '../../data/models/location_change_preview_model.dart';
@@ -15,13 +19,14 @@ class LocationChangeOptionsLoaded extends LocationChangeState {
   final LocationChangeOptionsModel options;
   final Set<int> selectedChildIds;
   final List<ChildAvailableTripsModel> availableTrips;
-  final Map<int, int?> selectedTripForChild; // child_id -> trip_id
+  final Map<int, Set<int>> selectedTripIdsForChild; // child_id -> set of trip_ids
   final SavedAddressModel? selectedAddress;
   final double? customLat;
   final double? customLng;
   final String? customLabel;
   final String pointType; // 'pickup' or 'dropoff'
   final DateTime changeDate;
+  final int currentStep; // 1: Children & Date, 2: Trips & Location, 3: Preview
   final LocationChangePreviewModel? previewData;
   final bool isAvailableTripsLoading;
   final bool isPreviewLoading;
@@ -34,13 +39,14 @@ class LocationChangeOptionsLoaded extends LocationChangeState {
     required this.options,
     required this.selectedChildIds,
     this.availableTrips = const [],
-    this.selectedTripForChild = const {},
+    this.selectedTripIdsForChild = const {},
     this.selectedAddress,
     this.customLat,
     this.customLng,
     this.customLabel,
     required this.pointType,
     required this.changeDate,
+    this.currentStep = 1,
     this.previewData,
     this.isAvailableTripsLoading = false,
     this.isPreviewLoading = false,
@@ -54,14 +60,16 @@ class LocationChangeOptionsLoaded extends LocationChangeState {
     LocationChangeOptionsModel? options,
     Set<int>? selectedChildIds,
     List<ChildAvailableTripsModel>? availableTrips,
-    Map<int, int?>? selectedTripForChild,
+    Map<int, Set<int>>? selectedTripIdsForChild,
     SavedAddressModel? selectedAddress,
     bool clearSelectedAddress = false,
     double? customLat,
     double? customLng,
     String? customLabel,
+    bool clearCustomLocation = false,
     String? pointType,
     DateTime? changeDate,
+    int? currentStep,
     LocationChangePreviewModel? previewData,
     bool clearPreview = false,
     bool? isAvailableTripsLoading,
@@ -76,13 +84,14 @@ class LocationChangeOptionsLoaded extends LocationChangeState {
       options: options ?? this.options,
       selectedChildIds: selectedChildIds ?? this.selectedChildIds,
       availableTrips: availableTrips ?? this.availableTrips,
-      selectedTripForChild: selectedTripForChild ?? this.selectedTripForChild,
+      selectedTripIdsForChild: selectedTripIdsForChild ?? this.selectedTripIdsForChild,
       selectedAddress: clearSelectedAddress ? null : (selectedAddress ?? this.selectedAddress),
-      customLat: customLat ?? this.customLat,
-      customLng: customLng ?? this.customLng,
-      customLabel: customLabel ?? this.customLabel,
+      customLat: clearCustomLocation ? null : (customLat ?? this.customLat),
+      customLng: clearCustomLocation ? null : (customLng ?? this.customLng),
+      customLabel: clearCustomLocation ? null : (customLabel ?? this.customLabel),
       pointType: pointType ?? this.pointType,
       changeDate: changeDate ?? this.changeDate,
+      currentStep: currentStep ?? this.currentStep,
       previewData: clearPreview ? null : (previewData ?? this.previewData),
       isAvailableTripsLoading: isAvailableTripsLoading ?? this.isAvailableTripsLoading,
       isPreviewLoading: isPreviewLoading ?? this.isPreviewLoading,
@@ -127,7 +136,10 @@ class LocationChangeCubit extends Cubit<LocationChangeState> {
     try {
       final options = await _repository.getOptions();
       final defaultAddress = options.addresses.isNotEmpty ? options.addresses.first : null;
-      final initialChildIds = options.children.map((c) => c.id).toSet();
+      
+      // Auto-select children who have active subscriptions only
+      final activeChildren = options.children.where((c) => c.hasActiveSubscription).toList();
+      final initialChildIds = activeChildren.isNotEmpty ? {activeChildren.first.id} : <int>{};
 
       final initialLoaded = LocationChangeOptionsLoaded(
         options: options,
@@ -135,6 +147,7 @@ class LocationChangeCubit extends Cubit<LocationChangeState> {
         selectedAddress: defaultAddress,
         pointType: 'pickup',
         changeDate: DateTime.now(),
+        currentStep: 1,
       );
 
       emit(initialLoaded);
@@ -147,9 +160,33 @@ class LocationChangeCubit extends Cubit<LocationChangeState> {
     }
   }
 
+  Map<int, Set<int>> _computeDefaultTrips(
+    List<ChildAvailableTripsModel> availableTrips,
+    Set<int> selectedChildIds,
+    String pointType,
+  ) {
+    final result = <int, Set<int>>{};
+    for (final childTrips in availableTrips) {
+      if (!selectedChildIds.contains(childTrips.childId)) continue;
+      final matching = childTrips.availableTrips.where((trip) {
+        if (!trip.isEditable) return false;
+        if (pointType == 'pickup') return trip.direction == 'to_school';
+        if (pointType == 'dropoff') return trip.direction == 'to_home';
+        return true;
+      }).map((t) => t.activeSubscriptionId > 0 ? t.activeSubscriptionId : t.tripId).where((id) => id > 0).toSet();
+
+      result[childTrips.childId] = matching;
+    }
+    return result;
+  }
+
   Future<void> _fetchAvailableTripsInternal(LocationChangeOptionsLoaded currentState) async {
     if (currentState.selectedChildIds.isEmpty) {
-      emit(currentState.copyWith(availableTrips: [], clearPreview: true));
+      emit(currentState.copyWith(
+        availableTrips: [],
+        selectedTripIdsForChild: {},
+        clearPreview: true,
+      ));
       return;
     }
 
@@ -162,9 +199,16 @@ class LocationChangeCubit extends Cubit<LocationChangeState> {
         date: dateStr,
       );
 
+      final defaultTripSelections = _computeDefaultTrips(
+        trips,
+        currentState.selectedChildIds,
+        currentState.pointType,
+      );
+
       emit(currentState.copyWith(
         isAvailableTripsLoading: false,
         availableTrips: trips,
+        selectedTripIdsForChild: defaultTripSelections,
         clearPreview: true,
       ));
     } catch (e) {
@@ -187,6 +231,18 @@ class LocationChangeCubit extends Cubit<LocationChangeState> {
     final currentState = state;
     if (currentState is! LocationChangeOptionsLoaded) return;
 
+    final child = currentState.options.children.firstWhere(
+      (c) => c.id == childId,
+      orElse: () => ChildOptionModel(id: 0, name: ''),
+    );
+
+    if (!child.hasActiveSubscription) {
+      emit(currentState.copyWith(
+        error: 'الطفل "${child.name}" لا يملك اشتراكاً نشطاً لتعديل موقعه.',
+      ));
+      return;
+    }
+
     final updated = Set<int>.from(currentState.selectedChildIds);
     if (updated.contains(childId)) {
       updated.remove(childId);
@@ -204,7 +260,10 @@ class LocationChangeCubit extends Cubit<LocationChangeState> {
     if (currentState is! LocationChangeOptionsLoaded) return;
 
     final updated = selectAll
-        ? currentState.options.children.map((c) => c.id).toSet()
+        ? currentState.options.children
+            .where((c) => c.hasActiveSubscription)
+            .map((c) => c.id)
+            .toSet()
         : <int>{};
 
     final updatedState = currentState.copyWith(selectedChildIds: updated, clearPreview: true);
@@ -225,7 +284,39 @@ class LocationChangeCubit extends Cubit<LocationChangeState> {
     final currentState = state;
     if (currentState is! LocationChangeOptionsLoaded) return;
 
-    emit(currentState.copyWith(pointType: type, clearPreview: true));
+    final defaultTripSelections = _computeDefaultTrips(
+      currentState.availableTrips,
+      currentState.selectedChildIds,
+      type,
+    );
+
+    emit(currentState.copyWith(
+      pointType: type,
+      selectedTripIdsForChild: defaultTripSelections,
+      clearPreview: true,
+    ));
+  }
+
+  void toggleTripSelectionForChild(int childId, int tripId) {
+    final currentState = state;
+    if (currentState is! LocationChangeOptionsLoaded) return;
+
+    final map = Map<int, Set<int>>.from(
+      currentState.selectedTripIdsForChild.map((k, v) => MapEntry(k, Set<int>.from(v))),
+    );
+    final trips = map[childId] ?? <int>{};
+
+    if (trips.contains(tripId)) {
+      trips.remove(tripId);
+    } else {
+      trips.add(tripId);
+    }
+    map[childId] = trips;
+
+    emit(currentState.copyWith(
+      selectedTripIdsForChild: map,
+      clearPreview: true,
+    ));
   }
 
   void selectAddress(SavedAddressModel address) {
@@ -234,9 +325,7 @@ class LocationChangeCubit extends Cubit<LocationChangeState> {
 
     emit(currentState.copyWith(
       selectedAddress: address,
-      customLat: null,
-      customLng: null,
-      customLabel: null,
+      clearCustomLocation: true,
       clearPreview: true,
     ));
   }
@@ -254,29 +343,162 @@ class LocationChangeCubit extends Cubit<LocationChangeState> {
     ));
   }
 
+  /// حفظ عنوان جديد في السيرفر وتحديث قائمة العناوين واختياره تلقائياً
+  Future<String?> saveNewAddressAndSelect(AddressModel newAddress) async {
+    final currentState = state;
+    if (currentState is! LocationChangeOptionsLoaded) return 'الحالة غير جاهزة';
+
+    try {
+      final (success, message) = await getIt<AddressRepository>().addAddress(newAddress);
+      if (!success) {
+        return message;
+      }
+
+      // جلب أحدث قائمة عناوين بعد الإضافة
+      final (latestAddresses, _) = await getIt<AddressRepository>().getAddresses();
+
+      List<SavedAddressModel> updatedSavedAddresses = [];
+      SavedAddressModel? newlyCreatedAddress;
+
+      if (latestAddresses != null && latestAddresses.isNotEmpty) {
+        updatedSavedAddresses = latestAddresses.map((a) => SavedAddressModel(
+          id: int.tryParse(a.id ?? '') ?? 0,
+          label: a.title,
+          lat: a.latitude,
+          lng: a.longitude,
+        )).toList();
+
+        // العنوان الجديد عادة هو الأخير أو يطابق الاسم والإحداثيات
+        newlyCreatedAddress = updatedSavedAddresses.firstWhere(
+          (a) => (a.label == newAddress.title) &&
+                 (a.lat - newAddress.latitude).abs() < 0.001 &&
+                 (a.lng - newAddress.longitude).abs() < 0.001,
+          orElse: () => updatedSavedAddresses.last,
+        );
+      } else {
+        newlyCreatedAddress = SavedAddressModel(
+          id: int.tryParse(newAddress.id ?? '') ?? (DateTime.now().millisecondsSinceEpoch % 100000),
+          label: newAddress.title,
+          lat: newAddress.latitude,
+          lng: newAddress.longitude,
+        );
+        updatedSavedAddresses = [newlyCreatedAddress, ...currentState.options.addresses];
+      }
+
+      final updatedOptions = LocationChangeOptionsModel(
+        children: currentState.options.children,
+        addresses: updatedSavedAddresses,
+        activeSubscriptions: currentState.options.activeSubscriptions,
+      );
+
+      emit(currentState.copyWith(
+        options: updatedOptions,
+        selectedAddress: newlyCreatedAddress,
+        clearCustomLocation: true,
+        clearPreview: true,
+      ));
+
+      return null;
+    } catch (e) {
+      debugPrint('❌ [LocationChangeCubit] saveNewAddressAndSelect error: $e');
+      return e.toString();
+    }
+  }
+
+  void goToStep(int step) {
+    final currentState = state;
+    if (currentState is! LocationChangeOptionsLoaded) return;
+    emit(currentState.copyWith(currentStep: step, clearError: true));
+  }
+
+  void backStep() {
+    final currentState = state;
+    if (currentState is! LocationChangeOptionsLoaded) return;
+    if (currentState.currentStep > 1) {
+      emit(currentState.copyWith(
+        currentStep: currentState.currentStep - 1,
+        clearError: true,
+      ));
+    }
+  }
+
+  Future<bool> proceedToStep2() async {
+    final currentState = state;
+    if (currentState is! LocationChangeOptionsLoaded) return false;
+
+    if (currentState.selectedChildIds.isEmpty) {
+      emit(currentState.copyWith(error: 'يرجى اختيار طفل واحد على الأقل للمتابعة'));
+      return false;
+    }
+
+    if (currentState.availableTrips.isEmpty && !currentState.isAvailableTripsLoading) {
+      await _fetchAvailableTripsInternal(currentState);
+    }
+
+    emit((state as LocationChangeOptionsLoaded).copyWith(currentStep: 2, clearError: true));
+    return true;
+  }
+
+  Future<bool> proceedToStep3() async {
+    final currentState = state;
+    if (currentState is! LocationChangeOptionsLoaded) return false;
+
+    if (currentState.selectedAddress == null &&
+        (currentState.customLat == null || currentState.customLng == null)) {
+      emit(currentState.copyWith(error: 'يرجى اختيار الموقع الجديد المطلوب للمتابعة'));
+      return false;
+    }
+
+    final selections = _buildSelectionsPayload(currentState);
+    if (selections.isEmpty) {
+      emit(currentState.copyWith(error: 'لا توجد رحلات متاحة للأطفال المختارين في هذا التاريخ'));
+      return false;
+    }
+
+    final hasEmptyTrips = selections.any((item) =>
+        item['trip_ids'] == null || (item['trip_ids'] as List).isEmpty);
+    if (hasEmptyTrips) {
+      emit(currentState.copyWith(error: 'يرجى تحديد رحلة واحدة على الأقل لكل طفل تم اختياره'));
+      return false;
+    }
+
+    await calculatePreview();
+
+    final previewState = state;
+    if (previewState is LocationChangeOptionsLoaded && previewState.previewData != null) {
+      emit(previewState.copyWith(currentStep: 3, clearError: true));
+      return true;
+    }
+
+    return false;
+  }
+
   List<Map<String, dynamic>> _buildSelectionsPayload(LocationChangeOptionsLoaded currentState) {
     final selections = <Map<String, dynamic>>[];
 
     for (final childId in currentState.selectedChildIds) {
-      final childTrips = currentState.availableTrips.firstWhere(
-        (t) => t.childId == childId,
-        orElse: () => ChildAvailableTripsModel(childId: childId, childName: '', availableTrips: []),
-      );
+      final selectedTrips = currentState.selectedTripIdsForChild[childId];
+      List<int> tripIds = [];
 
-      final matchingTrips = childTrips.availableTrips.where((trip) {
-        if (currentState.pointType == 'pickup') return trip.direction == 'to_school';
-        if (currentState.pointType == 'dropoff') return trip.direction == 'to_home';
-        return false;
-      }).toList();
+      if (selectedTrips != null && selectedTrips.isNotEmpty) {
+        tripIds = selectedTrips.toList();
+      } else {
+        final childTrips = currentState.availableTrips.firstWhere(
+          (t) => t.childId == childId,
+          orElse: () => ChildAvailableTripsModel(childId: childId, childName: '', availableTrips: []),
+        );
 
-      final tripIds = <int>[];
-      if (matchingTrips.isNotEmpty) {
-        final activeSubId = matchingTrips.first.activeSubscriptionId;
-        if (activeSubId > 0) {
-          tripIds.add(activeSubId);
-        } else if (matchingTrips.first.tripId > 0) {
-          tripIds.add(matchingTrips.first.tripId);
-        }
+        final matchingTrips = childTrips.availableTrips.where((trip) {
+          if (!trip.isEditable) return false;
+          if (currentState.pointType == 'pickup') return trip.direction == 'to_school';
+          if (currentState.pointType == 'dropoff') return trip.direction == 'to_home';
+          return true;
+        }).toList();
+
+        tripIds = matchingTrips
+            .map((t) => t.activeSubscriptionId > 0 ? t.activeSubscriptionId : t.tripId)
+            .where((id) => id > 0)
+            .toList();
       }
 
       selections.add({
@@ -316,7 +538,7 @@ class LocationChangeCubit extends Cubit<LocationChangeState> {
 
     final isValid = selections.every((item) => item['trip_ids'] != null && (item['trip_ids'] as List).isNotEmpty);
     if (!isValid) {
-      emit(currentState.copyWith(error: 'لا توجد رحلات مطابقة للوجهة المحددة للأطفال المختارين في هذا التاريخ'));
+      emit(currentState.copyWith(error: 'لا توجد رحلات قابلة للتعديل للوجهة المحددة للأطفال المختارين في هذا التاريخ'));
       return;
     }
 
@@ -329,9 +551,11 @@ class LocationChangeCubit extends Cubit<LocationChangeState> {
       date: dateStr,
       selections: selections,
       addressId: currentState.selectedAddress?.id,
-      lat: currentState.customLat,
-      lng: currentState.customLng,
-      label: currentState.customLabel ?? currentState.selectedAddress?.label,
+      lat: currentState.selectedAddress != null ? null : currentState.customLat,
+      lng: currentState.selectedAddress != null ? null : currentState.customLng,
+      label: currentState.selectedAddress != null
+          ? currentState.selectedAddress!.label
+          : currentState.customLabel,
     );
 
     if (preview != null) {
@@ -382,9 +606,11 @@ class LocationChangeCubit extends Cubit<LocationChangeState> {
       date: dateStr,
       selections: selections,
       addressId: currentState.selectedAddress?.id,
-      lat: currentState.customLat,
-      lng: currentState.customLng,
-      label: currentState.customLabel ?? currentState.selectedAddress?.label,
+      lat: currentState.selectedAddress != null ? null : currentState.customLat,
+      lng: currentState.selectedAddress != null ? null : currentState.customLng,
+      label: currentState.selectedAddress != null
+          ? currentState.selectedAddress!.label
+          : currentState.customLabel,
     );
 
     if (createdRequests != null && createdRequests.isNotEmpty) {

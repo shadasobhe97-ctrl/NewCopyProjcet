@@ -112,7 +112,15 @@ class StorageService {
 
   static String? getFullName() => _prefs.getString(_fullNameKey);
 
+  static Future<bool> saveFullName(String name) {
+    return _prefs.setString(_fullNameKey, name);
+  }
+
   static String? getPhoneNumber() => _prefs.getString(_phoneNumberKey);
+
+  static Future<bool> savePhoneNumber(String phone) {
+    return _prefs.setString(_phoneNumberKey, phone);
+  }
 
   static bool? getIsActive() => _prefs.getBool(_isActiveKey);
 

@@ -184,53 +184,47 @@ class _InvoiceDetailsScreenContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // بيانات العقد والسائق
-                  _buildSectionCard(
-                    context: context,
-                    title: 'بيانات العقد والسائق',
-                    children: [
-                      _buildInfoRow(context, 'رقم العقد',
-                          invoice.contractNumber ?? 'غير متوفر'),
-                      const Divider(),
-                      _buildInfoRow(context, 'حالة العقد',
-                          invoice.contractStatus ?? 'غير متوفر',
-                          isStatus: true),
-                      const Divider(),
-                      _buildInfoRow(
-                          context, 'السائق', invoice.driverName ?? 'غير متوفر'),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // معلومات الفاتورة
-                  _buildSectionCard(
-                    context: context,
-                    title: 'معلومات الفاتورة',
-                    children: [
-                      _buildInfoRow(context, 'نوع الفاتورة', invoice.type),
-                      const Divider(),
-                      _buildInfoRow(context, 'المبلغ المحسوب',
-                          '${invoice.calculatedAmount.toStringAsFixed(2)} د.ل'),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-
-
-                  // التواريخ
-                  _buildSectionCard(
-                    context: context,
-                    title: 'معلومات إضافية',
-                    children: [
-                      _buildInfoRow(context, 'الإجراء المتخذ',
-                          invoice.actionTaken ?? 'لا يوجد'),
-                      const Divider(),
-                      _buildInfoRow(
-                          context, 'تاريخ الإصدار', invoice.createdAt),
-                      const Divider(),
-                      _buildInfoRow(
-                          context, 'تاريخ الدفع', invoice.paidAt ?? '—'),
-                    ],
+                  // بطاقة موحدة لكافة التفاصيل بدون عنوان للكارد
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                    decoration: AppTheme.boxDecoration(
+                      color: context.isDarkMode ? AppColors.darkSurface : Colors.white,
+                      borderRadius: AppTheme.radius(16),
+                      border: AppTheme.border(color: context.dividerColor),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        _buildInfoRow(
+                          context,
+                          'السائق',
+                          (invoice.driverName != null && invoice.driverName!.trim().isNotEmpty)
+                              ? invoice.driverName!
+                              : 'غير متوفر',
+                        ),
+                        const Divider(height: 22),
+                        _buildInfoRow(
+                          context,
+                          'المبلغ المحسوب',
+                          '${invoice.calculatedAmount.toStringAsFixed(2)} د.ل',
+                        ),
+                        const Divider(height: 22),
+                        _buildInfoRow(
+                          context,
+                          'تاريخ الدفع',
+                          (invoice.paidAt != null && invoice.paidAt!.trim().isNotEmpty)
+                              ? invoice.paidAt!
+                              : '—',
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 40),
                 ],
@@ -239,43 +233,6 @@ class _InvoiceDetailsScreenContent extends StatelessWidget {
           }
           return const SizedBox.shrink();
         },
-      ),
-    );
-  }
-
-  Widget _buildSectionCard({
-    required BuildContext context,
-    required String title,
-    required List<Widget> children,
-  }) {
-    return Container(
-      decoration: AppTheme.boxDecoration(
-        color: context.isDarkMode ? AppColors.darkSurface : Colors.white,
-        borderRadius: AppTheme.radius(16),
-        border: AppTheme.border(color: context.dividerColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              title,
-              style: AppTextStyles.style(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: context.primaryColor,
-              ),
-            ),
-          ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: children,
-            ),
-          ),
-        ],
       ),
     );
   }

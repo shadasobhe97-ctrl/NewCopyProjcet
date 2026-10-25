@@ -229,6 +229,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   }
 
   void _saveProfile() {
+    if (_formKey.currentState == null) return;
     if (_formKey.currentState!.validate()) {
       final newEmail = _emailController.text.trim();
       final emailChanged = newEmail.isNotEmpty && newEmail != _originalEmail;
@@ -252,6 +253,13 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
           ),
         );
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('يرجى التحقق من صحة البيانات المدخلة في الحقول.'),
+          backgroundColor: context.errorColor,
+        ),
+      );
     }
   }
 
@@ -714,7 +722,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
 
   Widget _buildEditMode(bool isSaving) {
     return Form(
-      key: const ValueKey('edit_mode'),
+      key: _formKey,
       child: Column(
         children: [
           _buildAvatarSection(),

@@ -5,6 +5,8 @@ class AvailableTripModel {
   final String? shiftSlot;
   final int driverId;
   final String driverName;
+  final bool isEditable;
+  final String? blockReason;
 
   AvailableTripModel({
     required this.tripId,
@@ -13,9 +15,15 @@ class AvailableTripModel {
     this.shiftSlot,
     required this.driverId,
     required this.driverName,
+    this.isEditable = true,
+    this.blockReason,
   });
 
   factory AvailableTripModel.fromJson(Map<String, dynamic> json) {
+    final isEditableVal = json['is_editable'] == null
+        ? true
+        : (json['is_editable'] == true || json['is_editable'] == 1);
+
     return AvailableTripModel(
       tripId: int.tryParse((json['trip_id'] ?? json['id'])?.toString() ?? '') ?? 0,
       activeSubscriptionId: int.tryParse(json['active_subscription_id']?.toString() ?? '') ?? 0,
@@ -23,6 +31,8 @@ class AvailableTripModel {
       shiftSlot: json['shift_slot']?.toString(),
       driverId: int.tryParse(json['driver_id']?.toString() ?? '') ?? 0,
       driverName: json['driver_name']?.toString() ?? json['driver']?['name']?.toString() ?? 'سائق',
+      isEditable: isEditableVal,
+      blockReason: json['block_reason']?.toString(),
     );
   }
 }

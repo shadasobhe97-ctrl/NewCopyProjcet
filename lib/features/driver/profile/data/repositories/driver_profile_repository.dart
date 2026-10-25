@@ -18,6 +18,21 @@ class DriverProfileRepository {
   Future<DriverModel> getDriverProfile() async {
     final driver = await remoteDataSource.getDriverProfile();
 
+    final effectiveFullName = (driver.hasPendingChanges &&
+            driver.pendingFullName != null &&
+            driver.pendingFullName!.trim().isNotEmpty)
+        ? driver.pendingFullName!.trim()
+        : (driver.fullName.trim().isNotEmpty
+            ? driver.fullName.trim()
+            : (sessionRepository.getFullName() ?? ''));
+    final effectivePhoneNumber = (driver.hasPendingChanges &&
+            driver.pendingPhoneNumber != null &&
+            driver.pendingPhoneNumber!.trim().isNotEmpty)
+        ? driver.pendingPhoneNumber!.trim()
+        : (driver.phoneNumber.trim().isNotEmpty
+            ? driver.phoneNumber.trim()
+            : (sessionRepository.getPhoneNumber() ?? ''));
+
     // تحديث البيانات المحلية محلياً فور النجاح
     await sessionRepository.saveUserSession(
       token: sessionRepository.getToken() ?? '',
@@ -25,11 +40,13 @@ class DriverProfileRepository {
       roleId: sessionRepository.getRoleId() ?? 8,
       roleName: 'driver',
       userId: int.tryParse(sessionRepository.getUserId() ?? '') ?? 0,
-      fullName: driver.fullName,
-      phoneNumber: driver.phoneNumber,
+      fullName: effectiveFullName,
+      phoneNumber: effectivePhoneNumber,
       isActive: sessionRepository.getIsActive() ?? true,
       avatarUrl: driver.avatarUrl,
     );
+    await StorageService.saveFullName(effectiveFullName);
+    await StorageService.savePhoneNumber(effectivePhoneNumber);
 
     return driver;
   }
@@ -66,6 +83,25 @@ class DriverProfileRepository {
             ? '${driver.avatarUrl}?v=${DateTime.now().millisecondsSinceEpoch}'
             : null;
 
+    final effectiveFullName = (driver.hasPendingChanges &&
+            driver.pendingFullName != null &&
+            driver.pendingFullName!.trim().isNotEmpty)
+        ? driver.pendingFullName!.trim()
+        : ((fullName != null && fullName.trim().isNotEmpty)
+            ? fullName.trim()
+            : (driver.fullName.trim().isNotEmpty
+                ? driver.fullName.trim()
+                : (sessionRepository.getFullName() ?? '')));
+    final effectivePhoneNumber = (driver.hasPendingChanges &&
+            driver.pendingPhoneNumber != null &&
+            driver.pendingPhoneNumber!.trim().isNotEmpty)
+        ? driver.pendingPhoneNumber!.trim()
+        : ((phoneNumber != null && phoneNumber.trim().isNotEmpty)
+            ? phoneNumber.trim()
+            : (driver.phoneNumber.trim().isNotEmpty
+                ? driver.phoneNumber.trim()
+                : (sessionRepository.getPhoneNumber() ?? '')));
+
     // تحديث البيانات المحلية فقط عند نجاح الـ API بالكامل
     await sessionRepository.saveUserSession(
       token: sessionRepository.getToken() ?? '',
@@ -75,15 +111,13 @@ class DriverProfileRepository {
       userId: driver.userId > 0
           ? driver.userId
           : (int.tryParse(sessionRepository.getUserId() ?? '') ?? 0),
-      fullName: driver.fullName.isNotEmpty
-          ? driver.fullName
-          : (sessionRepository.getFullName() ?? ''),
-      phoneNumber: driver.phoneNumber.isNotEmpty
-          ? driver.phoneNumber
-          : (sessionRepository.getPhoneNumber() ?? ''),
+      fullName: effectiveFullName,
+      phoneNumber: effectivePhoneNumber,
       isActive: driver.isActive,
       avatarUrl: versionedAvatar,
     );
+    await StorageService.saveFullName(effectiveFullName);
+    await StorageService.savePhoneNumber(effectivePhoneNumber);
     if (versionedAvatar != null) {
       await sessionRepository.saveAvatarUrl(versionedAvatar);
       await StorageService.saveAvatarUrl(versionedAvatar);

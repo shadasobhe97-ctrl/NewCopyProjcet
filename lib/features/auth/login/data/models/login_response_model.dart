@@ -1,3 +1,5 @@
+import 'package:kids_transport/core/utils/app_image_helper.dart';
+
 class LoginResponseModel {
   final bool status;
   final String message;
@@ -138,7 +140,16 @@ class UserModel {
       role: rawRole.isNotEmpty ? rawRole : ((roleId == 8 || roleId == 4) ? 'driver' : 'parent'),
       isActive: _readBool(json['is_active'] ?? json['isActive'] ?? true),
       isTrusted: json['is_trusted'] == true,
-      avatarUrl: json['avatar_url']?.toString() ?? json['photo_url']?.toString(),
+      avatarUrl: AppImageHelper.resolveUrl(
+        (json['avatar_url'] ??
+                json['avatar'] ??
+                json['photo_url'] ??
+                json['photo'] ??
+                json['image'] ??
+                json['profile_photo_url'] ??
+                json['profile_image'])
+            ?.toString(),
+      ),
       emailChangePending: json['email_change_pending'] == true,
     );
   }
