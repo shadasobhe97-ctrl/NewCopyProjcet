@@ -575,8 +575,6 @@ class _DriverAddressDetailsScreenState
 
   /// واجهة العرض الحالية
   Widget _buildViewMode(BuildContext context, DriverAddressModel address) {
-    final isDark = context.isDarkMode;
-
     return Column(
       key: const ValueKey("view_mode"),
       crossAxisAlignment: CrossAxisAlignment.stretch,
