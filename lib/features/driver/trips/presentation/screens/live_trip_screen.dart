@@ -280,12 +280,37 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
       builder: (dCtx) => AlertDialog(
         title: Text(title, textAlign: TextAlign.right),
         content: Text(message, textAlign: TextAlign.right),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(onPressed: () => Navigator.of(dCtx).pop(false), child: const Text('إلغاء')),
-          ElevatedButton(
-            onPressed: () => Navigator.of(dCtx).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('تأكيد'),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(dCtx).pop(false),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('إلغاء'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(dCtx).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('تأكيد'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -341,12 +366,37 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
               textAlign: TextAlign.right,
               style: AppTextStyles.style(fontSize: 14),
             ),
+            actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             actions: [
-              TextButton(onPressed: () => Navigator.of(dCtx).pop(false), child: const Text('رجوع')),
-              ElevatedButton(
-                onPressed: () => Navigator.of(dCtx).pop(true),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-                child: const Text('إنهاء رغم ذلك'),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(dCtx).pop(false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('رجوع'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(dCtx).pop(true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('إنهاء رغم ذلك'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1131,15 +1181,37 @@ class _LiveTripScreenState extends State<LiveTripScreen> with TickerProviderStat
             textAlign: TextAlign.right,
             style: AppTextStyles.style(fontSize: 14),
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dCtx).pop(false),
-              child: const Text('إلغاء'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(dCtx).pop(true),
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
-              child: const Text('تأكيد الاستلام'),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(dCtx).pop(false),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('إلغاء'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(dCtx).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.success,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('تأكيد الاستلام'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -1748,15 +1820,37 @@ class _BreakdownReasonDialogState extends State<_BreakdownReasonDialog> {
           ),
         ],
       ),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('إلغاء'),
-        ),
-        ElevatedButton(
-          onPressed: _submit,
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-          child: const Text('إرسال بلاغ الطوارئ'),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('إلغاء'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('إرسال بلاغ الطوارئ'),
+              ),
+            ),
+          ],
         ),
       ],
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 import '../../data/models/parent_model.dart';
 import '../../data/repositories/parent_profile_repository.dart';
 import 'parent_profile_state.dart';
@@ -50,20 +51,22 @@ class ParentProfileCubit extends Cubit<ParentProfileState> {
 
       // إعادة جلب أحدث البيانات من الباك إند فوراً بعد عملية التعديل (Refresh)
       final freshParent = await repository.getParentProfile();
-      _currentParent = freshParent;
+      final effectiveAvatar = freshParent.avatarUrl ?? StorageService.getAvatarUrl();
+      final updatedParent = freshParent.copyWith(avatarUrl: effectiveAvatar);
+      _currentParent = updatedParent;
 
       debugPrint(
-        '✅ [ParentProfileCubit] تحديث ورفرش ناجح من الباك إند — avatarUrl: ${freshParent.avatarUrl}, '
-        'emailChangePending: ${freshParent.emailChangePending}',
+        '✅ [ParentProfileCubit] تحديث ورفرش ناجح من الباك إند — avatarUrl: ${updatedParent.avatarUrl}, '
+        'emailChangePending: ${updatedParent.emailChangePending}',
       );
       emit(
         ParentProfileSuccess(
-          freshParent,
+          updatedParent,
           result.message,
           emailVerification: result.emailVerification,
         ),
       );
-      emit(ParentProfileLoaded(freshParent));
+      emit(ParentProfileLoaded(updatedParent));
     } catch (e) {
       debugPrint('❌ [ParentProfileCubit] updateProfile: $e');
       emit(ParentProfileError(e.toString().replaceAll('Exception:', '')));

@@ -91,13 +91,28 @@ class _AddChildScreenState extends State<AddChildScreen> {
     } else {
       _preferredTimeSlot = 'morning';
     }
-    final pickup = child.logistics?.pickupTime;
+    final pickup = child.effectivePickupTime;
     if (pickup != null && pickup.isNotEmpty) {
       _pickupTime = _parseTimeOfDay(pickup);
     }
-    final dropoff = child.logistics?.dropoffTime;
+    final dropoff = child.effectiveDropoffTime;
     if (dropoff != null && dropoff.isNotEmpty) {
       _dropoffTime = _parseTimeOfDay(dropoff);
+    }
+    // وضع أوقات افتراضية في التعديل لتجنب منع حفظ البيانات الشخصية أو الصورة
+    _pickupTime ??= const TimeOfDay(hour: 7, minute: 0);
+    _dropoffTime ??= const TimeOfDay(hour: 14, minute: 0);
+
+    // تجهيز المدرسة فوراً من بيانات الطفل دون انتظار اكتمال شبكة المدارس
+    if (child.school != null) {
+      _selectedSchool = child.school;
+    } else if (child.schoolId > 0 || child.schoolName.isNotEmpty) {
+      _selectedSchool = SchoolModel(
+        id: child.schoolId > 0 ? child.schoolId : 1,
+        name: child.schoolName.isNotEmpty ? child.schoolName : "المدرسة الحالية",
+        region: "",
+        address: "",
+      );
     }
   }
 
@@ -224,20 +239,37 @@ class _AddChildScreenState extends State<AddChildScreen> {
           "تعديل إحداثيات أو تفاصيل هذا العنوان سيتعدل فوراً في عنوان منزلك الرئيسي المعتمد وسيطبق التعديل تلقائياً على كافة أبنائك المرتبطين بالحافلة.\n\nهل ترغب في المتابعة لتعديل العنوان؟",
           textAlign: TextAlign.right,
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("إلغاء"),
-          ),
-          ElevatedButton(
-            style: AppTheme.elevatedButtonStyle(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              _openEditAddressBottomSheet();
-            },
-            child: const Text("نعم، تابع للتعديل"),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.grey300),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text("إلغاء"),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: AppTheme.elevatedButtonStyle(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _openEditAddressBottomSheet();
+                  },
+                  child: const Text("نعم، تابع للتعديل"),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -857,29 +889,55 @@ class _AddChildScreenState extends State<AddChildScreen> {
   }
 
   Future<void> _submitChild() async {
-    if (!_formKey.currentState!.validate()) return;
+    final isEditMode = widget.childToEdit != null;
 
-    if (_birthDate == null) {
+    if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("الرجاء اختيار تاريخ ميلاد الطفل."),
+          content: Text("يرجى التأكد من ملء الحقول المطلوبة بشكل صحيح."),
           backgroundColor: AppColors.orange,
         ),
       );
       return;
+    }
+
+    if (_birthDate == null) {
+      if (isEditMode && widget.childToEdit != null) {
+        _birthDate = widget.childToEdit!.birthDate;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("الرجاء اختيار تاريخ ميلاد الطفل."),
+            backgroundColor: AppColors.orange,
+          ),
+        );
+        return;
+      }
     }
 
     if (_selectedSchool == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("الرجاء اختيار مدرسة الطفل."),
-          backgroundColor: AppColors.orange,
-        ),
-      );
-      return;
+      if (isEditMode && widget.childToEdit != null) {
+        _selectedSchool = widget.childToEdit!.school ??
+            SchoolModel(
+              id: widget.childToEdit!.schoolId > 0 ? widget.childToEdit!.schoolId : 1,
+              name: widget.childToEdit!.schoolName.isNotEmpty
+                  ? widget.childToEdit!.schoolName
+                  : "المدرسة",
+              region: "",
+              address: "",
+            );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("الرجاء اختيار مدرسة الطفل."),
+            backgroundColor: AppColors.orange,
+          ),
+        );
+        return;
+      }
     }
 
-    if (_pickupTime == null || _dropoffTime == null) {
+    if (!isEditMode && (_pickupTime == null || _dropoffTime == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("الرجاء اختيار وقت الركوب ووقت النزول أولاً."),
@@ -888,6 +946,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
       );
       return;
     }
+
+    _pickupTime ??= const TimeOfDay(hour: 7, minute: 0);
+    _dropoffTime ??= const TimeOfDay(hour: 14, minute: 0);
 
     final fullName = _fullNameController.text.trim();
     final nameParts = fullName.split(' ').where((p) => p.isNotEmpty).toList();
@@ -905,15 +966,14 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
     try {
       final gradeStr = _grade.toString();
-      final isEditMode = widget.childToEdit != null;
       final pickupStr = _formatTimeOfDay(_pickupTime);
       final dropoffStr = _formatTimeOfDay(_dropoffTime);
 
       final childModel = ChildModel(
         id: widget.childToEdit?.id,
         userId: widget.childToEdit?.userId,
-        schoolId: _selectedSchool!.id,
-        addressId: _primaryAddress?.id ?? '1',
+        schoolId: _selectedSchool?.id ?? widget.childToEdit?.schoolId ?? 1,
+        addressId: _primaryAddress?.id ?? widget.childToEdit?.addressId ?? '1',
         fullName: fullName,
         gender: _gender,
         birthDate: _birthDate!,
@@ -998,29 +1058,51 @@ class _AddChildScreenState extends State<AddChildScreen> {
           "هل ترغب في إضافة طفل آخر الآن؟",
           textAlign: TextAlign.center,
         ),
-        actionsAlignment: MainAxisAlignment.spaceEvenly,
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          OutlinedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              StorageService.clearParentRegStage();
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/parentMainWrapper',
-                (route) => false,
-              );
-            },
-            child: const Text("لا، الانتقال للرئيسية"),
-          ),
-          ElevatedButton(
-            style: AppTheme.elevatedButtonStyle(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              _resetFormForNewChild();
-            },
-            child: const Text("نعم، أضف طفلاً آخر"),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.grey300),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    StorageService.clearParentRegStage();
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/parentMainWrapper',
+                      (route) => false,
+                    );
+                  },
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text("لا، الانتقال للرئيسية"),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: AppTheme.elevatedButtonStyle(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _resetFormForNewChild();
+                  },
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text("نعم، أضف طفلاً آخر"),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

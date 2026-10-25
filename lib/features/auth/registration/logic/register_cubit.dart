@@ -8,6 +8,9 @@ import 'package:kids_transport/features/auth/registration/data/models/driver_reg
 import 'package:kids_transport/features/auth/registration/data/models/driver_status_response_model.dart';
 import 'package:kids_transport/features/auth/registration/data/models/parent_register_request.dart';
 import 'package:kids_transport/features/auth/registration/data/repositories/registration_repository.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:kids_transport/core/di/dependency_injection.dart';
+import 'package:kids_transport/features/parent/profile/logic/cubit/parent_profile_cubit.dart';
 import 'register_state.dart';
 
 class RegisterCubit extends Cubit<RegisterState> {
@@ -170,9 +173,16 @@ class RegisterCubit extends Cubit<RegisterState> {
         return;
       }
 
-      // حفظ التوكن والجلسة كاملة لاستخدامها فوراً في API calls
       parentAccessToken = response.accessToken;
       registeredUserId = response.id;
+
+      final avatarPath = (avatarFile is XFile)
+          ? avatarFile.path
+          : (avatarFile is File ? avatarFile.path : null);
+
+      final effectiveAvatar = (response.user.avatarUrl != null && response.user.avatarUrl!.isNotEmpty)
+          ? response.user.avatarUrl
+          : avatarPath;
 
       await StorageService.saveUserSession(
         token: response.accessToken,
@@ -185,7 +195,18 @@ class RegisterCubit extends Cubit<RegisterState> {
         fullName: response.user.fullName,
         phoneNumber: response.user.phoneNumber,
         isActive: response.user.isActive,
+        avatarUrl: effectiveAvatar,
       );
+
+      if (effectiveAvatar != null && effectiveAvatar.isNotEmpty) {
+        await StorageService.saveAvatarUrl(effectiveAvatar);
+      }
+
+      if (getIt.isRegistered<ParentProfileCubit>()) {
+        try {
+          getIt<ParentProfileCubit>().fetchProfile();
+        } catch (_) {}
+      }
 
       emit(
         ParentRegisterSuccess(
@@ -296,6 +317,10 @@ class RegisterCubit extends Cubit<RegisterState> {
       if (response.userId > 0) registeredUserId = response.userId;
       driverAccessToken = response.accessToken;
 
+      final driverAvatarPath = (avatarFile is XFile)
+          ? avatarFile.path
+          : (avatarFile is File ? avatarFile.path : null);
+
       // حفظ السيشن محلياً مباشرة بعد نجاح OTP حتى لا تضيع الجلسة عند إغلاق التطبيق
       await StorageService.saveUserSession(
         token: response.accessToken,
@@ -305,7 +330,11 @@ class RegisterCubit extends Cubit<RegisterState> {
         fullName: fullName ?? '',
         phoneNumber: phoneNumber ?? '',
         isActive: false,
+        avatarUrl: driverAvatarPath,
       );
+      if (driverAvatarPath != null) {
+        await StorageService.saveAvatarUrl(driverAvatarPath);
+      }
 
       // 🌟 الباك إند صار يُنشئ سجل السائق مباشرة عند التحقق من OTP ويرجّع driver_id
       if (response.driverId > 0) {
@@ -370,6 +399,10 @@ class RegisterCubit extends Cubit<RegisterState> {
 
       // حفظ جلسة السائق بعد إكمال الملف
       final driverData = response.data;
+      final driverAvatar = (avatarFile is XFile
+          ? avatarFile.path
+          : (avatarFile is File ? avatarFile.path : StorageService.getAvatarUrl()));
+
       await StorageService.saveUserSession(
         token: resolvedToken,
         tokenType: 'Bearer',
@@ -379,7 +412,11 @@ class RegisterCubit extends Cubit<RegisterState> {
         fullName: driverData?.fullName,
         phoneNumber: null,
         isActive: true,
+        avatarUrl: driverAvatar,
       );
+      if (driverAvatar != null && driverAvatar.isNotEmpty) {
+        await StorageService.saveAvatarUrl(driverAvatar);
+      }
 
       // حفظ driver_id لاستخدامه في المهام الخاصة بالسائق
       final rawDriverId =

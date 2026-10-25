@@ -5,6 +5,8 @@ import 'package:kids_transport/features/parent/search/data/models/driver_search_
 import 'package:kids_transport/features/parent/children/data/models/child_model.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
+import 'package:kids_transport/core/utils/app_image_helper.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kids_transport/features/parent/children/logic/children_cubit/children_cubit.dart';
 import 'package:kids_transport/features/parent/search/data/models/subscription_request.dart';
@@ -207,30 +209,64 @@ class _DriverProfileViewState extends State<DriverProfileView> {
               ),
             ],
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                'إلغاء',
-                style: AppTextStyles.style(color: AppColors.textMuted),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _submitDirectly();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            Row(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: isDark ? AppColors.grey700 : AppColors.grey300,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'إلغاء',
+                        style: AppTextStyles.style(
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? AppColors.grey300 : AppColors.textMuted,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              child: Text(
-                'تأكيد وإرسال',
-                style: AppTextStyles.style(color: AppColors.white),
-              ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _submitDirectly();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'تأكيد وإرسال',
+                        style: AppTextStyles.style(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -560,54 +596,58 @@ class _DriverProfileViewState extends State<DriverProfileView> {
           ),
           actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(
-                    color: isDark ? AppColors.grey700 : AppColors.grey300,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  'إلغاء',
-                  style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.grey300 : AppColors.textMuted,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.parentRecharge,
-                    arguments: getIt<WalletCubit>(),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: isDark ? AppColors.grey700 : AppColors.grey300,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'إلغاء',
+                      style: AppTextStyles.style(
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppColors.grey300 : AppColors.textMuted,
+                      ),
+                    ),
                   ),
                 ),
-                child: Text(
-                  'اشحن محفظتك',
-                  style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.white,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.parentRecharge,
+                        arguments: getIt<WalletCubit>(),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'اشحن محفظتك',
+                      style: AppTextStyles.style(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.white,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -1244,30 +1284,60 @@ class _DriverProfileViewState extends State<DriverProfileView> {
                     color: isDark ? AppColors.grey300 : AppColors.grey700,
                   ),
                 ),
+                actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 actions: [
-                  TextButton(
-                    onPressed: isSubmitting ? null : () => Navigator.pop(dCtx),
-                    child: Text(
-                      'إلغاء',
-                      style: AppTextStyles.style(color: AppColors.textMuted),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: isSubmitting
-                        ? null
-                        : () {
-                            context.read<ReviewsCubit>().deleteReview(
-                              driverId: widget.driver.driverId,
-                              reviewId: reviewId,
-                            );
-                          },
-                    child: Text(
-                      'نعم، حذف',
-                      style: AppTextStyles.style(
-                        color: AppColors.error,
-                        fontWeight: FontWeight.bold,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: isSubmitting ? null : () => Navigator.pop(dCtx),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(
+                              color: isDark ? AppColors.grey700 : AppColors.grey300,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'إلغاء',
+                            style: AppTextStyles.style(
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? AppColors.grey300 : AppColors.textMuted,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: isSubmitting
+                              ? null
+                              : () {
+                                  context.read<ReviewsCubit>().deleteReview(
+                                    driverId: widget.driver.driverId,
+                                    reviewId: reviewId,
+                                  );
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.error,
+                            foregroundColor: AppColors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'نعم، حذف',
+                            style: AppTextStyles.style(
+                              color: AppColors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1304,41 +1374,24 @@ class _DriverProfileViewState extends State<DriverProfileView> {
         children: [
           // Avatar circle
           Container(
-            width: 96,
-            height: 96,
+            width: 96.r,
+            height: 96.r,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: avatarColor.withValues(alpha: isDark ? 0.18 : 0.12),
               border: Border.all(
                 color: avatarColor.withValues(alpha: 0.3),
-                width: 2,
+                width: 2.w,
               ),
             ),
-            child: d.photoUrl != null && d.photoUrl!.isNotEmpty
-                ? ClipOval(
-                    child: CachedNetworkImage(
-                      imageUrl: d.photoUrl!,
-                      fit: BoxFit.cover,
-                      width: 96.w,
-                      height: 96.h,
-                      placeholder: (context, url) => Center(
-                        child: CircularProgressIndicator(
-                          color: avatarColor,
-                          strokeWidth: 2.w,
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Icon(
-                        isFemale ? Icons.face_4_rounded : Icons.person_rounded,
-                        size: 52.r,
-                        color: avatarColor,
-                      ),
-                    ),
-                  )
-                : Icon(
-                    isFemale ? Icons.face_4_rounded : Icons.person_rounded,
-                    size: 52.r,
-                    color: avatarColor,
-                  ),
+            child: AppUserAvatar(
+              imageUrl: d.photoUrl,
+              radius: 46.r,
+              defaultIcon: isFemale ? Icons.face_4_rounded : Icons.person_rounded,
+              iconColor: avatarColor,
+              iconSize: 52.r,
+              backgroundColor: Colors.transparent,
+            ),
           ),
           const SizedBox(height: 14),
 
@@ -1531,38 +1584,118 @@ class _DriverProfileViewState extends State<DriverProfileView> {
       title: 'بيانات المركبة',
       child: Column(
         children: [
-          // صور السيارة أو Placeholder
+          // صورة المركبة أو Placeholder
           Container(
             width: double.infinity,
-            height: 140,
-            margin: const EdgeInsets.only(bottom: 16),
+            height: 180.h,
+            margin: EdgeInsets.only(bottom: 16.h),
             decoration: BoxDecoration(
               color: isDark ? AppColors.grey900 : AppColors.grey50,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(16.r),
               border: Border.all(
                 color: isDark ? AppColors.grey800 : AppColors.grey200,
               ),
             ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    vehicleIcon,
-                    size: 56,
-                    color: theme.colorScheme.primary.withValues(alpha: 0.8),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    d.vehicleType,
-                    style: AppTextStyles.style(
-                      fontSize: 12,
-                      color: isDark ? AppColors.grey400 : AppColors.textMuted,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(15.r),
+              child: (d.vehicleImageUrl != null && d.vehicleImageUrl!.isNotEmpty)
+                  ? GestureDetector(
+                      onTap: () => _showVehicleImageDialog(context, d.vehicleImageUrl!, d.vehicleType),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          CachedNetworkImage(
+                            imageUrl: d.vehicleImageUrl!,
+                            httpHeaders: AppImageHelper.safeHttpHeaders,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: 180.h,
+                            placeholder: (context, url) => Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 28.r,
+                                    height: 28.r,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    'جاري تحميل صورة المركبة...',
+                                    style: AppTextStyles.style(
+                                      fontSize: 11.sp,
+                                      color: isDark ? AppColors.grey400 : AppColors.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            errorWidget: (context, url, error) {
+                              debugPrint('⚠️ [DriverProfileView] Error loading vehicle image "$url": $error');
+                              return _buildVehiclePlaceholder(theme, isDark, vehicleIcon, d.vehicleType);
+                            },
+                          ),
+                          // Overlay Gradient at bottom with vehicle type and zoom prompt
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.bottomCenter,
+                                  end: Alignment.topCenter,
+                                  colors: [
+                                    Colors.black.withValues(alpha: 0.8),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    d.vehicleType,
+                                    style: AppTextStyles.style(
+                                      fontSize: 12.5.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.5),
+                                      borderRadius: BorderRadius.circular(8.r),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.zoom_in_rounded, size: 14.r, color: Colors.white),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          'تكبير الصورة',
+                                          style: AppTextStyles.style(
+                                            fontSize: 10.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _buildVehiclePlaceholder(theme, isDark, vehicleIcon, d.vehicleType),
             ),
           ),
           _infoRow(
@@ -1615,6 +1748,85 @@ class _DriverProfileViewState extends State<DriverProfileView> {
             isDark,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildVehiclePlaceholder(
+    ThemeData theme,
+    bool isDark,
+    IconData vehicleIcon,
+    String vehicleType,
+  ) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            vehicleIcon,
+            size: 56.r,
+            color: theme.colorScheme.primary.withValues(alpha: 0.8),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            vehicleType,
+            style: AppTextStyles.style(
+              fontSize: 12.sp,
+              color: isDark ? AppColors.grey400 : AppColors.textMuted,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showVehicleImageDialog(BuildContext context, String imageUrl, String title) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.85),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.all(16.r),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(
+              alignment: Alignment.topRight,
+              child: IconButton(
+                onPressed: () => Navigator.pop(ctx),
+                icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
+              ),
+            ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16.r),
+              child: InteractiveViewer(
+                minScale: 0.8,
+                maxScale: 4.0,
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  httpHeaders: AppImageHelper.safeHttpHeaders,
+                  fit: BoxFit.contain,
+                  placeholder: (context, url) => const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
+                  errorWidget: (context, url, error) => const Center(
+                    child: Icon(Icons.broken_image_rounded, color: Colors.white, size: 48),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              title,
+              style: AppTextStyles.style(
+                fontSize: 14.sp,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

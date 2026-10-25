@@ -52,6 +52,8 @@ class _SmartSearchBottomSheetWidgetState
   late String _subscriptionType;
   DateTime? _startDate;
   DateTime? _endDate;
+  String? _inlineError;
+  OverlayEntry? _toastEntry;
 
   @override
   void initState() {
@@ -63,14 +65,116 @@ class _SmartSearchBottomSheetWidgetState
     _endDate = widget.initialEndDate ?? DateTime.now();
   }
 
+  @override
+  void dispose() {
+    _removeTopToast();
+    super.dispose();
+  }
+
+  void _removeTopToast() {
+    _toastEntry?.remove();
+    _toastEntry = null;
+  }
+
+  void _showTopToast(String message) {
+    _removeTopToast();
+
+    final overlay = Overlay.maybeOf(context);
+    if (overlay == null) return;
+
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (ctx) => Positioned(
+        top: MediaQuery.of(ctx).padding.top + 16.h,
+        left: 20.w,
+        right: 20.w,
+        child: Material(
+          color: Colors.transparent,
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: TweenAnimationBuilder<double>(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutBack,
+              tween: Tween(begin: 0.0, end: 1.0),
+              builder: (animContext, value, child) {
+                return Transform.translate(
+                  offset: Offset(0, -20 * (1 - value)),
+                  child: Opacity(
+                    opacity: value.clamp(0.0, 1.0),
+                    child: child,
+                  ),
+                );
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                decoration: BoxDecoration(
+                  color: AppColors.error,
+                  borderRadius: BorderRadius.circular(14.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      blurRadius: 14.r,
+                      offset: Offset(0, 4.h),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.white,
+                      size: 22.r,
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: Text(
+                        message,
+                        style: AppTextStyles.style(
+                          color: Colors.white,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        _removeTopToast();
+                      },
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: Colors.white.withValues(alpha: 0.8),
+                        size: 20.r,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(entry);
+    _toastEntry = entry;
+
+    Future.delayed(const Duration(seconds: 4), () {
+      if (_toastEntry == entry) {
+        _removeTopToast();
+      }
+    });
+  }
+
   void _toggleKid(int id) {
     setState(() {
+      _inlineError = null;
       if (_selectedKidsIds.contains(id)) {
         _selectedKidsIds.remove(id);
       } else {
         _selectedKidsIds.add(id);
       }
     });
+    _removeTopToast();
   }
 
   Future<void> _pickDate(bool isStart) async {
@@ -106,6 +210,7 @@ class _SmartSearchBottomSheetWidgetState
 
     if (picked != null) {
       setState(() {
+        _inlineError = null;
         if (isStart) {
           _startDate = picked;
           final minEnd = picked.add(const Duration(days: 7));
@@ -116,6 +221,7 @@ class _SmartSearchBottomSheetWidgetState
           _endDate = picked;
         }
       });
+      _removeTopToast();
     }
   }
 
@@ -518,6 +624,53 @@ class _SmartSearchBottomSheetWidgetState
 
                     SizedBox(height: 20.h),
 
+                    if (_inlineError != null) ...[
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: isDark ? 0.2 : 0.1),
+                          borderRadius: BorderRadius.circular(14.r),
+                          border: Border.all(
+                            color: AppColors.error.withValues(alpha: 0.4),
+                            width: 1.w,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline_rounded,
+                              color: AppColors.error,
+                              size: 20.r,
+                            ),
+                            SizedBox(width: 10.w),
+                            Expanded(
+                              child: Text(
+                                _inlineError!,
+                                style: AppTextStyles.style(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () {
+                                setState(() => _inlineError = null);
+                                _removeTopToast();
+                              },
+                              child: Icon(
+                                Icons.close_rounded,
+                                size: 18.r,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                    ],
+
                     // ── زر الاعتماد النهائي (Pill Shape) ──
                     ElevatedButton(
                       style: AppTheme.elevatedButtonStyle(
@@ -526,34 +679,23 @@ class _SmartSearchBottomSheetWidgetState
                       ),
                       onPressed: () {
                         if (_selectedKidsIds.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                "يرجى اختيار طفل واحد على الأقل قبل البحث.",
-                                style: AppTextStyles.style(fontSize: 12.sp),
-                              ),
-                              backgroundColor: AppColors.orange,
-                            ),
-                          );
+                          const errorMsg = "يرجى اختيار طفل واحد على الأقل قبل المتابعة.";
+                          setState(() => _inlineError = errorMsg);
+                          _showTopToast(errorMsg);
                           return;
                         }
 
                         if (_startDate != null && _endDate != null) {
                           final daysDiff = _endDate!.difference(_startDate!).inDays;
                           if (daysDiff < 7) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  "الحد الأدنى مسموح به للاشتراك هو أسبوع واحد (7 أيام).",
-                                  style: AppTextStyles.style(fontSize: 12.sp),
-                                ),
-                                backgroundColor: AppColors.orange,
-                              ),
-                            );
+                            const errorMsg = "الحد الأدنى مسموح به للاشتراك هو أسبوع واحد (7 أيام).";
+                            setState(() => _inlineError = errorMsg);
+                            _showTopToast(errorMsg);
                             return;
                           }
                         }
 
+                        _removeTopToast();
                         widget.onApply(
                           selectedKidsIds: _selectedKidsIds,
                           tripDirection: _tripDirection,
@@ -563,12 +705,15 @@ class _SmartSearchBottomSheetWidgetState
                         );
                         Navigator.pop(context);
                       },
-                      child: Text(
-                        widget.buttonLabel ?? "عرض السائقين المناسبين",
-                        style: AppTextStyles.style(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          widget.buttonLabel ?? "عرض السائقين المناسبين",
+                          style: AppTextStyles.style(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),

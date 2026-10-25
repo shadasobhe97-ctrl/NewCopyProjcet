@@ -11,15 +11,21 @@ class CoverageModel {
     required this.zones,
   });
 
+  static String sanitizeSubMunicipalityName(String name) {
+    if (name.isEmpty) return '';
+    return name.replaceAll('محلة', 'فرع بلدي').trim();
+  }
+
   factory CoverageModel.fromJson(Map<String, dynamic> json) {
     final mName = json['municipality_name']?.toString() ??
         json['municipality']?['name']?.toString() ??
         json['name']?.toString() ??
         '';
-    final subName = json['sub_municipality_name']?.toString() ??
+    final rawSubName = json['sub_municipality_name']?.toString() ??
         json['sub_municipality']?['name']?.toString() ??
         json['name']?.toString() ??
         '';
+    final subName = sanitizeSubMunicipalityName(rawSubName);
 
     final List<ZoneModel> parsedZones = [];
     final rawZones = json['zones'];

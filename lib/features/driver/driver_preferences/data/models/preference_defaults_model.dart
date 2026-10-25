@@ -31,7 +31,8 @@ class PreferenceDefaultsModel {
           if (subTree is List) {
             for (final subItem in subTree) {
               if (subItem is Map) {
-                final subName = subItem['name']?.toString() ?? subItem['sub_municipality_name']?.toString() ?? '';
+                final rawSubName = subItem['name']?.toString() ?? subItem['sub_municipality_name']?.toString() ?? '';
+                final subName = CoverageModel.sanitizeSubMunicipalityName(rawSubName);
                 final List<ZoneModel> zList = [];
                 final rawZ = subItem['zones'];
                 if (rawZ is List) {

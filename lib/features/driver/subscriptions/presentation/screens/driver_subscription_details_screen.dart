@@ -105,46 +105,50 @@ class _DriverSubscriptionDetailsScreenState
           ),
           actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
           actions: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: Text(
+                      'تراجع',
+                      style: AppTextStyles.style(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
-                child: Text(
-                  'تراجع',
-                  style: AppTextStyles.style(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  context.read<DriverSubscriptionsCubit>().cancelSubscription(
-                    subscription,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  foregroundColor: AppColors.white,
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      context.read<DriverSubscriptionsCubit>().cancelSubscription(
+                        subscription,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: AppColors.white,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: Text(
+                      'تأكيد الإلغاء',
+                      style: AppTextStyles.style(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.white,
+                      ),
+                    ),
                   ),
                 ),
-                child: Text(
-                  'تأكيد الإلغاء',
-                  style: AppTextStyles.style(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.white,
-                  ),
-                ),
-              ),
+              ],
             ),
           ],
         ),

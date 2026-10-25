@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kids_transport/features/parent/search/data/models/driver_search_model.dart';
 import 'package:kids_transport/core/theme/app_colors.dart';
 import 'package:kids_transport/core/theme/text_styles.dart';
+import 'package:kids_transport/core/widgets/app_user_avatar.dart';
 
 class DriverSearchCardWidget extends StatelessWidget {
   final DriverSearchModel driver;
@@ -124,26 +125,21 @@ class DriverSearchCardWidget extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Avatar
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: (driver.gender == 'FEMALE'
-                              ? AppColors.femalePink
-                              : cs.primary)
-                          .withValues(alpha: isDark ? 0.15 : 0.10),
-                    ),
-                    child: Icon(
-                      driver.gender == 'FEMALE'
-                          ? Icons.face_4_rounded
-                          : Icons.person_rounded,
-                      size: 30,
-                      color: driver.gender == 'FEMALE'
-                          ? AppColors.femalePink
-                          : cs.primary,
-                    ),
+                  // Avatar (Driver photo or fallback)
+                  AppUserAvatar(
+                    imageUrl: driver.photoUrl,
+                    radius: 28,
+                    defaultIcon: driver.gender == 'FEMALE'
+                        ? Icons.face_4_rounded
+                        : Icons.person_rounded,
+                    iconColor: driver.gender == 'FEMALE'
+                        ? AppColors.femalePink
+                        : cs.primary,
+                    iconSize: 30,
+                    backgroundColor: (driver.gender == 'FEMALE'
+                            ? AppColors.femalePink
+                            : cs.primary)
+                        .withValues(alpha: isDark ? 0.15 : 0.10),
                   ),
                   const SizedBox(width: 14),
 

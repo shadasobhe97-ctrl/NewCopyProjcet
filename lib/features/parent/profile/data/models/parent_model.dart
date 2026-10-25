@@ -1,3 +1,5 @@
+import 'package:kids_transport/core/utils/app_image_helper.dart';
+
 class ParentModel {
   final int userId;
   final String fullName;
@@ -28,13 +30,24 @@ class ParentModel {
     // بعض APIs ترجع المستخدم داخل مفتاح 'user' (مثل الـ login/register)
     final data = (json['user'] is Map) ? Map<String, dynamic>.from(json['user'] as Map) : json;
 
+    final rawAvatar = (data['avatar_url'] ??
+            data['avatar'] ??
+            data['photo_url'] ??
+            data['photo'] ??
+            data['image'] ??
+            data['profile_photo_url'] ??
+            data['profile_image'] ??
+            json['avatar_url'] ??
+            json['avatar'])
+        ?.toString();
+
     return ParentModel(
       userId: _parseInt(data['id'] ?? data['user_id']),
       fullName: (data['full_name'] ?? data['name'] ?? '').toString(),
       email: (data['email'] ?? '').toString(),
       phoneNumber: (data['phone_number'] ?? '').toString(),
       alternativePhone: data['alternative_phone']?.toString(),
-      avatarUrl: _resolvePhotoUrl(data['avatar_url']?.toString()),
+      avatarUrl: _resolvePhotoUrl(rawAvatar),
       emailChangePending:
           data['email_change_pending'] == true ||
           data['email_change_pending'] == 1 ||
@@ -43,8 +56,8 @@ class ParentModel {
   }
 
   static String? _resolvePhotoUrl(String? url) {
-    if (url == null || url.isEmpty) return null;
-    return url;
+    if (url == null || url.trim().isEmpty) return null;
+    return AppImageHelper.resolveUrl(url);
   }
 
   Map<String, dynamic> toJson() {

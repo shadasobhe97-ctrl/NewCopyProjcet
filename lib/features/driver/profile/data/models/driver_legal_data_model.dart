@@ -108,6 +108,30 @@ class DriverLegalDataModel {
     );
   }
 
+  String get driverStatusArabicText {
+    final lower = driverStatus.toLowerCase().trim();
+    switch (lower) {
+      case 'active':
+        return 'نشط';
+      case 'verified':
+      case 'approved':
+        return 'تم التحقق';
+      case 'pending':
+      case 'pending_approval':
+      case 'under_review':
+        return 'قيد المراجعة';
+      case 'rejected':
+      case 'declined':
+        return 'مرفوض';
+      case 'suspended':
+        return 'معلق مؤقتاً';
+      case 'inactive':
+        return 'غير نشط';
+      default:
+        return driverStatus;
+    }
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'national_id': nationalId,

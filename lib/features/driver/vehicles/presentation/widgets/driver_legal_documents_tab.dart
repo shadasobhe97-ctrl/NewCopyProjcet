@@ -738,7 +738,10 @@ class _DriverLegalDocumentsTabState extends State<DriverLegalDocumentsTab>
                                 ),
                               ),
                               const Spacer(),
-                              _buildStatusBadge(legalData.driverStatus),
+                              _buildStatusBadge(
+                                legalData.driverStatus,
+                                arabicText: legalData.driverStatusArabicText,
+                              ),
                             ],
                           ),
                           const Divider(height: 24),

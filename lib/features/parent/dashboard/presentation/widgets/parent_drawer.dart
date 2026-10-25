@@ -13,6 +13,7 @@ import 'package:kids_transport/core/theme/text_styles.dart';
 import 'package:kids_transport/core/theme/app_theme.dart';
 import 'package:kids_transport/core/widgets/app_drawer_item.dart';
 import 'package:kids_transport/features/terms/presentation/screens/terms_and_conditions_screen.dart';
+import 'package:kids_transport/core/services/storage_service.dart';
 
 class ParentDrawer extends StatelessWidget {
   const ParentDrawer({super.key});
@@ -84,6 +85,28 @@ class ParentDrawer extends StatelessWidget {
             phoneNumber = cubit.getCachedPhoneNumber();
           }
 
+          final cachedName = StorageService.getFullName()?.trim();
+          if (fullName.trim().isEmpty && cachedName != null && cachedName.isNotEmpty) {
+            fullName = cachedName;
+          }
+          final cachedPhone = StorageService.getPhoneNumber()?.trim();
+          if (phoneNumber.trim().isEmpty && cachedPhone != null && cachedPhone.isNotEmpty) {
+            phoneNumber = cachedPhone;
+          }
+          if (avatarUrl == null || avatarUrl.trim().isEmpty) {
+            avatarUrl = StorageService.getAvatarUrl();
+          }
+
+          if (profileState is ParentProfileInitial) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (context.mounted) {
+                try {
+                  context.read<ParentProfileCubit>().fetchProfile();
+                } catch (_) {}
+              }
+            });
+          }
+
           if (fullName.isEmpty) fullName = 'ولي أمر';
 
           return Drawer(
@@ -109,14 +132,15 @@ class ParentDrawer extends StatelessWidget {
                         iconColor: context.primaryColor,
                         label: 'الملف الشخصي',
                         onTap: () async {
-                          Navigator.pop(context);
-                          await Navigator.pushNamed(
-                            context,
+                          final cubit = context.read<ParentProfileCubit>();
+                          final nav = Navigator.of(context);
+                          nav.pop();
+                          await nav.pushNamed(
                             AppRoutes.parentProfile,
                           );
-                          if (context.mounted) {
+                          if (!cubit.isClosed) {
                             try {
-                              context.read<ParentProfileCubit>().fetchProfile();
+                              cubit.fetchProfile();
                             } catch (_) {}
                           }
                         },
